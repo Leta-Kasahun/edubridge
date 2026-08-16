@@ -1,0 +1,51 @@
+{
+  "name": "edubridge",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.18.2",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "web:dev": "pnpm --filter web dev",
+    "web:build": "pnpm --filter web build",
+    "web:start": "pnpm --filter web start",
+    "web:lint": "pnpm --filter web lint",
+
+    "api:dev": "pnpm --filter api dev",
+    "api:build": "pnpm --filter api build",
+    "api:start": "pnpm --filter api start",
+    "api:lint": "pnpm --filter api lint",
+
+    "build": "pnpm -r build",
+    "start": "pnpm -r --parallel start",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:rebuild": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:stop": "docker compose stop",
+    "docker:start": "docker compose start",
+    "docker:restart": "docker compose restart",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:api": "docker compose logs -f api",
+    "docker:logs:web": "docker compose logs -f web",
+    "docker:ps": "docker compose ps",
+    "docker:clean": "docker compose down -v",
+    "docker:reset": "docker compose down -v --remove-orphans",
+
+    "db:generate": "pnpm --filter api prisma generate",
+    "db:migrate": "pnpm --filter api prisma migrate dev",
+    "db:deploy": "pnpm --filter api prisma migrate deploy",
+    "db:reset": "pnpm --filter api prisma migrate reset",
+    "db:seed": "pnpm --filter api prisma db seed",
+    "db:studio": "pnpm --filter api prisma studio",
+    "db:push": "pnpm --filter api prisma db push",
+    "db:pull": "pnpm --filter api prisma db pull",
+    "db:format": "pnpm --filter api prisma format",
+    "db:validate": "pnpm --filter api prisma validate",
+
+    "setup": "pnpm install && pnpm db:generate && pnpm db:push"
+  }
+}
