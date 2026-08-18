@@ -1,0 +1,12 @@
+node_modules
+dist
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.git
+.github
+Dockerfile
+README.md
+docs

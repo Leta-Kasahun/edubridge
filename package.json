@@ -46,6 +46,6 @@
     "db:format": "pnpm --filter api prisma format",
     "db:validate": "pnpm --filter api prisma validate",
 
-    "setup": "pnpm install && pnpm db:generate && pnpm db:push"
+    "setup": "pnpm install"
   }
 }
