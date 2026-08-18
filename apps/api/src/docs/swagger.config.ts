@@ -13,8 +13,8 @@ export const swaggerConfig = {
   },
   servers: [
     {
-      url: '/api/v1',
-      description: 'API v1',
+      url: '/api',
+      description: 'API',
     },
   ],
   security: [
