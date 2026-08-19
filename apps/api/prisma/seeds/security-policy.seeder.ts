@@ -1,0 +1,56 @@
+import { prisma, runWithTenant } from "../../src/lib/prisma.js";
+
+export async function seedSecurityPolicy(tenantId: string) {
+  return runWithTenant({ tenantId }, async () => {
+    return prisma.securityPolicy.upsert({
+      where: { tenantId },
+      update: {
+        otpEnabled: true,
+        requireOtpForLogin: true,
+        requireOtpForEmailChange: true,
+        requireOtpForVerification: true,
+        minPasswordLength: 8,
+        maxPasswordLength: 128,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxFailedAttempts: 5,
+        failedAttemptWindowMinutes: 15,
+        lockoutDurationMinutes: 15,
+        accessTokenExpiryMinutes: 15,
+        refreshTokenExpiryDays: 7,
+        maxConcurrentSessions: 5,
+        sessionTimeoutMinutes: 60,
+        revokeSessionsOnPasswordChange: true,
+        detectSuspiciousLogin: true,
+        notifyOnNewDevice: true,
+        allowGoogleAuth: true,
+      },
+      create: {
+        tenantId,
+        otpEnabled: true,
+        requireOtpForLogin: true,
+        requireOtpForEmailChange: true,
+        requireOtpForVerification: true,
+        minPasswordLength: 12,
+        maxPasswordLength: 128,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxFailedAttempts: 5,
+        failedAttemptWindowMinutes: 15,
+        lockoutDurationMinutes: 15,
+        accessTokenExpiryMinutes: 15,
+        refreshTokenExpiryDays: 7,
+        maxConcurrentSessions: 5,
+        sessionTimeoutMinutes: 60,
+        revokeSessionsOnPasswordChange: true,
+        detectSuspiciousLogin: true,
+        notifyOnNewDevice: true,
+        allowGoogleAuth: true,
+      },
+    });
+  });
+}

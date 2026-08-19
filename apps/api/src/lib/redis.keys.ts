@@ -6,6 +6,7 @@ export const RedisKeys = {
     session: (sessionId: string) => `auth:session:${sessionId}`,
     userSessions: (userId: string) => `auth:user:${userId}:sessions`,
     refreshToken: (tokenHash: string) => `auth:refresh:${tokenHash}`,
+    blacklist: (tokenId: string) => `auth:blacklist:${tokenId}`,
     loginAttempts: (identifier: string) => `auth:attempts:${identifier}`,
     ipAttempts: (ipAddress: string) => `auth:ip:attempts:${ipAddress}`,
     lockout: (userId: string) => `auth:lockout:${userId}`,

@@ -7,6 +7,10 @@ export interface AccessTokenPayload {
   tenantId?: string;
   email?: string;
   roles?: string[];
+  sessionId?: string;
+  deviceId?: string;
+  tokenId?: string;
+  type?: "access" | "refresh";
 }
 
 export interface RefreshTokenPayload {

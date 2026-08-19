@@ -1,22 +1,19 @@
-// src/docs/route.registry.ts
-
 export interface ParameterDefinition {
   name: string;
-  in: 'path' | 'query' | 'header' | 'cookie';
+  in: "path" | "query" | "header" | "cookie";
   required?: boolean;
   schema: Record<string, unknown>;
   description?: string;
-  example?: unknown;
 }
 
 export interface RouteDefinition {
   path: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string;
   summary?: string;
   description: string;
   tags: string[];
   security?: boolean;
-  requestBody?: Record<string, unknown>;
+  requestBody?: unknown;
   parameters?: ParameterDefinition[];
   responses?: Record<number, { description: string; content?: Record<string, unknown> }>;
 }
@@ -26,7 +23,6 @@ export interface SchemaDefinition {
   properties?: Record<string, unknown>;
   required?: string[];
   description?: string;
-  example?: unknown;
   items?: Record<string, unknown>;
   enum?: string[];
 }
@@ -34,6 +30,23 @@ export interface SchemaDefinition {
 export interface TagDefinition {
   name: string;
   description: string;
+}
+
+function convertToOpenApiSchema(schemaInput: unknown): Record<string, unknown> | undefined {
+  if (!schemaInput || typeof schemaInput !== "object") {
+    return undefined;
+  }
+
+  // Handle Zod schemas if toJSONSchema is present
+  if ("toJSONSchema" in schemaInput && typeof (schemaInput as { toJSONSchema: () => Record<string, unknown> }).toJSONSchema === "function") {
+    const jsonSchema = (schemaInput as { toJSONSchema: () => Record<string, unknown> }).toJSONSchema();
+    const cleanSchema = { ...jsonSchema };
+    delete cleanSchema.$schema;
+    return cleanSchema;
+  }
+
+  // Plain JSON / OpenAPI schema
+  return schemaInput as Record<string, unknown>;
 }
 
 class RouteRegistry {
@@ -61,94 +74,77 @@ class RouteRegistry {
 
     this.routes.forEach((route) => {
       const method = route.method.toLowerCase();
-      const routePath = route.path;
+      // Normalize express :param syntax to OpenAPI {param} syntax
+      const routePath = route.path.replace(/:([a-zA-Z0-9_]+)/g, "{$1}");
 
       if (!paths[routePath]) {
         paths[routePath] = {};
       }
 
-      const defaultResponses: Record<number, { description: string; content?: Record<string, unknown> }> = {
-        200: { description: 'Successful operation' },
-        201: { description: 'Resource created successfully' },
-        400: {
-          description: 'Bad Request - Validation or parameter error',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-        401: {
-          description: 'Unauthorized - Missing or invalid JWT token',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-        403: {
-          description: 'Forbidden - Insufficient permissions for tenant or action',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-        404: {
-          description: 'Not Found - Resource does not exist or is outside tenant scope',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-        429: {
-          description: 'Too Many Requests - Rate limit exceeded',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-        500: {
-          description: 'Internal Server Error',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/ApiErrorResponse' },
-            },
-          },
-        },
-      };
+      const responses =
+        route.responses && Object.keys(route.responses).length > 0
+          ? route.responses
+          : {
+              200: {
+                description: "Successful Response",
+              },
+            };
 
       const operation: Record<string, unknown> = {
         tags: route.tags,
         summary: route.summary || route.description,
         description: route.description,
-        operationId: `${method}_${routePath.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`,
-        security: route.security !== false ? [{ bearerAuth: [] }] : [],
-        responses: { ...defaultResponses, ...(route.responses || {}) },
+        operationId: `${method}_${routePath.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "")}`,
+        security: route.security ? [{ bearerAuth: [] }] : [],
+        responses,
       };
 
-      if (route.parameters && route.parameters.length > 0) {
-        operation.parameters = route.parameters.map((p) => ({
-          name: p.name,
-          in: p.in,
-          required: p.required !== undefined ? p.required : p.in === 'path',
-          description: p.description || `${p.name} parameter`,
-          schema: p.schema,
-          ...(p.example !== undefined ? { example: p.example } : {}),
+      // Extract path parameter names from routePath (e.g. {id}, {category})
+      const pathParamNames: string[] = [];
+      const matches = routePath.match(/{([^}]+)}/g);
+      if (matches) {
+        matches.forEach((m) => {
+          pathParamNames.push(m.slice(1, -1));
+        });
+      }
+
+      const explicitParams = (route.parameters || []).map((p) => ({
+        name: p.name,
+        in: p.in,
+        required: p.required !== undefined ? p.required : p.in === "path",
+        description: p.description || `${p.name} parameter`,
+        schema: p.schema,
+      }));
+
+      const explicitParamNames = new Set(explicitParams.map((p) => p.name));
+      const autoPathParams = pathParamNames
+        .filter((name) => !explicitParamNames.has(name))
+        .map((name) => ({
+          name,
+          in: "path",
+          required: true,
+          description: `${name} path parameter`,
+          schema: { type: "string" },
         }));
+
+      const allParams = [...explicitParams, ...autoPathParams];
+      if (allParams.length > 0) {
+        operation.parameters = allParams;
       }
 
       if (route.requestBody) {
-        operation.requestBody = {
-          required: true,
-          content: {
-            'application/json': {
-              schema: route.requestBody,
+        const reqObj = route.requestBody as Record<string, unknown>;
+        const schema = convertToOpenApiSchema(reqObj.schema || route.requestBody);
+        if (schema) {
+          operation.requestBody = {
+            required: reqObj.required !== false,
+            content: {
+              "application/json": {
+                schema,
+              },
             },
-          },
-        };
+          };
+        }
       }
 
       paths[routePath][method] = operation;
@@ -161,16 +157,16 @@ class RouteRegistry {
     return {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
           description: 'JWT Authorization header using the Bearer scheme. Example: "Bearer eyJhbGciOi..."',
         },
         tenantHeader: {
-          type: 'apiKey',
-          in: 'header',
-          name: 'x-tenant-id',
-          description: 'Tenant ID Header for multi-tenant partition context',
+          type: "apiKey",
+          in: "header",
+          name: "x-tenant-id",
+          description: "Tenant ID Header for multi-tenant partition context",
         },
       },
       schemas: Object.fromEntries(this.schemas),
@@ -180,7 +176,7 @@ class RouteRegistry {
   generateTags(): Array<TagDefinition> {
     return Array.from(this.tags).map((tag) => ({
       name: tag,
-      description: this.tagDescriptions.get(tag) || `${tag} domain operations and management`,
+      description: this.tagDescriptions.get(tag) || `${tag} operations`,
     }));
   }
 }
