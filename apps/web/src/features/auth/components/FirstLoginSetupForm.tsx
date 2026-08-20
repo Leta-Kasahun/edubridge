@@ -37,7 +37,7 @@ export function FirstLoginSetupForm({
   } = useForm<FirstLoginSetupFormData>({
     resolver: zodResolver(firstLoginSetupValidationSchema),
     defaultValues: {
-      email,
+      email: email || "",
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
@@ -47,9 +47,10 @@ export function FirstLoginSetupForm({
   const newPassword = watch("newPassword") || "";
 
   const onSubmit = (values: FirstLoginSetupFormData) => {
+    const resolvedEmail = values.email || email || "";
     firstLoginSetup(
       {
-        email,
+        email: resolvedEmail,
         userId,
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,

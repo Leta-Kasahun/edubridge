@@ -31,7 +31,7 @@ export class PasswordService {
     const user = dto.userId
       ? await this.authRepo.findById(dto.userId)
       : dto.email
-        ? await this.authRepo.findByEmail(dto.email)
+        ? await this.authRepo.findByIdentifier(dto.email)
         : null;
     if (!user || !user.passwordHash) {
       throw new NotFoundError("User not found");
@@ -52,7 +52,8 @@ export class PasswordService {
 
     const newPasswordHash = await hashPassword(dto.newPassword);
     await this.authRepo.updatePassword(user.id, newPasswordHash);
-    await this.authRepo.updateEmailVerified(user.id, false, dto.email);
+    const verifiedEmail = dto.email && dto.email.includes("@") ? dto.email : (user.email ?? undefined);
+    await this.authRepo.updateEmailVerified(user.id, false, verifiedEmail);
     await this.authRepo.updateStatus(user.id, "ACTIVE");
 
     await this.otpSvc.generateAndSaveOtp(user.id, "EMAIL_VERIFICATION", activeTenantId);

@@ -34,7 +34,7 @@ function FirstLoginSetupContent() {
       <FirstLoginSetupForm
         email={email}
         userId={userId}
-        onSuccess={() => router.push(ROUTES.DASHBOARD)}
+        onSuccess={() => router.push(ROUTES.AUTH.LOGIN)}
       />
     </AuthCard>
   );

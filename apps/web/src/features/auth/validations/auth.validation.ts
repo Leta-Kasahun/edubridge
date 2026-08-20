@@ -62,7 +62,7 @@ export const resendOtpValidationSchema = z.object({
 export const createFirstLoginSchema = (policy?: Partial<SecurityPolicy>) =>
   z
     .object({
-      email: emailSchema,
+      email: z.string().trim().min(1).max(255).optional(),
       currentPassword: z.string().min(1, "Current password is required"),
       newPassword: createPasswordSchema(policy),
       confirmPassword: z.string().min(1, "Confirm your password"),

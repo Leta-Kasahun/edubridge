@@ -38,7 +38,7 @@ export const resendOtpSchema = z.object({
 
 export const firstLoginSetupSchema = z.object({
   userId: z.string().uuid().optional(),
-  email: z.string().trim().email().toLowerCase(),
+  email: z.string().trim().min(1).max(255),
   currentPassword: z.string().min(1),
   newPassword: z.string().min(8).max(128),
 });
