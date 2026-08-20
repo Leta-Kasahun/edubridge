@@ -23,7 +23,7 @@ export const loginSchema = z.object({
 
 export const verifyOtpSchema = z.object({
   userId: z.string().uuid().optional(),
-  email: z.string().trim().email().optional(),
+  email: z.string().trim().optional(),
   identifier: z.string().trim().optional(),
   otp: z.string().trim().length(6).regex(/^\d{6}$/),
   purpose: otpPurposeEnum.optional().default("LOGIN_2FA"),
@@ -31,7 +31,7 @@ export const verifyOtpSchema = z.object({
 
 export const resendOtpSchema = z.object({
   userId: z.string().uuid().optional(),
-  email: z.string().trim().email().optional(),
+  email: z.string().trim().optional(),
   identifier: z.string().trim().optional(),
   purpose: otpPurposeEnum.optional().default("LOGIN_2FA"),
 });

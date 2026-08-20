@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, User, Lock, ArrowRight } from "lucide-react";
 import { FormField, SubmitButton, ErrorAlert } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
@@ -16,6 +16,7 @@ import { useLogin } from "../hooks";
 import { loginValidationSchema, LoginFormData } from "../validations";
 import { AuthResponseData } from "../types";
 import { GoogleButton } from "./GoogleButton";
+import { AuthIdentifierToggle, AuthIdentifierMode } from "./AuthIdentifierToggle";
 
 export interface LoginFormProps {
   onSuccess?: (data: AuthResponseData) => void;
@@ -34,6 +35,7 @@ export function LoginForm({
   isGoogleLoading,
   forgotPasswordHref = ROUTES.AUTH.RESET_PASSWORD,
 }: LoginFormProps) {
+  const [authMode, setAuthMode] = useState<AuthIdentifierMode>("email");
   const [googleError, setGoogleError] = useState<string | null>(null);
   const setAuth = useAuthStore((state) => state.setAuth);
   const { mutate: login, isPending, error } = useLogin();
@@ -133,13 +135,15 @@ export function LoginForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 w-full">
         {currentError && <ErrorAlert message={currentError} />}
 
+        <AuthIdentifierToggle mode={authMode} onChange={setAuthMode} />
+
         <FormField
           id="email"
-          label="Email or Username"
-          type="text"
-          placeholder="Enter your email or username"
-          autoComplete="username"
-          leftIcon={<Mail size={18} />}
+          label={authMode === "email" ? "Email Address" : "Username"}
+          type={authMode === "email" ? "email" : "text"}
+          placeholder={authMode === "email" ? "Enter your email address" : "Enter your username"}
+          autoComplete={authMode === "email" ? "email" : "username"}
+          leftIcon={authMode === "email" ? <Mail size={18} /> : <User size={18} />}
           error={errors.email?.message}
           {...register("email")}
         />

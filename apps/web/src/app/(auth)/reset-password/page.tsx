@@ -5,14 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, CheckCircle2, ArrowRight } from "lucide-react";
-import { AuthCard } from "@/features/auth";
+import { Mail, User, CheckCircle2, ArrowRight } from "lucide-react";
+import { AuthCard, AuthIdentifierToggle, AuthIdentifierMode } from "@/features/auth";
 import { FormField, SubmitButton, ErrorAlert } from "@/shared/components";
+import { getErrorMessage } from "@/shared/utils";
+import { authService } from "@/features/auth/services";
 import { resetPasswordRequestValidationSchema, ResetPasswordRequestFormData } from "@/features/auth/validations";
 import { ROUTES } from "@/constants/routes";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const [authMode, setAuthMode] = useState<AuthIdentifierMode>("email");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,20 +34,30 @@ export default function ResetPasswordPage() {
 
   const identifierValue = watch("email");
 
-  const onSubmit = async () => {
+  const onSubmit = async (values: ResetPasswordRequestFormData) => {
     setIsLoading(true);
     setError(null);
     try {
+      const rawValue = values.email.trim();
+      if (authMode === "username") {
+        router.push(`${ROUTES.AUTH.FIRST_LOGIN_SETUP}?email=${encodeURIComponent(rawValue)}`);
+        return;
+      }
+      await authService.resendOtp({
+        identifier: rawValue,
+        email: rawValue.includes("@") ? rawValue : undefined,
+        purpose: "PASSWORD_RESET",
+      });
       setIsSubmitted(true);
-    } catch {
-      setError("Failed to send verification code. Please try again.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to verify account. Please check your credentials and try again."));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleProceedToOtp = () => {
-    const query = identifierValue ? `?email=${encodeURIComponent(identifierValue)}` : "";
+    const query = identifierValue ? `?email=${encodeURIComponent(identifierValue.trim())}&purpose=PASSWORD_RESET` : "";
     router.push(`${ROUTES.AUTH.VERIFY_OTP}${query}`);
   };
 
@@ -54,7 +67,9 @@ export default function ResetPasswordPage() {
       description={
         isSubmitted
           ? "Check your inbox for the one-time verification code (OTP)"
-          : "Enter your registered email or username to receive a verification OTP code"
+          : authMode === "email"
+          ? "Enter your registered email address to receive an OTP verification code"
+          : "Enter your registered username to directly update your password"
       }
       backHref={ROUTES.AUTH.LOGIN}
       backLabel="Back to Sign In"
@@ -78,7 +93,7 @@ export default function ResetPasswordPage() {
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-foreground">OTP Sent</h3>
             <p className="text-sm text-muted-foreground">
-              We sent a verification code to the registered email associated with{" "}
+              We sent a verification code to the registered account associated with{" "}
               <strong className="text-foreground font-medium">{identifierValue}</strong>.
             </p>
           </div>
@@ -94,24 +109,26 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 w-full">
           {error && <ErrorAlert message={error} />}
 
+          <AuthIdentifierToggle mode={authMode} onChange={setAuthMode} />
+
           <FormField
             id="email"
-            label="Email or Username"
+            label={authMode === "email" ? "Email Address" : "Username"}
             type="text"
-            placeholder="Enter your email or username"
-            autoComplete="username"
-            leftIcon={<Mail size={18} />}
+            placeholder={authMode === "email" ? "Enter your email address" : "Enter your username"}
+            autoComplete={authMode === "email" ? "email" : "username"}
+            leftIcon={authMode === "email" ? <Mail size={18} /> : <User size={18} />}
             error={errors.email?.message}
             {...register("email")}
           />
 
           <SubmitButton
             isLoading={isLoading}
-            loadingText="Sending OTP..."
+            loadingText={authMode === "email" ? "Sending OTP..." : "Submitting..."}
             icon={<ArrowRight size={18} />}
             iconPosition="right"
           >
-            Send OTP
+            {authMode === "email" ? "Send OTP" : "Submit"}
           </SubmitButton>
         </form>
       )}

@@ -54,7 +54,8 @@ export const loginValidationSchema = z.object({
 
 export const verifyOtpValidationSchema = z.object({ otp: otpSchema });
 export const resendOtpValidationSchema = z.object({
-  email: emailSchema.optional(),
+  email: z.string().trim().min(1).max(255).optional(),
+  identifier: z.string().trim().min(1).max(255).optional(),
   userId: z.string().uuid().optional(),
 });
 
@@ -94,7 +95,9 @@ export const createChangePasswordSchema = (policy?: Partial<SecurityPolicy>) =>
 export const firstLoginSetupValidationSchema = createFirstLoginSchema();
 export const changePasswordValidationSchema = createChangePasswordSchema();
 
-export const resetPasswordRequestValidationSchema = z.object({ email: emailSchema });
+export const resetPasswordRequestValidationSchema = z.object({
+  email: z.string().trim().min(1, "Email or Username is required").max(255),
+});
 export const resetPasswordConfirmValidationSchema = z
   .object({
     token: z.string().min(1, "Token is required"),
