@@ -1,0 +1,31 @@
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: "/auth/login",
+    VERIFY_OTP: "/auth/verify-otp",
+    RESEND_OTP: "/auth/resend-otp",
+    FIRST_LOGIN_SETUP: "/auth/first-login-setup",
+    GOOGLE: "/auth/google",
+    REFRESH_TOKEN: "/auth/refresh-token",
+    LOGOUT: "/auth/logout",
+    LOGOUT_ALL: "/auth/logout-all",
+    CHANGE_PASSWORD: "/auth/change-password",
+  },
+  ROLES: {
+    BASE: "/roles",
+    BY_ID: (id: string) => `/roles/${id}`,
+    PERMISSIONS: (id: string) => `/roles/${id}/permissions`,
+    PERMISSION_BY_ID: (roleId: string, permissionId: string) => `/roles/${roleId}/permissions/${permissionId}`,
+  },
+  PERMISSIONS: {
+    BASE: "/permissions",
+  },
+  LOOKUPS: {
+    BASE: "/lookups",
+    BY_CATEGORY: (category: string) => `/lookups/${category}`,
+    BY_CATEGORY_KEY: (category: string, key: string) => `/lookups/${category}/${key}`,
+    BY_ID: (id: string) => `/lookups/${id}`,
+  },
+  HEALTH: "/health",
+} as const;
+
+export type ApiEndpoints = typeof API_ENDPOINTS;

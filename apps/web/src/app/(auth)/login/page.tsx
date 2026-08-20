@@ -1,10 +1,30 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { AuthCard, LoginForm } from "@/features/auth";
+import { ROUTES } from "@/constants/routes";
+
 export default function LoginPage() {
+  const router = useRouter();
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-200 p-8 shadow-sm">
-        <h1 className="text-2xl font-bold tracking-tight">Login to EduBridge</h1>
-        <p className="text-sm text-gray-500">Enter your credentials to access your account</p>
-      </div>
-    </main>
+    <AuthCard
+      title="Welcome Back"
+      description="Sign in to your account to continue"
+      backHref={ROUTES.HOME}
+      backLabel="Back to Home"
+    >
+      <LoginForm
+        onSuccess={() => router.push(ROUTES.DASHBOARD)}
+        onRequiresOtp={(userId) => {
+          const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+          router.push(`${ROUTES.AUTH.VERIFY_OTP}${query}`);
+        }}
+        onRequiresFirstLoginSetup={(userId) => {
+          const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+          router.push(`${ROUTES.AUTH.FIRST_LOGIN_SETUP}${query}`);
+        }}
+      />
+    </AuthCard>
   );
 }
