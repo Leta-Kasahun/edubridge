@@ -27,7 +27,7 @@ export class AuthService {
     private readonly sessionSvc: SessionService = sessionService,
     private readonly sessionRepo: SessionRepository = sessionRepository,
     private readonly authRepo: AuthRepository = authRepository
-  ) { }
+  ) {}
 
   async login(dto: LoginDto, metadata: SessionMetadata, tenantId?: string): Promise<AuthResponse> {
     return this.loginSvc.login(dto, metadata, tenantId);
@@ -47,6 +47,26 @@ export class AuthService {
     tenantId?: string
   ): Promise<AuthResponse> {
     return this.passwordSvc.firstLoginSetup(dto, metadata, tenantId);
+  }
+
+  getGoogleAuthUrl(customState?: string): string {
+    return this.googleAuthSvc.getAuthorizationUrl(customState);
+  }
+
+  async handleGoogleCallback(
+    code: string,
+    metadata: SessionMetadata,
+    tenantId?: string
+  ): Promise<AuthResponse> {
+    return this.googleAuthSvc.processGoogleCallback(code, metadata, tenantId);
+  }
+
+  getGoogleRedirectUrl(result: AuthResponse): string {
+    return this.googleAuthSvc.resolveFrontendRedirect(result);
+  }
+
+  getGoogleErrorRedirectUrl(errorMessage: string): string {
+    return this.googleAuthSvc.resolveFrontendErrorRedirect(errorMessage);
   }
 
   async googleAuth(

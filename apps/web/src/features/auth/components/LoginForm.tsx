@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +8,11 @@ import { Mail, Lock, ArrowRight } from "lucide-react";
 import { FormField, SubmitButton, ErrorAlert } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
-import { useLogin, useGoogleAuth } from "../hooks";
+import { env } from "@/config/env";
+import { useAuthStore } from "@/stores";
+import { setAuthTokens } from "@/lib/apiClient";
+import { AuthUser } from "@/shared/types";
+import { useLogin } from "../hooks";
 import { loginValidationSchema, LoginFormData } from "../validations";
 import { AuthResponseData } from "../types";
 import { GoogleButton } from "./GoogleButton";
@@ -29,8 +34,9 @@ export function LoginForm({
   isGoogleLoading,
   forgotPasswordHref = ROUTES.AUTH.RESET_PASSWORD,
 }: LoginFormProps) {
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const { mutate: login, isPending, error } = useLogin();
-  const { mutate: googleLogin, isPending: isGoogleAuthPending } = useGoogleAuth();
 
   const {
     register,
@@ -44,7 +50,55 @@ export function LoginForm({
     },
   });
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const googleSuccess = params.get("google_success");
+    const token = params.get("token");
+    const expiresIn = params.get("expiresIn");
+    const userDataRaw = params.get("userData");
+    const authError = params.get("error");
+
+    if (authError) {
+      setGoogleError(authError);
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+
+    if (googleSuccess === "true" && token) {
+      let parsedUser: AuthUser | null = null;
+      if (userDataRaw) {
+        try {
+          parsedUser = JSON.parse(decodeURIComponent(userDataRaw)) as AuthUser;
+        } catch {
+          parsedUser = null;
+        }
+      }
+
+      const numExpiresIn = expiresIn ? Number(expiresIn) : 900;
+      setAuthTokens(token, numExpiresIn);
+
+      if (parsedUser) {
+        setAuth({
+          user: parsedUser,
+          accessToken: token,
+          expiresIn: numExpiresIn,
+        });
+      }
+
+      window.history.replaceState(null, "", window.location.pathname);
+      if (onSuccess) {
+        onSuccess({
+          tokens: { accessToken: token, expiresIn: numExpiresIn },
+          user: parsedUser ?? undefined,
+        });
+      }
+    }
+  }, [onSuccess, setAuth]);
+
   const onSubmit = (values: LoginFormData) => {
+    setGoogleError(null);
     login(values, {
       onSuccess: (data) => {
         if (data.requiresOtp && onRequiresOtp) {
@@ -63,16 +117,21 @@ export function LoginForm({
   };
 
   const handleGoogleClick = () => {
+    setGoogleError(null);
     if (onGoogleClick) {
       onGoogleClick();
       return;
     }
+
+    window.location.href = `${env.apiUrl}/auth/google`;
   };
+
+  const currentError = error ? getErrorMessage(error) : googleError;
 
   return (
     <div className="space-y-5 w-full">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 w-full">
-        {error && <ErrorAlert message={getErrorMessage(error)} />}
+        {currentError && <ErrorAlert message={currentError} />}
 
         <FormField
           id="email"
@@ -124,7 +183,7 @@ export function LoginForm({
 
       <GoogleButton
         onClick={handleGoogleClick}
-        isLoading={isGoogleLoading || isGoogleAuthPending}
+        isLoading={isGoogleLoading}
       />
 
       <div className="pt-2 text-center text-xs sm:text-sm text-muted-foreground">

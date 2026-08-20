@@ -18,6 +18,8 @@ router.post("/login", authLimiter, validate(loginSchema), authController.login);
 router.post("/verify-otp", otpLimiter, validate(verifyOtpSchema), authController.verifyOtp);
 router.post("/resend-otp", otpLimiter, validate(resendOtpSchema), authController.resendOtp);
 router.post("/first-login-setup", authLimiter, validate(firstLoginSetupSchema), authController.firstLoginSetup);
+router.get("/google", authController.initiateGoogleAuth);
+router.get("/google/callback", authController.handleGoogleCallback);
 router.post("/google", authController.googleAuth);
 router.post("/refresh-token", authLimiter, validate(refreshTokenSchema), authController.refreshToken);
 router.post("/logout", authController.logout);

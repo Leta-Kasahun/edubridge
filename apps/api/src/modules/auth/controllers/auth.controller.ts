@@ -15,14 +15,41 @@ export class AuthController {
     return {
       ipAddress: (req.headers["x-forwarded-for"] as string) || req.ip || "127.0.0.1",
       userAgent: req.headers["user-agent"],
-      deviceId: req.body.deviceId as string | undefined,
-      deviceType: req.body.deviceType,
+      deviceId: req.body?.deviceId as string | undefined,
+      deviceType: req.body?.deviceType,
     };
   }
 
   private extractTenantId(req: Request) {
     return (req.headers["x-tenant-id"] as string) || req.tenantId;
   }
+
+  initiateGoogleAuth = asyncHandler(async (_req: Request, res: Response) => {
+    const authUrl = this.authSvc.getGoogleAuthUrl();
+    res.redirect(authUrl);
+  });
+
+  handleGoogleCallback = asyncHandler(async (req: Request, res: Response) => {
+    const { code, error } = req.query;
+
+    if (error || !code) {
+      const errorMsg = (error as string) || "Google authentication was cancelled or failed";
+      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(errorMsg));
+      return;
+    }
+
+    const metadata = this.extractMetadata(req);
+    const tenantId = this.extractTenantId(req);
+
+    try {
+      const result = await this.authSvc.handleGoogleCallback(code as string, metadata, tenantId);
+      setRefreshCookie(res, result.tokens?.refreshToken);
+      res.redirect(this.authSvc.getGoogleRedirectUrl(result));
+    } catch (authError) {
+      const msg = authError instanceof Error ? authError.message : "Authentication failed";
+      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(msg));
+    }
+  });
 
   login = asyncHandler(async (req: Request, res: Response) => {
     const metadata = this.extractMetadata(req);

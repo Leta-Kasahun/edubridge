@@ -7,6 +7,18 @@ import { tokenService, TokenService } from "./token.service.js";
 import { sessionService, SessionService } from "./session.service.js";
 import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
+import { env } from "../../../config/env.js";
+
+interface GoogleTokenResponse {
+  access_token: string;
+  id_token?: string;
+  token_type?: string;
+}
+
+interface GoogleUserInfo {
+  sub: string;
+  email: string;
+}
 
 export class GoogleAuthService {
   constructor(
@@ -15,6 +27,81 @@ export class GoogleAuthService {
     private readonly tokenSvc: TokenService = tokenService,
     private readonly sessionSvc: SessionService = sessionService
   ) {}
+
+  getAuthorizationUrl(customState?: string): string {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CALLBACK_URL) {
+      throw new UnauthorizedError("Google OAuth credentials not configured on the server");
+    }
+    const state = customState || crypto.randomBytes(16).toString("hex");
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      env.GOOGLE_CLIENT_ID
+    )}&redirect_uri=${encodeURIComponent(
+      env.GOOGLE_CALLBACK_URL
+    )}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent&state=${state}`;
+  }
+
+  async exchangeCodeForTokens(code: string): Promise<GoogleTokenResponse> {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: env.GOOGLE_CALLBACK_URL,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new UnauthorizedError("Failed to exchange authorization code with Google");
+    }
+
+    return (await response.json()) as GoogleTokenResponse;
+  }
+
+  async fetchGoogleProfile(accessToken: string): Promise<GoogleUserInfo> {
+    const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      throw new UnauthorizedError("Failed to retrieve Google user profile");
+    }
+
+    return (await response.json()) as GoogleUserInfo;
+  }
+
+  async processGoogleCallback(
+    code: string,
+    metadata: SessionMetadata,
+    tenantId?: string
+  ): Promise<AuthResponse> {
+    const tokenData = await this.exchangeCodeForTokens(code);
+    const profile = await this.fetchGoogleProfile(tokenData.access_token);
+    return this.authenticateWithGoogle(profile.sub, profile.email, metadata, tenantId);
+  }
+
+  getFrontendBaseUrl(): string {
+    const firstOrigin = env.CORS_ORIGIN ? env.CORS_ORIGIN.split(",")[0] : null;
+    if (env.CORS_ORIGIN === "*" || !env.CORS_ORIGIN || !firstOrigin) {
+      return "http://localhost:3000";
+    }
+    return firstOrigin.trim();
+  }
+
+  resolveFrontendRedirect(result: AuthResponse): string {
+    const baseUrl = this.getFrontendBaseUrl();
+    const token = result.tokens?.accessToken || "";
+    const expiresIn = result.tokens?.expiresIn || 900;
+    const userData = encodeURIComponent(JSON.stringify(result.user || {}));
+    return `${baseUrl}/login?google_success=true&token=${encodeURIComponent(token)}&expiresIn=${expiresIn}&userData=${userData}`;
+  }
+
+  resolveFrontendErrorRedirect(errorMessage: string): string {
+    const baseUrl = this.getFrontendBaseUrl();
+    return `${baseUrl}/login?error=${encodeURIComponent(errorMessage)}`;
+  }
 
   async authenticateWithGoogle(
     googleId: string,
