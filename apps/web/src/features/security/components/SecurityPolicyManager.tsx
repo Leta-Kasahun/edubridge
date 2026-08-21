@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   KeyRound,
   ShieldCheck,
@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { useSecurityPolicy, useUpdateSecurityPolicy } from "../hooks/useSecurityPolicy";
 import { SecurityPolicy } from "../types/security.types";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_POLICY: SecurityPolicy = {
+const FALLBACK_POLICY: SecurityPolicy = {
   minPasswordLength: 12,
   maxPasswordLength: 128,
   requireUppercase: true,
@@ -108,11 +109,17 @@ function NumberRow({ label, value, min = 0, max = 1000, unit, onChange }: Number
 }
 
 export function SecurityPolicyManager() {
-  const { data: apiPolicy } = useSecurityPolicy();
+  const { data: apiPolicy, isLoading } = useSecurityPolicy();
   const updateMutation = useUpdateSecurityPolicy();
 
-  const [policy, setPolicy] = useState<SecurityPolicy>(apiPolicy || DEFAULT_POLICY);
+  const [policy, setPolicy] = useState<SecurityPolicy>(apiPolicy || FALLBACK_POLICY);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (apiPolicy) {
+      setPolicy(apiPolicy);
+    }
+  }, [apiPolicy]);
 
   const updateField = <K extends keyof SecurityPolicy>(key: K, value: SecurityPolicy[K]) => {
     setPolicy((prev) => ({
@@ -123,13 +130,22 @@ export function SecurityPolicyManager() {
   };
 
   const handleSave = () => {
-    updateMutation.mutate(policy, {
+    const { id, tenantId, ...cleanPayload } = policy;
+    updateMutation.mutate(cleanPayload, {
       onSuccess: () => {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
       },
     });
   };
+
+  if (isLoading && !apiPolicy) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <LoadingSpinner size={28} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -144,6 +160,11 @@ export function SecurityPolicyManager() {
             <>
               <Check size={14} className="stroke-[3]" />
               <span>Saved</span>
+            </>
+          ) : updateMutation.isPending ? (
+            <>
+              <LoadingSpinner size={14} />
+              <span>Saving...</span>
             </>
           ) : (
             <>

@@ -71,12 +71,10 @@ export const requirePermission = (actionOrPerm: string, resource?: string) => {
       if (cached) {
         userPermissions = JSON.parse(cached);
       } else {
-        const membership = await prisma.tenantMembership.findUnique({
+        const membership = await prisma.tenantMembership.findFirst({
           where: {
-            tenantId_userId: {
-              tenantId,
-              userId: req.user.userId,
-            },
+            tenantId,
+            userId: req.user.userId,
           },
           include: {
             roles: {

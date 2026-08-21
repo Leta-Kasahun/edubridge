@@ -69,12 +69,10 @@ export const findTenantByIdentifier = async (identifier: string): Promise<Resolv
 };
 
 export const validateTenantMembership = async (tenantId: string, userId: string): Promise<boolean> => {
-  const membership = await prisma.tenantMembership.findUnique({
+  const membership = await prisma.tenantMembership.findFirst({
     where: {
-      tenantId_userId: {
-        tenantId,
-        userId,
-      },
+      tenantId,
+      userId,
     },
     select: {
       status: true,

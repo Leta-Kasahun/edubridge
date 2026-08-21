@@ -12,6 +12,7 @@ import { healthRouter } from "./modules/health/route.js";
 import { authRouter } from "./modules/auth/route.js";
 import { permissionRouter } from "./modules/permissions/route.js";
 import { lookupRouter } from "./modules/lookup/route.js";
+import { securityPolicyRouter } from "./modules/security-policy/route.js";
 
 const app: Express = express();
 
@@ -31,6 +32,7 @@ app.use("/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api", permissionRouter);
 app.use("/api/lookups", lookupRouter);
+app.use("/api/security-policy", securityPolicyRouter);
 
 app.use(errorHandler);
 
