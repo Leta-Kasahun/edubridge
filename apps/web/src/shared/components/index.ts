@@ -3,3 +3,6 @@ export * from "./SubmitButton";
 export * from "./FormField";
 export * from "./ErrorAlert";
 export * from "./UserMenu";
+export * from "./Breadcrumbs";
+export * from "./TableToolbar";
+export * from "./layouts";

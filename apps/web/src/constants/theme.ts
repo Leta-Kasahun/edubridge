@@ -36,18 +36,24 @@ export const THEME_COLORS = {
     lightBg: '#FEF2F2',
   },
   sidebar: {
+    bg: '#0F172A',
+    text: '#CBD5E1',
+    icon: '#94A3B8',
     normal: {
       bg: 'transparent',
-      text: '#475569',
+      text: '#CBD5E1',
+      icon: '#94A3B8',
     },
     hover: {
-      bg: '#F1F5F9',
-      text: '#0F172A',
+      bg: '#1E293B',
+      text: '#FFFFFF',
     },
     active: {
-      bg: '#ECFDF5',
-      text: '#059669',
+      bg: '#064E3B',
+      text: '#6EE7B7',
+      icon: '#6EE7B7',
     },
+    divider: '#1E293B',
   },
   header: {
     bg: '#FFFFFF',

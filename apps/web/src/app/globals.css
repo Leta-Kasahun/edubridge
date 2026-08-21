@@ -133,18 +133,18 @@
   --ring: #059669;
   --radius: 0.5rem;
 
-  --sidebar: transparent;
-  --sidebar-foreground: #475569;
-  --sidebar-hover: #F1F5F9;
-  --sidebar-hover-foreground: #0F172A;
-  --sidebar-active: #ECFDF5;
-  --sidebar-active-foreground: #059669;
-  --sidebar-border: #E2E8F0;
-  --sidebar-primary: #059669;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #ECFDF5;
-  --sidebar-accent-foreground: #059669;
-  --sidebar-ring: #059669;
+  --sidebar: #0F172A;
+  --sidebar-foreground: #CBD5E1;
+  --sidebar-hover: #1E293B;
+  --sidebar-hover-foreground: #FFFFFF;
+  --sidebar-active: #064E3B;
+  --sidebar-active-foreground: #6EE7B7;
+  --sidebar-border: #1E293B;
+  --sidebar-primary: #064E3B;
+  --sidebar-primary-foreground: #6EE7B7;
+  --sidebar-accent: #064E3B;
+  --sidebar-accent-foreground: #6EE7B7;
+  --sidebar-ring: #6EE7B7;
 
   --header: #FFFFFF;
   --header-foreground: #0F172A;
@@ -360,7 +360,7 @@
 
 @utility sidebar-item {
   background-color: transparent;
-  color: #475569;
+  color: #CBD5E1;
   font-size: 0.9375rem;
   font-weight: 500;
   transition: all 0.15s ease-in-out;
@@ -371,12 +371,12 @@
   gap: 0.75rem;
 }
 @utility sidebar-item-hover {
-  background-color: #F1F5F9;
-  color: #0F172A;
+  background-color: #1E293B;
+  color: #FFFFFF;
 }
 @utility sidebar-item-active {
-  background-color: #ECFDF5;
-  color: #059669;
+  background-color: #064E3B;
+  color: #6EE7B7;
   font-weight: 600;
 }
 

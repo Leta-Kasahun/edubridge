@@ -67,9 +67,9 @@
 ### Sidebar Navigation
 | State | Background | Text Color | Classes / Utility |
 | :--- | :--- | :--- | :--- |
-| **Normal** | `transparent` | `#475569` | `.sidebar-item` / `bg-transparent text-[#475569]` |
-| **Hover** | `#F1F5F9` | `#0F172A` | `.sidebar-item:hover` / `hover:bg-[#F1F5F9] hover:text-[#0F172A]` |
-| **Active** | `#ECFDF5` | `#059669` | `.sidebar-item-active` / `bg-[#ECFDF5] text-[#059669] font-semibold` |
+| **Normal** | `transparent` | `#CBD5E1` | `.sidebar-item` / `bg-transparent text-[#CBD5E1]` |
+| **Hover** | `#1E293B` | `#FFFFFF` | `.sidebar-item:hover` / `hover:bg-[#1E293B] hover:text-[#FFFFFF]` |
+| **Active** | `#064E3B` | `#6EE7B7` | `.sidebar-item-active` / `bg-[#064E3B] text-[#6EE7B7] font-semibold` |
 
 ### Header
 - **Background**: `#FFFFFF` (`bg-header` or `bg-white`)

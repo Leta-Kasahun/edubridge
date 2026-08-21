@@ -25,6 +25,9 @@ export const API_ENDPOINTS = {
     BY_CATEGORY_KEY: (category: string, key: string) => `/lookups/${category}/${key}`,
     BY_ID: (id: string) => `/lookups/${id}`,
   },
+  SECURITY_POLICY: {
+    BASE: "/security-policy",
+  },
   HEALTH: "/health",
 } as const;
 
