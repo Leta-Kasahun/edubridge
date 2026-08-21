@@ -5,7 +5,6 @@ import { TokenPayload, AuthTokens } from "../types/auth.types.js";
 import { sessionRepository, SessionRepository } from "../repository/session.repository.js";
 import { securityRepository, SecurityRepository } from "../repository/security.repository.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
-import { jwtConfig } from "../../../config/jwt.js";
 
 export class TokenService {
   constructor(

@@ -1,6 +1,6 @@
 import { prisma, runWithTenant } from "../../src/lib/prisma.js";
 import { DEFAULT_LOOKUPS } from "../data/lookups.data.js";
-import { LookupCategory } from "../../src/generated/prisma/client.js";
+import { LookupCategory, Prisma } from "../../src/generated/prisma/client.js";
 
 export async function seedLookups(tenantId: string) {
   return runWithTenant({ tenantId }, async () => {
@@ -15,7 +15,7 @@ export async function seedLookups(tenantId: string) {
             },
           },
           update: {
-            value: item.value as any,
+            value: item.value as unknown as Prisma.InputJsonValue,
             description: item.description,
             isActive: true,
           },
@@ -23,7 +23,7 @@ export async function seedLookups(tenantId: string) {
             tenantId,
             category: item.category as LookupCategory,
             key: item.key,
-            value: item.value as any,
+            value: item.value as unknown as Prisma.InputJsonValue,
             description: item.description,
             isActive: true,
           },

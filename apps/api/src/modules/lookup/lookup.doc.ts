@@ -1,7 +1,7 @@
-import { routeRegistry } from "../../docs/route.registry.js";
+import { RouteDefinition, routeRegistry } from "../../docs/route.registry.js";
 import { createLookupSchema, updateLookupSchema } from "./schemas/lookup.schema.js";
 
-const lookupRouteDefinitions = [
+const lookupRouteDefinitions: RouteDefinition[] = [
   {
     path: "/lookups/:category",
     method: "GET",
@@ -43,7 +43,7 @@ const lookupRouteDefinitions = [
 
 export const registerLookupRoutes = () => {
   for (const definition of lookupRouteDefinitions) {
-    routeRegistry.register(definition as any);
+    routeRegistry.register(definition);
   }
 };
 

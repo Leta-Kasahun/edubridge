@@ -33,7 +33,7 @@ export class SecurityEventService {
     if (requireNumbers && !/\d/.test(password)) {
       throw new BadRequestError("Password must contain at least one number");
     }
-    if (requireSpecial && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (requireSpecial && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       throw new BadRequestError("Password must contain at least one special character");
     }
   }

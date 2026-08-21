@@ -10,7 +10,6 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
-import { useLookupCategory, useCreateLookup, useUpdateLookup, useDeleteLookup } from "../hooks/useLookups";
 import { Lookup } from "../types/lookup.types";
 import { cn } from "@/lib/utils";
 

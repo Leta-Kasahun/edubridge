@@ -21,7 +21,9 @@ export class PermissionCacheService {
         if (userKeys.length > 0) {
           keys.push(...userKeys);
         }
-      } catch {}
+      } catch (err) {
+        void err;
+      }
     }
     if (keys.length > 0) {
       await redis.del(...keys);
@@ -44,7 +46,9 @@ export class PermissionCacheService {
       if (userKeys.length > 0) {
         keys.push(...userKeys);
       }
-    } catch {}
+    } catch (err) {
+      void err;
+    }
     if (keys.length > 0) {
       await redis.del(...keys);
     }

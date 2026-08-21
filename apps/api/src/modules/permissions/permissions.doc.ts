@@ -1,4 +1,4 @@
-import { routeRegistry } from "../../docs/route.registry.js";
+import { RouteDefinition, routeRegistry } from "../../docs/route.registry.js";
 import {
   createRoleSchema,
   updateRoleSchema,
@@ -6,7 +6,7 @@ import {
   assignPermissionSchema,
 } from "./schemas/permissions.schema.js";
 
-const permissionRouteDefinitions = [
+const permissionRouteDefinitions: RouteDefinition[] = [
   {
     path: "/roles",
     method: "GET",
@@ -85,7 +85,7 @@ const permissionRouteDefinitions = [
 
 export const registerPermissionRoutes = () => {
   for (const definition of permissionRouteDefinitions) {
-    routeRegistry.register(definition as any);
+    routeRegistry.register(definition);
   }
 };
 

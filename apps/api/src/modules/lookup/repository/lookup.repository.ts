@@ -1,6 +1,6 @@
 import { prisma, getTenantContext } from "../../../lib/prisma.js";
 import { CreateLookupInput, UpdateLookupInput } from "../types/lookup.types.js";
-import { LookupCategory } from "../../../generated/prisma/client.js";
+import { LookupCategory, Prisma } from "../../../generated/prisma/client.js";
 
 export class LookupRepository {
   async findAllByCategory(category: string) {
@@ -23,14 +23,18 @@ export class LookupRepository {
   }
 
   async create(data: CreateLookupInput) {
+    const tenantId =
+      (data as { tenantId?: string }).tenantId ??
+      (getTenantContext()?.tenantId as string);
+
     return prisma.lookup.create({
       data: {
         category: data.category as LookupCategory,
         key: data.key,
-        value: data.value as any,
+        value: data.value as unknown as Prisma.InputJsonValue,
         description: data.description,
         isActive: data.isActive,
-        tenantId: (data as any).tenantId ?? (getTenantContext()?.tenantId as string),
+        tenantId,
       },
     });
   }
@@ -41,7 +45,10 @@ export class LookupRepository {
       data: {
         category: data.category ? (data.category as LookupCategory) : undefined,
         key: data.key,
-        value: data.value as any,
+        value:
+          data.value !== undefined
+            ? (data.value as unknown as Prisma.InputJsonValue)
+            : undefined,
         description: data.description,
         isActive: data.isActive,
       },

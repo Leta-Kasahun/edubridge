@@ -32,7 +32,9 @@ export class LookupService {
         if (matchKeys.length > 0) {
           keys.push(...matchKeys);
         }
-      } catch {}
+      } catch (err) {
+        void err;
+      }
     }
 
     if (keys.length > 0) {

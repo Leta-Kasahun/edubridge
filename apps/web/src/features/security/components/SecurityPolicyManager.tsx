@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   KeyRound,
-  ShieldCheck,
   Smartphone,
   Clock,
   AlertTriangle,
@@ -11,7 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { useSecurityPolicy, useUpdateSecurityPolicy } from "../hooks/useSecurityPolicy";
-import { SecurityPolicy } from "../types/security.types";
+import { SecurityPolicy, UpdateSecurityPolicyPayload } from "../types/security.types";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { cn } from "@/lib/utils";
 
@@ -112,17 +111,16 @@ export function SecurityPolicyManager() {
   const { data: apiPolicy, isLoading } = useSecurityPolicy();
   const updateMutation = useUpdateSecurityPolicy();
 
-  const [policy, setPolicy] = useState<SecurityPolicy>(apiPolicy || FALLBACK_POLICY);
+  const [overrides, setOverrides] = useState<Partial<SecurityPolicy>>({});
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  useEffect(() => {
-    if (apiPolicy) {
-      setPolicy(apiPolicy);
-    }
-  }, [apiPolicy]);
+  const policy: SecurityPolicy = {
+    ...(apiPolicy || FALLBACK_POLICY),
+    ...overrides,
+  };
 
   const updateField = <K extends keyof SecurityPolicy>(key: K, value: SecurityPolicy[K]) => {
-    setPolicy((prev) => ({
+    setOverrides((prev) => ({
       ...prev,
       [key]: value,
     }));
@@ -130,8 +128,41 @@ export function SecurityPolicyManager() {
   };
 
   const handleSave = () => {
-    const { id, tenantId, ...cleanPayload } = policy;
-    updateMutation.mutate(cleanPayload, {
+    const payload: UpdateSecurityPolicyPayload = {
+      minPasswordLength: policy.minPasswordLength,
+      maxPasswordLength: policy.maxPasswordLength,
+      requireUppercase: policy.requireUppercase,
+      requireLowercase: policy.requireLowercase,
+      requireNumbers: policy.requireNumbers,
+      requireSpecialChars: policy.requireSpecialChars,
+      passwordExpiryDays: policy.passwordExpiryDays,
+      forcePasswordChangeAfterReset: policy.forcePasswordChangeAfterReset,
+
+      maxFailedAttempts: policy.maxFailedAttempts,
+      failedAttemptWindowMinutes: policy.failedAttemptWindowMinutes,
+      lockoutDurationMinutes: policy.lockoutDurationMinutes,
+
+      otpEnabled: policy.otpEnabled,
+      otpExpiryMinutes: policy.otpExpiryMinutes,
+      otpMaxAttempts: policy.otpMaxAttempts,
+      otpResendCooldownSeconds: policy.otpResendCooldownSeconds,
+      otpMaxResendPerHour: policy.otpMaxResendPerHour,
+      requireOtpForLogin: policy.requireOtpForLogin,
+      requireOtpForEmailChange: policy.requireOtpForEmailChange,
+      requireOtpForVerification: policy.requireOtpForVerification,
+
+      accessTokenExpiryMinutes: policy.accessTokenExpiryMinutes,
+      refreshTokenExpiryDays: policy.refreshTokenExpiryDays,
+      maxConcurrentSessions: policy.maxConcurrentSessions,
+      sessionTimeoutMinutes: policy.sessionTimeoutMinutes,
+      revokeSessionsOnPasswordChange: policy.revokeSessionsOnPasswordChange,
+
+      detectSuspiciousLogin: policy.detectSuspiciousLogin,
+      notifyOnNewDevice: policy.notifyOnNewDevice,
+      allowGoogleAuth: policy.allowGoogleAuth,
+    };
+
+    updateMutation.mutate(payload, {
       onSuccess: () => {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);

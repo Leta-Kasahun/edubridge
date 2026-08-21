@@ -36,7 +36,12 @@ export function LoginForm({
   forgotPasswordHref = ROUTES.AUTH.RESET_PASSWORD,
 }: LoginFormProps) {
   const [authMode, setAuthMode] = useState<AuthIdentifierMode>("email");
-  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [googleError, setGoogleError] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("error");
+    }
+    return null;
+  });
   const setAuth = useAuthStore((state) => state.setAuth);
   const { mutate: login, isPending, error } = useLogin();
 
@@ -63,7 +68,6 @@ export function LoginForm({
     const authError = params.get("error");
 
     if (authError) {
-      setGoogleError(authError);
       window.history.replaceState(null, "", window.location.pathname);
       return;
     }
