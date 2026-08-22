@@ -4,14 +4,18 @@ import { cn } from "@/lib/utils";
 export type AuthIdentifierMode = "email" | "username";
 
 export interface AuthIdentifierToggleProps {
-  mode: AuthIdentifierMode;
-  onChange: (mode: AuthIdentifierMode) => void;
-  className?: string;
+  readonly mode: AuthIdentifierMode;
+  readonly onChange: (mode: AuthIdentifierMode) => void;
+  readonly emailLabel?: string;
+  readonly usernameLabel?: string;
+  readonly className?: string;
 }
 
 export function AuthIdentifierToggle({
   mode,
   onChange,
+  emailLabel = "Use Email",
+  usernameLabel = "Use Username",
   className,
 }: AuthIdentifierToggleProps) {
   return (
@@ -27,7 +31,7 @@ export function AuthIdentifierToggle({
         )}
       >
         <Mail size={18} className="shrink-0" />
-        <span>Use Email</span>
+        <span>{emailLabel}</span>
       </button>
 
       <button
@@ -41,7 +45,7 @@ export function AuthIdentifierToggle({
         )}
       >
         <User size={18} className="shrink-0" />
-        <span>Use Username</span>
+        <span>{usernameLabel}</span>
       </button>
     </div>
   );

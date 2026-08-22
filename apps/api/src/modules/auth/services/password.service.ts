@@ -30,65 +30,61 @@ export class PasswordService {
     metadata: SessionMetadata,
     tenantId?: string
   ): Promise<AuthResponse> {
+    const identifier = dto.email || dto.username || dto.identifier;
     const user = dto.userId
       ? await this.authRepo.findById(dto.userId)
-      : dto.email
-        ? await this.authRepo.findByIdentifier(dto.email)
+      : identifier
+        ? await this.authRepo.findByIdentifier(identifier)
         : null;
-    if (!user || !user.passwordHash) {
-      throw new NotFoundError("User not found");
-    }
 
-    const isCurrentValid = await comparePassword(dto.currentPassword, user.passwordHash);
-    if (!isCurrentValid) {
-      throw new UnauthorizedError("Current password is incorrect");
-    }
-
-    const isSamePassword = await comparePassword(dto.newPassword, user.passwordHash);
-    if (isSamePassword) {
-      throw new BadRequestError("New password must be different from current password");
+    if (!user) {
+      throw new NotFoundError("User account not found");
     }
 
     const activeTenantId = tenantId || user.memberships[0]?.tenantId;
+
+    if (dto.otp) {
+      await this.otpSvc.verifySetupOtp(user.id, dto.otp, activeTenantId);
+    } else if (dto.currentPassword) {
+      if (!user.passwordHash) {
+        throw new BadRequestError(
+          "Temporary password is not configured for this account. Please use the email verification code."
+        );
+      }
+
+      const isCurrentValid = await comparePassword(dto.currentPassword, user.passwordHash);
+      if (!isCurrentValid) {
+        throw new UnauthorizedError("Current temporary password is incorrect");
+      }
+
+      const isSamePassword = await comparePassword(dto.newPassword, user.passwordHash);
+      if (isSamePassword) {
+        throw new BadRequestError("New password must be different from temporary password");
+      }
+    } else {
+      throw new BadRequestError("Please provide either your verification code or temporary password");
+    }
+
     await this.securityEventSvc.validatePasswordPolicy(dto.newPassword, activeTenantId);
 
     const newPasswordHash = await hashPassword(dto.newPassword);
     await this.authRepo.updatePassword(user.id, newPasswordHash);
-    const verifiedEmail = dto.email && dto.email.includes("@") ? dto.email : (user.email ?? undefined);
-    await this.authRepo.updateEmailVerified(user.id, false, verifiedEmail);
     await this.authRepo.updateStatus(user.id, "ACTIVE");
+    await this.authRepo.updateEmailVerified(user.id, true, user.email ?? undefined);
 
-    const { plainOtp, expiryMinutes } = await this.otpSvc.generateAndSaveOtp(user.id, "EMAIL_VERIFICATION", activeTenantId);
-    if (verifiedEmail) {
-      await sendOtpEmail(verifiedEmail, plainOtp, OTPPurpose.EMAIL_VERIFICATION, expiryMinutes);
-    }
-
-    const policy = activeTenantId ? await this.securityRepo.findSecurityPolicy(activeTenantId) : null;
-    const userProfile = mapUserProfile(user, activeTenantId);
-    const tempSessionId = crypto.randomUUID();
-
-    const { tokens, refreshTokenHash, refreshExpiresAt } = this.tokenSvc.generateTokenPair({
-      userId: user.id,
-      sessionId: tempSessionId,
-      roles: userProfile.roles,
+    await this.securityRepo.createSecurityEvent({
       tenantId: activeTenantId,
-      deviceId: metadata.deviceId,
-      accessExpiresInMinutes: policy?.accessTokenExpiryMinutes,
-      refreshExpiresInDays: policy?.refreshTokenExpiryDays,
+      userId: user.id,
+      type: "PASSWORD_CHANGED",
+      riskLevel: "LOW",
+      description: "First-time account setup and password configuration completed successfully.",
     });
 
-    await this.sessionSvc.createSession({
-      tenantId: activeTenantId as string,
-      userId: user.id,
-      refreshTokenHash,
-      metadata,
-      refreshExpiresAt,
-    });
+    const userProfile = mapUserProfile(user, activeTenantId);
 
     return {
-      tokens,
       user: userProfile,
-      message: "Account setup complete. Verification code sent to email.",
+      message: "Account setup completed successfully. Please sign in with your new password.",
     };
   }
 

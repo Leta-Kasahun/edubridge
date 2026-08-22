@@ -34,8 +34,11 @@ export interface ResendOtpPayload {
 
 export interface FirstLoginSetupPayload {
   userId?: string;
-  email: string;
-  currentPassword: string;
+  email?: string;
+  username?: string;
+  identifier?: string;
+  otp?: string;
+  currentPassword?: string;
   newPassword: string;
 }
 
@@ -50,7 +53,8 @@ export interface ChangePasswordPayload {
 }
 
 export interface ResetPasswordRequestPayload {
-  identifier: string;
+  email: string;
+  identifier?: string;
 }
 
 export interface ResetPasswordConfirmPayload {

@@ -69,6 +69,30 @@ export class OtpService {
     await this.otpRepo.consumeOtp(validOtp.id);
     return true;
   }
+
+  async verifySetupOtp(userId: string, plainOtp: string, tenantId?: string) {
+    const validOtp = await this.otpRepo.findValidSetupOtp(userId);
+    if (!validOtp) {
+      throw new BadRequestError("Invalid or expired verification code", "OTP_EXPIRED");
+    }
+
+    const policy = tenantId ? await this.securityRepo.findSecurityPolicy(tenantId) : null;
+    const maxAttempts = policy?.otpMaxAttempts || AUTH_CONSTANTS.OTP.MAX_ATTEMPTS;
+
+    if (validOtp.attemptCount >= maxAttempts) {
+      await this.otpRepo.consumeOtp(validOtp.id);
+      throw new BadRequestError("Maximum verification code attempts exceeded. Please request a new code.", "OTP_MAX_ATTEMPTS");
+    }
+
+    const isValid = verifyOTPHash(plainOtp, validOtp.codeHash);
+    if (!isValid) {
+      await this.otpRepo.incrementOtpAttempts(validOtp.id);
+      throw new BadRequestError("Incorrect verification code", "OTP_INVALID");
+    }
+
+    await this.otpRepo.consumeOtp(validOtp.id);
+    return true;
+  }
 }
 
 export const otpService = new OtpService();

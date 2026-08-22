@@ -59,21 +59,66 @@ export const resendOtpValidationSchema = z.object({
   userId: z.string().uuid().optional(),
 });
 
+export type FirstLoginMode = "EMAIL" | "USERNAME";
+
 export const createFirstLoginSchema = (policy?: Partial<SecurityPolicy>) =>
   z
     .object({
-      email: z.string().trim().min(1).max(255).optional(),
-      currentPassword: z.string().min(1, "Current password is required"),
+      mode: z.enum(["EMAIL", "USERNAME"]),
+      email: z.string().trim().max(255).optional(),
+      username: z.string().trim().max(255).optional(),
+      otp: z.string().trim().optional(),
+      currentPassword: z.string().optional(),
       newPassword: createPasswordSchema(policy),
       confirmPassword: z.string().min(1, "Confirm your password"),
     })
-    .refine((d) => d.newPassword !== d.currentPassword, {
-      message: "New password must differ from current",
-      path: ["newPassword"],
-    })
-    .refine((d) => d.newPassword === d.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
+    .superRefine((data, ctx) => {
+      if (data.mode === "EMAIL") {
+        if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid email address is required",
+            path: ["email"],
+          });
+        }
+        if (!data.otp || !/^\d{6}$/.test(data.otp)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "6-digit verification code is required",
+            path: ["otp"],
+          });
+        }
+      } else if (data.mode === "USERNAME") {
+        if (!data.username || data.username.trim().length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Username is required",
+            path: ["username"],
+          });
+        }
+        if (!data.currentPassword || data.currentPassword.trim().length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Temporary password is required",
+            path: ["currentPassword"],
+          });
+        }
+        if (data.newPassword === data.currentPassword) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "New password must differ from temporary password",
+            path: ["newPassword"],
+          });
+        }
+      }
+
+      if (data.newPassword !== data.confirmPassword) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Passwords do not match",
+          path: ["confirmPassword"],
+        });
+      }
     });
 
 export const createChangePasswordSchema = (policy?: Partial<SecurityPolicy>) =>
@@ -96,7 +141,7 @@ export const firstLoginSetupValidationSchema = createFirstLoginSchema();
 export const changePasswordValidationSchema = createChangePasswordSchema();
 
 export const resetPasswordRequestValidationSchema = z.object({
-  email: z.string().trim().min(1, "Email or Username is required").max(255),
+  email: emailSchema,
 });
 export const resetPasswordConfirmValidationSchema = z
   .object({

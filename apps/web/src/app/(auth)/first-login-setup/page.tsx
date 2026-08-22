@@ -11,12 +11,20 @@ function FirstLoginSetupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const username = searchParams.get("username") || "";
+  const modeParam = searchParams.get("mode")?.toUpperCase();
+  const initialMode =
+    modeParam === "USERNAME" || modeParam === "EMAIL"
+      ? modeParam
+      : username
+      ? "USERNAME"
+      : undefined;
   const userId = searchParams.get("userId") || undefined;
 
   return (
     <AuthCard
-      title="Set Your Password"
-      description="Replace your temporary credentials with a secure personal password"
+      title="First-Time Account Setup"
+      description="Configure your personal password to activate and access your school portal"
       backHref={ROUTES.AUTH.LOGIN}
       backLabel="Back to Sign In"
       footer={
@@ -32,7 +40,9 @@ function FirstLoginSetupContent() {
       }
     >
       <FirstLoginSetupForm
-        email={email}
+        initialEmail={email}
+        initialUsername={username}
+        initialMode={initialMode}
         userId={userId}
         onSuccess={() => router.push(ROUTES.AUTH.LOGIN)}
       />

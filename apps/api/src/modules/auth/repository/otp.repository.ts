@@ -29,6 +29,20 @@ export class OtpRepository {
     });
   }
 
+  async findValidSetupOtp(userId: string) {
+    return prisma.oTPCode.findFirst({
+      where: {
+        userId,
+        purpose: {
+          in: ["INVITATION_ACCEPT", "EMAIL_VERIFICATION", "LOGIN_2FA"],
+        },
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async consumeOtp(id: string) {
     return runWithoutTenant(async () => {
       return prisma.oTPCode.update({
