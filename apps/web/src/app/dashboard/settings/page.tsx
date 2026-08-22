@@ -1,26 +1,27 @@
 import Link from "next/link";
 import { Shield, Sliders, ChevronRight, Lock } from "lucide-react";
 import { DashboardLayout } from "@/shared/components/layouts";
+import { ROUTES } from "@/constants/routes";
 
 const SETTINGS_SECTIONS = [
   {
     title: "Security Policy",
     description: "Password complexity, session expiry, 2FA enforcement, and login controls.",
-    href: "/settings/security",
+    href: ROUTES.SETTINGS.SECURITY,
     icon: Lock,
     badge: "Policy Control",
   },
   {
     title: "Roles & Access",
     description: "Configure administrative and faculty user roles with granular module permissions.",
-    href: "/settings/roles",
+    href: ROUTES.SETTINGS.ROLES,
     icon: Shield,
     badge: "RBAC Engine",
   },
   {
     title: "School Preferences",
     description: "Tenant feature flags, attendance grace rules, and institutional defaults.",
-    href: "/settings/preferences",
+    href: ROUTES.SETTINGS.PREFERENCES,
     icon: Sliders,
     badge: "Lookups",
   },

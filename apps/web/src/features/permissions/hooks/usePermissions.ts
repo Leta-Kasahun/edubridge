@@ -59,7 +59,7 @@ export function useHasPermission(
   if (!user) return false;
 
   const roles = user.roles || [];
-  if (roles.includes("SUPER_ADMIN") || roles.includes("TENANT_ADMIN")) {
+  if (roles.includes("SYSTEM_ADMIN") || roles.includes("SCHOOL_ADMIN")) {
     return true;
   }
 

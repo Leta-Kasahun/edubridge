@@ -11,6 +11,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 enum TenantStatus {
   ACTIVE
   SUSPENDED
@@ -103,10 +104,15 @@ enum LookupCategory {
 }
 
 model Tenant {
-  id              String             @id @default(uuid()) @db.Uuid
-  name            String
-  code            String             @unique
-  status          TenantStatus       @default(ACTIVE)
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  code      String       @unique
+  status    TenantStatus @default(ACTIVE)
+  regionId  String?      @db.Uuid
+  zoneId    String?      @db.Uuid
+  woredaId  String?      @db.Uuid
+  cityId    String?      @db.Uuid
+  addressId String?      @unique @db.Uuid
 
   memberships     TenantMembership[]
   roles           Role[]
@@ -117,55 +123,70 @@ model Tenant {
   invitations     Invitation[]
   auditLogs       AuditLog[]
   securityEvents  SecurityEvent[]
+  studentProfiles StudentProfile[]
+  teacherProfiles TeacherProfile[]
+  academicYears   AcademicYear[]
+  sections        Section[]
+  grades          Grade[]
+  importBatches   ImportBatch[]
+  region          Region?            @relation(fields: [regionId], references: [id])
+  zone            Zone?              @relation(fields: [zoneId], references: [id])
+  woreda          Woreda?            @relation(fields: [woredaId], references: [id])
+  city            City?              @relation(fields: [cityId], references: [id])
+  address         Address?           @relation(fields: [addressId], references: [id])
 
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
-  id                      String             @id @default(uuid()) @db.Uuid
-  username                String?            @unique
-  email                   String?            @unique
-  googleId                String?            @unique
-  passwordHash            String?
-  status                  AccountStatus      @default(PENDING_FIRST_LOGIN)
-  emailVerified           Boolean            @default(false)
-  pendingEmail            String?
-  firstName               String
-  lastName                String
-  failedLoginAttempts     Int                @default(0)
-  lockedUntil             DateTime?
-  lastLoginAt             DateTime?
-  lastLoginIp             String?
-  passwordChangedAt       DateTime?
+  id                  String        @id @default(uuid()) @db.Uuid
+  username            String?       @unique
+  email               String?       @unique
+  googleId            String?       @unique
+  passwordHash        String?
+  status              AccountStatus @default(PENDING_FIRST_LOGIN)
+  emailVerified       Boolean       @default(false)
+  pendingEmail        String?
+  firstName           String
+  lastName            String
+  failedLoginAttempts Int           @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  lastLoginIp         String?
+  passwordChangedAt   DateTime?
 
-  memberships             TenantMembership[]
-  otpCodes                OTPCode[]
-  sessions                Session[]
-  loginAttempts           LoginAttempt[]
-  securityEvents          SecurityEvent[]
-  auditLogs               AuditLog[]
-  createdInvitations      Invitation[]       @relation("CreatedInvitations")
-  resolvedSecurityEvents  SecurityEvent[]    @relation("ResolvedSecurityEvents")
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  importBatches  ImportBatch[]   @relation("ImportCreatedBy")
 
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
+  memberships            TenantMembership[]
+  otpCodes               OTPCode[]
+  sessions               Session[]
+  loginAttempts          LoginAttempt[]
+  securityEvents         SecurityEvent[]
+  auditLogs              AuditLog[]
+  createdInvitations     Invitation[]       @relation("CreatedInvitations")
+  resolvedSecurityEvents SecurityEvent[]    @relation("ResolvedSecurityEvents")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
 }
 
 model TenantMembership {
-  id              String             @id @default(uuid()) @db.Uuid
-  tenantId        String             @db.Uuid
-  userId          String             @db.Uuid
-  status          MembershipStatus   @default(ACTIVE)
+  id       String           @id @default(uuid()) @db.Uuid
+  tenantId String           @db.Uuid
+  userId   String           @db.Uuid
+  status   MembershipStatus @default(ACTIVE)
 
-  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roles           MembershipRole[]
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles  MembershipRole[]
 
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, userId])
   @@index([userId])
@@ -173,167 +194,167 @@ model TenantMembership {
 }
 
 model Role {
-  id                String             @id @default(uuid()) @db.Uuid
-  tenantId          String             @db.Uuid
-  name              String
-  code              String
-  description       String?
-  isSystem          Boolean            @default(false)
-  isActive          Boolean            @default(true)
+  id          String  @id @default(uuid()) @db.Uuid
+  tenantId    String  @db.Uuid
+  name        String
+  code        String
+  description String?
+  isSystem    Boolean @default(false)
+  isActive    Boolean @default(true)
 
-  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  membershipRoles   MembershipRole[]
-  permissions       RolePermission[]
-  invitations       Invitation[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipRoles MembershipRole[]
+  permissions     RolePermission[]
+  invitations     Invitation[]
 
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, isActive])
 }
 
 model Permission {
-  id                String             @id @default(uuid()) @db.Uuid
-  code              String             @unique
-  name              String
-  description       String?
-  resource          String
-  action            String
-  isActive          Boolean            @default(true)
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique
+  name        String
+  description String?
+  resource    String
+  action      String
+  isActive    Boolean @default(true)
 
-  roles             RolePermission[]
+  roles RolePermission[]
 
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([resource, action])
 }
 
 model RolePermission {
-  roleId            String             @db.Uuid
-  permissionId      String             @db.Uuid
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
 
-  role              Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission        Permission         @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime           @default(now())
+  createdAt DateTime @default(now())
 
   @@id([roleId, permissionId])
 }
 
 model MembershipRole {
-  membershipId      String             @db.Uuid
-  roleId            String             @db.Uuid
+  membershipId String @db.Uuid
+  roleId       String @db.Uuid
 
-  membership        TenantMembership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  role              Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  membership TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role       Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  assignedAt        DateTime           @default(now())
-  expiresAt         DateTime?
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?
 
   @@id([membershipId, roleId])
   @@index([roleId])
 }
 
 model Lookup {
-  id              String          @id @default(uuid()) @db.Uuid
-  tenantId        String          @db.Uuid
-  category        LookupCategory
-  key             String
-  value           Json
-  description     String?
-  isActive        Boolean         @default(true)
+  id          String         @id @default(uuid()) @db.Uuid
+  tenantId    String         @db.Uuid
+  category    LookupCategory
+  key         String
+  value       Json
+  description String?
+  isActive    Boolean        @default(true)
 
-  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, category, key])
   @@index([tenantId, category])
 }
 
 model SecurityPolicy {
-  id                              String    @id @default(uuid()) @db.Uuid
-  tenantId                        String    @unique @db.Uuid
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @unique @db.Uuid
 
-  tenant                          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  minPasswordLength               Int       @default(12)
-  maxPasswordLength               Int       @default(128)
-  requireUppercase                Boolean   @default(true)
-  requireLowercase                Boolean   @default(true)
-  requireNumbers                  Boolean   @default(true)
-  requireSpecialChars             Boolean   @default(true)
-  passwordExpiryDays              Int       @default(0)
-  forcePasswordChangeAfterReset   Boolean   @default(true)
+  minPasswordLength             Int     @default(12)
+  maxPasswordLength             Int     @default(128)
+  requireUppercase              Boolean @default(true)
+  requireLowercase              Boolean @default(true)
+  requireNumbers                Boolean @default(true)
+  requireSpecialChars           Boolean @default(true)
+  passwordExpiryDays            Int     @default(0)
+  forcePasswordChangeAfterReset Boolean @default(true)
 
-  maxFailedAttempts               Int       @default(5)
-  failedAttemptWindowMinutes      Int       @default(15)
-  lockoutDurationMinutes          Int       @default(15)
+  maxFailedAttempts          Int @default(5)
+  failedAttemptWindowMinutes Int @default(15)
+  lockoutDurationMinutes     Int @default(15)
 
-  otpEnabled                      Boolean   @default(false)
-  otpExpiryMinutes                Int       @default(5)
-  otpMaxAttempts                  Int       @default(5)
-  otpResendCooldownSeconds        Int       @default(30)
-  otpMaxResendPerHour             Int       @default(5)
-  requireOtpForLogin              Boolean   @default(false)
-  requireOtpForEmailChange        Boolean   @default(true)
-  requireOtpForVerification       Boolean   @default(true)
+  otpEnabled                Boolean @default(false)
+  otpExpiryMinutes          Int     @default(5)
+  otpMaxAttempts            Int     @default(5)
+  otpResendCooldownSeconds  Int     @default(30)
+  otpMaxResendPerHour       Int     @default(5)
+  requireOtpForLogin        Boolean @default(false)
+  requireOtpForEmailChange  Boolean @default(true)
+  requireOtpForVerification Boolean @default(true)
 
-  accessTokenExpiryMinutes        Int       @default(15)
-  refreshTokenExpiryDays          Int       @default(7)
-  maxConcurrentSessions           Int       @default(5)
-  sessionTimeoutMinutes           Int       @default(60)
-  revokeSessionsOnPasswordChange  Boolean   @default(true)
+  accessTokenExpiryMinutes       Int     @default(15)
+  refreshTokenExpiryDays         Int     @default(7)
+  maxConcurrentSessions          Int     @default(5)
+  sessionTimeoutMinutes          Int     @default(60)
+  revokeSessionsOnPasswordChange Boolean @default(true)
 
-  detectSuspiciousLogin           Boolean   @default(true)
-  notifyOnNewDevice               Boolean   @default(true)
+  detectSuspiciousLogin Boolean @default(true)
+  notifyOnNewDevice     Boolean @default(true)
 
-  allowGoogleAuth                 Boolean   @default(true)
+  allowGoogleAuth Boolean @default(true)
 
-  createdAt                       DateTime  @default(now())
-  updatedAt                       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OTPCode {
-  id                String       @id @default(uuid()) @db.Uuid
-  userId            String       @db.Uuid
-  codeHash          String
-  purpose           OTPPurpose
-  expiresAt         DateTime
-  consumedAt        DateTime?
-  attemptCount      Int          @default(0)
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @db.Uuid
+  codeHash     String
+  purpose      OTPPurpose
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  attemptCount Int        @default(0)
 
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, purpose])
   @@index([expiresAt])
 }
 
 model Session {
-  id                String          @id @default(uuid()) @db.Uuid
-  tenantId          String          @db.Uuid
-  userId            String          @db.Uuid
-  refreshTokenHash  String          @unique
-  status            SessionStatus   @default(ACTIVE)
-  deviceId          String
-  deviceType        DeviceType      @default(WEB)
-  ipAddress         String
-  userAgent         String?
-  lastUsedAt        DateTime        @default(now())
-  expiresAt         DateTime
-  revokedAt         DateTime?
-  revokeReason      String?
+  id               String        @id @default(uuid()) @db.Uuid
+  tenantId         String        @db.Uuid
+  userId           String        @db.Uuid
+  refreshTokenHash String        @unique
+  status           SessionStatus @default(ACTIVE)
+  deviceId         String
+  deviceType       DeviceType    @default(WEB)
+  ipAddress        String
+  userAgent        String?
+  lastUsedAt       DateTime      @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  revokeReason     String?
 
-  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  securityEvents    SecurityEvent[]
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  securityEvents SecurityEvent[]
 
-  createdAt         DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, status])
   @@index([tenantId, userId, status])
@@ -341,20 +362,20 @@ model Session {
 }
 
 model LoginAttempt {
-  id                String          @id @default(uuid()) @db.Uuid
-  tenantId          String?         @db.Uuid
-  userId            String?         @db.Uuid
-  identifier        String
-  ipAddress         String
-  userAgent         String?
-  deviceId          String?
-  success           Boolean         @default(false)
-  failureReason     FailureReason?
+  id            String         @id @default(uuid()) @db.Uuid
+  tenantId      String?        @db.Uuid
+  userId        String?        @db.Uuid
+  identifier    String
+  ipAddress     String
+  userAgent     String?
+  deviceId      String?
+  success       Boolean        @default(false)
+  failureReason FailureReason?
 
-  tenant            Tenant?         @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  user              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([identifier, createdAt])
   @@index([ipAddress, createdAt])
@@ -362,25 +383,25 @@ model LoginAttempt {
 }
 
 model SecurityEvent {
-  id                String             @id @default(uuid()) @db.Uuid
-  tenantId          String?            @db.Uuid
-  userId            String?            @db.Uuid
-  sessionId         String?            @db.Uuid
-  type              SecurityEventType
-  riskLevel         RiskLevel          @default(LOW)
-  ipAddress         String?
-  description       String?
-  metadata          Json?
-  isResolved        Boolean            @default(false)
-  resolvedAt        DateTime?
-  resolvedById      String?            @db.Uuid
+  id           String            @id @default(uuid()) @db.Uuid
+  tenantId     String?           @db.Uuid
+  userId       String?           @db.Uuid
+  sessionId    String?           @db.Uuid
+  type         SecurityEventType
+  riskLevel    RiskLevel         @default(LOW)
+  ipAddress    String?
+  description  String?
+  metadata     Json?
+  isResolved   Boolean           @default(false)
+  resolvedAt   DateTime?
+  resolvedById String?           @db.Uuid
 
-  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  session           Session?           @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  resolvedBy        User?              @relation("ResolvedSecurityEvents", fields: [resolvedById], references: [id], onDelete: SetNull)
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  session    Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  resolvedBy User?    @relation("ResolvedSecurityEvents", fields: [resolvedById], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime           @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([riskLevel, isResolved])
@@ -388,21 +409,21 @@ model SecurityEvent {
 }
 
 model Invitation {
-  id                String             @id @default(uuid()) @db.Uuid
-  tenantId          String             @db.Uuid
-  email             String
-  roleId            String?            @db.Uuid
-  tokenHash         String             @unique
-  status            InvitationStatus   @default(PENDING)
-  expiresAt         DateTime
-  acceptedAt        DateTime?
-  createdById       String             @db.Uuid
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @db.Uuid
+  email       String
+  roleId      String?          @db.Uuid
+  tokenHash   String           @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdById String           @db.Uuid
 
-  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  role              Role?              @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  createdBy         User               @relation("CreatedInvitations", fields: [createdById], references: [id])
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role      Role?  @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  createdBy User   @relation("CreatedInvitations", fields: [createdById], references: [id])
 
-  createdAt         DateTime           @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId, email])
   @@index([expiresAt])
@@ -410,21 +431,495 @@ model Invitation {
 }
 
 model AuditLog {
-  id                String       @id @default(uuid()) @db.Uuid
-  tenantId          String?      @db.Uuid
-  userId            String?      @db.Uuid
-  action            String
-  resource          String
-  resourceId        String?      @db.Uuid
-  metadata          Json?
-  ipAddress         String?
+  id         String  @id @default(uuid()) @db.Uuid
+  tenantId   String? @db.Uuid
+  userId     String? @db.Uuid
+  action     String
+  resource   String
+  resourceId String? @db.Uuid
+  metadata   Json?
+  ipAddress  String?
 
-  tenant            Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  user              User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId, action])
   @@index([userId, createdAt])
   @@index([resource, resourceId])
+}
+
+// ============================================================
+// GEOGRAPHY
+// ============================================================
+
+model Region {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zones     Zone[]
+  cities    City[]
+  addresses Address[]
+  tenants   Tenant[]
+
+  @@index([name])
+}
+
+model Zone {
+  id        String   @id @default(uuid()) @db.Uuid
+  regionId  String   @db.Uuid
+  code      String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  region    Region    @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  woredas   Woreda[]
+  addresses Address[]
+  tenants   Tenant[]
+
+  @@unique([regionId, code])
+  @@index([regionId, name])
+}
+
+model Woreda {
+  id        String   @id @default(uuid()) @db.Uuid
+  zoneId    String   @db.Uuid
+  code      String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zone      Zone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  kebeles   Kebele[]
+  addresses Address[]
+  tenants   Tenant[]
+
+  @@unique([zoneId, code])
+  @@index([zoneId, name])
+}
+
+model Kebele {
+  id        String   @id @default(uuid()) @db.Uuid
+  woredaId  String   @db.Uuid
+  code      String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  woreda    Woreda    @relation(fields: [woredaId], references: [id], onDelete: Cascade)
+  addresses Address[]
+
+  @@unique([woredaId, code])
+  @@index([woredaId, name])
+}
+
+model City {
+  id        String   @id @default(uuid()) @db.Uuid
+  regionId  String?  @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  region    Region?   @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  subCities SubCity[]
+  addresses Address[]
+  tenants   Tenant[]
+
+  @@index([regionId])
+  @@index([name])
+}
+
+model SubCity {
+  id        String   @id @default(uuid()) @db.Uuid
+  cityId    String   @db.Uuid
+  code      String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  addresses Address[]
+
+  @@unique([cityId, code])
+  @@index([cityId, name])
+}
+
+model Address {
+  id               String   @id @default(uuid()) @db.Uuid
+  regionId         String?  @db.Uuid
+  zoneId           String?  @db.Uuid
+  woredaId         String?  @db.Uuid
+  kebeleId         String?  @db.Uuid
+  cityId           String?  @db.Uuid
+  subCityId        String?  @db.Uuid
+  specificLocation String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  region  Region?  @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  zone    Zone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  woreda  Woreda?  @relation(fields: [woredaId], references: [id], onDelete: SetNull)
+  kebele  Kebele?  @relation(fields: [kebeleId], references: [id], onDelete: SetNull)
+  city    City?    @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  subCity SubCity? @relation(fields: [subCityId], references: [id], onDelete: SetNull)
+
+  tenant Tenant?
+
+  students StudentProfile[]
+  teachers TeacherProfile[]
+  contacts Contact[]
+}
+
+// ============================================================
+// PEOPLE
+// ============================================================
+
+model StudentProfile {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @db.Uuid
+  userId      String?       @unique @db.Uuid
+  studentCode String
+  firstName   String
+  middleName  String
+  lastName    String?
+  gender      Gender
+  dateOfBirth DateTime?
+  nationality String?
+  photoUrl    String?
+  addressId   String?       @db.Uuid
+  status      StudentStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+
+  contacts    StudentContact[]
+  enrollments StudentEnrollment[]
+
+  @@unique([tenantId, studentCode])
+  @@index([tenantId, status])
+  @@index([tenantId, lastName])
+  @@index([tenantId, firstName])
+}
+
+model TeacherProfile {
+  id           String        @id @default(uuid()) @db.Uuid
+  tenantId     String        @db.Uuid
+  userId       String?       @unique @db.Uuid
+  employeeCode String
+  firstName    String
+  middleName   String
+  lastName     String
+  gender       Gender
+  dateOfBirth  DateTime?
+  phoneNumber  String?
+  email        String?
+  addressId    String?       @db.Uuid
+  status       TeacherStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+
+  assignments TeacherAssignment[]
+
+  @@unique([tenantId, employeeCode])
+  @@index([tenantId, status])
+  @@index([tenantId, lastName])
+}
+
+model Contact {
+  id                     String              @id @default(uuid()) @db.Uuid
+  fullName               String
+  relationship           ContactRelationship
+  phoneNumber            String
+  alternativePhoneNumber String?
+  addressId              String?             @db.Uuid
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  address  Address?         @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  students StudentContact[]
+
+  @@index([phoneNumber])
+  @@index([relationship])
+}
+
+model StudentContact {
+  id                 String   @id @default(uuid()) @db.Uuid
+  studentId          String   @db.Uuid
+  contactId          String   @db.Uuid
+  isPrimary          Boolean  @default(false)
+  isEmergencyContact Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  contact Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, contactId])
+  @@index([studentId])
+  @@index([contactId])
+}
+
+// ============================================================
+// ACADEMIC FOUNDATION
+// ============================================================
+
+model AcademicYear {
+  id        String             @id @default(uuid()) @db.Uuid
+  tenantId  String             @db.Uuid
+  name      String
+  code      String
+  startDate DateTime
+  endDate   DateTime
+  status    AcademicYearStatus @default(UPCOMING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sections    Section[]
+  enrollments StudentEnrollment[]
+  assignments TeacherAssignment[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+}
+
+model Section {
+  id             String        @id @default(uuid()) @db.Uuid
+  tenantId       String        @db.Uuid
+  academicYearId String        @db.Uuid
+  gradeId        String        @db.Uuid
+  name           String
+  code           String
+  capacity       Int?
+  status         SectionStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  grade        Grade        @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  enrollments StudentEnrollment[]
+  assignments TeacherAssignment[]
+
+  @@unique([academicYearId, code])
+  @@index([tenantId, academicYearId])
+  @@index([gradeId])
+}
+
+model StudentEnrollment {
+  id             String           @id @default(uuid()) @db.Uuid
+  tenantId       String           @db.Uuid
+  studentId      String           @db.Uuid
+  academicYearId String           @db.Uuid
+  sectionId      String           @db.Uuid
+  status         EnrollmentStatus @default(ACTIVE)
+  enrolledAt     DateTime         @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  section      Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, academicYearId])
+  @@index([tenantId, sectionId])
+  @@index([studentId])
+  @@index([academicYearId])
+}
+
+model TeacherAssignment {
+  id             String                @id @default(uuid()) @db.Uuid
+  tenantId       String                @db.Uuid
+  teacherId      String                @db.Uuid
+  academicYearId String                @db.Uuid
+  sectionId      String                @db.Uuid
+  role           TeacherAssignmentRole
+  status         AssignmentStatus      @default(ACTIVE)
+  startDate      DateTime              @default(now())
+  endDate        DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  section      Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, teacherId])
+  @@index([academicYearId, sectionId])
+  @@index([sectionId])
+}
+
+// ============================================================
+// PROVISIONING
+// ============================================================
+
+model ImportBatch {
+  id             String            @id @default(uuid()) @db.Uuid
+  tenantId       String            @db.Uuid
+  entityType     ImportEntityType
+  source         ImportSource
+  fileName       String?
+  status         ImportBatchStatus @default(PENDING)
+  totalRows      Int               @default(0)
+  successfulRows Int               @default(0)
+  failedRows     Int               @default(0)
+  createdById    String            @db.Uuid
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User        @relation("ImportCreatedBy", fields: [createdById], references: [id])
+  rows      ImportRow[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([createdById])
+}
+
+model ImportRow {
+  id        String          @id @default(uuid()) @db.Uuid
+  batchId   String          @db.Uuid
+  rowNumber Int
+  status    ImportRowStatus @default(PENDING)
+  data      Json
+  errors    Json?
+  resultId  String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, rowNumber])
+  @@index([batchId, status])
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+model Grade {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  level     Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sections Section[]
+
+  @@unique([tenantId, level])
+  @@index([tenantId, isActive])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ContactRelationship {
+  FATHER
+  MOTHER
+  GUARDIAN
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  GRADUATED
+  TRANSFERRED
+  WITHDRAWN
+  SUSPENDED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  RESIGNED
+  SUSPENDED
+}
+
+enum AcademicYearStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum SectionStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  TRANSFERRED
+  WITHDRAWN
+  SUSPENDED
+}
+
+enum TeacherAssignmentRole {
+  HOMEROOM_TEACHER
+  SUBJECT_TEACHER
+  OTHER
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+}
+
+enum ImportEntityType {
+  STUDENT
+  TEACHER
+}
+
+enum ImportSource {
+  CSV
+  XLSX
+  MANUAL
+}
+
+enum ImportBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+enum ImportRowStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  SKIPPED
 }

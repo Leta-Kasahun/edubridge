@@ -11,9 +11,11 @@ import {
   ChevronRight,
   X,
   School,
+  ShieldCheck,
 } from "lucide-react";
 import { useUiStore } from "@/stores/ui.store";
-import { NAVIGATION_TREE, NavNode } from "@/shared/utils/navigation";
+import { useAuthStore } from "@/stores/auth.store";
+import { getNavigationTree, NavNode } from "@/shared/utils/navigation";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -144,8 +146,25 @@ export function Sidebar() {
   const sidebarMobileOpen = useUiStore((state) => state.sidebarMobileOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const setSidebarMobileOpen = useUiStore((state) => state.setSidebarMobileOpen);
+  const user = useAuthStore((state) => state.user);
 
   const closeMobile = () => setSidebarMobileOpen(false);
+
+  const userRoles = user?.roles ?? [];
+  const isSystemAdmin = userRoles.includes("SYSTEM_ADMIN");
+  const navTree = getNavigationTree(userRoles);
+
+  const roleLabel = isSystemAdmin
+    ? "System Admin"
+    : userRoles[0]
+    ? userRoles[0].replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "School Admin";
+
+  const orgName = isSystemAdmin
+    ? "EduBridge Platform"
+    : user?.memberships?.[0]?.tenantName ?? "Greenfield Academy";
+
+  const orgSubtitle = isSystemAdmin ? "Global Operations" : "2025-2026 Academic Term";
 
   return (
     <>
@@ -185,14 +204,18 @@ export function Sidebar() {
                 className="flex items-center gap-2.5 overflow-hidden rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7]"
               >
                 <div className="h-8 w-8 shrink-0 rounded-lg bg-[#064E3B] text-[#6EE7B7] flex items-center justify-center border border-[#064E3B]">
-                  <GraduationCap size={18} className="stroke-[2.3]" />
+                  {isSystemAdmin ? (
+                    <ShieldCheck size={18} className="stroke-[2.3]" />
+                  ) : (
+                    <GraduationCap size={18} className="stroke-[2.3]" />
+                  )}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-sm font-bold text-white tracking-tight truncate leading-none">
                     Edu<span className="text-[#6EE7B7]">Bridge</span>
                   </span>
                   <span className="text-[10px] font-medium text-[#94A3B8] truncate mt-0.5">
-                    School Admin
+                    {roleLabel}
                   </span>
                 </div>
               </Link>
@@ -235,14 +258,14 @@ export function Sidebar() {
           <div className="px-3.5 py-3 border-b border-[#1E293B]">
             <div className="flex items-center gap-3 p-2 rounded-lg bg-[#1E293B]/60 border border-[#1E293B]">
               <div className="h-8 w-8 rounded-lg bg-[#0F172A] text-[#6EE7B7] flex items-center justify-center shrink-0 border border-[#1E293B]">
-                <School size={16} />
+                {isSystemAdmin ? <ShieldCheck size={16} /> : <School size={16} />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-white truncate">
-                  Greenfield Academy
+                  {orgName}
                 </p>
                 <span className="inline-block text-[10px] text-[#6EE7B7] font-medium">
-                  2025-2026 Term 2
+                  {orgSubtitle}
                 </span>
               </div>
             </div>
@@ -250,7 +273,7 @@ export function Sidebar() {
         )}
 
         <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
-          {NAVIGATION_TREE.map((node) => (
+          {navTree.map((node) => (
             <NavTreeItem
               key={node.href}
               node={node}

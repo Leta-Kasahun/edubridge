@@ -15,7 +15,7 @@ export interface EmailResult {
   error?: string;
 }
 
-const emailLayout = (title: string, content: string): string => `
+const buildEmailWrapper = (title: string, content: string): string => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,23 +23,29 @@ const emailLayout = (title: string, content: string): string => `
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#090d16;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#090d16;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#334155;-webkit-font-smoothing:antialiased;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#0f172a;border-radius:12px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:440px;background-color:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
           <tr>
-            <td style="padding:32px 32px 16px 32px;text-align:center;">
-              <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.02em;color:#ffffff;">EduBridge</h1>
+            <td style="padding:24px 28px 12px 28px;text-align:left;border-bottom:1px solid #f1f5f9;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <span style="font-size:18px;font-weight:700;letter-spacing:-0.02em;color:#0f172a;">Edu<span style="color:#059669;">Bridge</span></span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:16px 32px 32px 32px;font-size:15px;line-height:1.6;color:#cbd5e1;">
+            <td style="padding:20px 28px 24px 28px;font-size:14px;line-height:1.55;color:#334155;">
               ${content}
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 32px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;font-size:12px;color:#64748b;">
+            <td style="padding:16px 28px;border-top:1px solid #f1f5f9;background-color:#fafbfc;text-align:center;font-size:11px;color:#94a3b8;">
               &copy; ${new Date().getFullYear()} ${env.EMAIL_FROM_NAME}. All rights reserved.
             </td>
           </tr>
@@ -121,18 +127,18 @@ export const sendOtpEmail = async (
 ): Promise<EmailResult> => {
   const subject = getOtpSubject(purpose);
   const content = `
-    <h2 style="margin:0 0 12px 0;font-size:18px;color:#ffffff;font-weight:600;">${subject}</h2>
-    <p style="margin:0 0 24px 0;color:#94a3b8;">Use the verification code below to complete your request. This code will expire in <strong style="color:#ffffff;">${expiryMinutes} minutes</strong>.</p>
-    <div style="background-color:#050811;border:1px solid rgba(99,102,241,0.35);border-radius:8px;padding:16px;text-align:center;margin:0 0 24px 0;">
-      <span style="font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:700;letter-spacing:6px;color:#6366f1;">${code}</span>
+    <h2 style="margin:0 0 8px 0;font-size:16px;color:#0f172a;font-weight:600;">${subject}</h2>
+    <p style="margin:0 0 16px 0;color:#64748b;font-size:13px;">Use the code below to complete your authentication. This code expires in <strong style="color:#0f172a;">${expiryMinutes} minutes</strong>.</p>
+    <div style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px;text-align:center;margin:0 0 16px 0;">
+      <span style="font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:24px;font-weight:700;letter-spacing:6px;color:#059669;">${code}</span>
     </div>
-    <p style="margin:0;font-size:13px;color:#64748b;">If you did not request this code, please ignore this email or secure your account.</p>
+    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.4;">If you did not request this verification code, please ignore this email or secure your account.</p>
   `;
 
   return sendEmail({
     to,
     subject,
-    html: emailLayout(subject, content),
+    html: buildEmailWrapper(subject, content),
   });
 };
 
@@ -142,21 +148,21 @@ export const sendInvitationEmail = async (
   roleName: string,
   inviteUrl: string
 ): Promise<EmailResult> => {
-  const subject = `You have been invited to join ${schoolName}`;
+  const subject = `Invitation to join ${schoolName}`;
   const content = `
-    <h2 style="margin:0 0 12px 0;font-size:18px;color:#ffffff;font-weight:600;">School Invitation</h2>
-    <p style="margin:0 0 16px 0;color:#cbd5e1;">You have been invited to join <strong style="color:#ffffff;">${schoolName}</strong> as a <strong style="color:#6366f1;">${roleName}</strong>.</p>
-    <p style="margin:0 0 24px 0;color:#94a3b8;">Click the button below to accept your invitation and set up your account.</p>
-    <div style="text-align:center;margin:0 0 24px 0;">
-      <a href="${inviteUrl}" style="display:inline-block;background-color:#6366f1;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 28px;border-radius:8px;font-size:15px;">Accept Invitation</a>
+    <h2 style="margin:0 0 8px 0;font-size:16px;color:#0f172a;font-weight:600;">School Invitation</h2>
+    <p style="margin:0 0 12px 0;color:#64748b;font-size:13px;">You have been invited to join <strong style="color:#0f172a;">${schoolName}</strong> as a <strong style="color:#059669;">${roleName}</strong>.</p>
+    <p style="margin:0 0 16px 0;color:#64748b;font-size:13px;">Click the button below to accept your invitation and set up your account credentials.</p>
+    <div style="text-align:center;margin:0 0 16px 0;">
+      <a href="${inviteUrl}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 22px;border-radius:6px;font-size:13px;">Accept Invitation</a>
     </div>
-    <p style="margin:0;font-size:13px;color:#64748b;">This invitation link will expire automatically. If button doesn't work, copy and paste this link: <span style="word-break:break-all;color:#94a3b8;">${inviteUrl}</span></p>
+    <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.4;">If the button does not work, copy and paste this URL into your browser: <span style="word-break:break-all;color:#64748b;">${inviteUrl}</span></p>
   `;
 
   return sendEmail({
     to,
     subject,
-    html: emailLayout(subject, content),
+    html: buildEmailWrapper(subject, content),
   });
 };
 
@@ -166,21 +172,89 @@ export const sendSecurityAlertEmail = async (
   ipAddress?: string,
   device?: string
 ): Promise<EmailResult> => {
-  const subject = "Security Alert: New activity on your account";
+  const subject = "Security Alert: Account Activity Notice";
   const content = `
-    <h2 style="margin:0 0 12px 0;font-size:18px;color:#ef4444;font-weight:600;">Security Notice</h2>
-    <p style="margin:0 0 16px 0;color:#cbd5e1;">We detected a new security event on your EduBridge account:</p>
-    <div style="background-color:#050811;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;margin:0 0 24px 0;font-size:14px;">
-      <p style="margin:0 0 8px 0;"><strong style="color:#94a3b8;">Event:</strong> <span style="color:#ffffff;">${eventType}</span></p>
-      ${ipAddress ? `<p style="margin:0 0 8px 0;"><strong style="color:#94a3b8;">IP Address:</strong> <span style="color:#ffffff;">${ipAddress}</span></p>` : ""}
-      ${device ? `<p style="margin:0;"><strong style="color:#94a3b8;">Device:</strong> <span style="color:#ffffff;">${device}</span></p>` : ""}
+    <h2 style="margin:0 0 8px 0;font-size:16px;color:#dc2626;font-weight:600;">Security Notice</h2>
+    <p style="margin:0 0 12px 0;color:#64748b;font-size:13px;">A security-sensitive event was registered on your EduBridge account:</p>
+    <div style="background-color:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin:0 0 16px 0;font-size:12px;color:#334155;">
+      <p style="margin:0 0 6px 0;"><strong style="color:#64748b;">Event:</strong> <span style="color:#0f172a;font-weight:600;">${eventType}</span></p>
+      ${ipAddress ? `<p style="margin:0 0 6px 0;"><strong style="color:#64748b;">IP Address:</strong> <span style="color:#0f172a;">${ipAddress}</span></p>` : ""}
+      ${device ? `<p style="margin:0;"><strong style="color:#64748b;">Device:</strong> <span style="color:#0f172a;">${device}</span></p>` : ""}
     </div>
-    <p style="margin:0;font-size:13px;color:#64748b;">If this was not you, please immediately reset your password and review your active sessions.</p>
+    <p style="margin:0;font-size:12px;color:#94a3b8;">If you did not perform this action, please update your password immediately.</p>
   `;
 
   return sendEmail({
     to,
     subject,
-    html: emailLayout(subject, content),
+    html: buildEmailWrapper(subject, content),
+  });
+};
+
+export interface SendProvisioningInvitationOptions {
+  to: string;
+  recipientName: string;
+  schoolName: string;
+  roleName: string;
+  username: string;
+  tempPassword?: string;
+  otpCode: string;
+  expiryHours?: number;
+  setupUrl?: string;
+}
+
+export const sendProvisioningInvitationEmail = async (
+  options: SendProvisioningInvitationOptions
+): Promise<EmailResult> => {
+  const expiryHours = options.expiryHours ?? 48;
+  const subject = `Invitation to join ${options.schoolName} - EduBridge`;
+  const content = `
+    <h2 style="margin:0 0 8px 0;font-size:16px;color:#0f172a;font-weight:600;">Welcome to ${options.schoolName}</h2>
+    <p style="margin:0 0 16px 0;color:#64748b;font-size:13px;line-height:1.5;">Hello <strong style="color:#0f172a;">${options.recipientName}</strong>, you have been invited to join <strong style="color:#0f172a;">${options.schoolName}</strong> as a <strong style="color:#059669;">${options.roleName}</strong>. Use your assigned username and the one-time verification code below to activate your account and complete setup.</p>
+    
+    <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 16px 0;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size:13px;">
+        <tr>
+          <td style="padding:4px 0;color:#64748b;width:140px;">Assigned Username:</td>
+          <td style="padding:4px 0;color:#0f172a;font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-weight:600;">${options.username}</td>
+        </tr>
+        ${
+          options.tempPassword
+            ? `<tr>
+                <td style="padding:4px 0;color:#64748b;">Temporary Password:</td>
+                <td style="padding:4px 0;color:#0f172a;font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-weight:600;">${options.tempPassword}</td>
+              </tr>`
+            : ""
+        }
+      </table>
+      
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #cbd5e1;text-align:center;">
+        <span style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">One-Time Verification Code (OTP)</span>
+        <div style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:8px 12px;display:inline-block;">
+          <span style="font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-size:22px;font-weight:700;letter-spacing:6px;color:#059669;">${options.otpCode}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background-color:#fffbeb;border:1px solid #fef3c7;border-radius:6px;padding:10px 12px;margin:0 0 16px 0;font-size:12px;color:#92400e;">
+      <strong>Notice:</strong> This invitation code expires in <strong>${expiryHours} hours</strong> and is valid for a single use.
+    </div>
+
+    ${
+      options.setupUrl
+        ? `<div style="text-align:center;margin:0 0 16px 0;">
+            <a href="${options.setupUrl}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 22px;border-radius:6px;font-size:13px;">Complete Account Setup</a>
+          </div>`
+        : ""
+    }
+
+    <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.4;">If you did not expect this invitation, please contact your school administrator or system administration.</p>
+  `;
+
+  return sendEmail({
+    to: options.to,
+    toName: options.recipientName,
+    subject,
+    html: buildEmailWrapper(subject, content),
   });
 };

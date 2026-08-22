@@ -88,7 +88,7 @@ export function UserMenu({ className }: UserMenuProps) {
             </Link>
 
             <Link
-              href="/settings"
+              href={ROUTES.SETTINGS.BASE}
               onClick={close}
               className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg text-foreground hover:bg-muted transition-colors"
             >

@@ -10,8 +10,18 @@ export const mapUserProfile = (
     roles: m.roles.map((r) => r.role.code),
   }));
 
+  const allRoles = Array.from(new Set(memberships.flatMap((m) => m.roles)));
+  const isSystemAdmin = allRoles.includes("SYSTEM_ADMIN");
+
+  const systemAdminMembership = memberships.find((m) => m.roles.includes("SYSTEM_ADMIN"));
   const currentMembership =
-    memberships.find((m) => m.tenantId === activeTenantId) || memberships[0];
+    (activeTenantId ? memberships.find((m) => m.tenantId === activeTenantId) : null) ??
+    systemAdminMembership ??
+    memberships[0];
+
+  const effectiveRoles = isSystemAdmin
+    ? Array.from(new Set(["SYSTEM_ADMIN", ...(currentMembership?.roles ?? [])]))
+    : currentMembership?.roles ?? [];
 
   return {
     id: user.id,
@@ -21,7 +31,7 @@ export const mapUserProfile = (
     lastName: user.lastName,
     status: user.status,
     emailVerified: user.emailVerified,
-    roles: currentMembership?.roles || [],
+    roles: effectiveRoles,
     tenantId: currentMembership?.tenantId,
     memberships,
     currentTenantId: currentMembership?.tenantId,

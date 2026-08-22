@@ -23,6 +23,12 @@ export interface PaginatedResponse<T = unknown> {
   meta: PaginationMeta;
 }
 
+export interface UserMembershipInfo {
+  tenantId: string;
+  tenantName: string;
+  roles: string[];
+}
+
 export interface AuthUser {
   id: string;
   email: string | null;
@@ -31,5 +37,7 @@ export interface AuthUser {
   lastName?: string;
   roles: string[];
   tenantId?: string;
+  tenantName?: string;
   status?: string;
+  memberships?: UserMembershipInfo[];
 }

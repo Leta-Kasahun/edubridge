@@ -79,8 +79,6 @@ export class LoginService {
 
     const allRoles = user.memberships.flatMap((m) => m.roles.map((r) => r.role.code));
     const isSystemAdmin = allRoles.includes("SYSTEM_ADMIN");
-
-    // Only System Admin always requires OTP on login
     if (isSystemAdmin) {
       const { plainOtp, expiryMinutes } = await this.otpSvc.generateAndSaveOtp(user.id, "LOGIN_2FA", tenantId);
       const recipientEmail = user.email || (identifier.includes("@") ? identifier : undefined);

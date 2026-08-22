@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AuthCard, VerifyOtpForm } from "@/features/auth";
+import { AuthCard, VerifyOtpForm, OtpPurpose } from "@/features/auth";
 import { LoadingSpinner } from "@/shared/components";
 import { ROUTES } from "@/constants/routes";
 
@@ -12,7 +12,15 @@ function VerifyOtpContent() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId") || undefined;
   const email = searchParams.get("email") || undefined;
-  const purpose = (searchParams.get("purpose") as any) || undefined;
+  const rawPurpose = searchParams.get("purpose");
+  const purpose: OtpPurpose | undefined =
+    rawPurpose === "LOGIN_2FA" ||
+    rawPurpose === "EMAIL_VERIFICATION" ||
+    rawPurpose === "EMAIL_CHANGE" ||
+    rawPurpose === "PASSWORD_RESET" ||
+    rawPurpose === "INVITATION_ACCEPT"
+      ? rawPurpose
+      : undefined;
 
   return (
     <AuthCard

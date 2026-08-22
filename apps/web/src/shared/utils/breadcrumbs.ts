@@ -9,21 +9,11 @@ export interface BreadcrumbItemData {
 
 const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   dashboard: "Dashboard",
-  students: "Students",
-  classes: "Classes",
-  teachers: "Teachers & Staff",
-  attendance: "Attendance",
-  exams: "Exams & Grades",
-  announcements: "Announcements",
+  schools: "Manage Schools",
   settings: "Settings",
-  security: "Security",
+  security: "Security Policy",
   roles: "Roles & Access",
   preferences: "Preferences",
-  physics: "Physics",
-  calculus: "Calculus",
-  chemistry: "Chemistry",
-  admissions: "New Admissions",
-  records: "Student Records",
 };
 
 export function formatBreadcrumbSegment(segment: string): string {

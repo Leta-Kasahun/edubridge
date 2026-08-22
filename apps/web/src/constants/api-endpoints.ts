@@ -28,6 +28,14 @@ export const API_ENDPOINTS = {
   SECURITY_POLICY: {
     BASE: "/security-policy",
   },
+  PROVISIONING: {
+    TENANT: {
+      BASE: "/provisioning/tenant",
+      INVITE: "/provisioning/tenant/invite",
+      DIRECT: "/provisioning/tenant/direct",
+      REGENERATE_CREDENTIALS: "/provisioning/tenant/regenerate-credentials",
+    },
+  },
   HEALTH: "/health",
 } as const;
 

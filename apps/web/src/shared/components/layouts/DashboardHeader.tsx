@@ -3,6 +3,7 @@
 import { Menu, Search, Bell } from "lucide-react";
 import { UserMenu } from "@/shared/components/UserMenu";
 import { useUiStore } from "@/stores/ui.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
@@ -13,6 +14,8 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ className }: DashboardHeaderProps) {
   const toggleSidebarMobile = useUiStore((state) => state.toggleSidebarMobile);
+  const user = useAuthStore((state) => state.user);
+  const isSystemAdmin = user?.roles?.includes("SYSTEM_ADMIN") ?? false;
 
   return (
     <header
@@ -38,7 +41,7 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           />
           <input
             type="search"
-            placeholder="Search across school..."
+            placeholder={isSystemAdmin ? "Search platform resources..." : "Search across school..."}
             className="w-full h-8.5 pl-9 pr-3 text-xs bg-muted/50 hover:bg-muted/70 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors"
           />
         </div>
