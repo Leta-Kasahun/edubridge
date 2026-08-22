@@ -10,7 +10,7 @@ export default function SchoolAdminLayout({
 }) {
   return (
     <DashboardLayout>
-      <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "TENANT_ADMIN"]}>
+      <RoleGuard allowedRoles={["SCHOOL_ADMIN"]}>
         {children}
       </RoleGuard>
     </DashboardLayout>

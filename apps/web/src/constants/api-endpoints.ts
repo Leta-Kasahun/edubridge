@@ -35,6 +35,16 @@ export const API_ENDPOINTS = {
       DIRECT: "/provisioning/tenant/direct",
       REGENERATE_CREDENTIALS: "/provisioning/tenant/regenerate-credentials",
     },
+    TEACHERS: {
+      BASE: "/provisioning/teachers",
+      INVITE: "/provisioning/teachers/invite",
+      DIRECT: "/provisioning/teachers/direct",
+      BULK: "/provisioning/teachers/bulk",
+      BULK_CSV: "/provisioning/teachers/bulk-csv",
+      BY_ID: (id: string) => `/provisioning/teachers/${id}`,
+      DEACTIVATE: (id: string) => `/provisioning/teachers/${id}/deactivate`,
+      ACTIVATE: (id: string) => `/provisioning/teachers/${id}/activate`,
+    },
   },
   HEALTH: "/health",
 } as const;

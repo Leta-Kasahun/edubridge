@@ -8,6 +8,7 @@ export const ROUTES = {
   },
   DASHBOARD: "/dashboard",
   SCHOOLS: "/dashboard/schools",
+  TEACHERS: "/dashboard/teachers",
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",

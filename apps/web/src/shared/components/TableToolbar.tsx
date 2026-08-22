@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Search, X, ChevronDown, Check, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
 
 export interface FilterOption {
   readonly label: string;
@@ -44,41 +45,24 @@ export function TableToolbar({
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const filterContainerRef = useRef<HTMLDivElement>(null);
 
+  useClickOutside(searchContainerRef, () => setShowSuggestions(false));
+  useClickOutside(filterContainerRef, () => setOpenFilterId(null));
+
   const filteredSuggestions = searchSuggestions.filter(
     (s) =>
       s.toLowerCase().includes(searchValue.toLowerCase()) &&
       s.toLowerCase() !== searchValue.toLowerCase()
   );
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-      if (
-        filterContainerRef.current &&
-        !filterContainerRef.current.contains(event.target as Node)
-      ) {
-        setOpenFilterId(null);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-3",
+        "flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full",
         className
       )}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 min-w-0">
-        <div ref={searchContainerRef} className="relative w-full sm:w-72">
+      <div className="flex items-center gap-2.5 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+        <div ref={searchContainerRef} className="relative flex-1 sm:max-w-xs min-w-[180px]">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -134,7 +118,7 @@ export function TableToolbar({
         {filters.length > 0 && (
           <div
             ref={filterContainerRef}
-            className="flex items-center gap-2 flex-wrap"
+            className="flex items-center gap-2 flex-wrap shrink-0"
           >
             {filters.map((group) => {
               const isOpen = openFilterId === group.id;
@@ -151,7 +135,7 @@ export function TableToolbar({
                       setOpenFilterId(isOpen ? null : group.id)
                     }
                     className={cn(
-                      "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer",
+                      "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap",
                       group.selectedValue && group.selectedValue !== "ALL"
                         ? "bg-primary/10 border-primary/40 text-primary"
                         : "bg-card text-foreground border-border hover:bg-muted"
@@ -204,7 +188,11 @@ export function TableToolbar({
         )}
       </div>
 
-      {actionButton && <div className="shrink-0">{actionButton}</div>}
+      {actionButton && (
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          {actionButton}
+        </div>
+      )}
     </div>
   );
 }

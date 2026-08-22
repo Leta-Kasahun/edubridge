@@ -2,10 +2,12 @@ import { registerPermissionDocs } from "../modules/permissions/permissions.doc.j
 import { registerLookupDocs } from "../modules/lookup/lookup.doc.js";
 import { registerAuthDocs } from "../modules/auth/auth.doc.js";
 import { registerTenantProvisioningDocs } from "../modules/provisioning/tenant/tenant.provision.doc.js";
+import { registerTeacherProvisioningDocs } from "../modules/provisioning/teacher/teacher.provision.doc.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
   registerPermissionDocs();
   registerLookupDocs();
   registerTenantProvisioningDocs();
+  registerTeacherProvisioningDocs();
 }

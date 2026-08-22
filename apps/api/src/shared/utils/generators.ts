@@ -17,6 +17,11 @@ export const generateTeacherUsername = (tenantCode: string, sequence: number): s
   return `${tenantCode.toUpperCase()}T${year}${seq}`;
 };
 
+export const generateEmployeeCode = (tenantCode: string, sequence: number): string => {
+  const seq = String(sequence).padStart(4, "0");
+  return `${tenantCode.toUpperCase()}EMP${seq}`;
+};
+
 export const generateStudentUsername = (tenantCode: string, sequence: number): string => {
   const year = String(new Date().getFullYear()).slice(-2);
   const seq = String(sequence).padStart(4, "0");

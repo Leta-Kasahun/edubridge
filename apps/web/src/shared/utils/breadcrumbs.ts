@@ -10,6 +10,7 @@ export interface BreadcrumbItemData {
 const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   dashboard: "Dashboard",
   schools: "Manage Schools",
+  teachers: "Teachers",
   settings: "Settings",
   security: "Security Policy",
   roles: "Roles & Access",
