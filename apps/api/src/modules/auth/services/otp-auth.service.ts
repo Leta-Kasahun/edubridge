@@ -9,6 +9,7 @@ import { VerifyOtpDto, ResendOtpDto } from "../schemas/auth.schema.js";
 import { SessionMetadata, AuthResponse, OTPPurpose } from "../types/auth.types.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
+import { sendOtpEmail } from "../../../lib/email.js";
 
 export class OtpAuthService {
   constructor(
@@ -101,12 +102,20 @@ export class OtpAuthService {
 
     const purpose: OTPPurpose = (dto.purpose as OTPPurpose) || "LOGIN_2FA";
     const activeTenantId = tenantId || user.memberships[0]?.tenantId;
-    await this.otpSvc.generateAndSaveOtp(user.id, purpose, activeTenantId);
+    const { plainOtp, expiryMinutes } = await this.otpSvc.generateAndSaveOtp(user.id, purpose, activeTenantId);
+
+    const recipientEmail = (dto.email && dto.email.includes("@"))
+      ? dto.email
+      : (user.email ?? (dto.identifier && dto.identifier.includes("@") ? dto.identifier : undefined));
+
+    if (recipientEmail) {
+      await sendOtpEmail(recipientEmail, plainOtp, purpose, expiryMinutes);
+    }
 
     return {
       userId: user.id,
       purpose,
-      message: "New verification code has been generated",
+      message: "New verification code has been sent to your email",
     };
   }
 }

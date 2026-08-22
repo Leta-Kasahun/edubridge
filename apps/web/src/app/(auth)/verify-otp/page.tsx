@@ -12,6 +12,7 @@ function VerifyOtpContent() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId") || undefined;
   const email = searchParams.get("email") || undefined;
+  const purpose = (searchParams.get("purpose") as any) || undefined;
 
   return (
     <AuthCard
@@ -34,6 +35,7 @@ function VerifyOtpContent() {
       <VerifyOtpForm
         userId={userId}
         email={email}
+        purpose={purpose}
         onSuccess={() => router.push(ROUTES.DASHBOARD)}
       />
     </AuthCard>

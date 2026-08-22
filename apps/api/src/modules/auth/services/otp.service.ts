@@ -43,7 +43,7 @@ export class OtpService {
 
     await this.cacheSvc.setOtpCooldown(userId, purpose, cooldownSeconds);
 
-    return { plainOtp, expiresAt };
+    return { plainOtp, expiresAt, expiryMinutes };
   }
 
   async verifyOtp(userId: string, plainOtp: string, purpose: OTPPurpose, tenantId?: string) {

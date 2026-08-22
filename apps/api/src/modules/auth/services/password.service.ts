@@ -12,6 +12,8 @@ import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
+import { sendOtpEmail } from "../../../lib/email.js";
+import { OTPPurpose } from "../../../shared/enums/index.js";
 
 export class PasswordService {
   constructor(
@@ -56,7 +58,10 @@ export class PasswordService {
     await this.authRepo.updateEmailVerified(user.id, false, verifiedEmail);
     await this.authRepo.updateStatus(user.id, "ACTIVE");
 
-    await this.otpSvc.generateAndSaveOtp(user.id, "EMAIL_VERIFICATION", activeTenantId);
+    const { plainOtp, expiryMinutes } = await this.otpSvc.generateAndSaveOtp(user.id, "EMAIL_VERIFICATION", activeTenantId);
+    if (verifiedEmail) {
+      await sendOtpEmail(verifiedEmail, plainOtp, OTPPurpose.EMAIL_VERIFICATION, expiryMinutes);
+    }
 
     const policy = activeTenantId ? await this.securityRepo.findSecurityPolicy(activeTenantId) : null;
     const userProfile = mapUserProfile(user, activeTenantId);

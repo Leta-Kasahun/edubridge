@@ -12,6 +12,8 @@ import { securityEventService, SecurityEventService } from "./security-event.ser
 import { LoginDto } from "../schemas/auth.schema.js";
 import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
+import { sendOtpEmail } from "../../../lib/email.js";
+import { OTPPurpose } from "../../../shared/enums/index.js";
 
 export class LoginService {
   constructor(
@@ -80,7 +82,11 @@ export class LoginService {
 
     // Only System Admin always requires OTP on login
     if (isSystemAdmin) {
-      await this.otpSvc.generateAndSaveOtp(user.id, "LOGIN_2FA", tenantId);
+      const { plainOtp, expiryMinutes } = await this.otpSvc.generateAndSaveOtp(user.id, "LOGIN_2FA", tenantId);
+      const recipientEmail = user.email || (identifier.includes("@") ? identifier : undefined);
+      if (recipientEmail) {
+        await sendOtpEmail(recipientEmail, plainOtp, OTPPurpose.LOGIN_2FA, expiryMinutes);
+      }
       await this.securityRepo.recordLoginAttempt({
         tenantId,
         userId: user.id,
