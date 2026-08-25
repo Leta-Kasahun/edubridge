@@ -217,6 +217,8 @@ function mapToTeacherProfileDetail(profile: ProfileRecord): TeacherProfileDetail
     age: calculateAge(profile.dateOfBirth),
     phoneNumber: profile.phoneNumber,
     email: profile.email,
+    nationality: profile.nationality,
+    photoUrl: profile.photoUrl,
     status: profile.status,
     accountStatus: profile.user?.status ?? null,
     username: profile.user?.username ?? null,
@@ -337,6 +339,8 @@ export class TeacherProfileRepository {
           dateOfBirth: parsedDob,
           phoneNumber: normalizedPhone,
           email: payload.email || null,
+          nationality: payload.nationality || null,
+          photoUrl: payload.photoUrl || null,
           addressId: addressId ?? undefined,
         },
         include: PROFILE_INCLUDE,
@@ -379,6 +383,8 @@ export class TeacherProfileRepository {
         : null;
     }
     if (payload.email !== undefined) updateData.email = payload.email || null;
+    if (payload.nationality !== undefined) updateData.nationality = payload.nationality || null;
+    if (payload.photoUrl !== undefined) updateData.photoUrl = payload.photoUrl || null;
     if (addressId !== undefined) updateData.addressId = addressId;
 
     return prisma.$transaction(async (tx) => {

@@ -207,128 +207,194 @@ export function TeacherProfileView() {
       </div>
 
       {!isEditing ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="bg-card rounded-2xl border border-border p-5 space-y-4 shadow-xs">
+        <div className="space-y-6">
+          <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
               Personal & Demographics
             </h2>
 
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">First Name</span>
-                <span className="font-medium text-foreground">{profile.firstName}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  First Name
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {profile.firstName}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Middle Name</span>
-                <span className="font-medium text-foreground">{profile.middleName}</span>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Middle Name
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {profile.middleName}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Last Name</span>
-                <span className="font-medium text-foreground">{profile.lastName}</span>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Last Name
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {profile.lastName}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Gender</span>
-                <span className="font-medium text-foreground uppercase">{profile.gender}</span>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Gender
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block uppercase">
+                  {profile.gender}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Date of Birth</span>
-                <span className="font-medium text-foreground">
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Date of Birth
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {formatDisplayDate(profile.dateOfBirth) || "Not registered"}
                 </span>
               </div>
+
               {profile.age !== null && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Calculated Age</span>
-                  <span className="font-medium text-foreground">{profile.age} years</span>
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Calculated Age
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.age} years
+                  </span>
                 </div>
               )}
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Nationality</span>
-                <span className="font-medium text-foreground">{profile.nationality || "Ethiopian"}</span>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Nationality
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {profile.nationality || "Ethiopian"}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border p-5 space-y-4 shadow-xs">
+          <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
               Contact Details
             </h2>
 
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Phone Number</span>
-                <span className="font-medium text-foreground font-mono">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Phone Number
+                </span>
+                <span className="text-sm font-medium text-foreground font-mono mt-1 block">
                   {formatPhoneDisplay(profile.phoneNumber || "") || "Not registered"}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Email Address</span>
-                <span className="font-medium text-foreground truncate max-w-[200px]">
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Email Address
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block truncate">
                   {profile.email || "Not registered"}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Verification</span>
-                <span className="font-medium text-foreground">
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Verification Status
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {profile.emailVerified ? "Verified Account" : "Pending Verification"}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Registered On</span>
-                <span className="font-medium text-foreground">
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Registered On
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {formatDisplayDate(profile.createdAt)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border p-5 space-y-4 shadow-xs sm:col-span-2">
+          <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
               Residential Address
             </h2>
 
             {profile.address ? (
-              <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {(profile.address.regionName || profile.address.regionId) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Region</span>
-                    <span className="font-medium text-foreground">{profile.address.regionName || profile.address.regionId}</span>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Region
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.regionName || profile.address.regionId}
+                    </span>
                   </div>
                 )}
+
                 {(profile.address.zoneName || profile.address.zoneId) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Zone</span>
-                    <span className="font-medium text-foreground">{profile.address.zoneName || profile.address.zoneId}</span>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Zone
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.zoneName || profile.address.zoneId}
+                    </span>
                   </div>
                 )}
+
                 {(profile.address.woredaName || profile.address.woredaId) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Woreda</span>
-                    <span className="font-medium text-foreground">{profile.address.woredaName || profile.address.woredaId}</span>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Woreda
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.woredaName || profile.address.woredaId}
+                    </span>
                   </div>
                 )}
+
                 {(profile.address.cityName || profile.address.cityId) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">City</span>
-                    <span className="font-medium text-foreground">{profile.address.cityName || profile.address.cityId}</span>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      City
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.cityName || profile.address.cityId}
+                    </span>
                   </div>
                 )}
+
                 {(profile.address.kebeleName || profile.address.kebeleId) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Kebele</span>
-                    <span className="font-medium text-foreground">{profile.address.kebeleName || profile.address.kebeleId}</span>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Kebele
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.kebeleName || profile.address.kebeleId}
+                    </span>
                   </div>
                 )}
+
                 {profile.address.specificLocation && (
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="text-muted-foreground shrink-0">Current Location</span>
-                    <span className="font-medium text-foreground text-right">{profile.address.specificLocation}</span>
-                  </div>
-                )}
-                {profile.address.formattedAddress && (
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-muted-foreground mb-1">Full Address</p>
-                    <p className="font-medium text-foreground leading-relaxed">{profile.address.formattedAddress}</p>
+                  <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Current Location
+                    </span>
+                    <span className="text-sm font-medium text-foreground mt-1 block">
+                      {profile.address.specificLocation}
+                    </span>
                   </div>
                 )}
               </div>
