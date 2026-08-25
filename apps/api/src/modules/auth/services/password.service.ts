@@ -80,11 +80,37 @@ export class PasswordService {
       description: "First-time account setup and password configuration completed successfully.",
     });
 
-    const userProfile = mapUserProfile(user, activeTenantId);
+    const freshUser = await this.authRepo.findById(user.id);
+    const userProfile = mapUserProfile(freshUser ?? user, activeTenantId);
+
+    const policy = activeTenantId ? await this.securityRepo.findSecurityPolicy(activeTenantId) : null;
+    const sessionId = crypto.randomUUID();
+    const resolvedDeviceId = metadata.deviceId || "web-client";
+
+    const { tokens, refreshTokenHash, refreshExpiresAt } = this.tokenSvc.generateTokenPair({
+      userId: user.id,
+      sessionId,
+      roles: userProfile.roles,
+      tenantId: activeTenantId || undefined,
+      deviceId: resolvedDeviceId,
+      accessExpiresInMinutes: policy?.accessTokenExpiryMinutes,
+      refreshExpiresInDays: policy?.refreshTokenExpiryDays,
+    });
+
+    if (activeTenantId) {
+      await this.sessionSvc.createSession({
+        tenantId: activeTenantId,
+        userId: user.id,
+        refreshTokenHash,
+        metadata: { ...metadata, deviceId: resolvedDeviceId },
+        refreshExpiresAt,
+      });
+    }
 
     return {
+      tokens,
       user: userProfile,
-      message: "Account setup completed successfully. Please sign in with your new password.",
+      message: "Account setup completed successfully.",
     };
   }
 

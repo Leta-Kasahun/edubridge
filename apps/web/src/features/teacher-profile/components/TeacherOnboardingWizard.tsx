@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
   FormField,
-  SubmitButton,
+  LoadingSpinner,
   ErrorAlert,
   OnboardingLayout,
   OnboardingStepper,
@@ -382,9 +382,9 @@ export function TeacherOnboardingWizard({
             <button
               type="button"
               onClick={handleBack}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={14} />
               <span>Back</span>
             </button>
           ) : (
@@ -392,25 +392,33 @@ export function TeacherOnboardingWizard({
           )}
 
           {currentStep < 3 ? (
-            <SubmitButton
+            <button
               type="button"
               onClick={handleNext}
-              icon={<ArrowRight size={16} />}
-              iconPosition="right"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0"
             >
-              Continue
-            </SubmitButton>
+              <span>Continue</span>
+              <ArrowRight size={14} />
+            </button>
           ) : (
-            <SubmitButton
+            <button
               type="button"
               onClick={handleSubmit}
-              isLoading={completeMutation.isPending}
-              loadingText="Activating Dashboard..."
-              icon={<CheckCircle2 size={16} />}
-              iconPosition="right"
+              disabled={completeMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
             >
-              Confirm & Complete
-            </SubmitButton>
+              {completeMutation.isPending ? (
+                <>
+                  <LoadingSpinner size={14} />
+                  <span>Activating...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={14} />
+                  <span>Confirm & Complete</span>
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>

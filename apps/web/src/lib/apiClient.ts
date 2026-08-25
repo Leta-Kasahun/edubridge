@@ -89,7 +89,7 @@ export const refreshAccessToken = async (): Promise<string> => {
   const expiresIn = response.data?.data?.tokens?.expiresIn;
 
   if (!newAccessToken) {
-    throw new Error("Failed to refresh access token");
+    throw new Error("Your session has expired. Please sign in to continue.");
   }
 
   setAuthTokens(newAccessToken, expiresIn);
