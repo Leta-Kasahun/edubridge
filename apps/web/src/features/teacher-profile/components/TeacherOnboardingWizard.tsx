@@ -67,12 +67,12 @@ export function TeacherOnboardingWizard({
 
   const [addressValues, setAddressValues] = useState<AddressFormValues>({
     specificLocation: profile?.address?.specificLocation || "",
-    cityId: profile?.address?.cityName || profile?.address?.cityId || "",
-    subCityId: profile?.address?.subCityName || profile?.address?.subCityId || "",
-    regionId: profile?.address?.regionName || profile?.address?.regionId || "",
-    zoneId: profile?.address?.zoneName || profile?.address?.zoneId || "",
-    woredaId: profile?.address?.woredaName || profile?.address?.woredaId || "",
-    kebeleId: profile?.address?.kebeleName || profile?.address?.kebeleId || "",
+    cityId: profile?.address?.cityId || "",
+    subCityId: profile?.address?.subCityId || "",
+    regionId: profile?.address?.regionId || "",
+    zoneId: profile?.address?.zoneId || "",
+    woredaId: profile?.address?.woredaId || "",
+    kebeleId: profile?.address?.kebeleId || "",
   });
 
   useEffect(() => {
@@ -87,12 +87,12 @@ export function TeacherOnboardingWizard({
       if (profile.address) {
         setAddressValues({
           specificLocation: profile.address.specificLocation || "",
-          cityId: profile.address.cityName || profile.address.cityId || "",
-          subCityId: profile.address.subCityName || profile.address.subCityId || "",
-          regionId: profile.address.regionName || profile.address.regionId || "",
-          zoneId: profile.address.zoneName || profile.address.zoneId || "",
-          woredaId: profile.address.woredaName || profile.address.woredaId || "",
-          kebeleId: profile.address.kebeleName || profile.address.kebeleId || "",
+          cityId: profile.address.cityId || "",
+          subCityId: profile.address.subCityId || "",
+          regionId: profile.address.regionId || "",
+          zoneId: profile.address.zoneId || "",
+          woredaId: profile.address.woredaId || "",
+          kebeleId: profile.address.kebeleId || "",
         });
       }
     }
@@ -105,12 +105,22 @@ export function TeacherOnboardingWizard({
     setAddressValues((prev) => ({ ...prev, [field]: val }));
   };
 
+  const clearFieldError = (field: string) => {
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
   const validateStep1 = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!firstName.trim()) errors.firstName = "First name is required";
-    if (!middleName.trim()) errors.middleName = "Middle name is required";
-    if (!lastName.trim()) errors.lastName = "Last name is required";
-    if (!dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+    if (!firstName.trim()) errors.firstName = "Please enter your first name";
+    if (!middleName.trim()) errors.middleName = "Please enter your middle name";
+    if (!lastName.trim()) errors.lastName = "Please enter your last name";
+    if (!dateOfBirth) errors.dateOfBirth = "Please select your date of birth";
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -118,10 +128,10 @@ export function TeacherOnboardingWizard({
   const validateStep2 = (): boolean => {
     const errors: Record<string, string> = {};
     if (phoneNumber && !/^\+?[0-9\s-]{9,20}$/.test(phoneNumber.trim())) {
-      errors.phoneNumber = "Invalid phone number format";
+      errors.phoneNumber = "Please enter a valid phone number (e.g. 0911223344)";
     }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errors.email = "Invalid email format";
+      errors.email = "Please enter a valid email address";
     }
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -167,7 +177,7 @@ export function TeacherOnboardingWizard({
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push(ROUTES.DASHBOARD);
+          router.push(ROUTES.TEACHER.PROFILE);
         }
       },
     });
@@ -191,7 +201,7 @@ export function TeacherOnboardingWizard({
         { label: "Phone Number", value: formatPhoneDisplay(phoneNumber) || "Not registered" },
         { label: "Email Address", value: email || "Not registered" },
         { label: "Specific Location", value: addressValues.specificLocation || "Not provided" },
-        { label: "City / Town", value: addressValues.cityId || "Not provided" },
+        { label: "City", value: addressValues.cityId || "Not provided" },
         { label: "Sub-City", value: addressValues.subCityId || "Not provided" },
         { label: "Region", value: addressValues.regionId || "Not provided" },
       ],
@@ -200,8 +210,8 @@ export function TeacherOnboardingWizard({
 
   return (
     <OnboardingLayout
-      title="Teacher Profile Onboarding"
-      subtitle="Complete your faculty profile details to activate your dashboard and academic workspace"
+      title="Teacher Profile Setup"
+      subtitle="Complete your profile details to activate your school portal access"
       stepper={
         <OnboardingStepper
           steps={ONBOARDING_STEPS}
@@ -227,11 +237,11 @@ export function TeacherOnboardingWizard({
         {currentStep === 1 && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="border-b border-border pb-3">
-              <h2 className="text-sm sm:text-base font-bold text-foreground">
-                Step 1: Personal & Demographics
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
+                Personal Information
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Verify and complete your official legal name and demographic details.
+                Enter your official legal name and demographic details as they appear on your ID.
               </p>
             </div>
 
@@ -251,7 +261,8 @@ export function TeacherOnboardingWizard({
                 id="firstName"
                 label="First Name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(e) => { setFirstName(e.target.value); clearFieldError("firstName"); }}
+                onBlur={() => { if (!firstName.trim()) setValidationErrors((prev) => ({ ...prev, firstName: "Please enter your first name" })); }}
                 error={validationErrors.firstName}
                 placeholder="First name"
                 required
@@ -261,7 +272,8 @@ export function TeacherOnboardingWizard({
                 id="middleName"
                 label="Middle Name"
                 value={middleName}
-                onChange={(e) => setMiddleName(e.target.value)}
+                onChange={(e) => { setMiddleName(e.target.value); clearFieldError("middleName"); }}
+                onBlur={() => { if (!middleName.trim()) setValidationErrors((prev) => ({ ...prev, middleName: "Please enter your middle name" })); }}
                 error={validationErrors.middleName}
                 placeholder="Father's name"
                 required
@@ -271,7 +283,8 @@ export function TeacherOnboardingWizard({
                 id="lastName"
                 label="Last Name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(e) => { setLastName(e.target.value); clearFieldError("lastName"); }}
+                onBlur={() => { if (!lastName.trim()) setValidationErrors((prev) => ({ ...prev, lastName: "Please enter your last name" })); }}
                 error={validationErrors.lastName}
                 placeholder="Grandfather's name"
                 required
@@ -280,14 +293,17 @@ export function TeacherOnboardingWizard({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block">
+                <label
+                  htmlFor="gender"
+                  className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block"
+                >
                   Gender
                 </label>
                 <select
                   id="gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as Gender)}
-                  className="h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm font-medium text-foreground focus-visible:bg-background focus-visible:border-foreground/40 focus-visible:outline-hidden"
+                  className="h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:border-foreground/40 focus:bg-background transition-colors"
                 >
                   <option value="FEMALE">Female</option>
                   <option value="MALE">Male</option>
@@ -301,7 +317,7 @@ export function TeacherOnboardingWizard({
                 min={minDate}
                 max={maxDate}
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={(e) => { setDateOfBirth(e.target.value); clearFieldError("dateOfBirth"); }}
                 error={validationErrors.dateOfBirth}
                 required
               />
@@ -320,11 +336,11 @@ export function TeacherOnboardingWizard({
         {currentStep === 2 && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="border-b border-border pb-3">
-              <h2 className="text-sm sm:text-base font-bold text-foreground">
-                Step 2: Contact & Residential Address
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
+                Contact & Address
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Provide your primary contact and residence details.
+                Provide your primary contact number, email, and current residential address.
               </p>
             </div>
 
@@ -365,11 +381,11 @@ export function TeacherOnboardingWizard({
         {currentStep === 3 && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="border-b border-border pb-3">
-              <h2 className="text-sm sm:text-base font-bold text-foreground">
-                Step 3: Review & Final Confirmation
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
+                Review & Confirm
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Please review all information carefully. Click Edit on any section to modify before submitting.
+                Review all your information before submitting. You can edit any section by clicking the edit button.
               </p>
             </div>
 

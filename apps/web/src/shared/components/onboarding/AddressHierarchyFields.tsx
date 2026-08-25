@@ -28,7 +28,7 @@ export function AddressHierarchyFields({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <FormField
           id="specificLocation"
-          label="Street Address / Specific Location"
+          label="Current Address"
           placeholder="e.g., Bole Subcity, House No. 123"
           value={values.specificLocation || ""}
           onChange={(e) => onChange("specificLocation", e.target.value)}
@@ -39,7 +39,7 @@ export function AddressHierarchyFields({
 
         <FormField
           id="city"
-          label="City / Town"
+          label="City"
           placeholder="e.g., Addis Ababa"
           value={values.cityId || ""}
           onChange={(e) => onChange("cityId", e.target.value)}
@@ -89,7 +89,7 @@ export function AddressHierarchyFields({
 
         <FormField
           id="kebele"
-          label="Kebele / Ward"
+          label="Kebele"
           placeholder="e.g., Kebele 04"
           value={values.kebeleId || ""}
           onChange={(e) => onChange("kebeleId", e.target.value)}

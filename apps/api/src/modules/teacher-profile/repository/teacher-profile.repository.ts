@@ -6,6 +6,13 @@ import {
   validateAddressHierarchy,
   parseDate,
 } from "../../../shared/utils/index.js";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function toUuidOrNull(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return UUID_PATTERN.test(value) ? value : null;
+}
 import {
   CompleteTeacherProfilePayload,
   UpdateTeacherProfilePayload,
@@ -154,12 +161,12 @@ export class TeacherProfileRepository {
     }
 
     const addressPayload = {
-      regionId: data.regionId || null,
-      zoneId: data.zoneId || null,
-      woredaId: data.woredaId || null,
-      kebeleId: data.kebeleId || null,
-      cityId: data.cityId || null,
-      subCityId: data.subCityId || null,
+      regionId: toUuidOrNull(data.regionId),
+      zoneId: toUuidOrNull(data.zoneId),
+      woredaId: toUuidOrNull(data.woredaId),
+      kebeleId: toUuidOrNull(data.kebeleId),
+      cityId: toUuidOrNull(data.cityId),
+      subCityId: toUuidOrNull(data.subCityId),
       specificLocation: data.specificLocation || null,
     };
 

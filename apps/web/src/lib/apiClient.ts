@@ -125,7 +125,8 @@ apiClient.interceptors.response.use(
 
     if (
       originalRequest.url?.includes(API_ENDPOINTS.AUTH.LOGIN) ||
-      originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)
+      originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN) ||
+      originalRequest.url?.includes(API_ENDPOINTS.AUTH.FIRST_LOGIN_SETUP)
     ) {
       return Promise.reject(error);
     }

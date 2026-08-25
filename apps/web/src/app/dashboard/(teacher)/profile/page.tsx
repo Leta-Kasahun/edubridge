@@ -3,7 +3,7 @@ import { TeacherProfileView } from "@/features/teacher-profile";
 
 export const metadata: Metadata = {
   title: "My Profile | EduBridge",
-  description: "View and update your faculty profile details and credentials",
+  description: "View and update your teacher profile details and credentials",
 };
 
 export default function TeacherProfilePage() {

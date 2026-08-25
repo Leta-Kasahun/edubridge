@@ -2,12 +2,12 @@ import { z } from "zod";
 import { isValidDob } from "../../../shared/utils/date.util.js";
 
 export const addressSchema = z.object({
-  regionId: z.string().uuid().optional().nullable(),
-  zoneId: z.string().uuid().optional().nullable(),
-  woredaId: z.string().uuid().optional().nullable(),
-  kebeleId: z.string().uuid().optional().nullable(),
-  cityId: z.string().uuid().optional().nullable(),
-  subCityId: z.string().uuid().optional().nullable(),
+  regionId: z.string().max(150).optional().nullable(),
+  zoneId: z.string().max(150).optional().nullable(),
+  woredaId: z.string().max(150).optional().nullable(),
+  kebeleId: z.string().max(150).optional().nullable(),
+  cityId: z.string().max(150).optional().nullable(),
+  subCityId: z.string().max(150).optional().nullable(),
   specificLocation: z.string().max(255).optional().nullable(),
 });
 
