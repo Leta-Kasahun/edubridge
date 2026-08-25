@@ -46,16 +46,54 @@ export function revokeImagePreviewUrl(url: string | null | undefined): void {
   }
 }
 
-export function fileToDataUrl(file: File): Promise<string> {
+export function fileToDataUrl(
+  file: File,
+  maxDimension = 600,
+  quality = 0.85
+): Promise<string> {
   return new Promise((resolve, reject) => {
+    const img = document.createElement("img");
     const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Failed to read image file"));
+
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result !== "string") {
+        reject(new Error("Failed to read image"));
+        return;
       }
+
+      img.src = result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxDimension) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else if (height > maxDimension) {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(result);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+
+      img.onerror = () => {
+        resolve(result);
+      };
     };
+
     reader.onerror = () => reject(reader.error ?? new Error("File reading error"));
     reader.readAsDataURL(file);
   });

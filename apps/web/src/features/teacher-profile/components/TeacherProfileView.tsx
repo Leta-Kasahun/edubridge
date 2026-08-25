@@ -7,12 +7,14 @@ import {
   FormField,
   ErrorAlert,
   LoadingSpinner,
+  ProfilePhotoUpload,
   AddressHierarchyFields,
   AddressFormValues,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { formatDisplayDate, getMinMaxDobStrings } from "@/shared/utils/date.util";
 import { formatPhoneDisplay } from "@/shared/utils/phone.util";
+import { fileToDataUrl } from "@/shared/utils/image.util";
 import { useMyTeacherProfile, useUpdateTeacherProfile } from "../hooks/useTeacherProfile";
 import { Gender, UpdateTeacherProfilePayload } from "../types/teacher-profile.types";
 
@@ -30,6 +32,7 @@ export function TeacherProfileView() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [nationality, setNationality] = useState("Ethiopian");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [addressValues, setAddressValues] = useState<AddressFormValues>({});
 
   const startEditing = () => {
@@ -42,6 +45,7 @@ export function TeacherProfileView() {
     setPhoneNumber(profile.phoneNumber || "");
     setEmail(profile.email || "");
     setNationality(profile.nationality || "Ethiopian");
+    setPhotoUrl(profile.photoUrl || null);
     setAddressValues({
       regionId: profile.address?.regionName || profile.address?.regionId || "",
       zoneId: profile.address?.zoneName || profile.address?.zoneId || "",
@@ -73,6 +77,7 @@ export function TeacherProfileView() {
       phoneNumber: phoneNumber.trim() || null,
       email: email.trim() || null,
       nationality: nationality.trim() || null,
+      photoUrl: photoUrl || null,
       address: {
         regionId: addressValues.regionId?.trim() || null,
         zoneId: addressValues.zoneId?.trim() || null,
@@ -414,6 +419,28 @@ export function TeacherProfileView() {
             <p className="text-xs text-muted-foreground mt-0.5">
               Update your personal demographics, contact details, and residential location.
             </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Profile Photo
+            </h3>
+            <ProfilePhotoUpload
+              key={photoUrl ?? "empty"}
+              initialPhotoUrl={photoUrl}
+              onPhotoSelect={async (file) => {
+                if (file) {
+                  try {
+                    const dataUrl = await fileToDataUrl(file);
+                    setPhotoUrl(dataUrl);
+                  } catch {
+                    setPhotoUrl(URL.createObjectURL(file));
+                  }
+                } else {
+                  setPhotoUrl(null);
+                }
+              }}
+            />
           </div>
 
           <div className="space-y-4">

@@ -23,6 +23,13 @@ function sanitizeMessage(msg: string): string {
     return "Unable to connect to the server. Please check your internet connection.";
   }
   if (
+    lower.includes("entity too large") ||
+    lower.includes("payload too large") ||
+    lower.includes("413")
+  ) {
+    return "The uploaded image file is too large. Please select a smaller photo.";
+  }
+  if (
     lower.includes("internal server error") ||
     lower.includes("500") ||
     lower.includes("prisma") ||
