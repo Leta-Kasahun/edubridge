@@ -14,6 +14,8 @@ const router: Router = Router();
 
 router.use(authenticate, requireRoles("SYSTEM_ADMIN"));
 
+router.get("/", tenantProvisioningController.getTenants);
+
 router.post(
   "/invite",
   validate(provisionSchoolAdminInviteSchema),
@@ -37,5 +39,11 @@ router.post(
   validate(regenerateCredentialsSchema),
   tenantProvisioningController.regenerateCredentials
 );
+
+router.get("/:id", tenantProvisioningController.getTenantById);
+
+router.patch("/:id/activate", tenantProvisioningController.activateTenant);
+
+router.patch("/:id/deactivate", tenantProvisioningController.deactivateTenant);
 
 export { router as tenantProvisioningRouter };

@@ -4,3 +4,6 @@ export * from "./hooks/useTenantProvisioning";
 export * from "./components/TenantProvisioningManager";
 export * from "./components/TenantProvisioningForm";
 export * from "./components/ProvisioningResultCard";
+export * from "./components/TenantListTable";
+export * from "./components/TenantActionDropdown";
+export * from "./components/TenantDetailModal";

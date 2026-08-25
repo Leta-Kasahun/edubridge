@@ -1,8 +1,195 @@
 import { prisma, runWithoutTenant } from "../../../../lib/prisma.js";
+import { Prisma, TenantStatus } from "../../../../generated/prisma/client.js";
 import { generateTenantCode } from "../../../../shared/utils/generators.js";
-import { CreateProvisionedUserData, ProvisionedUserRecord } from "../types/tenant-provisioning.types.js";
+import {
+  CreateProvisionedUserData,
+  ProvisionedUserRecord,
+  TenantListItem,
+  TenantQueryFilters,
+  PaginatedTenantResult,
+} from "../types/tenant-provisioning.types.js";
 
 export class TenantProvisioningRepository {
+  async getTenants(filters: TenantQueryFilters = {}): Promise<PaginatedTenantResult> {
+    return runWithoutTenant(async () => {
+      const page = Math.max(1, filters.page || 1);
+      const limit = Math.min(100, Math.max(1, filters.limit || 20));
+      const skip = (page - 1) * limit;
+
+      const where: Prisma.TenantWhereInput = {};
+
+      if (filters.status) {
+        where.status = filters.status;
+      }
+
+      if (filters.search && filters.search.trim().length > 0) {
+        const query = filters.search.trim();
+        where.OR = [
+          { name: { contains: query, mode: "insensitive" } },
+          { code: { contains: query, mode: "insensitive" } },
+          {
+            memberships: {
+              some: {
+                roles: {
+                  some: {
+                    role: {
+                      code: "SCHOOL_ADMIN",
+                    },
+                  },
+                },
+                user: {
+                  OR: [
+                    { firstName: { contains: query, mode: "insensitive" } },
+                    { lastName: { contains: query, mode: "insensitive" } },
+                    { email: { contains: query, mode: "insensitive" } },
+                    { username: { contains: query, mode: "insensitive" } },
+                  ],
+                },
+              },
+            },
+          },
+        ];
+      }
+
+      const [total, tenants] = await Promise.all([
+        prisma.tenant.count({ where }),
+        prisma.tenant.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
+            memberships: {
+              where: {
+                roles: {
+                  some: {
+                    role: {
+                      code: "SCHOOL_ADMIN",
+                    },
+                  },
+                },
+              },
+              include: {
+                user: true,
+              },
+              take: 1,
+            },
+            _count: {
+              select: {
+                teacherProfiles: true,
+                studentProfiles: true,
+              },
+            },
+          },
+        }),
+      ]);
+
+      const data: TenantListItem[] = tenants.map((t) => {
+        const adminMembership = t.memberships[0];
+        const adminUser = adminMembership?.user;
+
+        return {
+          id: t.id,
+          name: t.name,
+          code: t.code,
+          status: t.status,
+          admin: adminUser
+            ? {
+                id: adminUser.id,
+                username: adminUser.username ?? "",
+                email: adminUser.email,
+                firstName: adminUser.firstName,
+                lastName: adminUser.lastName,
+                status: adminUser.status,
+                emailVerified: adminUser.emailVerified,
+              }
+            : undefined,
+          totalTeachers: t._count.teacherProfiles,
+          totalStudents: t._count.studentProfiles,
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+        };
+      });
+
+      return {
+        data,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    });
+  }
+
+  async findTenantWithDetails(tenantId: string): Promise<TenantListItem | null> {
+    return runWithoutTenant(async () => {
+      const t = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        include: {
+          memberships: {
+            where: {
+              roles: {
+                some: {
+                  role: {
+                    code: "SCHOOL_ADMIN",
+                  },
+                },
+              },
+            },
+            include: {
+              user: true,
+            },
+            take: 1,
+          },
+          _count: {
+            select: {
+              teacherProfiles: true,
+              studentProfiles: true,
+            },
+          },
+        },
+      });
+
+      if (!t) return null;
+
+      const adminMembership = t.memberships[0];
+      const adminUser = adminMembership?.user;
+
+      return {
+        id: t.id,
+        name: t.name,
+        code: t.code,
+        status: t.status,
+        admin: adminUser
+          ? {
+              id: adminUser.id,
+              username: adminUser.username ?? "",
+              email: adminUser.email,
+              firstName: adminUser.firstName,
+              lastName: adminUser.lastName,
+              status: adminUser.status,
+              emailVerified: adminUser.emailVerified,
+            }
+          : undefined,
+        totalTeachers: t._count.teacherProfiles,
+        totalStudents: t._count.studentProfiles,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+      };
+    });
+  }
+
+  async updateTenantStatus(tenantId: string, status: TenantStatus) {
+    return runWithoutTenant(async () => {
+      return prisma.tenant.update({
+        where: { id: tenantId },
+        data: { status },
+      });
+    });
+  }
+
   async findTenantById(tenantId: string) {
     return prisma.tenant.findUnique({
       where: { id: tenantId },

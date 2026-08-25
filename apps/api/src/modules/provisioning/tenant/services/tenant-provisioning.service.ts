@@ -22,12 +22,57 @@ import {
   ProvisionSchoolAdminDirectPayload,
   ProvisionSchoolAdminPayload,
   ProvisionSchoolAdminResult,
+  TenantListItem,
+  TenantQueryFilters,
+  PaginatedTenantResult,
 } from "../types/tenant-provisioning.types.js";
 
 export class TenantProvisioningService {
   constructor(
     private readonly repo: TenantProvisioningRepository = tenantProvisioningRepository
   ) {}
+
+  async getTenants(filters: TenantQueryFilters = {}): Promise<PaginatedTenantResult> {
+    return this.repo.getTenants(filters);
+  }
+
+  async getTenantById(tenantId: string): Promise<TenantListItem> {
+    const tenant = await this.repo.findTenantWithDetails(tenantId);
+    if (!tenant) {
+      throw new NotFoundError("School/Tenant not found");
+    }
+    return tenant;
+  }
+
+  async activateTenant(tenantId: string): Promise<TenantListItem> {
+    const existing = await this.repo.findTenantById(tenantId);
+    if (!existing) {
+      throw new NotFoundError("School/Tenant not found");
+    }
+
+    await this.repo.updateTenantStatus(tenantId, "ACTIVE");
+
+    const updated = await this.repo.findTenantWithDetails(tenantId);
+    if (!updated) {
+      throw new NotFoundError("School/Tenant not found");
+    }
+    return updated;
+  }
+
+  async deactivateTenant(tenantId: string): Promise<TenantListItem> {
+    const existing = await this.repo.findTenantById(tenantId);
+    if (!existing) {
+      throw new NotFoundError("School/Tenant not found");
+    }
+
+    await this.repo.updateTenantStatus(tenantId, "SUSPENDED");
+
+    const updated = await this.repo.findTenantWithDetails(tenantId);
+    if (!updated) {
+      throw new NotFoundError("School/Tenant not found");
+    }
+    return updated;
+  }
 
   async inviteSchoolAdmin(
     payload: ProvisionSchoolAdminInvitePayload,
@@ -189,9 +234,9 @@ export class TenantProvisioningService {
   }
 
   async regenerateSchoolAdminCredentials(userId: string): Promise<{
-    username: string;
-    tempPassword: string;
-    message: string;
+    readonly username: string;
+    readonly tempPassword: string;
+    readonly message: string;
   }> {
     const user = await this.repo.findUserById(userId);
     if (!user) {

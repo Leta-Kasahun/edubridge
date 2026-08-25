@@ -1,82 +1,126 @@
-import { AccountStatus, InvitationStatus, OTPPurpose } from "../../../../generated/prisma/client.js";
+import {
+  AccountStatus,
+  InvitationStatus,
+  OTPPurpose,
+  TenantStatus,
+} from "../../../../generated/prisma/client.js";
 
 export type ProvisioningMethod = "INVITATION" | "DIRECT_CREDENTIALS";
 
 export interface ProvisionSchoolAdminInvitePayload {
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
 }
 
 export interface ProvisionSchoolAdminDirectPayload {
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
 }
 
 export interface ProvisionSchoolAdminPayload {
-  method: ProvisioningMethod;
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
+  readonly method: ProvisioningMethod;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
 }
 
 export interface ProvisionedUserRecord {
-  id: string;
-  tenantId: string;
-  tenantName: string;
-  username: string;
-  email: string | null;
-  firstName: string;
-  lastName: string;
-  status: AccountStatus;
-  emailVerified: boolean;
-  roles: string[];
-  membershipId: string;
+  readonly id: string;
+  readonly tenantId: string;
+  readonly tenantName: string;
+  readonly username: string;
+  readonly email: string | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly status: AccountStatus;
+  readonly emailVerified: boolean;
+  readonly roles: readonly string[];
+  readonly membershipId: string;
 }
 
 export interface ProvisionSchoolAdminResult {
-  method: ProvisioningMethod;
-  user: ProvisionedUserRecord;
-  credentials?: {
-    username: string;
-    tempPassword: string;
+  readonly method: ProvisioningMethod;
+  readonly user: ProvisionedUserRecord;
+  readonly credentials?: {
+    readonly username: string;
+    readonly tempPassword: string;
   };
-  invitation?: {
-    id: string;
-    email: string;
-    expiresAt: Date;
-    otpCode?: string;
+  readonly invitation?: {
+    readonly id: string;
+    readonly email: string;
+    readonly expiresAt: Date;
+    readonly otpCode?: string;
   };
-  message: string;
+  readonly message: string;
 }
 
 export interface CreateProvisionedUserData {
-  tenantId: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
-  username: string;
-  passwordHash?: string | null;
-  emailVerified: boolean;
-  status: AccountStatus;
-  roleId: string;
-  createdById?: string;
-  otp?: {
-    codeHash: string;
-    expiresAt: Date;
-    purpose: OTPPurpose;
+  readonly tenantId: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
+  readonly username: string;
+  readonly passwordHash?: string | null;
+  readonly emailVerified: boolean;
+  readonly status: AccountStatus;
+  readonly roleId: string;
+  readonly createdById?: string;
+  readonly otp?: {
+    readonly codeHash: string;
+    readonly expiresAt: Date;
+    readonly purpose: OTPPurpose;
   };
-  invitation?: {
-    tokenHash: string;
-    expiresAt: Date;
-    createdById: string;
-    status?: InvitationStatus;
+  readonly invitation?: {
+    readonly tokenHash: string;
+    readonly expiresAt: Date;
+    readonly createdById: string;
+    readonly status?: InvitationStatus;
+  };
+}
+
+export interface TenantAdminInfo {
+  readonly id: string;
+  readonly username: string;
+  readonly email: string | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly status: AccountStatus;
+  readonly emailVerified: boolean;
+}
+
+export interface TenantListItem {
+  readonly id: string;
+  readonly name: string;
+  readonly code: string;
+  readonly status: TenantStatus;
+  readonly admin?: TenantAdminInfo;
+  readonly totalTeachers: number;
+  readonly totalStudents: number;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export interface TenantQueryFilters {
+  readonly page?: number;
+  readonly limit?: number;
+  readonly search?: string;
+  readonly status?: TenantStatus;
+}
+
+export interface PaginatedTenantResult {
+  readonly data: readonly TenantListItem[];
+  readonly pagination: {
+    readonly total: number;
+    readonly page: number;
+    readonly limit: number;
+    readonly totalPages: number;
   };
 }

@@ -1,66 +1,107 @@
+export type TenantStatus = "ACTIVE" | "SUSPENDED";
+
 export type ProvisioningMethod = "INVITATION" | "DIRECT_CREDENTIALS";
 
 export interface ProvisionSchoolAdminInvitePayload {
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
 }
 
 export interface ProvisionSchoolAdminDirectPayload {
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
 }
 
 export interface ProvisionSchoolAdminPayload {
-  method: ProvisioningMethod;
-  tenantName: string;
-  tenantId?: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
+  readonly method: ProvisioningMethod;
+  readonly tenantName: string;
+  readonly tenantId?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
 }
 
 export interface ProvisionedUser {
-  id: string;
-  tenantId: string;
-  tenantName: string;
-  username: string;
-  email: string | null;
-  firstName: string;
-  lastName: string;
-  status: string;
-  emailVerified: boolean;
-  roles: string[];
-  membershipId: string;
+  readonly id: string;
+  readonly tenantId: string;
+  readonly tenantName: string;
+  readonly username: string;
+  readonly email: string | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly status: string;
+  readonly emailVerified: boolean;
+  readonly roles: readonly string[];
+  readonly membershipId: string;
 }
 
 export interface ProvisionSchoolAdminResult {
-  method: ProvisioningMethod;
-  user: ProvisionedUser;
-  credentials?: {
-    username: string;
-    tempPassword: string;
+  readonly method: ProvisioningMethod;
+  readonly user: ProvisionedUser;
+  readonly credentials?: {
+    readonly username: string;
+    readonly tempPassword: string;
   };
-  invitation?: {
-    id: string;
-    email: string;
-    expiresAt: string;
-    otpCode?: string;
+  readonly invitation?: {
+    readonly id: string;
+    readonly email: string;
+    readonly expiresAt: string;
+    readonly otpCode?: string;
   };
-  message: string;
+  readonly message: string;
 }
 
 export interface RegenerateCredentialsPayload {
-  userId: string;
+  readonly userId: string;
 }
 
 export interface RegenerateCredentialsResult {
-  username: string;
-  tempPassword: string;
-  message: string;
+  readonly username: string;
+  readonly tempPassword: string;
+  readonly message: string;
+}
+
+export interface TenantAdminInfo {
+  readonly id: string;
+  readonly username: string;
+  readonly email: string | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly status: string;
+  readonly emailVerified: boolean;
+}
+
+export interface TenantRecord {
+  readonly id: string;
+  readonly name: string;
+  readonly code: string;
+  readonly status: TenantStatus;
+  readonly admin?: TenantAdminInfo;
+  readonly totalTeachers: number;
+  readonly totalStudents: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface TenantQueryFilters {
+  readonly page?: number;
+  readonly limit?: number;
+  readonly search?: string;
+  readonly status?: TenantStatus;
+}
+
+export interface TenantPaginatedResponse {
+  readonly data: readonly TenantRecord[];
+  readonly pagination: {
+    readonly total: number;
+    readonly page: number;
+    readonly limit: number;
+    readonly totalPages: number;
+  };
 }

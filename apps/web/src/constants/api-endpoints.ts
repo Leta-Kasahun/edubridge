@@ -34,6 +34,9 @@ export const API_ENDPOINTS = {
       INVITE: "/provisioning/tenant/invite",
       DIRECT: "/provisioning/tenant/direct",
       REGENERATE_CREDENTIALS: "/provisioning/tenant/regenerate-credentials",
+      BY_ID: (id: string) => `/provisioning/tenant/${id}`,
+      DEACTIVATE: (id: string) => `/provisioning/tenant/${id}/deactivate`,
+      ACTIVATE: (id: string) => `/provisioning/tenant/${id}/activate`,
     },
     TEACHERS: {
       BASE: "/provisioning/teachers",

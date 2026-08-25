@@ -1,21 +1,24 @@
 "use client";
 
-import { Menu, Search, Bell } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import { UserMenu } from "@/shared/components/UserMenu";
+import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
+import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { useUiStore } from "@/stores/ui.store";
-import { useAuthStore } from "@/stores/auth.store";
 import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
   readonly className?: string;
-  readonly title?: string;
-  readonly subtitle?: string;
+  readonly breadcrumbs?: readonly BreadcrumbItemData[];
+  readonly customBreadcrumbLabels?: Readonly<Record<string, string>>;
 }
 
-export function DashboardHeader({ className }: DashboardHeaderProps) {
+export function DashboardHeader({
+  className,
+  breadcrumbs,
+  customBreadcrumbLabels,
+}: DashboardHeaderProps) {
   const toggleSidebarMobile = useUiStore((state) => state.toggleSidebarMobile);
-  const user = useAuthStore((state) => state.user);
-  const isSystemAdmin = user?.roles?.includes("SYSTEM_ADMIN") ?? false;
 
   return (
     <header
@@ -34,15 +37,10 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           <Menu size={20} />
         </button>
 
-        <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          />
-          <input
-            type="search"
-            placeholder={isSystemAdmin ? "Search platform resources..." : "Search across school..."}
-            className="w-full h-8.5 pl-9 pr-3 text-xs bg-muted/50 hover:bg-muted/70 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors"
+        <div className="min-w-0 overflow-hidden">
+          <Breadcrumbs
+            items={breadcrumbs}
+            customLabels={customBreadcrumbLabels}
           />
         </div>
       </div>
