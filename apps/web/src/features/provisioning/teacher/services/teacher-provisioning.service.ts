@@ -102,17 +102,6 @@ export const teacherProvisioningService = {
     return response.data.data;
   },
 
-  async updateTeacher(
-    id: string,
-    payload: UpdateTeacherPayload
-  ): Promise<TeacherRecord> {
-    const response = await apiClient.put<ApiResponse<TeacherRecord>>(
-      API_ENDPOINTS.PROVISIONING.TEACHERS.BY_ID(id),
-      payload
-    );
-    return response.data.data;
-  },
-
   async deactivateTeacher(
     id: string,
     status: string = "INACTIVE"

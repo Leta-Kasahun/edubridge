@@ -9,14 +9,13 @@ import {
   Filter,
   Users,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { TeacherActionDropdown } from "./TeacherActionDropdown";
 import {
   useTeachers,
   useDeactivateTeacher,
   useActivateTeacher,
-} from "../hooks/useTeacherManagement";
+} from "../hooks/useTeacherProvisioning";
 import {
   TeacherRecord,
   TeacherStatus,
@@ -26,14 +25,12 @@ import {
 export interface TeacherListTableProps {
   readonly onAddTeacher: () => void;
   readonly onImportCsv: () => void;
-  readonly onEditTeacher: (teacher: TeacherRecord) => void;
   readonly onViewTeacher: (teacher: TeacherRecord) => void;
 }
 
 export function TeacherListTable({
   onAddTeacher,
   onImportCsv,
-  onEditTeacher,
   onViewTeacher,
 }: TeacherListTableProps) {
   const [search, setSearch] = useState("");
@@ -135,7 +132,7 @@ export function TeacherListTable({
             setSearch(v);
             setPage(1);
           }}
-          searchPlaceholder="Search by name, code, email, username..."
+          searchPlaceholder="Search by code, name, email, username..."
           filters={filterGroups}
           actionButton={actionButtons}
         />
@@ -170,13 +167,15 @@ export function TeacherListTable({
           <>
             <div className="hidden sm:block overflow-x-visible">
               <table className="w-full text-xs text-left">
-                <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">
+                <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-xs">
                   <tr>
                     <th className="px-5 py-3.5">Teacher</th>
-                    <th className="px-4 py-3.5">Employee Code</th>
                     <th className="px-4 py-3.5">Username</th>
                     <th className="px-4 py-3.5">Gender</th>
+                    <th className="px-4 py-3.5">Email</th>
+                    <th className="px-4 py-3.5">Phone</th>
                     <th className="px-4 py-3.5">Status</th>
+                    <th className="px-4 py-3.5">Verification</th>
                     <th className="px-4 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -187,53 +186,42 @@ export function TeacherListTable({
                       className="hover:bg-muted/20 transition-colors"
                     >
                       <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                            {teacher.firstName.charAt(0)}{teacher.lastName.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-foreground">
-                              {teacher.firstName} {teacher.middleName} {teacher.lastName}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground">
-                              {teacher.email || teacher.phoneNumber || "No contact info"}
-                            </div>
-                          </div>
+                        <div className="font-semibold text-foreground text-xs">
+                          {teacher.firstName} {teacher.middleName} {teacher.lastName}
+                        </div>
+                        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                          {teacher.employeeCode}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-muted-foreground">
-                        {teacher.employeeCode}
-                      </td>
-
-                      <td className="px-4 py-3.5 font-mono font-medium text-foreground">
+                      <td className="px-4 py-3.5 font-mono text-foreground text-xs">
                         {teacher.username}
                       </td>
 
-                      <td className="px-4 py-3.5 uppercase text-muted-foreground">
+                      <td className="px-4 py-3.5 uppercase text-foreground text-xs">
                         {teacher.gender}
                       </td>
 
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={cn(
-                            "inline-flex px-2 py-0.5 rounded text-[10px] font-semibold",
-                            teacher.teacherStatus === "ACTIVE"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : teacher.teacherStatus === "SUSPENDED"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {teacher.teacherStatus}
-                        </span>
+                      <td className="px-4 py-3.5 text-foreground text-xs">
+                        {teacher.email || "—"}
+                      </td>
+
+                      <td className="px-4 py-3.5 font-mono text-foreground text-xs">
+                        {teacher.phoneNumber || "—"}
+                      </td>
+
+                      <td className="px-4 py-3.5 font-medium text-foreground text-xs">
+                        {teacher.teacherStatus === "ACTIVE" ? "Active" : "Inactive"}
+                      </td>
+
+                      <td className="px-4 py-3.5 font-medium text-foreground text-xs">
+                        {teacher.emailVerified ? "Verified" : "Pending"}
                       </td>
 
                       <td className="px-4 py-3.5 text-right">
                         <TeacherActionDropdown
                           teacher={teacher}
                           onView={onViewTeacher}
-                          onEdit={onEditTeacher}
                           onToggleStatus={handleToggleStatus}
                         />
                       </td>
@@ -247,48 +235,48 @@ export function TeacherListTable({
               {teachers.map((teacher) => (
                 <div key={teacher.teacherProfileId} className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                        {teacher.firstName.charAt(0)}{teacher.lastName.charAt(0)}
+                    <div>
+                      <div className="font-semibold text-xs text-foreground">
+                        {teacher.firstName} {teacher.middleName} {teacher.lastName}
                       </div>
-                      <div>
-                        <div className="font-semibold text-xs text-foreground">
-                          {teacher.firstName} {teacher.middleName} {teacher.lastName}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {teacher.email || teacher.phoneNumber || "No contact info"}
-                        </div>
+                      <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                        {teacher.employeeCode}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "inline-flex px-2 py-0.5 rounded text-[10px] font-semibold",
-                          teacher.teacherStatus === "ACTIVE"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {teacher.teacherStatus}
+                      <span className="text-xs font-medium text-foreground">
+                        {teacher.teacherStatus === "ACTIVE" ? "Active" : "Inactive"}
                       </span>
+
                       <TeacherActionDropdown
                         teacher={teacher}
                         onView={onViewTeacher}
-                        onEdit={onEditTeacher}
                         onToggleStatus={handleToggleStatus}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-border">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-border">
                     <div>
                       <span className="text-[10px] block uppercase text-muted-foreground">Username</span>
-                      <span className="font-mono font-medium text-foreground">{teacher.username}</span>
+                      <span className="font-mono font-medium text-foreground text-xs">{teacher.username}</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[10px] block uppercase text-muted-foreground">Code</span>
-                      <span className="font-mono">{teacher.employeeCode}</span>
+                    <div>
+                      <span className="text-[10px] block uppercase text-muted-foreground">Gender</span>
+                      <span className="uppercase font-medium text-foreground text-xs">{teacher.gender}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] block uppercase text-muted-foreground">Email</span>
+                      <span className="font-medium text-foreground truncate block text-xs">{teacher.email || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] block uppercase text-muted-foreground">Phone</span>
+                      <span className="font-mono font-medium text-foreground text-xs">{teacher.phoneNumber || "—"}</span>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-between pt-1 border-t border-border/60">
+                      <span className="text-[10px] uppercase text-muted-foreground">Verification</span>
+                      <span className="font-medium text-foreground text-xs">{teacher.emailVerified ? "Verified" : "Pending"}</span>
                     </div>
                   </div>
                 </div>

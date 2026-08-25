@@ -7,8 +7,8 @@ export const ROUTES = {
     RESET_PASSWORD: "/reset-password",
   },
   DASHBOARD: "/dashboard",
-  SCHOOLS: "/dashboard/schools",
-  TEACHERS: "/dashboard/teachers",
+  SCHOOLS: "/dashboard/schools-mng",
+  TEACHERS: "/dashboard/teachers-mng",
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",

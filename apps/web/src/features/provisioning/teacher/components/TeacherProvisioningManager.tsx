@@ -6,7 +6,6 @@ import { TeacherListTable } from "./TeacherListTable";
 import { TeacherProvisioningForm } from "./TeacherProvisioningForm";
 import { TeacherBulkProvisioningForm } from "./TeacherBulkProvisioningForm";
 import { TeacherProvisioningResultCard } from "./TeacherProvisioningResultCard";
-import { TeacherEditModal } from "./TeacherEditModal";
 import { TeacherDetailModal } from "./TeacherDetailModal";
 import {
   TeacherRecord,
@@ -17,8 +16,6 @@ import {
 export function TeacherProvisioningManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [selectedTeacherForEdit, setSelectedTeacherForEdit] =
-    useState<TeacherRecord | null>(null);
   const [selectedTeacherForView, setSelectedTeacherForView] =
     useState<TeacherRecord | null>(null);
 
@@ -47,7 +44,6 @@ export function TeacherProvisioningManager() {
       <TeacherListTable
         onAddTeacher={() => setIsAddModalOpen(true)}
         onImportCsv={() => setIsImportModalOpen(true)}
-        onEditTeacher={(teacher) => setSelectedTeacherForEdit(teacher)}
         onViewTeacher={(teacher) => setSelectedTeacherForView(teacher)}
       />
 
@@ -59,7 +55,7 @@ export function TeacherProvisioningManager() {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -79,7 +75,7 @@ export function TeacherProvisioningManager() {
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -99,7 +95,7 @@ export function TeacherProvisioningManager() {
               <button
                 type="button"
                 onClick={handleResetResults}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -115,24 +111,11 @@ export function TeacherProvisioningManager() {
         </div>
       )}
 
-      {selectedTeacherForEdit && (
-        <TeacherEditModal
-          teacher={selectedTeacherForEdit}
-          isOpen={Boolean(selectedTeacherForEdit)}
-          onClose={() => setSelectedTeacherForEdit(null)}
-        />
-      )}
-
       {selectedTeacherForView && (
         <TeacherDetailModal
           teacher={selectedTeacherForView}
           isOpen={Boolean(selectedTeacherForView)}
           onClose={() => setSelectedTeacherForView(null)}
-          onEdit={() => {
-            const current = selectedTeacherForView;
-            setSelectedTeacherForView(null);
-            setSelectedTeacherForEdit(current);
-          }}
         />
       )}
     </div>

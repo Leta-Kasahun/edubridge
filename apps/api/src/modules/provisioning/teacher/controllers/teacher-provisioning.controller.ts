@@ -9,10 +9,6 @@ import {
   teacherBulkProvisioningService,
   TeacherBulkProvisioningService,
 } from "../services/teacher-bulk-provisioning.service.js";
-import {
-  teacherManagementService,
-  TeacherManagementService,
-} from "../services/teacher-management.service.js";
 import { TeacherStatus, Gender } from "../../../../generated/prisma/client.js";
 
 function resolveTenantId(req: Request): string {
@@ -31,8 +27,7 @@ function resolveTenantId(req: Request): string {
 export class TeacherProvisioningController {
   constructor(
     private readonly provisioningSvc: TeacherProvisioningService = teacherProvisioningService,
-    private readonly bulkSvc: TeacherBulkProvisioningService = teacherBulkProvisioningService,
-    private readonly managementSvc: TeacherManagementService = teacherManagementService
+    private readonly bulkSvc: TeacherBulkProvisioningService = teacherBulkProvisioningService
   ) {}
 
   inviteTeacher = asyncHandler(async (req: Request, res: Response) => {
@@ -113,7 +108,7 @@ export class TeacherProvisioningController {
     const status = req.query.status as TeacherStatus | undefined;
     const gender = req.query.gender as Gender | undefined;
 
-    const result = await this.managementSvc.getTeachers(tenantId, {
+    const result = await this.provisioningSvc.getTeachers(tenantId, {
       page,
       limit,
       search,
@@ -134,24 +129,7 @@ export class TeacherProvisioningController {
     if (!profileId) {
       throw new BadRequestError("Teacher profile ID is required");
     }
-    const result = await this.managementSvc.getTeacherById(tenantId, profileId);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  });
-
-  updateTeacher = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = resolveTenantId(req);
-    const profileId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    if (!profileId) {
-      throw new BadRequestError("Teacher profile ID is required");
-    }
-    const result = await this.managementSvc.updateTeacher(
-      tenantId,
-      profileId,
-      req.body
-    );
+    const result = await this.provisioningSvc.getTeacherById(tenantId, profileId);
     res.status(200).json({
       success: true,
       data: result,
@@ -164,8 +142,8 @@ export class TeacherProvisioningController {
     if (!profileId) {
       throw new BadRequestError("Teacher profile ID is required");
     }
-    const status = req.body.status as TeacherStatus | undefined;
-    const result = await this.managementSvc.deactivateTeacher(
+    const status = req.body.status as "INACTIVE" | "SUSPENDED" | undefined;
+    const result = await this.provisioningSvc.deactivateTeacher(
       tenantId,
       profileId,
       status
@@ -183,7 +161,7 @@ export class TeacherProvisioningController {
     if (!profileId) {
       throw new BadRequestError("Teacher profile ID is required");
     }
-    const result = await this.managementSvc.activateTeacher(tenantId, profileId);
+    const result = await this.provisioningSvc.activateTeacher(tenantId, profileId);
     res.status(200).json({
       success: true,
       data: result,

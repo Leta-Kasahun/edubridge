@@ -41,11 +41,11 @@ export function TeacherProvisioningForm({
     }
 
     if (!middleName.trim()) {
-      errors.middleName = "Father / Middle name is required";
+      errors.middleName = "Middle name is required";
     }
 
     if (!lastName.trim()) {
-      errors.lastName = "Grandfather / Last name is required";
+      errors.lastName = "Last name is required";
     }
 
     if (method === "INVITATION") {
@@ -121,7 +121,7 @@ export function TeacherProvisioningForm({
                 });
               }}
               className={cn(
-                "h-11 sm:h-12 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer rounded-none active:scale-[0.99]",
+                "h-11 sm:h-12 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer rounded-xl active:scale-[0.99]",
                 method === "INVITATION"
                   ? "border-2 border-primary text-primary bg-primary/5 font-bold"
                   : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
@@ -142,7 +142,7 @@ export function TeacherProvisioningForm({
                 });
               }}
               className={cn(
-                "h-11 sm:h-12 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer rounded-none active:scale-[0.99]",
+                "h-11 sm:h-12 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer rounded-xl active:scale-[0.99]",
                 method === "DIRECT_CREDENTIALS"
                   ? "border-2 border-primary text-primary bg-primary/5 font-bold"
                   : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
@@ -176,7 +176,7 @@ export function TeacherProvisioningForm({
 
             <FormField
               id="middleName"
-              label="Father / Middle Name"
+              label="Middle Name"
               placeholder="e.g. Tadesse"
               value={middleName}
               onChange={(e) => {
@@ -192,7 +192,7 @@ export function TeacherProvisioningForm({
 
             <FormField
               id="lastName"
-              label="Grandfather Name"
+              label="Last Name"
               placeholder="e.g. Haile"
               value={lastName}
               onChange={(e) => {
@@ -208,35 +208,26 @@ export function TeacherProvisioningForm({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2 w-full">
+              <label
+                htmlFor="teacherGenderSelect"
+                className="text-xs font-semibold uppercase tracking-wider text-foreground/80 select-none block"
+              >
                 Gender <span className="text-primary">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2 h-11">
-                <button
-                  type="button"
-                  onClick={() => setGender("FEMALE")}
-                  className={cn(
-                    "h-full px-3 flex items-center justify-center text-xs font-semibold rounded-none border transition-all cursor-pointer",
-                    gender === "FEMALE"
-                      ? "border-2 border-primary text-primary bg-primary/5 font-bold"
-                      : "border-border text-muted-foreground hover:text-foreground bg-background/50"
-                  )}
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 flex items-center pointer-events-none text-muted-foreground/80">
+                  <User size={18} />
+                </div>
+                <select
+                  id="teacherGenderSelect"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as TeacherGender)}
+                  className="h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 pl-11 pr-3.5 text-sm sm:text-base font-normal shadow-xs transition-all duration-200 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 text-foreground cursor-pointer focus:outline-hidden"
                 >
-                  Female
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGender("MALE")}
-                  className={cn(
-                    "h-full px-3 flex items-center justify-center text-xs font-semibold rounded-none border transition-all cursor-pointer",
-                    gender === "MALE"
-                      ? "border-2 border-primary text-primary bg-primary/5 font-bold"
-                      : "border-border text-muted-foreground hover:text-foreground bg-background/50"
-                  )}
-                >
-                  Male
-                </button>
+                  <option value="FEMALE">Female</option>
+                  <option value="MALE">Male</option>
+                </select>
               </div>
             </div>
 
@@ -270,7 +261,7 @@ export function TeacherProvisioningForm({
 
             <FormField
               id="phoneNumber"
-              label="Phone Number (Optional)"
+              label="Phone Number"
               placeholder="+251 91 123 4567"
               value={phoneNumber}
               onChange={(e) => {
@@ -290,7 +281,7 @@ export function TeacherProvisioningForm({
           loadingText={method === "INVITATION" ? "Sending Invitation..." : "Creating Account..."}
           icon={method === "INVITATION" ? <Send size={18} /> : <KeyRound size={18} />}
           iconPosition="right"
-          className="w-full"
+          className="w-full h-11 sm:h-12 text-sm sm:text-base rounded-xl font-semibold"
         >
           {method === "INVITATION" ? "Invite Teacher" : "Generate Credentials"}
         </SubmitButton>

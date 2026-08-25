@@ -17,12 +17,12 @@ export interface NavNode {
 
 export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
   {
-    label: "System Dashboard",
+    label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
   },
   {
-    label: "Manage Schools",
+    label: "Schools",
     href: ROUTES.SCHOOLS,
     icon: Building2,
   },
@@ -31,8 +31,8 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.SETTINGS.BASE,
     icon: Settings,
     children: [
-      { label: "Security Policy", href: ROUTES.SETTINGS.SECURITY },
-      { label: "Roles & Permissions", href: ROUTES.SETTINGS.ROLES },
+      { label: "Security", href: ROUTES.SETTINGS.SECURITY },
+      { label: "Roles & Access", href: ROUTES.SETTINGS.ROLES },
       { label: "Preferences", href: ROUTES.SETTINGS.PREFERENCES },
     ],
   },

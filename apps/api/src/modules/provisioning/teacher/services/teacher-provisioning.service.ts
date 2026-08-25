@@ -22,12 +22,67 @@ import {
   SingleTeacherProvisionDirectPayload,
   SingleTeacherProvisionPayload,
   TeacherProvisionResult,
+  TeacherQueryFilters,
+  PaginatedTeacherResult,
+  ProvisionedTeacherRecord,
 } from "../types/teacher-provisioning.types.js";
 
 export class TeacherProvisioningService {
   constructor(
     private readonly repo: TeacherProvisioningRepository = teacherProvisioningRepository
   ) {}
+
+  async getTeachers(
+    tenantId: string,
+    filters: TeacherQueryFilters = {}
+  ): Promise<PaginatedTeacherResult> {
+    return this.repo.getTeachers(tenantId, filters);
+  }
+
+  async getTeacherById(
+    tenantId: string,
+    profileId: string
+  ): Promise<ProvisionedTeacherRecord> {
+    const profile = await this.repo.findTeacherProfileById(tenantId, profileId);
+    if (!profile) {
+      throw new NotFoundError("Teacher profile not found");
+    }
+    return profile;
+  }
+
+  async activateTeacher(
+    tenantId: string,
+    profileId: string
+  ): Promise<ProvisionedTeacherRecord> {
+    const updated = await this.repo.updateTeacherStatus(
+      tenantId,
+      profileId,
+      "ACTIVE",
+      "ACTIVE"
+    );
+    if (!updated) {
+      throw new NotFoundError("Teacher profile not found");
+    }
+    return updated;
+  }
+
+  async deactivateTeacher(
+    tenantId: string,
+    profileId: string,
+    status: "INACTIVE" | "SUSPENDED" = "INACTIVE"
+  ): Promise<ProvisionedTeacherRecord> {
+    const userStatus = status === "SUSPENDED" ? "SUSPENDED" : "DEACTIVATED";
+    const updated = await this.repo.updateTeacherStatus(
+      tenantId,
+      profileId,
+      status,
+      userStatus
+    );
+    if (!updated) {
+      throw new NotFoundError("Teacher profile not found");
+    }
+    return updated;
+  }
 
   async inviteTeacher(
     payload: SingleTeacherProvisionInvitePayload,

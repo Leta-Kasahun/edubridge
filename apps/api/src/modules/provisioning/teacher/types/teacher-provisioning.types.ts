@@ -83,6 +83,7 @@ export interface ProvisionedTeacherRecord {
   readonly teacherStatus: TeacherStatus;
   readonly emailVerified: boolean;
   readonly membershipId: string;
+  readonly createdAt?: Date;
 }
 
 export interface TeacherProvisionResult {

@@ -49,8 +49,6 @@ router.get("/", teacherProvisioningController.getTeachers);
 
 router.get("/:id", teacherProvisioningController.getTeacherById);
 
-router.put("/:id", teacherProvisioningController.updateTeacher);
-
 router.patch("/:id/deactivate", teacherProvisioningController.deactivateTeacher);
 
 router.patch("/:id/activate", teacherProvisioningController.activateTeacher);

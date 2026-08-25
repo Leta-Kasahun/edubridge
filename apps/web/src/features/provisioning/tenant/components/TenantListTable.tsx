@@ -13,9 +13,8 @@ import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { TenantActionDropdown } from "./TenantActionDropdown";
 import {
   useTenants,
-  useActivateTenant,
   useDeactivateTenant,
-  useRegenerateCredentials,
+  useActivateTenant,
 } from "../hooks/useTenantProvisioning";
 import {
   TenantRecord,
@@ -25,17 +24,13 @@ import {
 export interface TenantListTableProps {
   readonly onAddSchool: () => void;
   readonly onViewTenant: (tenant: TenantRecord) => void;
-  readonly onCredentialsRegenerated?: (result: {
-    readonly username: string;
-    readonly tempPassword: string;
-    readonly message: string;
-  }) => void;
+  readonly onRegenerateCredentials?: (tenant: TenantRecord) => void;
 }
 
 export function TenantListTable({
   onAddSchool,
   onViewTenant,
-  onCredentialsRegenerated,
+  onRegenerateCredentials,
 }: TenantListTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TenantStatus | undefined>(undefined);
@@ -48,9 +43,8 @@ export function TenantListTable({
     status: statusFilter,
   });
 
-  const activateMutation = useActivateTenant();
   const deactivateMutation = useDeactivateTenant();
-  const regenerateMutation = useRegenerateCredentials();
+  const activateMutation = useActivateTenant();
 
   const tenants = response?.data || [];
   const pagination = response?.pagination || {
@@ -65,16 +59,6 @@ export function TenantListTable({
       await deactivateMutation.mutateAsync(tenant.id);
     } else {
       await activateMutation.mutateAsync(tenant.id);
-    }
-  };
-
-  const handleRegenerateCredentials = async (tenant: TenantRecord) => {
-    if (!tenant.admin) return;
-    const res = await regenerateMutation.mutateAsync({
-      userId: tenant.admin.id,
-    });
-    if (onCredentialsRegenerated) {
-      onCredentialsRegenerated(res);
     }
   };
 
@@ -137,7 +121,7 @@ export function TenantListTable({
             </div>
             <div className="text-sm font-semibold text-foreground">No schools found</div>
             <div className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Get started by provisioning your first school and administrator account.
+              Get started by adding and provisioning your first school institution.
             </div>
             <div className="pt-2 flex items-center justify-center gap-2">
               <button
@@ -155,10 +139,10 @@ export function TenantListTable({
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="px-5 py-3.5">School / Tenant</th>
+                    <th className="px-5 py-3.5">School</th>
                     <th className="px-4 py-3.5">Code</th>
                     <th className="px-4 py-3.5">Administrator</th>
-                    <th className="px-4 py-3.5">Username</th>
+                    <th className="px-4 py-3.5">Admin Username</th>
                     <th className="px-4 py-3.5">Status</th>
                     <th className="px-4 py-3.5 text-right">Actions</th>
                   </tr>
@@ -170,19 +154,14 @@ export function TenantListTable({
                       className="hover:bg-muted/20 transition-colors"
                     >
                       <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                            {tenant.name.slice(0, 2).toUpperCase()}
+                        <div>
+                          <div className="font-semibold text-foreground">
+                            {tenant.name}
                           </div>
-                          <div>
-                            <div className="font-semibold text-foreground">
-                              {tenant.name}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-                              <span>{tenant.totalTeachers} teachers</span>
-                              <span>•</span>
-                              <span>{tenant.totalStudents} students</span>
-                            </div>
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                            <span>{tenant.totalTeachers} teachers</span>
+                            <span>•</span>
+                            <span>{tenant.totalStudents} students</span>
                           </div>
                         </div>
                       </td>
@@ -230,7 +209,7 @@ export function TenantListTable({
                           tenant={tenant}
                           onView={onViewTenant}
                           onToggleStatus={handleToggleStatus}
-                          onRegenerateCredentials={handleRegenerateCredentials}
+                          onRegenerateCredentials={onRegenerateCredentials}
                         />
                       </td>
                     </tr>
@@ -243,17 +222,12 @@ export function TenantListTable({
               {tenants.map((tenant) => (
                 <div key={tenant.id} className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                        {tenant.name.slice(0, 2).toUpperCase()}
+                    <div>
+                      <div className="font-semibold text-xs text-foreground">
+                        {tenant.name}
                       </div>
-                      <div>
-                        <div className="font-semibold text-xs text-foreground">
-                          {tenant.name}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          Code: {tenant.code}
-                        </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Code: {tenant.code}
                       </div>
                     </div>
 
@@ -272,23 +246,21 @@ export function TenantListTable({
                         tenant={tenant}
                         onView={onViewTenant}
                         onToggleStatus={handleToggleStatus}
-                        onRegenerateCredentials={handleRegenerateCredentials}
+                        onRegenerateCredentials={onRegenerateCredentials}
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground bg-background/50 p-2.5 rounded-lg border border-border">
                     <div>
-                      <span className="text-[10px] block uppercase text-muted-foreground">Admin</span>
+                      <span className="text-[10px] block uppercase text-muted-foreground">Administrator</span>
                       <span className="font-medium text-foreground">
                         {tenant.admin ? `${tenant.admin.firstName} ${tenant.admin.lastName}` : "Unassigned"}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] block uppercase text-muted-foreground">Username</span>
-                      <span className="font-mono font-medium text-foreground">
-                        {tenant.admin?.username || "—"}
-                      </span>
+                      <span className="text-[10px] block uppercase text-muted-foreground">Teachers</span>
+                      <span className="font-mono text-foreground">{tenant.totalTeachers}</span>
                     </div>
                   </div>
                 </div>

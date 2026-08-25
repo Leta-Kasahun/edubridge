@@ -11,7 +11,6 @@ import {
   Mail,
   ShieldAlert,
   ArrowRight,
-  Sparkles,
   Users,
   AlertTriangle,
 } from "lucide-react";
@@ -50,7 +49,7 @@ export function TeacherProvisioningResultCard({
     return (
       <div className="w-full max-w-2xl mx-auto bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-xs space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 rounded-full bg-primary/10 text-primary mb-1">
+          <div className="inline-flex items-center justify-center p-3 rounded-full bg-muted text-foreground mb-1">
             <Users size={32} />
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
@@ -67,8 +66,8 @@ export function TeacherProvisioningResultCard({
             <div className="text-lg font-bold text-foreground">{bulkResult.totalRows}</div>
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase text-emerald-600 dark:text-emerald-400">Success</div>
-            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{bulkResult.successCount}</div>
+            <div className="text-xs font-semibold uppercase text-foreground">Success</div>
+            <div className="text-lg font-bold text-foreground">{bulkResult.successCount}</div>
           </div>
           <div>
             <div className="text-xs font-semibold uppercase text-rose-600 dark:text-rose-400">Failed</div>
@@ -121,7 +120,7 @@ export function TeacherProvisioningResultCard({
   return (
     <div className="w-full max-w-2xl mx-auto bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-xs space-y-6">
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center p-3 rounded-full bg-primary/10 text-primary mb-1">
+        <div className="inline-flex items-center justify-center p-3 rounded-full bg-muted text-foreground mb-1">
           {isInvite ? <Send size={32} /> : <CheckCircle2 size={32} />}
         </div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
@@ -135,7 +134,7 @@ export function TeacherProvisioningResultCard({
       <div className="rounded-xl border border-border bg-background/50 divide-y divide-border overflow-hidden">
         <div className="p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2 rounded-lg bg-muted text-muted-foreground">
               <User size={18} />
             </div>
             <div>
@@ -155,7 +154,7 @@ export function TeacherProvisioningResultCard({
 
         <div className="p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2 rounded-lg bg-muted text-muted-foreground">
               <KeyRound size={18} />
             </div>
             <div>
@@ -168,12 +167,12 @@ export function TeacherProvisioningResultCard({
           <button
             type="button"
             onClick={() => copyToClipboard(result.teacher.username, "username")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
           >
             {copiedField === "username" ? (
               <>
-                <Check size={14} className="text-primary" />
-                <span className="text-primary font-semibold">Copied</span>
+                <Check size={14} className="text-foreground" />
+                <span className="text-foreground font-semibold">Copied</span>
               </>
             ) : (
               <>
@@ -187,7 +186,7 @@ export function TeacherProvisioningResultCard({
         {isInvite && result.invitation?.email && (
           <div className="p-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <div className="p-2 rounded-lg bg-muted text-muted-foreground">
                 <Mail size={18} />
               </div>
               <div>
@@ -199,7 +198,7 @@ export function TeacherProvisioningResultCard({
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground">Verification OTP</div>
-              <div className="text-xs font-mono font-bold text-primary">
+              <div className="text-xs font-mono font-bold text-foreground">
                 {result.invitation.otpCode || "Delivered to Email"}
               </div>
             </div>
@@ -207,10 +206,10 @@ export function TeacherProvisioningResultCard({
         )}
 
         {!isInvite && result.credentials?.tempPassword && (
-          <div className="p-4 flex items-center justify-between gap-4 bg-primary/5">
+          <div className="p-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <Sparkles size={18} />
+              <div className="p-2 rounded-lg bg-muted text-muted-foreground">
+                <KeyRound size={18} />
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Temporary Password</div>
@@ -222,12 +221,12 @@ export function TeacherProvisioningResultCard({
             <button
               type="button"
               onClick={() => copyToClipboard(result.credentials!.tempPassword, "password")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
               {copiedField === "password" ? (
                 <>
-                  <Check size={14} className="text-primary" />
-                  <span className="text-primary font-semibold">Copied</span>
+                  <Check size={14} className="text-foreground" />
+                  <span className="text-foreground font-semibold">Copied</span>
                 </>
               ) : (
                 <>
@@ -241,9 +240,9 @@ export function TeacherProvisioningResultCard({
       </div>
 
       {!isInvite && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200">
-          <ShieldAlert size={20} className="shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/60 border border-border text-muted-foreground">
+          <ShieldAlert size={20} className="shrink-0 mt-0.5 text-foreground" />
+          <div className="text-xs leading-relaxed text-foreground">
             Please share these credentials securely with the teacher. They will be prompted to choose a new permanent password on their first login.
           </div>
         </div>

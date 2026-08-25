@@ -1,5 +1,5 @@
 import { TeacherProvisioningManager } from "@/features/provisioning/teacher";
 
-export default function TeachersPage() {
+export default function TeachersManagementPage() {
   return <TeacherProvisioningManager />;
 }

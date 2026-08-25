@@ -6,21 +6,21 @@ import { TenantListTable } from "./TenantListTable";
 import { TenantProvisioningForm } from "./TenantProvisioningForm";
 import { ProvisioningResultCard } from "./ProvisioningResultCard";
 import { TenantDetailModal } from "./TenantDetailModal";
+import { useRegenerateCredentials } from "../hooks/useTenantProvisioning";
 import {
   TenantRecord,
   ProvisionSchoolAdminResult,
+  RegenerateCredentialsResult,
 } from "../types/tenant-provisioning.types";
 
 export function TenantProvisioningManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedTenantForView, setSelectedTenantForView] = useState<TenantRecord | null>(null);
   const [provisionResult, setProvisionResult] = useState<ProvisionSchoolAdminResult | null>(null);
-  const [regeneratedResult, setRegeneratedResult] = useState<{
-    readonly username: string;
-    readonly tempPassword: string;
-    readonly message: string;
-  } | null>(null);
+  const [regeneratedResult, setRegeneratedResult] = useState<RegenerateCredentialsResult | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const regenerateMutation = useRegenerateCredentials();
 
   const handleCopy = async (text: string, field: string) => {
     try {
@@ -41,12 +41,24 @@ export function TenantProvisioningManager() {
     setProvisionResult(null);
   };
 
+  const handleRegenerateCredentials = async (tenant: TenantRecord) => {
+    if (!tenant.admin) return;
+    try {
+      const res = await regenerateMutation.mutateAsync({
+        userId: tenant.admin.id,
+      });
+      setRegeneratedResult(res);
+    } catch {
+      setRegeneratedResult(null);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       <TenantListTable
         onAddSchool={() => setIsAddModalOpen(true)}
         onViewTenant={(tenant) => setSelectedTenantForView(tenant)}
-        onCredentialsRegenerated={(res) => setRegeneratedResult(res)}
+        onRegenerateCredentials={handleRegenerateCredentials}
       />
 
       {isAddModalOpen && (
@@ -173,6 +185,7 @@ export function TenantProvisioningManager() {
           tenant={selectedTenantForView}
           isOpen={Boolean(selectedTenantForView)}
           onClose={() => setSelectedTenantForView(null)}
+          onRegenerateCredentials={handleRegenerateCredentials}
         />
       )}
     </div>
