@@ -27,40 +27,9 @@ export function AddressHierarchyFields({
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <FormField
-          id="specificLocation"
-          label="Current Address"
-          placeholder="e.g., Bole Subcity, House No. 123"
-          value={values.specificLocation || ""}
-          onChange={(e) => onChange("specificLocation", e.target.value)}
-          error={errors.specificLocation}
-          disabled={disabled}
-          containerClassName="sm:col-span-2"
-        />
-
-        <FormField
-          id="city"
-          label="City"
-          placeholder="e.g., Addis Ababa"
-          value={values.cityId || ""}
-          onChange={(e) => onChange("cityId", e.target.value)}
-          error={errors.cityId}
-          disabled={disabled}
-        />
-
-        <FormField
-          id="subCity"
-          label="Sub-City"
-          placeholder="e.g., Bole"
-          value={values.subCityId || ""}
-          onChange={(e) => onChange("subCityId", e.target.value)}
-          error={errors.subCityId}
-          disabled={disabled}
-        />
-
-        <FormField
           id="region"
           label="Region"
-          placeholder="e.g., Oromia, Amhara"
+          placeholder="e.g., Oromia, Amhara, Addis Ababa"
           value={values.regionId || ""}
           onChange={(e) => onChange("regionId", e.target.value)}
           error={errors.regionId}
@@ -70,7 +39,7 @@ export function AddressHierarchyFields({
         <FormField
           id="zone"
           label="Zone"
-          placeholder="e.g., East Shewa"
+          placeholder="e.g., East Shewa, North Gondar"
           value={values.zoneId || ""}
           onChange={(e) => onChange("zoneId", e.target.value)}
           error={errors.zoneId}
@@ -80,7 +49,7 @@ export function AddressHierarchyFields({
         <FormField
           id="woreda"
           label="Woreda"
-          placeholder="e.g., Adama Woreda"
+          placeholder="e.g., Adama, Gondar Zuria"
           value={values.woredaId || ""}
           onChange={(e) => onChange("woredaId", e.target.value)}
           error={errors.woredaId}
@@ -88,15 +57,36 @@ export function AddressHierarchyFields({
         />
 
         <FormField
+          id="city"
+          label="City"
+          placeholder="e.g., Addis Ababa, Gondar"
+          value={values.cityId || ""}
+          onChange={(e) => onChange("cityId", e.target.value)}
+          error={errors.cityId}
+          disabled={disabled}
+        />
+
+        <FormField
           id="kebele"
           label="Kebele"
-          placeholder="e.g., Kebele 04"
+          placeholder="e.g., Kebele 04, Kebele 01"
           value={values.kebeleId || ""}
           onChange={(e) => onChange("kebeleId", e.target.value)}
           error={errors.kebeleId}
+          disabled={disabled}
+        />
+
+        <FormField
+          id="specificLocation"
+          label="Current Location"
+          placeholder="e.g., Near St. George Church, House No. 123"
+          value={values.specificLocation || ""}
+          onChange={(e) => onChange("specificLocation", e.target.value)}
+          error={errors.specificLocation}
           disabled={disabled}
         />
       </div>
     </div>
   );
 }
+

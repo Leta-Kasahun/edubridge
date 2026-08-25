@@ -43,13 +43,12 @@ export function TeacherProfileView() {
     setEmail(profile.email || "");
     setNationality(profile.nationality || "Ethiopian");
     setAddressValues({
-      specificLocation: profile.address?.specificLocation || "",
-      cityId: profile.address?.cityName || profile.address?.cityId || "",
-      subCityId: profile.address?.subCityName || profile.address?.subCityId || "",
       regionId: profile.address?.regionName || profile.address?.regionId || "",
       zoneId: profile.address?.zoneName || profile.address?.zoneId || "",
       woredaId: profile.address?.woredaName || profile.address?.woredaId || "",
+      cityId: profile.address?.cityName || profile.address?.cityId || "",
       kebeleId: profile.address?.kebeleName || profile.address?.kebeleId || "",
+      specificLocation: profile.address?.specificLocation || "",
     });
     setSavedSuccess(false);
     setIsEditing(true);
@@ -75,13 +74,12 @@ export function TeacherProfileView() {
       email: email.trim() || null,
       nationality: nationality.trim() || null,
       address: {
-        specificLocation: addressValues.specificLocation?.trim() || null,
-        cityId: addressValues.cityId?.trim() || null,
-        subCityId: addressValues.subCityId?.trim() || null,
         regionId: addressValues.regionId?.trim() || null,
         zoneId: addressValues.zoneId?.trim() || null,
         woredaId: addressValues.woredaId?.trim() || null,
+        cityId: addressValues.cityId?.trim() || null,
         kebeleId: addressValues.kebeleId?.trim() || null,
+        specificLocation: addressValues.specificLocation?.trim() || null,
       },
     };
 
@@ -137,13 +135,14 @@ export function TeacherProfileView() {
                 src={profile.photoUrl}
                 alt={profile.fullName}
                 fill
+                unoptimized
                 sizes="56px"
                 className="object-cover"
               />
             </div>
           ) : (
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0 border border-border">
-              <User size={24} />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0 border border-primary/20">
+              {profile.firstName?.[0]?.toUpperCase() ?? <User size={24} />}
             </div>
           )}
 
@@ -243,6 +242,10 @@ export function TeacherProfileView() {
                   <span className="font-medium text-foreground">{profile.age} years</span>
                 </div>
               )}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Nationality</span>
+                <span className="font-medium text-foreground">{profile.nationality || "Ethiopian"}</span>
+              </div>
             </div>
           </div>
 
@@ -284,10 +287,51 @@ export function TeacherProfileView() {
               Residential Address
             </h2>
 
-            {profile.address?.formattedAddress ? (
-              <p className="text-sm font-medium text-foreground leading-relaxed">
-                {profile.address.formattedAddress}
-              </p>
+            {profile.address ? (
+              <div className="space-y-3 text-xs">
+                {(profile.address.regionName || profile.address.regionId) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Region</span>
+                    <span className="font-medium text-foreground">{profile.address.regionName || profile.address.regionId}</span>
+                  </div>
+                )}
+                {(profile.address.zoneName || profile.address.zoneId) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Zone</span>
+                    <span className="font-medium text-foreground">{profile.address.zoneName || profile.address.zoneId}</span>
+                  </div>
+                )}
+                {(profile.address.woredaName || profile.address.woredaId) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Woreda</span>
+                    <span className="font-medium text-foreground">{profile.address.woredaName || profile.address.woredaId}</span>
+                  </div>
+                )}
+                {(profile.address.cityName || profile.address.cityId) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">City</span>
+                    <span className="font-medium text-foreground">{profile.address.cityName || profile.address.cityId}</span>
+                  </div>
+                )}
+                {(profile.address.kebeleName || profile.address.kebeleId) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Kebele</span>
+                    <span className="font-medium text-foreground">{profile.address.kebeleName || profile.address.kebeleId}</span>
+                  </div>
+                )}
+                {profile.address.specificLocation && (
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-muted-foreground shrink-0">Current Location</span>
+                    <span className="font-medium text-foreground text-right">{profile.address.specificLocation}</span>
+                  </div>
+                )}
+                {profile.address.formattedAddress && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-muted-foreground mb-1">Full Address</p>
+                    <p className="font-medium text-foreground leading-relaxed">{profile.address.formattedAddress}</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 No residential address registered. Click Edit Profile to add your address details.

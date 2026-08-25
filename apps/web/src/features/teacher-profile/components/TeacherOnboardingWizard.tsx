@@ -19,6 +19,7 @@ import {
 import { getErrorMessage } from "@/shared/utils";
 import { getMinMaxDobStrings, formatDisplayDate } from "@/shared/utils/date.util";
 import { formatPhoneDisplay } from "@/shared/utils/phone.util";
+import { fileToDataUrl } from "@/shared/utils/image.util";
 import { ROUTES } from "@/constants/routes";
 import {
   useMyTeacherProfile,
@@ -59,20 +60,19 @@ export function TeacherOnboardingWizard({
   const [dateOfBirth, setDateOfBirth] = useState(
     profile?.dateOfBirth ? profile.dateOfBirth.split("T")[0] || "" : ""
   );
-  const [nationality, setNationality] = useState("Ethiopian");
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [nationality, setNationality] = useState(profile?.nationality || "Ethiopian");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(profile?.photoUrl || null);
 
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || "");
   const [email, setEmail] = useState(profile?.email || "");
 
   const [addressValues, setAddressValues] = useState<AddressFormValues>({
+    regionId: profile?.address?.regionName || profile?.address?.regionId || "",
+    zoneId: profile?.address?.zoneName || profile?.address?.zoneId || "",
+    woredaId: profile?.address?.woredaName || profile?.address?.woredaId || "",
+    cityId: profile?.address?.cityName || profile?.address?.cityId || "",
+    kebeleId: profile?.address?.kebeleName || profile?.address?.kebeleId || "",
     specificLocation: profile?.address?.specificLocation || "",
-    cityId: profile?.address?.cityId || "",
-    subCityId: profile?.address?.subCityId || "",
-    regionId: profile?.address?.regionId || "",
-    zoneId: profile?.address?.zoneId || "",
-    woredaId: profile?.address?.woredaId || "",
-    kebeleId: profile?.address?.kebeleId || "",
   });
 
   useEffect(() => {
@@ -82,17 +82,18 @@ export function TeacherOnboardingWizard({
       if (profile.lastName) setLastName(profile.lastName);
       if (profile.gender) setGender(profile.gender);
       if (profile.dateOfBirth) setDateOfBirth(profile.dateOfBirth.split("T")[0] || "");
+      if (profile.nationality) setNationality(profile.nationality);
+      if (profile.photoUrl) setPhotoUrl(profile.photoUrl);
       if (profile.phoneNumber) setPhoneNumber(profile.phoneNumber);
       if (profile.email) setEmail(profile.email);
       if (profile.address) {
         setAddressValues({
+          regionId: profile.address.regionName || profile.address.regionId || "",
+          zoneId: profile.address.zoneName || profile.address.zoneId || "",
+          woredaId: profile.address.woredaName || profile.address.woredaId || "",
+          cityId: profile.address.cityName || profile.address.cityId || "",
+          kebeleId: profile.address.kebeleName || profile.address.kebeleId || "",
           specificLocation: profile.address.specificLocation || "",
-          cityId: profile.address.cityId || "",
-          subCityId: profile.address.subCityId || "",
-          regionId: profile.address.regionId || "",
-          zoneId: profile.address.zoneId || "",
-          woredaId: profile.address.woredaId || "",
-          kebeleId: profile.address.kebeleId || "",
         });
       }
     }
@@ -162,13 +163,12 @@ export function TeacherOnboardingWizard({
       nationality: nationality.trim() || null,
       photoUrl: photoUrl || null,
       address: {
-        specificLocation: addressValues.specificLocation?.trim() || null,
-        cityId: addressValues.cityId?.trim() || null,
-        subCityId: addressValues.subCityId?.trim() || null,
         regionId: addressValues.regionId?.trim() || null,
         zoneId: addressValues.zoneId?.trim() || null,
         woredaId: addressValues.woredaId?.trim() || null,
+        cityId: addressValues.cityId?.trim() || null,
         kebeleId: addressValues.kebeleId?.trim() || null,
+        specificLocation: addressValues.specificLocation?.trim() || null,
       },
     };
 
@@ -200,10 +200,12 @@ export function TeacherOnboardingWizard({
       items: [
         { label: "Phone Number", value: formatPhoneDisplay(phoneNumber) || "Not registered" },
         { label: "Email Address", value: email || "Not registered" },
-        { label: "Specific Location", value: addressValues.specificLocation || "Not provided" },
-        { label: "City", value: addressValues.cityId || "Not provided" },
-        { label: "Sub-City", value: addressValues.subCityId || "Not provided" },
         { label: "Region", value: addressValues.regionId || "Not provided" },
+        { label: "Zone", value: addressValues.zoneId || "Not provided" },
+        { label: "Woreda", value: addressValues.woredaId || "Not provided" },
+        { label: "City", value: addressValues.cityId || "Not provided" },
+        { label: "Kebele", value: addressValues.kebeleId || "Not provided" },
+        { label: "Current Location", value: addressValues.specificLocation || "Not provided" },
       ],
     },
   ];
@@ -246,14 +248,28 @@ export function TeacherOnboardingWizard({
             </div>
 
             <ProfilePhotoUpload
+              key={photoUrl ?? "empty"}
               initialPhotoUrl={photoUrl}
-              onPhotoSelect={(file) => {
+              onPhotoSelect={async (file) => {
                 if (file) {
-                  setPhotoUrl(URL.createObjectURL(file));
+                  try {
+                    const dataUrl = await fileToDataUrl(file);
+                    setPhotoUrl(dataUrl);
+                  } catch {
+                    setPhotoUrl(URL.createObjectURL(file));
+                  }
                 } else {
                   setPhotoUrl(null);
                 }
               }}
+            />
+
+            <FormField
+              id="nationality"
+              label="Nationality"
+              value={nationality}
+              onChange={(e) => setNationality(e.target.value)}
+              placeholder="e.g., Ethiopian"
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -291,7 +307,7 @@ export function TeacherOnboardingWizard({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <label
                   htmlFor="gender"
@@ -320,14 +336,6 @@ export function TeacherOnboardingWizard({
                 onChange={(e) => { setDateOfBirth(e.target.value); clearFieldError("dateOfBirth"); }}
                 error={validationErrors.dateOfBirth}
                 required
-              />
-
-              <FormField
-                id="nationality"
-                label="Nationality"
-                value={nationality}
-                onChange={(e) => setNationality(e.target.value)}
-                placeholder="e.g., Ethiopian"
               />
             </div>
           </div>

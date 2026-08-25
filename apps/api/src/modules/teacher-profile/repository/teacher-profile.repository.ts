@@ -6,19 +6,140 @@ import {
   validateAddressHierarchy,
   parseDate,
 } from "../../../shared/utils/index.js";
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function toUuidOrNull(value: string | null | undefined): string | null {
-  if (!value) return null;
-  return UUID_PATTERN.test(value) ? value : null;
-}
 import {
   CompleteTeacherProfilePayload,
   UpdateTeacherProfilePayload,
   TeacherProfileDetail,
   AddressData,
 } from "../types/teacher-profile.types.js";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function generateLocationCode(name: string): string {
+  const prefix = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 15);
+  const suffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `${prefix || "LOC"}_${suffix}`;
+}
+
+async function resolveOrCreateRegion(value: string | null | undefined): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const name = value.trim();
+  if (UUID_PATTERN.test(name)) {
+    const existing = await prisma.region.findUnique({ where: { id: name } });
+    if (existing) return existing.id;
+  }
+  const found = await prisma.region.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  if (found) return found.id;
+  const created = await prisma.region.create({
+    data: { name, code: generateLocationCode(name) },
+  });
+  return created.id;
+}
+
+async function resolveOrCreateZone(
+  value: string | null | undefined,
+  regionId: string | null
+): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const name = value.trim();
+  if (UUID_PATTERN.test(name)) {
+    const existing = await prisma.zone.findUnique({ where: { id: name } });
+    if (existing) return existing.id;
+  }
+  if (regionId) {
+    const found = await prisma.zone.findFirst({
+      where: { regionId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (found) return found.id;
+    const created = await prisma.zone.create({
+      data: { regionId, name, code: generateLocationCode(name) },
+    });
+    return created.id;
+  }
+  const found = await prisma.zone.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  return found?.id ?? null;
+}
+
+async function resolveOrCreateWoreda(
+  value: string | null | undefined,
+  zoneId: string | null
+): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const name = value.trim();
+  if (UUID_PATTERN.test(name)) {
+    const existing = await prisma.woreda.findUnique({ where: { id: name } });
+    if (existing) return existing.id;
+  }
+  if (zoneId) {
+    const found = await prisma.woreda.findFirst({
+      where: { zoneId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (found) return found.id;
+    const created = await prisma.woreda.create({
+      data: { zoneId, name, code: generateLocationCode(name) },
+    });
+    return created.id;
+  }
+  const found = await prisma.woreda.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  return found?.id ?? null;
+}
+
+async function resolveOrCreateKebele(
+  value: string | null | undefined,
+  woredaId: string | null
+): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const name = value.trim();
+  if (UUID_PATTERN.test(name)) {
+    const existing = await prisma.kebele.findUnique({ where: { id: name } });
+    if (existing) return existing.id;
+  }
+  if (woredaId) {
+    const found = await prisma.kebele.findFirst({
+      where: { woredaId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (found) return found.id;
+    const created = await prisma.kebele.create({
+      data: { woredaId, name, code: generateLocationCode(name) },
+    });
+    return created.id;
+  }
+  const found = await prisma.kebele.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  return found?.id ?? null;
+}
+
+async function resolveOrCreateCity(
+  value: string | null | undefined,
+  regionId: string | null
+): Promise<string | null> {
+  if (!value?.trim()) return null;
+  const name = value.trim();
+  if (UUID_PATTERN.test(name)) {
+    const existing = await prisma.city.findUnique({ where: { id: name } });
+    if (existing) return existing.id;
+  }
+  const found = await prisma.city.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  if (found) return found.id;
+  const created = await prisma.city.create({
+    data: { name, code: generateLocationCode(name), regionId: regionId ?? null },
+  });
+  return created.id;
+}
 
 const PROFILE_INCLUDE = {
   user: {
@@ -160,14 +281,20 @@ export class TeacherProfileRepository {
       throw new Error(validation.error || "Invalid address hierarchy");
     }
 
+    const regionId = await resolveOrCreateRegion(data.regionId);
+    const zoneId = await resolveOrCreateZone(data.zoneId, regionId);
+    const woredaId = await resolveOrCreateWoreda(data.woredaId, zoneId);
+    const kebeleId = await resolveOrCreateKebele(data.kebeleId, woredaId);
+    const cityId = await resolveOrCreateCity(data.cityId, regionId);
+
     const addressPayload = {
-      regionId: toUuidOrNull(data.regionId),
-      zoneId: toUuidOrNull(data.zoneId),
-      woredaId: toUuidOrNull(data.woredaId),
-      kebeleId: toUuidOrNull(data.kebeleId),
-      cityId: toUuidOrNull(data.cityId),
-      subCityId: toUuidOrNull(data.subCityId),
-      specificLocation: data.specificLocation || null,
+      regionId,
+      zoneId,
+      woredaId,
+      cityId,
+      kebeleId,
+      subCityId: null,
+      specificLocation: data.specificLocation?.trim() || null,
     };
 
     if (existingAddressId) {
@@ -282,3 +409,4 @@ export class TeacherProfileRepository {
 }
 
 export const teacherProfileRepository = new TeacherProfileRepository();
+

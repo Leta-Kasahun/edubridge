@@ -2,13 +2,13 @@ import { z } from "zod";
 import { isValidDob } from "@/shared/utils/date.util";
 
 export const addressSchema = z.object({
-  regionId: z.string().uuid().optional().nullable(),
-  zoneId: z.string().uuid().optional().nullable(),
-  woredaId: z.string().uuid().optional().nullable(),
-  kebeleId: z.string().uuid().optional().nullable(),
-  cityId: z.string().uuid().optional().nullable(),
-  subCityId: z.string().uuid().optional().nullable(),
-  specificLocation: z.string().max(255).optional().nullable(),
+  regionId: z.string().max(255).optional().nullable().or(z.literal("")),
+  zoneId: z.string().max(255).optional().nullable().or(z.literal("")),
+  woredaId: z.string().max(255).optional().nullable().or(z.literal("")),
+  kebeleId: z.string().max(255).optional().nullable().or(z.literal("")),
+  cityId: z.string().max(255).optional().nullable().or(z.literal("")),
+  subCityId: z.string().max(255).optional().nullable().or(z.literal("")),
+  specificLocation: z.string().max(255).optional().nullable().or(z.literal("")),
 });
 
 export const completeTeacherProfileSchema = z.object({
@@ -49,7 +49,7 @@ export const completeTeacherProfileSchema = z.object({
     .optional()
     .or(z.literal("")),
   nationality: z.string().trim().max(100).optional().or(z.literal("")),
-  photoUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  photoUrl: z.string().trim().max(10000000).optional().or(z.literal("")),
   address: addressSchema.optional().nullable(),
 });
 
@@ -78,7 +78,7 @@ export const updateTeacherProfileSchema = z.object({
     .optional()
     .or(z.literal("")),
   nationality: z.string().trim().max(100).optional().or(z.literal("")),
-  photoUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  photoUrl: z.string().trim().max(10000000).optional().or(z.literal("")),
   address: addressSchema.optional().nullable(),
 });
 

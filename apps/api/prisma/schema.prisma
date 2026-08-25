@@ -628,6 +628,8 @@ model TeacherProfile {
   dateOfBirth  DateTime?
   phoneNumber  String?
   email        String?
+  nationality  String?
+  photoUrl     String?
   addressId    String?       @db.Uuid
   status       TeacherStatus @default(ACTIVE)
   createdAt    DateTime      @default(now())

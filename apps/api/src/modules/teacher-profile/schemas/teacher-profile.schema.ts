@@ -38,7 +38,7 @@ export const completeTeacherProfileSchema = z.object({
     .optional()
     .nullable(),
   nationality: z.string().trim().max(100).optional().nullable(),
-  photoUrl: z.string().trim().max(500).optional().nullable(),
+  photoUrl: z.string().trim().max(10000000).optional().nullable(),
   address: addressSchema.optional().nullable(),
 });
 
@@ -69,7 +69,7 @@ export const updateTeacherProfileSchema = z.object({
     .optional()
     .nullable(),
   nationality: z.string().trim().max(100).optional().nullable(),
-  photoUrl: z.string().trim().max(500).optional().nullable(),
+  photoUrl: z.string().trim().max(10000000).optional().nullable(),
   address: addressSchema.optional().nullable(),
 });
 

@@ -22,8 +22,19 @@ function sanitizeMessage(msg: string): string {
   if (lower.includes("network error") || lower.includes("failed to fetch")) {
     return "Unable to connect to the server. Please check your internet connection.";
   }
-  if (lower.includes("internal server error") || lower.includes("500")) {
-    return "A system error occurred. Please try again in a moment.";
+  if (
+    lower.includes("internal server error") ||
+    lower.includes("500") ||
+    lower.includes("prisma") ||
+    lower.includes("invocation") ||
+    lower.includes("unknown argument") ||
+    lower.includes("syntax error") ||
+    lower.includes("foreign key") ||
+    lower.includes("violates") ||
+    lower.includes("column") ||
+    lower.includes("database")
+  ) {
+    return "Unable to save your details at this moment. Please check your entries and try again.";
   }
   if (lower.includes("input validation failed") || lower.includes("validation_error")) {
     return "Please check your entries and try again.";
