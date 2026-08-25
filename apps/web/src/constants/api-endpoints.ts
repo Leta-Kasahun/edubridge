@@ -49,6 +49,12 @@ export const API_ENDPOINTS = {
       ACTIVATE: (id: string) => `/provisioning/teachers/${id}/activate`,
     },
   },
+  TEACHER_PROFILE: {
+    BASE: "/teacher-profile",
+    ME: "/teacher-profile/me",
+    COMPLETE: "/teacher-profile/complete",
+    BY_ID: (id: string) => `/teacher-profile/${id}`,
+  },
   HEALTH: "/health",
 } as const;
 

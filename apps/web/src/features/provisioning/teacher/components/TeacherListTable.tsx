@@ -138,7 +138,7 @@ export function TeacherListTable({
         />
       </div>
 
-      <div className="bg-card rounded-2xl border border-border shadow-xs pb-1">
+      <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center space-y-3">
             <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -165,18 +165,18 @@ export function TeacherListTable({
           </div>
         ) : (
           <>
-            <div className="hidden sm:block overflow-x-visible">
-              <table className="w-full text-xs text-left">
+            <div className="hidden sm:block overflow-x-auto w-full">
+              <table className="w-full min-w-[850px] text-xs text-left">
                 <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-xs">
                   <tr>
-                    <th className="px-5 py-3.5">Teacher</th>
-                    <th className="px-4 py-3.5">Username</th>
-                    <th className="px-4 py-3.5">Gender</th>
-                    <th className="px-4 py-3.5">Email</th>
-                    <th className="px-4 py-3.5">Phone</th>
-                    <th className="px-4 py-3.5">Status</th>
-                    <th className="px-4 py-3.5">Verification</th>
-                    <th className="px-4 py-3.5 text-right">Actions</th>
+                    <th className="px-5 py-3.5 min-w-[200px]">Teacher</th>
+                    <th className="px-4 py-3.5 min-w-[130px]">Username</th>
+                    <th className="px-4 py-3.5 min-w-[90px]">Gender</th>
+                    <th className="px-4 py-3.5 min-w-[170px]">Email</th>
+                    <th className="px-4 py-3.5 min-w-[130px]">Phone</th>
+                    <th className="px-4 py-3.5 min-w-[90px]">Status</th>
+                    <th className="px-4 py-3.5 min-w-[100px]">Verification</th>
+                    <th className="px-4 py-3.5 text-right w-[70px] min-w-[70px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -185,8 +185,8 @@ export function TeacherListTable({
                       key={teacher.teacherProfileId}
                       className="hover:bg-muted/20 transition-colors"
                     >
-                      <td className="px-5 py-3.5">
-                        <div className="font-semibold text-foreground text-xs">
+                      <td className="px-5 py-3.5 min-w-[200px]">
+                        <div className="font-semibold text-foreground text-xs whitespace-nowrap">
                           {teacher.firstName} {teacher.middleName} {teacher.lastName}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
@@ -194,7 +194,7 @@ export function TeacherListTable({
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-foreground text-xs">
+                      <td className="px-4 py-3.5 font-mono text-foreground text-xs whitespace-nowrap">
                         {teacher.username}
                       </td>
 
@@ -202,19 +202,22 @@ export function TeacherListTable({
                         {teacher.gender}
                       </td>
 
-                      <td className="px-4 py-3.5 text-foreground text-xs">
+                      <td
+                        className="px-4 py-3.5 text-foreground text-xs truncate max-w-[180px]"
+                        title={teacher.email || ""}
+                      >
                         {teacher.email || "—"}
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-foreground text-xs">
+                      <td className="px-4 py-3.5 font-mono text-foreground text-xs whitespace-nowrap">
                         {teacher.phoneNumber || "—"}
                       </td>
 
-                      <td className="px-4 py-3.5 font-medium text-foreground text-xs">
+                      <td className="px-4 py-3.5 font-medium text-foreground text-xs whitespace-nowrap">
                         {teacher.teacherStatus === "ACTIVE" ? "Active" : "Inactive"}
                       </td>
 
-                      <td className="px-4 py-3.5 font-medium text-foreground text-xs">
+                      <td className="px-4 py-3.5 font-medium text-foreground text-xs whitespace-nowrap">
                         {teacher.emailVerified ? "Verified" : "Pending"}
                       </td>
 

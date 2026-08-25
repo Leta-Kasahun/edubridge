@@ -8,6 +8,8 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   "SecurityEvent",
   "Invitation",
   "AuditLog",
+  "TeacherProfile",
+  "StudentProfile",
 ]);
 
 export const FILTER_WHERE_OPERATIONS = new Set<string>([

@@ -3,6 +3,7 @@ import {
   Building2,
   Settings,
   GraduationCap,
+  User,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -68,6 +69,11 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: LayoutDashboard,
   },
   {
+    label: "My Profile",
+    href: ROUTES.PROFILE,
+    icon: User,
+  },
+  {
     label: "Settings",
     href: ROUTES.SETTINGS.BASE,
     icon: Settings,
@@ -82,6 +88,11 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
+  },
+  {
+    label: "My Profile",
+    href: ROUTES.PROFILE,
+    icon: User,
   },
   {
     label: "Settings",

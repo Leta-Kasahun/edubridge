@@ -7,3 +7,4 @@ export * from "./Breadcrumbs";
 export * from "./TableToolbar";
 export * from "./RoleGuard";
 export * from "./layouts";
+export * from "./onboarding";

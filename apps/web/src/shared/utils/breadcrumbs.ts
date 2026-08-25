@@ -11,6 +11,8 @@ const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   dashboard: "Dashboard",
   schools: "Manage Schools",
   teachers: "Teachers",
+  profile: "My Profile",
+  onboarding: "Onboarding",
   settings: "Settings",
   security: "Security Policy",
   roles: "Roles & Access",

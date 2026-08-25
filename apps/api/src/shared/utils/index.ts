@@ -3,3 +3,7 @@ export * from "./generate-password.js";
 export * from "./device-parser.util.js";
 export * from "./cookie.util.js";
 export * from "./generators.js";
+export * from "./date.util.js";
+export * from "./file-upload.util.js";
+export * from "./phone.util.js";
+export * from "./address.util.js";

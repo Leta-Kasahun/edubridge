@@ -15,6 +15,7 @@ import { lookupRouter } from "./modules/lookup/route.js";
 import { securityPolicyRouter } from "./modules/security-policy/route.js";
 import { tenantProvisioningRouter } from "./modules/provisioning/tenant/route.js";
 import { teacherProvisioningRouter } from "./modules/provisioning/teacher/route.js";
+import { teacherProfileRouter } from "./modules/teacher-profile/route.js";
 
 const app: Express = express();
 
@@ -38,6 +39,8 @@ app.use("/api/security-policy", securityPolicyRouter);
 app.use("/api/provisioning/tenant", tenantProvisioningRouter);
 app.use("/api/provisioning/teachers", teacherProvisioningRouter);
 app.use("/api/provisioning/teacher", teacherProvisioningRouter);
+app.use("/api/teacher-profile", teacherProfileRouter);
+app.use("/api/teacher-profiles", teacherProfileRouter);
 
 app.use(errorHandler);
 

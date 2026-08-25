@@ -3,6 +3,7 @@ import { registerLookupDocs } from "../modules/lookup/lookup.doc.js";
 import { registerAuthDocs } from "../modules/auth/auth.doc.js";
 import { registerTenantProvisioningDocs } from "../modules/provisioning/tenant/tenant.provision.doc.js";
 import { registerTeacherProvisioningDocs } from "../modules/provisioning/teacher/teacher.provision.doc.js";
+import { registerTeacherProfileDocs } from "../modules/teacher-profile/teacher-profile.doc.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
@@ -10,4 +11,5 @@ export function registerAllModules(): void {
   registerLookupDocs();
   registerTenantProvisioningDocs();
   registerTeacherProvisioningDocs();
+  registerTeacherProfileDocs();
 }

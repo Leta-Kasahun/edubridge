@@ -44,7 +44,13 @@ function FirstLoginSetupContent() {
         initialUsername={username}
         initialMode={initialMode}
         userId={userId}
-        onSuccess={() => router.push(ROUTES.AUTH.LOGIN)}
+        onSuccess={(data) => {
+          if (data?.tokens && data?.user?.roles?.includes("TEACHER")) {
+            router.push(ROUTES.ONBOARDING.TEACHER);
+          } else {
+            router.push(ROUTES.AUTH.LOGIN);
+          }
+        }}
       />
     </AuthCard>
   );
