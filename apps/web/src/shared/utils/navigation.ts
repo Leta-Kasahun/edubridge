@@ -73,14 +73,6 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.PROFILE,
     icon: User,
   },
-  {
-    label: "Settings",
-    href: ROUTES.SETTINGS.BASE,
-    icon: Settings,
-    children: [
-      { label: "Preferences", href: ROUTES.SETTINGS.PREFERENCES },
-    ],
-  },
 ];
 
 export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [

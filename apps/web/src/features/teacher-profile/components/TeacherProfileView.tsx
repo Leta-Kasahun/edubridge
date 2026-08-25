@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Edit2, Check, X } from "lucide-react";
+import Image from "next/image";
+import { Edit2, Save, X, User, Check } from "lucide-react";
 import {
   FormField,
-  SubmitButton,
   ErrorAlert,
   LoadingSpinner,
   AddressHierarchyFields,
@@ -21,6 +21,7 @@ export function TeacherProfileView() {
   const updateMutation = useUpdateTeacherProfile();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -40,6 +41,7 @@ export function TeacherProfileView() {
     setDateOfBirth(profile.dateOfBirth ? profile.dateOfBirth.split("T")[0] || "" : "");
     setPhoneNumber(profile.phoneNumber || "");
     setEmail(profile.email || "");
+    setNationality(profile.nationality || "Ethiopian");
     setAddressValues({
       specificLocation: profile.address?.specificLocation || "",
       cityId: profile.address?.cityName || profile.address?.cityId || "",
@@ -49,11 +51,13 @@ export function TeacherProfileView() {
       woredaId: profile.address?.woredaName || profile.address?.woredaId || "",
       kebeleId: profile.address?.kebeleName || profile.address?.kebeleId || "",
     });
+    setSavedSuccess(false);
     setIsEditing(true);
   };
 
   const cancelEditing = () => {
     setIsEditing(false);
+    setSavedSuccess(false);
   };
 
   const handleAddressChange = (field: keyof AddressFormValues, val: string) => {
@@ -83,7 +87,11 @@ export function TeacherProfileView() {
 
     await updateMutation.mutateAsync(payload, {
       onSuccess: () => {
-        setIsEditing(false);
+        setSavedSuccess(true);
+        setTimeout(() => {
+          setIsEditing(false);
+          setSavedSuccess(false);
+        }, 800);
       },
     });
   };
@@ -121,24 +129,33 @@ export function TeacherProfileView() {
         />
       )}
 
-      <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg sm:text-xl font-bold text-foreground">
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          {profile.photoUrl ? (
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-border shrink-0">
+              <Image
+                src={profile.photoUrl}
+                alt={profile.fullName}
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0 border border-border">
+              <User size={24} />
+            </div>
+          )}
+
+          <div className="space-y-0.5 min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
               {profile.fullName}
             </h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200">
-              {profile.status}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-mono">
-            <span>{profile.employeeCode}</span>
-            <span>•</span>
-            <span>Username: {profile.username}</span>
-            <span>•</span>
-            <span className="font-sans">
-              {profile.emailVerified ? "Verified Account" : "Pending Verification"}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-mono">
+              <span>{profile.employeeCode}</span>
+              <span>•</span>
+              <span>Username: {profile.username}</span>
+            </div>
           </div>
         </div>
 
@@ -146,29 +163,46 @@ export function TeacherProfileView() {
           <button
             type="button"
             onClick={startEditing}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors cursor-pointer self-start sm:self-auto"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 self-start sm:self-auto"
           >
             <Edit2 size={14} />
             <span>Edit Profile</span>
           </button>
         ) : (
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
             <button
               type="button"
               onClick={cancelEditing}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+              disabled={updateMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
             >
               <X size={14} />
               <span>Cancel</span>
             </button>
-            <SubmitButton
+
+            <button
+              type="button"
               onClick={handleSave}
-              isLoading={updateMutation.isPending}
-              icon={<Check size={14} />}
-              className="h-9 px-3.5 text-xs"
+              disabled={updateMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
             >
-              Save
-            </SubmitButton>
+              {savedSuccess ? (
+                <>
+                  <Check size={14} className="stroke-[3]" />
+                  <span>Saved</span>
+                </>
+              ) : updateMutation.isPending ? (
+                <>
+                  <LoadingSpinner size={14} />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  <span>Save</span>
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
@@ -231,9 +265,9 @@ export function TeacherProfileView() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Account Status</span>
+                <span className="text-muted-foreground">Verification</span>
                 <span className="font-medium text-foreground">
-                  {profile.accountStatus || "Active"}
+                  {profile.emailVerified ? "Verified Account" : "Pending Verification"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -263,10 +297,19 @@ export function TeacherProfileView() {
         </div>
       ) : (
         <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-6 shadow-xs">
-          <div className="space-y-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
-              Edit Personal & Contact Information
+          <div className="border-b border-border pb-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Edit Profile Information
             </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Update your personal demographics, contact details, and residential location.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Personal & Contact Information
+            </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <FormField
@@ -341,9 +384,9 @@ export function TeacherProfileView() {
           </div>
 
           <div className="space-y-4 pt-2 border-t border-border">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
-              Edit Residential Location
-            </h2>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Residential Location
+            </h3>
             <AddressHierarchyFields
               values={addressValues}
               onChange={handleAddressChange}

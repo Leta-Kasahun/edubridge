@@ -17,8 +17,8 @@ function FirstLoginSetupContent() {
     modeParam === "USERNAME" || modeParam === "EMAIL"
       ? modeParam
       : username
-      ? "USERNAME"
-      : undefined;
+        ? "USERNAME"
+        : undefined;
   const userId = searchParams.get("userId") || undefined;
 
   return (
@@ -45,7 +45,7 @@ function FirstLoginSetupContent() {
         initialMode={initialMode}
         userId={userId}
         onSuccess={(data) => {
-          if (data?.tokens && data?.user?.roles?.includes("TEACHER")) {
+          if (data?.user?.roles?.includes("TEACHER")) {
             router.push(ROUTES.ONBOARDING.TEACHER);
           } else {
             router.push(ROUTES.AUTH.LOGIN);

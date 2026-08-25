@@ -68,6 +68,8 @@ export interface TeacherProfileDetail {
   readonly age: number | null;
   readonly phoneNumber: string | null;
   readonly email: string | null;
+  readonly nationality?: string | null;
+  readonly photoUrl?: string | null;
   readonly status: TeacherStatus;
   readonly accountStatus: AccountStatus | null;
   readonly username: string | null;

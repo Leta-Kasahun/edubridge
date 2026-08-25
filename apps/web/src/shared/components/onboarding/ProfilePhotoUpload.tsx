@@ -1,4 +1,5 @@
 import { useState, useRef, ChangeEvent } from "react";
+import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -66,20 +67,22 @@ export function ProfilePhotoUpload({
 
       <div className="flex items-center gap-4">
         {previewUrl ? (
-          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-border group shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-border group shrink-0">
+            <Image
               src={previewUrl}
               alt="Profile preview"
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              sizes="64px"
+              className="object-cover"
             />
             <button
               type="button"
               onClick={handleRemovePhoto}
-              className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-foreground hover:bg-background transition-colors cursor-pointer"
+              className="absolute top-0.5 right-0.5 p-1 rounded-full bg-background/90 text-foreground hover:bg-background transition-colors cursor-pointer"
               aria-label="Remove photo"
             >
-              <X size={12} />
+              <X size={10} />
             </button>
           </div>
         ) : (
@@ -87,24 +90,24 @@ export function ProfilePhotoUpload({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-2 border-dashed border-border hover:border-foreground/40 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer",
+              "w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-dashed border-border hover:border-foreground/40 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer",
               displayError && "border-destructive text-destructive"
             )}
             aria-label="Upload photo"
           >
-            <Upload size={18} />
-            <span className="text-[10px] mt-1 font-medium">Upload</span>
+            <Upload size={16} />
+            <span className="text-[9px] mt-0.5 font-medium">Upload</span>
           </button>
         )}
 
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p className="font-medium text-foreground">Upload your passport-style headshot</p>
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          <p className="font-medium text-foreground">Upload your profile photo</p>
           <p className="text-[11px]">Supports JPG, PNG, WEBP up to 5MB.</p>
           {!previewUrl && (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-semibold text-foreground hover:underline cursor-pointer inline-block mt-0.5"
+              className="text-xs font-semibold text-foreground hover:underline cursor-pointer inline-block"
             >
               Browse file
             </button>

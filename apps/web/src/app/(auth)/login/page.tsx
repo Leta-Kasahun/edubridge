@@ -15,7 +15,13 @@ export default function LoginPage() {
       backLabel="Back to Home"
     >
       <LoginForm
-        onSuccess={() => router.push(ROUTES.DASHBOARD)}
+        onSuccess={(data) => {
+          if (data?.user?.roles?.includes("TEACHER")) {
+            router.push(ROUTES.ONBOARDING.TEACHER);
+          } else {
+            router.push(ROUTES.DASHBOARD);
+          }
+        }}
         onRequiresOtp={(userId) => {
           const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
           router.push(`${ROUTES.AUTH.VERIFY_OTP}${query}`);

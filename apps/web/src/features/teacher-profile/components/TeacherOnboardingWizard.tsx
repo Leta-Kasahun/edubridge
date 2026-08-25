@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
@@ -20,7 +20,10 @@ import { getErrorMessage } from "@/shared/utils";
 import { getMinMaxDobStrings, formatDisplayDate } from "@/shared/utils/date.util";
 import { formatPhoneDisplay } from "@/shared/utils/phone.util";
 import { ROUTES } from "@/constants/routes";
-import { useCompleteTeacherProfile } from "../hooks/useTeacherProfile";
+import {
+  useMyTeacherProfile,
+  useCompleteTeacherProfile,
+} from "../hooks/useTeacherProfile";
 import {
   TeacherProfileDetail,
   Gender,
@@ -43,31 +46,57 @@ export function TeacherOnboardingWizard({
   onSuccess,
 }: TeacherOnboardingWizardProps) {
   const router = useRouter();
+  const { data: fetchedProfile } = useMyTeacherProfile(!initialProfile);
+  const profile = initialProfile || fetchedProfile;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const [firstName, setFirstName] = useState(initialProfile?.firstName || "");
-  const [middleName, setMiddleName] = useState(initialProfile?.middleName || "");
-  const [lastName, setLastName] = useState(initialProfile?.lastName || "");
-  const [gender, setGender] = useState<Gender>(initialProfile?.gender || "FEMALE");
+  const [firstName, setFirstName] = useState(profile?.firstName || "");
+  const [middleName, setMiddleName] = useState(profile?.middleName || "");
+  const [lastName, setLastName] = useState(profile?.lastName || "");
+  const [gender, setGender] = useState<Gender>(profile?.gender || "FEMALE");
   const [dateOfBirth, setDateOfBirth] = useState(
-    initialProfile?.dateOfBirth ? initialProfile.dateOfBirth.split("T")[0] || "" : ""
+    profile?.dateOfBirth ? profile.dateOfBirth.split("T")[0] || "" : ""
   );
   const [nationality, setNationality] = useState("Ethiopian");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
-  const [phoneNumber, setPhoneNumber] = useState(initialProfile?.phoneNumber || "");
-  const [email, setEmail] = useState(initialProfile?.email || "");
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || "");
+  const [email, setEmail] = useState(profile?.email || "");
 
   const [addressValues, setAddressValues] = useState<AddressFormValues>({
-    specificLocation: initialProfile?.address?.specificLocation || "",
-    cityId: initialProfile?.address?.cityName || initialProfile?.address?.cityId || "",
-    subCityId: initialProfile?.address?.subCityName || initialProfile?.address?.subCityId || "",
-    regionId: initialProfile?.address?.regionName || initialProfile?.address?.regionId || "",
-    zoneId: initialProfile?.address?.zoneName || initialProfile?.address?.zoneId || "",
-    woredaId: initialProfile?.address?.woredaName || initialProfile?.address?.woredaId || "",
-    kebeleId: initialProfile?.address?.kebeleName || initialProfile?.address?.kebeleId || "",
+    specificLocation: profile?.address?.specificLocation || "",
+    cityId: profile?.address?.cityName || profile?.address?.cityId || "",
+    subCityId: profile?.address?.subCityName || profile?.address?.subCityId || "",
+    regionId: profile?.address?.regionName || profile?.address?.regionId || "",
+    zoneId: profile?.address?.zoneName || profile?.address?.zoneId || "",
+    woredaId: profile?.address?.woredaName || profile?.address?.woredaId || "",
+    kebeleId: profile?.address?.kebeleName || profile?.address?.kebeleId || "",
   });
+
+  useEffect(() => {
+    if (profile) {
+      if (profile.firstName) setFirstName(profile.firstName);
+      if (profile.middleName) setMiddleName(profile.middleName);
+      if (profile.lastName) setLastName(profile.lastName);
+      if (profile.gender) setGender(profile.gender);
+      if (profile.dateOfBirth) setDateOfBirth(profile.dateOfBirth.split("T")[0] || "");
+      if (profile.phoneNumber) setPhoneNumber(profile.phoneNumber);
+      if (profile.email) setEmail(profile.email);
+      if (profile.address) {
+        setAddressValues({
+          specificLocation: profile.address.specificLocation || "",
+          cityId: profile.address.cityName || profile.address.cityId || "",
+          subCityId: profile.address.subCityName || profile.address.subCityId || "",
+          regionId: profile.address.regionName || profile.address.regionId || "",
+          zoneId: profile.address.zoneName || profile.address.zoneId || "",
+          woredaId: profile.address.woredaName || profile.address.woredaId || "",
+          kebeleId: profile.address.kebeleName || profile.address.kebeleId || "",
+        });
+      }
+    }
+  }, [profile]);
 
   const { minDate, maxDate } = getMinMaxDobStrings(18, 100);
   const completeMutation = useCompleteTeacherProfile();
