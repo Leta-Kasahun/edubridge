@@ -73,10 +73,11 @@ export function StudentSectionAccordion({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse min-w-[500px]">
+              <table className="w-full text-left text-xs border-collapse min-w-[550px]">
                 <thead>
                   <tr className="border-b border-border/80 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20">
                     <th className="px-4 sm:px-6 py-3">Student</th>
+                    <th className="px-4 py-3">Student code</th>
                     <th className="px-4 py-3">Username</th>
                     <th className="px-4 py-3">Gender</th>
                     <th className="px-4 py-3">Account status</th>
@@ -106,6 +107,9 @@ export function StudentSectionAccordion({
                           {fullName}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-foreground font-semibold">
+                          {student.studentCode}
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-foreground">
                           {student.username}
                         </td>
                         <td className="px-4 py-3.5 text-muted-foreground capitalize">

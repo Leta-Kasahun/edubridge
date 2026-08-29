@@ -79,7 +79,7 @@ export const studentRowValidationSchema = z.object({
       return val;
     })
     .pipe(studentGenderSchema),
-  section: z.string().trim().min(1, "Section is required").max(50),
+  section: z.string().trim().max(50).optional(),
   studentCode: z.string().trim().max(30).optional(),
   email: z.string().trim().email("Invalid email address format").optional().or(z.literal("")),
   dateOfBirth: z.string().trim().optional(),
@@ -89,6 +89,7 @@ export const bulkStudentCsvSchema = z.object({
   tenantId: z.string().uuid("Invalid tenant ID").optional(),
   academicYearId: z.string().uuid("Academic year is required"),
   gradeId: z.string().uuid("Grade is required"),
+  sectionId: z.string().uuid("Invalid section ID").optional(),
   csvContent: z.string().min(10, "CSV file is empty or missing data rows"),
   fileName: z.string().trim().max(255).optional(),
 });

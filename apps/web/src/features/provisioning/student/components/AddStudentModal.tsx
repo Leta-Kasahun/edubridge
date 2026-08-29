@@ -50,8 +50,6 @@ export function AddStudentModal({
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState<"MALE" | "FEMALE">("FEMALE");
   const [studentCode, setStudentCode] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -66,7 +64,7 @@ export function AddStudentModal({
     setError(null);
 
     if (!firstName.trim() || !middleName.trim()) {
-      setError("First name and middle name are required.");
+      setError("First name and father name are required.");
       return;
     }
 
@@ -91,8 +89,6 @@ export function AddStudentModal({
         lastName: lastName.trim() || undefined,
         gender,
         studentCode: studentCode.trim() || undefined,
-        dateOfBirth: dateOfBirth || undefined,
-        email: email.trim() || undefined,
       });
       onClose();
     } catch (err: unknown) {
@@ -102,7 +98,7 @@ export function AddStudentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
-      <div className="w-full max-w-xl bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+      <div className="w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-foreground">
@@ -187,7 +183,7 @@ export function AddStudentModal({
             {isCustomSection ? (
               <input
                 type="text"
-                placeholder="e.g. Section D"
+                placeholder="e.g. Section D, C"
                 value={sectionName}
                 onChange={(e) => setSectionName(e.target.value)}
                 className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
@@ -218,6 +214,7 @@ export function AddStudentModal({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                autoFocus
               />
             </div>
 
@@ -288,33 +285,6 @@ export function AddStudentModal({
                 placeholder="Auto-generated if blank"
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Date of Birth (Optional)
-              </label>
-              <input
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Email Address (Optional)
-              </label>
-              <input
-                type="email"
-                placeholder="student@school.edu.et"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
               />
             </div>

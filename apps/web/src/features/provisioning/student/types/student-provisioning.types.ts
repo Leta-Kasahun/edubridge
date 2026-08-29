@@ -36,7 +36,7 @@ export interface StudentImportRowData {
   readonly middleName: string;
   readonly lastName?: string;
   readonly gender: StudentGender;
-  readonly section: string;
+  readonly section?: string;
   readonly studentCode?: string;
   readonly email?: string;
   readonly dateOfBirth?: string;
@@ -46,6 +46,7 @@ export interface BulkStudentCsvPayload {
   readonly tenantId?: string;
   readonly academicYearId: string;
   readonly gradeId: string;
+  readonly sectionId?: string;
   readonly csvContent: string;
   readonly fileName?: string;
 }

@@ -1,3 +1,4 @@
+import { prisma } from "../../../../lib/prisma.js";
 import {
   ImportBatchStatus,
   ImportRowStatus,
@@ -33,6 +34,7 @@ export class StudentBulkProvisioningService {
       readonly tenantId?: string;
       readonly academicYearId: string;
       readonly gradeId: string;
+      readonly sectionId?: string;
       readonly students: readonly StudentImportRowData[];
     },
     tenantId: string,
@@ -52,6 +54,72 @@ export class StudentBulkProvisioningService {
     const successfulStudents: StudentProvisionResult[] = [];
     const failedRows: StudentBulkRowError[] = [];
     const importRows: CreateStudentImportRowInput[] = [];
+
+    const existingSections = await prisma.section.findMany({
+      where: {
+        tenantId: resolvedTenantId,
+        academicYearId: payload.academicYearId,
+        gradeId: payload.gradeId,
+        status: "ACTIVE",
+      },
+      include: {
+        _count: {
+          select: {
+            enrollments: {
+              where: { status: "ACTIVE", academicYearId: payload.academicYearId },
+            },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const sectionCapacities = new Map<
+      string,
+      { id: string; name: string; capacity: number; currentCount: number }
+    >();
+
+    if (existingSections.length > 0) {
+      for (const s of existingSections) {
+        sectionCapacities.set(s.id, {
+          id: s.id,
+          name: s.name,
+          capacity: s.capacity || 40,
+          currentCount: s._count.enrollments,
+        });
+      }
+    } else {
+      const defaultSection = await this.provisioningSvc.createSection(
+        resolvedTenantId,
+        payload.academicYearId,
+        payload.gradeId,
+        "Section A",
+        40
+      );
+      sectionCapacities.set(defaultSection.id, {
+        id: defaultSection.id,
+        name: defaultSection.name,
+        capacity: 40,
+        currentCount: 0,
+      });
+    }
+
+    const selectOptimalSectionId = (): string => {
+      const sectionsList = Array.from(sectionCapacities.values());
+
+      const underCapacity = sectionsList
+        .filter((s) => s.currentCount < s.capacity)
+        .sort((a, b) => a.currentCount - b.currentCount);
+
+      if (underCapacity.length > 0 && underCapacity[0]) {
+        return underCapacity[0].id;
+      }
+
+      const sortedByCount = sectionsList.sort(
+        (a, b) => a.currentCount - b.currentCount
+      );
+      return sortedByCount[0]?.id || sectionsList[0]?.id || "";
+    };
 
     for (let index = 0; index < payload.students.length; index += 1) {
       const rowNumber = index + 1;
@@ -81,12 +149,20 @@ export class StudentBulkProvisioningService {
           continue;
         }
 
+        let targetSectionId: string | undefined = payload.sectionId;
+        let targetSectionName: string | undefined = studentData.section?.trim();
+
+        if (!targetSectionName && !targetSectionId) {
+          targetSectionId = selectOptimalSectionId();
+        }
+
         const result = await this.provisioningSvc.provisionStudent(
           {
             tenantId: resolvedTenantId,
             academicYearId: payload.academicYearId,
             gradeId: payload.gradeId,
-            sectionName: studentData.section,
+            sectionId: targetSectionId,
+            sectionName: targetSectionId ? undefined : targetSectionName,
             firstName: studentData.firstName,
             middleName: studentData.middleName,
             lastName: studentData.lastName || undefined,
@@ -98,6 +174,13 @@ export class StudentBulkProvisioningService {
           resolvedTenantId,
           createdById
         );
+
+        if (result.enrollment?.sectionId) {
+          const sec = sectionCapacities.get(result.enrollment.sectionId);
+          if (sec) {
+            sec.currentCount += 1;
+          }
+        }
 
         successfulStudents.push(result);
         importRows.push({
@@ -166,6 +249,7 @@ export class StudentBulkProvisioningService {
         tenantId: payload.tenantId,
         academicYearId: payload.academicYearId,
         gradeId: payload.gradeId,
+        sectionId: payload.sectionId,
         students: parsed.validRows,
       },
       tenantId,
