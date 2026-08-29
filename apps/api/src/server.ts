@@ -16,10 +16,9 @@ const startServer = async () => {
   });
 
   const shutdown = async () => {
-    server.close(async () => {
-      await redis.quit().catch(() => null);
-      process.exit(0);
-    });
+    server.close();
+    await redis.quit().catch(() => null);
+    process.exit(0);
   };
 
   process.on("SIGTERM", shutdown);

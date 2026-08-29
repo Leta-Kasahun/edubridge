@@ -123,17 +123,20 @@ model Tenant {
   invitations     Invitation[]
   auditLogs       AuditLog[]
   securityEvents  SecurityEvent[]
-  studentProfiles StudentProfile[]
-  teacherProfiles TeacherProfile[]
-  academicYears   AcademicYear[]
-  sections        Section[]
-  grades          Grade[]
-  importBatches   ImportBatch[]
-  region          Region?            @relation(fields: [regionId], references: [id])
-  zone            Zone?              @relation(fields: [zoneId], references: [id])
-  woreda          Woreda?            @relation(fields: [woredaId], references: [id])
-  city            City?              @relation(fields: [cityId], references: [id])
-  address         Address?           @relation(fields: [addressId], references: [id])
+  studentProfiles       StudentProfile[]
+  teacherProfiles       TeacherProfile[]
+  teacherQualifications TeacherQualification[]
+  teacherExperiences    TeacherExperience[]
+  teacherAssignments    TeacherAssignment[]
+  academicYears         AcademicYear[]
+  sections              Section[]
+  grades                Grade[]
+  importBatches         ImportBatch[]
+  region                Region?                @relation(fields: [regionId], references: [id])
+  zone                  Zone?                  @relation(fields: [zoneId], references: [id])
+  woreda                Woreda?                @relation(fields: [woredaId], references: [id])
+  city                  City?                  @relation(fields: [cityId], references: [id])
+  address               Address?               @relation(fields: [addressId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -639,7 +642,9 @@ model TeacherProfile {
   user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
 
-  assignments TeacherAssignment[]
+  assignments    TeacherAssignment[]
+  qualifications TeacherQualification[]
+  experiences    TeacherExperience[]
 
   @@unique([tenantId, employeeCode])
   @@index([tenantId, status])
@@ -756,6 +761,7 @@ model TeacherAssignment {
   teacherId      String                @db.Uuid
   academicYearId String                @db.Uuid
   sectionId      String                @db.Uuid
+  subjectId      String?               @db.Uuid
   role           TeacherAssignmentRole
   status         AssignmentStatus      @default(ACTIVE)
   startDate      DateTime              @default(now())
@@ -763,13 +769,16 @@ model TeacherAssignment {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   academicYear AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   section      Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  subject      Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, teacherId])
   @@index([academicYearId, sectionId])
   @@index([sectionId])
+  @@index([subjectId])
 }
 
 // ============================================================
@@ -829,11 +838,97 @@ model Grade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sections Section[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sections      Section[]
+  gradeSubjects GradeSubject[]
 
   @@unique([tenantId, level])
   @@index([tenantId, isActive])
+}
+
+model GradeSubject {
+  id        String   @id @default(uuid()) @db.Uuid
+  gradeId   String   @db.Uuid
+  subjectId String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grade   Grade   @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([gradeId, subjectId])
+  @@index([gradeId])
+  @@index([subjectId])
+}
+
+model Subject {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  gradeSubjects GradeSubject[]
+  assignments   TeacherAssignment[]
+  experiences   TeacherExperience[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+}
+
+enum QualificationLevel {
+  CERTIFICATE
+  DIPLOMA
+  BACHELOR
+  MASTER
+  DOCTORATE
+  OTHER
+}
+
+model TeacherQualification {
+  id             String             @id @default(uuid()) @db.Uuid
+  tenantId       String             @db.Uuid
+  teacherId      String             @db.Uuid
+  level          QualificationLevel
+  fieldOfStudy   String
+  institution    String?
+  startYear      Int?
+  graduationYear Int?
+  documentUrl    String?
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, teacherId])
+  @@index([teacherId])
+}
+
+model TeacherExperience {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  teacherId   String    @db.Uuid
+  institution String
+  position    String?
+  subjectId   String?   @db.Uuid
+  startDate   DateTime
+  endDate     DateTime?
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, teacherId])
+  @@index([teacherId])
+  @@index([subjectId])
 }
 
 enum Gender {

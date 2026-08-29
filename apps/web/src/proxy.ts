@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 const AUTH_ROUTES = ["/login", "/verify-otp", "/first-login-setup", "/reset-password"];
 const PROTECTED_PREFIXES = ["/dashboard"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
