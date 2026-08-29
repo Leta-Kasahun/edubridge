@@ -81,8 +81,17 @@ export function StudentProvisioningManager() {
   const currentGrade = grades.find((g) => g.id === selectedGradeId) || grades[0];
   const sections = useMemo(() => {
     const raw = currentGrade?.sections || [];
+    const extractKey = (name: string) => {
+      const cleaned = name
+        .trim()
+        .toLowerCase()
+        .replace(/^(section|sec\.?|class|room)\s+/i, "")
+        .trim();
+      return cleaned || name.trim().toLowerCase();
+    };
+
     return [...raw].sort((a, b) =>
-      a.name.trim().toLowerCase().localeCompare(b.name.trim().toLowerCase(), undefined, {
+      extractKey(a.name).localeCompare(extractKey(b.name), undefined, {
         numeric: true,
         sensitivity: "base",
       })

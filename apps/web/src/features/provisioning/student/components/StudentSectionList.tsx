@@ -19,8 +19,13 @@ export interface StudentSectionListProps {
   readonly onDeactivate: (student: StudentRecord) => void;
 }
 
-function normalizeSectionSortKey(name: string): string {
-  return name.trim().toLowerCase();
+function extractSectionSortKey(name: string): string {
+  const cleaned = name
+    .trim()
+    .toLowerCase()
+    .replace(/^(section|sec\.?|class|room)\s+/i, "")
+    .trim();
+  return cleaned || name.trim().toLowerCase();
 }
 
 export function StudentSectionList({
@@ -35,8 +40,8 @@ export function StudentSectionList({
 }: StudentSectionListProps) {
   const sortedSections = useMemo(() => {
     return [...sections].sort((a, b) =>
-      normalizeSectionSortKey(a.name).localeCompare(
-        normalizeSectionSortKey(b.name),
+      extractSectionSortKey(a.name).localeCompare(
+        extractSectionSortKey(b.name),
         undefined,
         { numeric: true, sensitivity: "base" }
       )

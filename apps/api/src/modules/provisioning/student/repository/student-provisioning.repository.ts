@@ -637,6 +637,15 @@ export class StudentProvisioningRepository {
               },
             });
 
+            const extractKey = (name: string) => {
+              const cleaned = name
+                .trim()
+                .toLowerCase()
+                .replace(/^(section|sec\.?|class|room)\s+/i, "")
+                .trim();
+              return cleaned || name.trim().toLowerCase();
+            };
+
             const sectionItems: AcademicStructureSection[] = sectionsForYear
               .map((s) => ({
                 id: s.id,
@@ -646,7 +655,10 @@ export class StudentProvisioningRepository {
                 studentCount: s._count.enrollments,
               }))
               .sort((a, b) =>
-                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
+                extractKey(a.name).localeCompare(extractKey(b.name), undefined, {
+                  numeric: true,
+                  sensitivity: "base",
+                })
               );
 
             const gradeStudentCount = sectionItems.reduce((acc, curr) => acc + curr.studentCount, 0);
