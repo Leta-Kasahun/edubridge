@@ -22,6 +22,11 @@ export const generateEmployeeCode = (tenantCode: string, sequence: number): stri
   return `${tenantCode.toUpperCase()}EMP${seq}`;
 };
 
+export const generateStudentCode = (tenantCode: string, sequence: number): string => {
+  const seq = String(sequence).padStart(4, "0");
+  return `${tenantCode.toUpperCase()}STU${seq}`;
+};
+
 export const generateStudentUsername = (tenantCode: string, sequence: number): string => {
   const year = String(new Date().getFullYear()).slice(-2);
   const seq = String(sequence).padStart(4, "0");
@@ -34,6 +39,11 @@ export const generateAdminTempPassword = (): string => {
 };
 
 export const generateTeacherTempPassword = (): string => {
+  const digits = String(crypto.randomInt(0, 10000)).padStart(4, "0");
+  return `Temp@${digits}`;
+};
+
+export const generateStudentTempPassword = (): string => {
   const digits = String(crypto.randomInt(0, 10000)).padStart(4, "0");
   return `Temp@${digits}`;
 };

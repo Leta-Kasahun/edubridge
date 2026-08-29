@@ -48,6 +48,16 @@ export const API_ENDPOINTS = {
       DEACTIVATE: (id: string) => `/provisioning/teachers/${id}/deactivate`,
       ACTIVATE: (id: string) => `/provisioning/teachers/${id}/activate`,
     },
+    STUDENTS: {
+      BASE: "/provisioning/students",
+      ACADEMIC_STRUCTURE: "/provisioning/students/academic-structure",
+      GRADES: "/provisioning/students/grades",
+      SECTIONS: "/provisioning/students/sections",
+      BULK_CSV: "/provisioning/students/bulk-csv",
+      BY_ID: (id: string) => `/provisioning/students/${id}`,
+      DEACTIVATE: (id: string) => `/provisioning/students/${id}/deactivate`,
+      ACTIVATE: (id: string) => `/provisioning/students/${id}/activate`,
+    },
   },
   TEACHER_PROFILE: {
     BASE: "/teacher-profile",

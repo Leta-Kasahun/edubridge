@@ -33,9 +33,8 @@ export function MetricCard({
           {value}
         </span>
         <span
-          className={`flex items-center text-xs font-semibold ${
-            isPositive ? "text-primary" : "text-destructive"
-          }`}
+          className={`flex items-center text-xs font-semibold ${isPositive ? "text-primary" : "text-destructive"
+            }`}
         >
           <TrendingUp size={13} className="mr-0.5" />
           {change}

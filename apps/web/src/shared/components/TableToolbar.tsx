@@ -137,20 +137,20 @@ export function TableToolbar({
                     className={cn(
                       "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap",
                       group.selectedValue && group.selectedValue !== "ALL"
-                        ? "bg-primary/10 border-primary/40 text-primary"
+                        ? "bg-muted/80 border-border text-foreground"
                         : "bg-card text-foreground border-border hover:bg-muted"
                     )}
                   >
                     <GroupIcon size={13} className="text-muted-foreground" />
-                    <span>{group.label}:</span>
-                    <span className="font-bold">
+                    <span className="text-muted-foreground font-normal">{group.label}:</span>
+                    <span className="font-semibold text-foreground">
                       {selectedOption ? selectedOption.label : "All"}
                     </span>
-                    <ChevronDown size={13} className="text-muted-foreground" />
+                    <ChevronDown size={13} className="text-muted-foreground ml-0.5" />
                   </button>
 
                   {isOpen && (
-                    <div className="absolute left-0 top-10 w-44 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
+                    <div className="absolute left-0 top-10 w-48 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
                       {group.options.map((opt) => {
                         const isSelected = group.selectedValue === opt.value;
 
@@ -163,14 +163,14 @@ export function TableToolbar({
                               setOpenFilterId(null);
                             }}
                             className={cn(
-                              "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                              "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left",
                               isSelected
-                                ? "bg-primary/10 text-primary font-bold"
-                                : "text-foreground hover:bg-muted font-medium"
+                                ? "bg-muted font-bold text-foreground"
+                                : "text-foreground hover:bg-muted/60 font-medium"
                             )}
                           >
                             <span className="truncate">{opt.label}</span>
-                            {isSelected && <Check size={13} />}
+                            {isSelected && <Check size={13} className="text-foreground" />}
                             {!isSelected && opt.count !== undefined && (
                               <span className="text-[10px] text-muted-foreground">
                                 {opt.count}

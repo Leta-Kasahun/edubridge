@@ -29,7 +29,7 @@ const SAMPLE_ROLES: readonly Role[] = [
   },
   {
     id: "r-2",
-    name: "Faculty & Teacher",
+    name: "Teaching Staff",
     code: "TEACHER",
     description: "Access to assigned classrooms, grading, and attendance.",
     isSystem: true,

@@ -2,6 +2,8 @@ export * from "./error";
 export * from "./breadcrumbs";
 export * from "./navigation";
 export * from "./csv-parser";
+export * from "./credentials-export";
+export * from "./academic.util";
 export * from "./date.util";
 export * from "./image.util";
 export * from "./phone.util";

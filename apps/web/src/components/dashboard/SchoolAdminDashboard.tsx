@@ -21,28 +21,28 @@ export function SchoolAdminDashboard() {
           detail="Institutional portal"
         />
         <MetricCard
-          title="School Faculty"
-          value="Teachers"
+          title="Teachers"
+          value="Active"
           change="Managed"
           isPositive={true}
           icon={GraduationCap}
-          detail="Faculty & staff accounts"
+          detail="Provisioned teacher accounts"
         />
         <MetricCard
-          title="School Members"
-          value="Active"
-          change="Normal"
+          title="Students"
+          value="Enrolled"
+          change="Active"
           isPositive={true}
           icon={Users}
-          detail="Enrolled students & faculty"
+          detail="Grade & section rosters"
         />
         <MetricCard
-          title="Security Status"
+          title="Security"
           value="Protected"
           change="Verified"
           isPositive={true}
           icon={ShieldCheck}
-          detail="School security policy"
+          detail="Policy enforcement"
         />
       </div>
     </div>

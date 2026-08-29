@@ -1,8 +1,10 @@
+"use client";
+
 import {
   BookOpen,
   Users,
-  GraduationCap,
   CalendarCheck,
+  User,
 } from "lucide-react";
 import { MetricCard } from "./MetricCard";
 
@@ -19,28 +21,28 @@ export function TeacherDashboard() {
           detail="Current academic term"
         />
         <MetricCard
-          title="Total Students"
-          value="142"
-          change="Enrolled"
+          title="Students"
+          value="Enrolled"
+          change="Active"
           isPositive={true}
           icon={Users}
-          detail="Across all class sections"
+          detail="Classroom cohorts"
         />
         <MetricCard
-          title="Attendance Rate"
+          title="Attendance"
           value="96.4%"
           change="Normal"
           isPositive={true}
           icon={CalendarCheck}
-          detail="Average weekly attendance"
+          detail="Weekly average rate"
         />
         <MetricCard
-          title="Curriculum Progress"
-          value="Term 1"
-          change="On Track"
+          title="Profile"
+          value="Verified"
+          change="Active"
           isPositive={true}
-          icon={GraduationCap}
-          detail="Syllabus coverage"
+          icon={User}
+          detail="Teacher account"
         />
       </div>
     </div>

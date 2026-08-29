@@ -13,7 +13,7 @@ const SETTINGS_SECTIONS = [
   },
   {
     title: "Roles & Access",
-    description: "Configure administrative and faculty user roles with granular module permissions.",
+    description: "Configure administrative and teacher user roles with granular module permissions.",
     href: ROUTES.SETTINGS.ROLES,
     icon: Shield,
     badge: "RBAC Engine",
