@@ -1,5 +1,6 @@
-import { TeacherProvisioningManager } from "@/features/provisioning/teacher";
+import { redirect } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
 
 export default function TeachersManagementPage() {
-  return <TeacherProvisioningManager />;
+  redirect(ROUTES.PROVISIONING.TEACHERS);
 }
