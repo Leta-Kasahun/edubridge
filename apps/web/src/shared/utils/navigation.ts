@@ -5,6 +5,7 @@ import {
   User,
   GraduationCap,
   UserPlus,
+  Award,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -54,6 +55,11 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
       { label: "Teacher Provisioning", href: ROUTES.PROVISIONING.TEACHERS },
       { label: "Student Provisioning", href: ROUTES.PROVISIONING.STUDENTS },
     ],
+  },
+  {
+    label: "Qualified Teachers",
+    href: ROUTES.STAFF_QUALIFICATIONS,
+    icon: Award,
   },
   {
     label: "Settings",

@@ -22,6 +22,7 @@ export const ROUTES = {
   },
   SCHOOLS: "/dashboard/schools-mng",
   TEACHERS: "/dashboard/provisioning/teachers",
+  STAFF_QUALIFICATIONS: "/dashboard/staff-qualifications",
   PROVISIONING: {
     BASE: "/dashboard/provisioning",
     TEACHERS: "/dashboard/provisioning/teachers",

@@ -75,6 +75,9 @@ export const API_ENDPOINTS = {
     ME: "/teacher-experiences/me",
     BY_ID: (id: string) => `/teacher-experiences/${id}`,
   },
+  STAFF_QUALIFICATIONS: {
+    BASE: "/staff-qualifications",
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",
