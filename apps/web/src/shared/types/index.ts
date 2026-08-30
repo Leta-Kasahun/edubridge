@@ -34,7 +34,9 @@ export interface AuthUser {
   email: string | null;
   username?: string | null;
   firstName?: string;
+  middleName?: string;
   lastName?: string;
+  fullName?: string;
   roles: string[];
   tenantId?: string;
   tenantName?: string;

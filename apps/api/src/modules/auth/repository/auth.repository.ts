@@ -1,30 +1,46 @@
 import { prisma, runWithoutTenant } from "../../../lib/prisma.js";
 import { AccountStatus } from "../../../generated/prisma/client.js";
 
+const AUTH_USER_INCLUDE = {
+  memberships: {
+    include: {
+      roles: {
+        include: {
+          role: {
+            include: {
+              permissions: {
+                include: {
+                  permission: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      tenant: true,
+    },
+  },
+  teacherProfile: {
+    select: {
+      firstName: true,
+      middleName: true,
+      lastName: true,
+    },
+  },
+  studentProfile: {
+    select: {
+      firstName: true,
+      middleName: true,
+      lastName: true,
+    },
+  },
+} as const;
+
 export class AuthRepository {
   async findById(id: string) {
     return prisma.user.findUnique({
       where: { id },
-      include: {
-        memberships: {
-          include: {
-            roles: {
-              include: {
-                role: {
-                  include: {
-                    permissions: {
-                      include: {
-                        permission: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            tenant: true,
-          },
-        },
-      },
+      include: AUTH_USER_INCLUDE,
     });
   }
 
@@ -34,88 +50,28 @@ export class AuthRepository {
       where: isEmail
         ? { email: { equals: identifier, mode: "insensitive" } }
         : { username: { equals: identifier, mode: "insensitive" } },
-      include: {
-        memberships: {
-          include: {
-            roles: {
-              include: {
-                role: {
-                  include: {
-                    permissions: {
-                      include: {
-                        permission: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            tenant: true,
-          },
-        },
-      },
+      include: AUTH_USER_INCLUDE,
     });
   }
 
   async findByEmail(email: string) {
     return prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
-      include: {
-        memberships: {
-          include: {
-            roles: {
-              include: {
-                role: true,
-              },
-            },
-            tenant: true,
-          },
-        },
-      },
+      include: AUTH_USER_INCLUDE,
     });
   }
 
   async findByUsername(username: string) {
     return prisma.user.findFirst({
       where: { username: { equals: username, mode: "insensitive" } },
-      include: {
-        memberships: {
-          include: {
-            roles: {
-              include: {
-                role: true,
-              },
-            },
-            tenant: true,
-          },
-        },
-      },
+      include: AUTH_USER_INCLUDE,
     });
   }
 
   async findByGoogleId(googleId: string) {
     return prisma.user.findUnique({
       where: { googleId },
-      include: {
-        memberships: {
-          include: {
-            roles: {
-              include: {
-                role: {
-                  include: {
-                    permissions: {
-                      include: {
-                        permission: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            tenant: true,
-          },
-        },
-      },
+      include: AUTH_USER_INCLUDE,
     });
   }
 

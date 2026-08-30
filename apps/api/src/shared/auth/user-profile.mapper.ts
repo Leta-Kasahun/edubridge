@@ -1,7 +1,16 @@
 import { UserWithMembershipsRecord, UserAuthProfile } from "../../modules/auth/types/auth.types.js";
 
+interface ProfileNames {
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+}
+
 export const mapUserProfile = (
-  user: UserWithMembershipsRecord,
+  user: UserWithMembershipsRecord & {
+    teacherProfile?: ProfileNames | null;
+    studentProfile?: ProfileNames | null;
+  },
   activeTenantId?: string
 ): UserAuthProfile => {
   const memberships = user.memberships.map((m) => ({
@@ -23,12 +32,25 @@ export const mapUserProfile = (
     ? Array.from(new Set(["SYSTEM_ADMIN", ...(currentMembership?.roles ?? [])]))
     : currentMembership?.roles ?? [];
 
+  const profile = user.teacherProfile || user.studentProfile;
+  const firstName = profile?.firstName || user.firstName;
+  const middleName = profile?.middleName || null;
+  const lastName = profile?.lastName || user.lastName;
+
+  const nameParts = [firstName, middleName, profile?.lastName ? lastName : null].filter(Boolean);
+  const fullName =
+    nameParts.length > 0
+      ? nameParts.join(" ")
+      : `${firstName} ${lastName}`.trim() || user.username || "User";
+
   return {
     id: user.id,
     email: user.email,
     username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    firstName,
+    middleName,
+    lastName,
+    fullName,
     status: user.status,
     emailVerified: user.emailVerified,
     roles: effectiveRoles,

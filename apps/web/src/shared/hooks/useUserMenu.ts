@@ -9,6 +9,7 @@ import { ROUTES } from "@/constants/routes";
 
 export function useUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -18,11 +19,16 @@ export function useUserMenu() {
   useClickOutside(menuRef, () => setIsOpen(false));
 
   const firstName = user?.firstName || "";
+  const middleName = user?.middleName || "";
   const lastName = user?.lastName || "";
-  const fullName = `${firstName} ${lastName}`.trim() || user?.username || "User";
+
+  const nameParts = [firstName, middleName, lastName].filter(Boolean);
+  const fullName =
+    user?.fullName ||
+    (nameParts.length > 0 ? nameParts.join(" ") : user?.username || "User");
 
   const initials =
-    ((firstName[0] || "") + (lastName[0] || "")).toUpperCase() ||
+    ((firstName[0] || "") + (lastName[0] || middleName[0] || "")).toUpperCase() ||
     (user?.username?.[0] || "U").toUpperCase();
 
   const primaryRole = user?.roles?.[0];
@@ -39,8 +45,16 @@ export function useUserMenu() {
   const toggle = () => setIsOpen((prev) => !prev);
   const close = () => setIsOpen(false);
 
+  const openChangePassword = () => {
+    setIsOpen(false);
+    setIsChangePasswordOpen(true);
+  };
+
+  const closeChangePassword = () => setIsChangePasswordOpen(false);
+
   return {
     isOpen,
+    isChangePasswordOpen,
     menuRef,
     user,
     fullName,
@@ -49,6 +63,8 @@ export function useUserMenu() {
     isLoggingOut,
     toggle,
     close,
+    openChangePassword,
+    closeChangePassword,
     handleLogout,
   };
 }

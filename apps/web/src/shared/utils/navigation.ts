@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Building2,
   Settings,
-  GraduationCap,
   User,
   UserPlus,
 } from "lucide-react";
@@ -90,14 +89,6 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "My Profile",
     href: ROUTES.PROFILE,
     icon: User,
-  },
-  {
-    label: "Settings",
-    href: ROUTES.SETTINGS.BASE,
-    icon: Settings,
-    children: [
-      { label: "Preferences", href: ROUTES.SETTINGS.PREFERENCES },
-    ],
   },
 ];
 

@@ -40,7 +40,9 @@ export interface UserAuthProfile {
   email: string | null;
   username: string | null;
   firstName: string;
+  middleName?: string | null;
   lastName: string;
+  fullName?: string;
   status: AccountStatus;
   emailVerified: boolean;
   roles: string[];
