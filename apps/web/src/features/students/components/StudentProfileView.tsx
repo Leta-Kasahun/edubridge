@@ -8,9 +8,6 @@ import {
   MapPin,
   Edit,
   X,
-  Phone,
-  ShieldCheck,
-  Building,
 } from "lucide-react";
 import {
   FormField,
@@ -31,8 +28,6 @@ import {
   useUpdateStudentProfile,
 } from "../hooks/useStudentProfile";
 import {
-  StudentProfileDetail,
-  Gender,
   ContactRelationship,
   UpdateStudentProfilePayload,
 } from "../types/student-profile.types";
@@ -138,7 +133,7 @@ export function StudentProfileView() {
   const primaryContact = profile.contacts?.find((c) => c.isPrimary) || profile.contacts?.[0];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto w-full">
       <div className="bg-card rounded-2xl border border-border p-5 sm:p-7 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -161,12 +156,12 @@ export function StudentProfileView() {
                 <h1 className="text-lg sm:text-xl font-bold text-foreground">
                   {profile.fullName}
                 </h1>
-                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-2xs">
                   Student
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
-                <span className="font-mono font-semibold text-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap font-mono">
+                <span className="font-semibold text-foreground">
                   {profile.studentCode}
                 </span>
                 {profile.enrollment && (
@@ -188,7 +183,7 @@ export function StudentProfileView() {
           <button
             type="button"
             onClick={handleOpenEdit}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer shadow-2xs shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
           >
             <Edit size={14} />
             <span>Edit Profile</span>
@@ -196,272 +191,277 @@ export function StudentProfileView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+      <div className="space-y-6">
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <User size={16} className="text-muted-foreground" />
-            <h2 className="text-xs sm:text-sm font-bold text-foreground">
+            <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
               Personal & Demographics
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                 First Name
               </span>
-              <span className="font-medium text-foreground mt-0.5 block">
+              <span className="text-sm font-medium text-foreground mt-1 block">
                 {profile.firstName}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
-                Father / Middle Name
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Middle Name
               </span>
-              <span className="font-medium text-foreground mt-0.5 block">
+              <span className="text-sm font-medium text-foreground mt-1 block">
                 {profile.middleName}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
-                Grandfather Name
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Last Name
               </span>
-              <span className="font-medium text-foreground mt-0.5 block">
+              <span className="text-sm font-medium text-foreground mt-1 block">
                 {profile.lastName || "—"}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                 Gender
               </span>
-              <span className="font-medium uppercase text-foreground mt-0.5 block">
+              <span className="text-sm font-medium uppercase text-foreground mt-1 block">
                 {profile.gender}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                 Date of Birth
               </span>
-              <span className="font-medium text-foreground mt-0.5 block">
-                {profile.dateOfBirth ? formatDisplayDate(profile.dateOfBirth) : "Not provided"}
+              <span className="text-sm font-medium text-foreground mt-1 block">
+                {profile.dateOfBirth ? formatDisplayDate(profile.dateOfBirth) : "Not registered"}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
-                Age
-              </span>
-              <span className="font-medium text-foreground mt-0.5 block">
-                {profile.age ? `${profile.age} years old` : "—"}
-              </span>
-            </div>
+            {profile.age !== null && (
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Age
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {profile.age} years
+                </span>
+              </div>
+            )}
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                 Nationality
               </span>
-              <span className="font-medium text-foreground mt-0.5 block">
+              <span className="text-sm font-medium text-foreground mt-1 block">
                 {profile.nationality || "Ethiopian"}
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] uppercase text-muted-foreground block">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                 Assigned Username
               </span>
-              <span className="font-mono font-medium text-foreground mt-0.5 block">
+              <span className="text-sm font-mono font-medium text-foreground mt-1 block">
                 {profile.username || "—"}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <GraduationCap size={16} className="text-muted-foreground" />
-            <h2 className="text-xs sm:text-sm font-bold text-foreground">
+            <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
               Academic Enrollment
             </h2>
           </div>
 
           {profile.enrollment ? (
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Academic Year
                 </span>
-                <span className="font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {profile.enrollment.academicYearName}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Grade Level
                 </span>
-                <span className="font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   Grade {profile.enrollment.gradeLevel}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Section
                 </span>
-                <span className="font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {profile.enrollment.sectionName}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Enrollment Status
                 </span>
-                <span className="font-medium text-foreground mt-0.5 block capitalize">
+                <span className="text-sm font-medium text-foreground mt-1 block capitalize">
                   {profile.enrollment.status.toLowerCase()}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="py-6 text-center text-xs text-muted-foreground">
+            <div className="p-3.5 rounded-xl border border-border bg-background/50 text-xs text-muted-foreground">
               No active enrollment record found.
             </div>
           )}
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <Users size={16} className="text-muted-foreground" />
-            <h2 className="text-xs sm:text-sm font-bold text-foreground">
-              Parent / Guardian Contacts
+            <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
+              Parent Contact
             </h2>
           </div>
 
           {primaryContact ? (
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Contact Full Name
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Parent Name
                 </span>
-                <span className="font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-medium text-foreground mt-1 block">
                   {primaryContact.fullName}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Relationship
                 </span>
-                <span className="font-medium capitalize text-foreground mt-0.5 block">
+                <span className="text-sm font-medium capitalize text-foreground mt-1 block">
                   {primaryContact.relationship.toLowerCase()}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Primary Phone
                 </span>
-                <span className="font-mono font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-mono font-medium text-foreground mt-1 block">
                   {formatPhoneDisplay(primaryContact.phoneNumber) || "—"}
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Alternative Phone
                 </span>
-                <span className="font-mono font-medium text-foreground mt-0.5 block">
+                <span className="text-sm font-mono font-medium text-foreground mt-1 block">
                   {formatPhoneDisplay(primaryContact.alternativePhoneNumber || "") || "—"}
-                </span>
-              </div>
-
-              <div className="col-span-2">
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Emergency Contact
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {primaryContact.isEmergencyContact ? "Designated Emergency Contact" : "Standard Contact"}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="py-6 text-center text-xs text-muted-foreground">
-              No parent / guardian contact registered yet. Click &quot;Edit Profile&quot; to add.
+            <div className="p-3.5 rounded-xl border border-border bg-background/50 text-xs text-muted-foreground">
+              No parent contact registered yet. Click &quot;Edit Profile&quot; to add.
             </div>
           )}
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <MapPin size={16} className="text-muted-foreground" />
-            <h2 className="text-xs sm:text-sm font-bold text-foreground">
-              Residential Location
+            <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
+              Residential Address
             </h2>
           </div>
 
           {profile.address ? (
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Region
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.regionName || "—"}
-                </span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {(profile.address.regionName || profile.address.regionId) && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Region
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.regionName || profile.address.regionId}
+                  </span>
+                </div>
+              )}
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Zone
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.zoneName || "—"}
-                </span>
-              </div>
+              {(profile.address.zoneName || profile.address.zoneId) && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Zone
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.zoneName || profile.address.zoneId}
+                  </span>
+                </div>
+              )}
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Woreda
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.woredaName || "—"}
-                </span>
-              </div>
+              {(profile.address.woredaName || profile.address.woredaId) && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Woreda
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.woredaName || profile.address.woredaId}
+                  </span>
+                </div>
+              )}
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  City
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.cityName || "—"}
-                </span>
-              </div>
+              {(profile.address.cityName || profile.address.cityId) && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    City
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.cityName || profile.address.cityId}
+                  </span>
+                </div>
+              )}
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Kebele
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.kebeleName || "—"}
-                </span>
-              </div>
+              {(profile.address.kebeleName || profile.address.kebeleId) && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Kebele
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.kebeleName || profile.address.kebeleId}
+                  </span>
+                </div>
+              )}
 
-              <div>
-                <span className="text-[11px] uppercase text-muted-foreground block">
-                  Current Location
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {profile.address.specificLocation || "—"}
-                </span>
-              </div>
+              {profile.address.specificLocation && (
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Current Location
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {profile.address.specificLocation}
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="py-6 text-center text-xs text-muted-foreground">
-              No residential address registered yet. Click &quot;Edit Profile&quot; to add.
+            <div className="p-3.5 rounded-xl border border-border bg-background/50 text-xs text-muted-foreground">
+              No residential address registered. Click &quot;Edit Profile&quot; to add your address details.
             </div>
           )}
         </div>
@@ -476,7 +476,7 @@ export function StudentProfileView() {
                   Edit Student Profile
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Update your personal details, guardian contacts, and residential location
+                  Update your personal details, parent contact, and residential location
                 </p>
               </div>
               <button
@@ -519,13 +519,13 @@ export function StudentProfileView() {
 
               <div className="pt-2 border-t border-border space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                  Parent / Guardian Contact
+                  Parent Contact
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <FormField
                     id="editContactName"
-                    label="Parent / Guardian Name"
+                    label="Parent Name"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     placeholder="e.g. Kebede Tessema"
@@ -546,8 +546,7 @@ export function StudentProfileView() {
                     >
                       <option value="FATHER">Father</option>
                       <option value="MOTHER">Mother</option>
-                      <option value="GUARDIAN">Legal Guardian</option>
-                      <option value="OTHER">Other</option>
+                      <option value="OTHER">Parent / Other</option>
                     </select>
                   </div>
 

@@ -291,7 +291,7 @@ export function TeacherOnboardingWizard({
                 onChange={(e) => { setMiddleName(e.target.value); clearFieldError("middleName"); }}
                 onBlur={() => { if (!middleName.trim()) setValidationErrors((prev) => ({ ...prev, middleName: "Please enter your middle name" })); }}
                 error={validationErrors.middleName}
-                placeholder="Father's name"
+                placeholder="Middle name"
                 required
               />
 
@@ -302,7 +302,7 @@ export function TeacherOnboardingWizard({
                 onChange={(e) => { setLastName(e.target.value); clearFieldError("lastName"); }}
                 onBlur={() => { if (!lastName.trim()) setValidationErrors((prev) => ({ ...prev, lastName: "Please enter your last name" })); }}
                 error={validationErrors.lastName}
-                placeholder="Grandfather's name"
+                placeholder="Last name"
                 required
               />
             </div>

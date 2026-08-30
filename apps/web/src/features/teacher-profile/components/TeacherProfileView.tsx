@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { Edit2, Save, X, User, Check } from "lucide-react";
+import { Edit2, Save, X, Check } from "lucide-react";
 import {
   FormField,
   ErrorAlert,
@@ -122,7 +121,7 @@ export function TeacherProfileView() {
   }
 
   return (
-    <div className="space-y-6 w-full max-w-4xl mx-auto">
+    <div className="space-y-6 w-full max-w-5xl mx-auto">
       {updateMutation.error && (
         <ErrorAlert
           message={getErrorMessage(
@@ -132,83 +131,88 @@ export function TeacherProfileView() {
         />
       )}
 
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          {profile.photoUrl ? (
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-border shrink-0">
-              <Image
-                src={profile.photoUrl}
-                alt={profile.fullName}
-                fill
-                unoptimized
-                sizes="56px"
-                className="object-cover"
-              />
+      <div className="bg-card rounded-2xl border border-border p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xl sm:text-2xl overflow-hidden shrink-0">
+              {profile.photoUrl ? (
+                <img
+                  src={profile.photoUrl}
+                  alt={profile.fullName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>
+                  {profile.firstName[0]}
+                  {profile.middleName[0]}
+                </span>
+              )}
             </div>
+
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold text-foreground">
+                  {profile.fullName}
+                </h1>
+                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-2xs">
+                  Teacher
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap font-mono">
+                <span className="font-semibold text-foreground">{profile.employeeCode}</span>
+                <span>•</span>
+                <span>Username: {profile.username}</span>
+              </div>
+            </div>
+          </div>
+
+          {!isEditing ? (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
+            >
+              <Edit2 size={14} />
+              <span>Edit Profile</span>
+            </button>
           ) : (
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0 border border-primary/20">
-              {profile.firstName?.[0]?.toUpperCase() ?? <User size={24} />}
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={cancelEditing}
+                disabled={updateMutation.isPending}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                <X size={14} />
+                <span>Cancel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {savedSuccess ? (
+                  <>
+                    <Check size={14} className="stroke-[3]" />
+                    <span>Saved</span>
+                  </>
+                ) : updateMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size={14} />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    <span>Save</span>
+                  </>
+                )}
+              </button>
             </div>
           )}
-
-          <div className="space-y-0.5 min-w-0">
-            <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
-              {profile.fullName}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-mono">
-              <span>{profile.employeeCode}</span>
-              <span>•</span>
-              <span>Username: {profile.username}</span>
-            </div>
-          </div>
         </div>
-
-        {!isEditing ? (
-          <button
-            type="button"
-            onClick={startEditing}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 self-start sm:self-auto"
-          >
-            <Edit2 size={14} />
-            <span>Edit Profile</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={cancelEditing}
-              disabled={updateMutation.isPending}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
-            >
-              <X size={14} />
-              <span>Cancel</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
-            >
-              {savedSuccess ? (
-                <>
-                  <Check size={14} className="stroke-[3]" />
-                  <span>Saved</span>
-                </>
-              ) : updateMutation.isPending ? (
-                <>
-                  <LoadingSpinner size={14} />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save size={14} />
-                  <span>Save</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       {!isEditing ? (
@@ -267,7 +271,7 @@ export function TeacherProfileView() {
               {profile.age !== null && (
                 <div className="p-3.5 rounded-xl border border-border bg-background/50">
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                    Calculated Age
+                    Age
                   </span>
                   <span className="text-sm font-medium text-foreground mt-1 block">
                     {profile.age} years

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, UserCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
   FormField,
   LoadingSpinner,
@@ -34,7 +34,7 @@ import {
 
 const ONBOARDING_STEPS: readonly StepItem[] = [
   { id: 1, title: "Personal Details", description: "Identity & Demographics" },
-  { id: 2, title: "Parent / Guardian", description: "Primary Contact Info" },
+  { id: 2, title: "Parent Contact", description: "Primary Contact Info" },
   { id: 3, title: "Residential Address", description: "Location & Residence" },
   { id: 4, title: "Review & Confirm", description: "Verify All Details" },
 ];
@@ -146,9 +146,9 @@ export function StudentOnboardingWizard({
 
   const validateStep2 = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!contactName.trim()) errors.contactName = "Please enter parent / guardian full name";
+    if (!contactName.trim()) errors.contactName = "Please enter parent full name";
     if (!contactPhone.trim()) {
-      errors.contactPhone = "Please enter parent / guardian phone number";
+      errors.contactPhone = "Please enter parent phone number";
     } else if (!/^\+?[0-9\s-]{9,20}$/.test(contactPhone.trim())) {
       errors.contactPhone = "Please enter a valid phone number (e.g. 0911223344)";
     }
@@ -229,7 +229,7 @@ export function StudentOnboardingWizard({
       ],
     },
     {
-      title: "Parent / Guardian Contact",
+      title: "Parent Contact",
       onEdit: () => setCurrentStep(2),
       items: [
         { label: "Contact Name", value: contactName || "Not provided" },
@@ -256,7 +256,7 @@ export function StudentOnboardingWizard({
   return (
     <OnboardingLayout
       title="Student Profile Setup"
-      subtitle="Complete your profile and parent/guardian contact details to activate your school account"
+      subtitle="Complete your profile and parent contact details to activate your school account"
       stepper={
         <OnboardingStepper
           steps={ONBOARDING_STEPS}
@@ -339,7 +339,7 @@ export function StudentOnboardingWizard({
                 onChange={(e) => { setMiddleName(e.target.value); clearFieldError("middleName"); }}
                 onBlur={() => { if (!middleName.trim()) setValidationErrors((prev) => ({ ...prev, middleName: "Please enter your middle name" })); }}
                 error={validationErrors.middleName}
-                placeholder="Father's name"
+                placeholder="Middle name"
                 required
               />
 
@@ -348,7 +348,7 @@ export function StudentOnboardingWizard({
                 label="Last Name (Optional)"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Grandfather's name"
+                placeholder="Last name"
               />
             </div>
 
@@ -390,17 +390,17 @@ export function StudentOnboardingWizard({
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="border-b border-border pb-3">
               <h2 className="text-sm sm:text-base font-semibold text-foreground">
-                Parent / Guardian Contact
+                Parent Contact
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Provide contact information for your parent or legal guardian for school communications.
+                Provide contact information for your parent for school communications.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 id="contactName"
-                label="Parent / Guardian Full Name"
+                label="Parent Full Name"
                 value={contactName}
                 onChange={(e) => { setContactName(e.target.value); clearFieldError("contactName"); }}
                 error={validationErrors.contactName}
@@ -423,8 +423,7 @@ export function StudentOnboardingWizard({
                 >
                   <option value="FATHER">Father</option>
                   <option value="MOTHER">Mother</option>
-                  <option value="GUARDIAN">Legal Guardian</option>
-                  <option value="OTHER">Other</option>
+                  <option value="OTHER">Parent / Other</option>
                 </select>
               </div>
 
