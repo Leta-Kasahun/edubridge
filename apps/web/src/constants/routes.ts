@@ -14,6 +14,7 @@ export const ROUTES = {
   TEACHER: {
     DASHBOARD: "/dashboard",
     PROFILE: "/dashboard/profile",
+    QUALIFICATIONS: "/dashboard/qualifications",
   },
   STUDENT: {
     DASHBOARD: "/dashboard",
@@ -27,6 +28,7 @@ export const ROUTES = {
     STUDENTS: "/dashboard/provisioning/students",
   },
   PROFILE: "/dashboard/profile",
+  QUALIFICATIONS: "/dashboard/qualifications",
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",

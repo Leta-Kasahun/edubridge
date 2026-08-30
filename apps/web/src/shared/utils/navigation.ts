@@ -3,6 +3,7 @@ import {
   Building2,
   Settings,
   User,
+  GraduationCap,
   UserPlus,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -76,6 +77,11 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "My Profile",
     href: ROUTES.PROFILE,
     icon: User,
+  },
+  {
+    label: "My Qualifications",
+    href: ROUTES.QUALIFICATIONS,
+    icon: GraduationCap,
   },
 ];
 

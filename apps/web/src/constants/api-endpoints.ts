@@ -65,6 +65,16 @@ export const API_ENDPOINTS = {
     COMPLETE: "/teacher-profile/complete",
     BY_ID: (id: string) => `/teacher-profile/${id}`,
   },
+  TEACHER_QUALIFICATIONS: {
+    BASE: "/teacher-qualifications",
+    ME: "/teacher-qualifications/me",
+    BY_ID: (id: string) => `/teacher-qualifications/${id}`,
+  },
+  TEACHER_EXPERIENCES: {
+    BASE: "/teacher-experiences",
+    ME: "/teacher-experiences/me",
+    BY_ID: (id: string) => `/teacher-experiences/${id}`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",

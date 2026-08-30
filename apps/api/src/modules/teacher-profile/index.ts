@@ -4,3 +4,4 @@ export * from "./repository/index.js";
 export * from "./services/index.js";
 export * from "./controllers/index.js";
 export * from "./route.js";
+export * from "./qualification.route.js";
