@@ -151,6 +151,8 @@ export interface TeacherQueryFilters {
   readonly limit?: number;
   readonly search?: string;
   readonly status?: TeacherStatus;
+  readonly accountStatus?: AccountStatus;
+  readonly academicYearId?: string;
   readonly gender?: Gender;
 }
 

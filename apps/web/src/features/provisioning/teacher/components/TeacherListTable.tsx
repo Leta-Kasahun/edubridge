@@ -3,24 +3,23 @@
 import { useState } from "react";
 import {
   UserPlus,
-  UploadCloud,
+  Upload,
   ChevronLeft,
   ChevronRight,
-  Filter,
+  Calendar,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { ACCOUNT_STATUS_FILTER_OPTIONS, formatStudentAccountStatus } from "@/shared/utils";
 import { TeacherActionDropdown } from "./TeacherActionDropdown";
 import {
   useTeachers,
   useDeactivateTeacher,
   useActivateTeacher,
 } from "../hooks/useTeacherProvisioning";
-import {
-  TeacherRecord,
-  TeacherStatus,
-  TeacherGender,
-} from "../types/teacher-provisioning.types";
+import { useAcademicStructure } from "@/features/provisioning/student/hooks";
+import { TeacherRecord } from "../types/teacher-provisioning.types";
 
 export interface TeacherListTableProps {
   readonly onAddTeacher: () => void;
@@ -34,16 +33,21 @@ export function TeacherListTable({
   onViewTeacher,
 }: TeacherListTableProps) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TeacherStatus | undefined>(undefined);
-  const [genderFilter, setGenderFilter] = useState<TeacherGender | undefined>(undefined);
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
+  const [accountStatus, setAccountStatus] = useState<string>("ALL");
   const [page, setPage] = useState(1);
+
+  const { data: structureData } = useAcademicStructure(
+    selectedAcademicYearId || undefined
+  );
+  const academicYears = structureData?.academicYears || [];
 
   const { data: response, isLoading } = useTeachers({
     page,
     limit: 10,
     search: search.trim() || undefined,
-    status: statusFilter,
-    gender: genderFilter,
+    accountStatus: accountStatus !== "ALL" ? accountStatus : undefined,
+    academicYearId: selectedAcademicYearId || undefined,
   });
 
   const deactivateMutation = useDeactivateTeacher();
@@ -68,57 +72,61 @@ export function TeacherListTable({
     }
   };
 
-  const filterGroups: readonly FilterGroup[] = [
-    {
-      id: "status",
-      label: "Status",
+  const filterGroups: FilterGroup[] = [];
+
+  if (academicYears.length > 0) {
+    filterGroups.push({
+      id: "academicYear",
+      label: "Academic year",
       options: [
-        { label: "All Statuses", value: "" },
-        { label: "Active", value: "ACTIVE" },
-        { label: "Inactive", value: "INACTIVE" },
-        { label: "Suspended", value: "SUSPENDED" },
+        { label: "All", value: "" },
+        ...academicYears.map((y) => ({
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
+          value: y.id,
+        })),
       ],
-      selectedValue: statusFilter || "",
+      selectedValue: selectedAcademicYearId,
       onSelect: (val) => {
-        setStatusFilter((val as TeacherStatus) || undefined);
+        setSelectedAcademicYearId(val);
         setPage(1);
       },
-      icon: Filter,
+      icon: Calendar,
+    });
+  }
+
+  filterGroups.push({
+    id: "accountStatus",
+    label: "Status",
+    options: ACCOUNT_STATUS_FILTER_OPTIONS.map((opt) => ({
+      label: opt.label,
+      value: opt.value,
+    })),
+    selectedValue: accountStatus,
+    onSelect: (val) => {
+      setAccountStatus(val);
+      setPage(1);
     },
-    {
-      id: "gender",
-      label: "Gender",
-      options: [
-        { label: "All Genders", value: "" },
-        { label: "Female", value: "FEMALE" },
-        { label: "Male", value: "MALE" },
-      ],
-      selectedValue: genderFilter || "",
-      onSelect: (val) => {
-        setGenderFilter((val as TeacherGender) || undefined);
-        setPage(1);
-      },
-    },
-  ];
+    icon: ShieldCheck,
+  });
 
   const actionButtons = (
     <div className="flex items-center gap-2">
       <button
         type="button"
         onClick={onImportCsv}
-        className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+        className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
       >
-        <UploadCloud size={15} />
-        <span>Import CSV</span>
+        <Upload size={14} className="text-foreground" />
+        <span>Import</span>
       </button>
 
       <button
         type="button"
         onClick={onAddTeacher}
-        className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
+        className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
       >
-        <UserPlus size={15} />
-        <span>Add Teacher</span>
+        <UserPlus size={14} />
+        <span>Add teacher</span>
       </button>
     </div>
   );
@@ -151,7 +159,7 @@ export function TeacherListTable({
             </div>
             <div className="text-sm font-semibold text-foreground">No teachers found</div>
             <div className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Get started by adding individual teachers or importing them via CSV.
+              Get started by adding individual teachers or importing them via Excel or CSV.
             </div>
             <div className="pt-2 flex items-center justify-center gap-2">
               <button
@@ -159,14 +167,14 @@ export function TeacherListTable({
                 onClick={onAddTeacher}
                 className="px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer"
               >
-                Add Teacher
+                Add teacher
               </button>
             </div>
           </div>
         ) : (
           <>
             <div className="hidden sm:block overflow-x-auto w-full">
-              <table className="w-full min-w-[850px] text-xs text-left">
+              <table className="w-full min-w-[800px] text-xs text-left">
                 <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-xs">
                   <tr>
                     <th className="px-5 py-3.5 min-w-[200px]">Teacher</th>
@@ -174,8 +182,7 @@ export function TeacherListTable({
                     <th className="px-4 py-3.5 min-w-[90px]">Gender</th>
                     <th className="px-4 py-3.5 min-w-[170px]">Email</th>
                     <th className="px-4 py-3.5 min-w-[130px]">Phone</th>
-                    <th className="px-4 py-3.5 min-w-[90px]">Status</th>
-                    <th className="px-4 py-3.5 min-w-[100px]">Verification</th>
+                    <th className="px-4 py-3.5 min-w-[110px]">Status</th>
                     <th className="px-4 py-3.5 text-right w-[70px] min-w-[70px]">Actions</th>
                   </tr>
                 </thead>
@@ -214,11 +221,7 @@ export function TeacherListTable({
                       </td>
 
                       <td className="px-4 py-3.5 font-medium text-foreground text-xs whitespace-nowrap">
-                        {teacher.teacherStatus === "ACTIVE" ? "Active" : "Inactive"}
-                      </td>
-
-                      <td className="px-4 py-3.5 font-medium text-foreground text-xs whitespace-nowrap">
-                        {teacher.emailVerified ? "Verified" : "Pending"}
+                        {formatStudentAccountStatus(teacher.status)}
                       </td>
 
                       <td className="px-4 py-3.5 text-right">
@@ -249,7 +252,7 @@ export function TeacherListTable({
 
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-foreground">
-                        {teacher.teacherStatus === "ACTIVE" ? "Active" : "Inactive"}
+                        {formatStudentAccountStatus(teacher.status)}
                       </span>
 
                       <TeacherActionDropdown
@@ -276,10 +279,6 @@ export function TeacherListTable({
                     <div>
                       <span className="text-[10px] block uppercase text-muted-foreground">Phone</span>
                       <span className="font-mono font-medium text-foreground text-xs">{teacher.phoneNumber || "—"}</span>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-between pt-1 border-t border-border/60">
-                      <span className="text-[10px] uppercase text-muted-foreground">Verification</span>
-                      <span className="font-medium text-foreground text-xs">{teacher.emailVerified ? "Verified" : "Pending"}</span>
                     </div>
                   </div>
                 </div>

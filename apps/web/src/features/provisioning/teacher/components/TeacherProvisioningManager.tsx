@@ -68,20 +68,31 @@ export function TeacherProvisioningManager() {
       )}
 
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-3xl bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-base font-bold text-foreground">Import Teachers via CSV</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-2xl bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground">
+                  Import Teachers (Excel / CSV)
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bulk onboard teachers via Excel (.xlsx, .xls) or CSV
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0 cursor-pointer"
+                aria-label="Close modal"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="p-6">
-              <TeacherBulkProvisioningForm onSuccess={handleBulkSuccess} />
+            <div className="p-4 sm:p-6 max-h-[calc(85vh-120px)] overflow-y-auto">
+              <TeacherBulkProvisioningForm
+                onSuccess={handleBulkSuccess}
+                onClose={() => setIsImportModalOpen(false)}
+              />
             </div>
           </div>
         </div>

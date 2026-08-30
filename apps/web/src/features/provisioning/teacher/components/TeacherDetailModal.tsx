@@ -1,7 +1,11 @@
 "use client";
 
 import { X } from "lucide-react";
-import { formatPhoneDisplay, formatDisplayDate } from "@/shared/utils";
+import {
+  formatPhoneDisplay,
+  formatDisplayDate,
+  formatStudentAccountStatus,
+} from "@/shared/utils";
 import { TeacherRecord } from "../types/teacher-provisioning.types";
 
 export interface TeacherDetailModalProps {
@@ -25,14 +29,7 @@ export function TeacherDetailModal({
     ? formatDisplayDate(teacher.createdAt)
     : null;
 
-  const formattedAccountStatus =
-    teacher.status === "PENDING_FIRST_LOGIN"
-      ? "Pending First Login"
-      : teacher.status === "ACTIVE"
-      ? "Active"
-      : teacher.status === "SUSPENDED"
-      ? "Suspended"
-      : teacher.status;
+  const formattedAccountStatus = formatStudentAccountStatus(teacher.status);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">

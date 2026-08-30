@@ -213,6 +213,20 @@ export class TeacherProvisioningRepository {
       where.status = filters.status;
     }
 
+    if (filters.accountStatus) {
+      where.user = {
+        status: filters.accountStatus,
+      };
+    }
+
+    if (filters.academicYearId) {
+      where.assignments = {
+        some: {
+          academicYearId: filters.academicYearId,
+        },
+      };
+    }
+
     if (filters.gender) {
       where.gender = filters.gender;
     }
@@ -265,7 +279,7 @@ export class TeacherProvisioningRepository {
         gender: p.gender,
         email: p.email,
         phoneNumber: p.phoneNumber,
-        status: user?.status || AccountStatus.ACTIVE,
+        status: user?.status || AccountStatus.PENDING_FIRST_LOGIN,
         teacherStatus: p.status,
         emailVerified: user?.emailVerified || false,
         membershipId: membership?.id || "",

@@ -9,7 +9,7 @@ import {
   teacherBulkProvisioningService,
   TeacherBulkProvisioningService,
 } from "../services/teacher-bulk-provisioning.service.js";
-import { TeacherStatus, Gender } from "../../../../generated/prisma/client.js";
+import { TeacherStatus, Gender, AccountStatus } from "../../../../generated/prisma/client.js";
 
 function resolveTenantId(req: Request): string {
   const tenantId =
@@ -106,6 +106,8 @@ export class TeacherProvisioningController {
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
     const search = req.query.search ? String(req.query.search) : undefined;
     const status = req.query.status as TeacherStatus | undefined;
+    const accountStatus = req.query.accountStatus as AccountStatus | undefined;
+    const academicYearId = req.query.academicYearId ? String(req.query.academicYearId) : undefined;
     const gender = req.query.gender as Gender | undefined;
 
     const result = await this.provisioningSvc.getTeachers(tenantId, {
@@ -113,6 +115,8 @@ export class TeacherProvisioningController {
       limit,
       search,
       status,
+      accountStatus,
+      academicYearId,
       gender,
     });
 
