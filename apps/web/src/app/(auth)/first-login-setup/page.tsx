@@ -47,6 +47,8 @@ function FirstLoginSetupContent() {
         onSuccess={(data) => {
           if (data?.user?.roles?.includes("TEACHER")) {
             router.push(ROUTES.ONBOARDING.TEACHER);
+          } else if (data?.user?.roles?.includes("STUDENT")) {
+            router.push(ROUTES.ONBOARDING.STUDENT);
           } else {
             router.push(ROUTES.AUTH.LOGIN);
           }

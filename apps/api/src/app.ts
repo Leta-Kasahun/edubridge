@@ -17,6 +17,7 @@ import { tenantProvisioningRouter } from "./modules/provisioning/tenant/route.js
 import { teacherProvisioningRouter } from "./modules/provisioning/teacher/route.js";
 import { studentProvisioningRouter } from "./modules/provisioning/student/route.js";
 import { teacherProfileRouter } from "./modules/teacher-profile/route.js";
+import { studentProfileRouter } from "./modules/students/route.js";
 
 const app: Express = express();
 
@@ -44,6 +45,8 @@ app.use("/api/provisioning/students", studentProvisioningRouter);
 app.use("/api/provisioning/student", studentProvisioningRouter);
 app.use("/api/teacher-profile", teacherProfileRouter);
 app.use("/api/teacher-profiles", teacherProfileRouter);
+app.use("/api/student-profile", studentProfileRouter);
+app.use("/api/student-profiles", studentProfileRouter);
 
 app.use(errorHandler);
 

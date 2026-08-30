@@ -8,9 +8,14 @@ export const ROUTES = {
   },
   ONBOARDING: {
     TEACHER: "/onboarding/teacher",
+    STUDENT: "/onboarding/student",
   },
   DASHBOARD: "/dashboard",
   TEACHER: {
+    DASHBOARD: "/dashboard",
+    PROFILE: "/dashboard/profile",
+  },
+  STUDENT: {
     DASHBOARD: "/dashboard",
     PROFILE: "/dashboard/profile",
   },
