@@ -152,11 +152,13 @@ export class StudentProvisioningRepository {
   }
 
   async getNextStudentSequence(tenantCode: string): Promise<number> {
-    const prefix = `${tenantCode.toUpperCase()}-STU-`;
     const count = await prisma.studentProfile.count({
       where: {
-        studentCode: {
-          startsWith: prefix,
+        tenant: {
+          code: {
+            equals: tenantCode,
+            mode: "insensitive",
+          },
         },
       },
     });

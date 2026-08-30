@@ -3,6 +3,7 @@ import {
   generateStudentUsername,
   generateStudentCode,
   generateStudentTempPassword,
+  getNextSequence,
 } from "../../../../shared/utils/generators.js";
 import {
   NotFoundError,
@@ -187,16 +188,23 @@ export class StudentProvisioningService {
       }
     }
 
-    let sequence = await this.repo.getNextStudentSequence(tenant.code);
+    let sequence = await getNextSequence(tenant.code, "STUDENT");
     let username = generateStudentUsername(tenant.code, sequence);
+    let studentCode =
+      payload.studentCode && payload.studentCode.trim().length > 0
+        ? payload.studentCode.trim()
+        : generateStudentCode(tenant.code, sequence);
 
-    while (await this.repo.findUserByUsername(username)) {
+    while (
+      (await this.repo.findUserByUsername(username)) ||
+      (!payload.studentCode && (await this.repo.findStudentByStudentCode(tenant.id, studentCode)))
+    ) {
       sequence += 1;
       username = generateStudentUsername(tenant.code, sequence);
+      if (!payload.studentCode || payload.studentCode.trim().length === 0) {
+        studentCode = generateStudentCode(tenant.code, sequence);
+      }
     }
-
-    const studentCode =
-      payload.studentCode?.trim() || generateStudentCode(tenant.code, sequence);
 
     const tempPassword = generateStudentTempPassword();
     const passwordHash = await hashPassword(tempPassword);

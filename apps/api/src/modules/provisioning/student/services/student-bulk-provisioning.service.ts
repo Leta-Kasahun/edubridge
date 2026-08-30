@@ -35,6 +35,7 @@ export class StudentBulkProvisioningService {
       readonly academicYearId: string;
       readonly gradeId: string;
       readonly sectionId?: string;
+      readonly sectionName?: string;
       readonly students: readonly StudentImportRowData[];
     },
     tenantId: string,
@@ -93,7 +94,7 @@ export class StudentBulkProvisioningService {
         resolvedTenantId,
         payload.academicYearId,
         payload.gradeId,
-        "Section A",
+        payload.sectionName?.trim() || "Section A",
         40
       );
       sectionCapacities.set(defaultSection.id, {
@@ -106,19 +107,37 @@ export class StudentBulkProvisioningService {
 
     const selectOptimalSectionId = (): string => {
       const sectionsList = Array.from(sectionCapacities.values());
-
-      const underCapacity = sectionsList
-        .filter((s) => s.currentCount < s.capacity)
-        .sort((a, b) => a.currentCount - b.currentCount);
-
-      if (underCapacity.length > 0 && underCapacity[0]) {
-        return underCapacity[0].id;
+      if (sectionsList.length === 0) {
+        return "";
       }
 
-      const sortedByCount = sectionsList.sort(
-        (a, b) => a.currentCount - b.currentCount
+      const availableSections = sectionsList.filter(
+        (s) => s.capacity > s.currentCount
       );
-      return sortedByCount[0]?.id || sectionsList[0]?.id || "";
+
+      if (availableSections.length > 0) {
+        const totalRemainingWeight = availableSections.reduce(
+          (acc, s) => acc + (s.capacity - s.currentCount),
+          0
+        );
+
+        let randomVal = Math.random() * totalRemainingWeight;
+        for (const sec of availableSections) {
+          const weight = sec.capacity - sec.currentCount;
+          if (randomVal < weight) {
+            return sec.id;
+          }
+          randomVal -= weight;
+        }
+        return availableSections[0]?.id || "";
+      }
+
+      const minCount = Math.min(...sectionsList.map((s) => s.currentCount));
+      const leastFilledSections = sectionsList.filter(
+        (s) => s.currentCount === minCount
+      );
+      const randomIndex = Math.floor(Math.random() * leastFilledSections.length);
+      return leastFilledSections[randomIndex]?.id || sectionsList[0]?.id || "";
     };
 
     for (let index = 0; index < payload.students.length; index += 1) {
@@ -150,7 +169,8 @@ export class StudentBulkProvisioningService {
         }
 
         let targetSectionId: string | undefined = payload.sectionId;
-        let targetSectionName: string | undefined = studentData.section?.trim();
+        let targetSectionName: string | undefined =
+          studentData.section?.trim() || payload.sectionName?.trim() || undefined;
 
         if (!targetSectionName && !targetSectionId) {
           targetSectionId = selectOptimalSectionId();
@@ -176,9 +196,16 @@ export class StudentBulkProvisioningService {
         );
 
         if (result.enrollment?.sectionId) {
-          const sec = sectionCapacities.get(result.enrollment.sectionId);
-          if (sec) {
-            sec.currentCount += 1;
+          const existing = sectionCapacities.get(result.enrollment.sectionId);
+          if (existing) {
+            existing.currentCount += 1;
+          } else {
+            sectionCapacities.set(result.enrollment.sectionId, {
+              id: result.enrollment.sectionId,
+              name: result.enrollment.sectionName,
+              capacity: 40,
+              currentCount: 1,
+            });
           }
         }
 
@@ -250,6 +277,7 @@ export class StudentBulkProvisioningService {
         academicYearId: payload.academicYearId,
         gradeId: payload.gradeId,
         sectionId: payload.sectionId,
+        sectionName: payload.sectionName,
         students: parsed.validRows,
       },
       tenantId,

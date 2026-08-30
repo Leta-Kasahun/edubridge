@@ -63,7 +63,7 @@ export function StudentToolbar({
 
     list.push({
       id: "accountStatus",
-      label: "Account status",
+      label: "Status",
       options: ACCOUNT_STATUS_FILTER_OPTIONS.map((opt) => ({
         label: opt.label,
         value: opt.value,
@@ -104,20 +104,20 @@ export function StudentToolbar({
       searchPlaceholder="Search by code or name..."
       filters={filters}
       actionButton={
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onOpenImportCsv}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs flex-1 sm:flex-initial"
+            className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
           >
             <Upload size={14} className="text-foreground" />
-            <span>Import CSV</span>
+            <span>Import</span>
           </button>
 
           <button
             type="button"
             onClick={onOpenAddStudent}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs flex-1 sm:flex-initial"
+            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
           >
             <UserPlus size={14} />
             <span>Add student</span>

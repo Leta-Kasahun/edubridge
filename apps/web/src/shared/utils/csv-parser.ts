@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+
 export interface CsvParsedRow {
   readonly rowNumber: number;
   readonly raw: Record<string, string>;
@@ -131,10 +133,34 @@ export function parseCsvString(
   };
 }
 
+export async function parseImportFile(
+  file: File,
+  requiredColumns: readonly string[] = []
+): Promise<{ readonly csvContent: string; readonly parseResult: CsvParseResult }> {
+  const fileName = file.name.toLowerCase();
+  let csvContent = "";
+
+  if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName || !workbook.Sheets[firstSheetName]) {
+      throw new Error("Excel file contains no readable sheets");
+    }
+    const worksheet = workbook.Sheets[firstSheetName];
+    csvContent = XLSX.utils.sheet_to_csv(worksheet);
+  } else {
+    csvContent = await file.text();
+  }
+
+  const parseResult = parseCsvString(csvContent, requiredColumns);
+  return { csvContent, parseResult };
+}
+
 export async function parseCsvFile(
   file: File,
   requiredColumns: readonly string[] = []
 ): Promise<CsvParseResult> {
-  const content = await file.text();
-  return parseCsvString(content, requiredColumns);
+  const { parseResult } = await parseImportFile(file, requiredColumns);
+  return parseResult;
 }

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { ChevronDown, MoreVertical, Eye, UserX, UserCheck } from "lucide-react";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
-import { formatStudentAccountStatus, getStudentStatusBadgeColor } from "@/shared/utils";
+import { formatStudentAccountStatus } from "@/shared/utils";
 import { cn } from "@/lib/utils";
 import {
   StudentRecord,
@@ -94,7 +94,6 @@ export function StudentSectionAccordion({
                       .filter(Boolean)
                       .join(" ");
 
-                    const badge = getStudentStatusBadgeColor(student.status);
                     const formattedStatus = formatStudentAccountStatus(student.status);
                     const isMenuOpen = activeMenuId === student.id;
 
@@ -115,18 +114,8 @@ export function StudentSectionAccordion({
                         <td className="px-4 py-3.5 text-muted-foreground capitalize">
                           {student.gender.toLowerCase()}
                         </td>
-                        <td className="px-4 py-3.5">
-                          <div className="inline-flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "w-2 h-2 rounded-full shrink-0",
-                                badge.dotClass
-                              )}
-                            />
-                            <span className="text-foreground font-medium text-xs">
-                              {formattedStatus}
-                            </span>
-                          </div>
+                        <td className="px-4 py-3.5 text-foreground font-medium text-xs">
+                          {formattedStatus}
                         </td>
                         <td className="px-4 py-3.5 text-right relative">
                           <div className="inline-block text-left" ref={isMenuOpen ? actionMenuRef : undefined}>

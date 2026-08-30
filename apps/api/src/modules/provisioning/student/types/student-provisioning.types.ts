@@ -40,6 +40,7 @@ export interface BulkStudentCsvPayload {
   readonly academicYearId: string;
   readonly gradeId: string;
   readonly sectionId?: string;
+  readonly sectionName?: string;
   readonly csvContent: string;
   readonly fileName?: string;
 }

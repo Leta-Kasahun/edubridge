@@ -90,6 +90,7 @@ export const bulkStudentCsvSchema = z.object({
   academicYearId: z.string().uuid("Academic year is required"),
   gradeId: z.string().uuid("Grade is required"),
   sectionId: z.string().uuid("Invalid section ID").optional(),
+  sectionName: z.string().trim().min(1).max(50).optional(),
   csvContent: z.string().min(10, "CSV file is empty or missing data rows"),
   fileName: z.string().trim().max(255).optional(),
 });
