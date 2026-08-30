@@ -1,0 +1,8 @@
+export const ACADEMIC_YEAR_STATUSES = [
+  "UPCOMING",
+  "ACTIVE",
+  "COMPLETED",
+  "ARCHIVED",
+] as const;
+
+export const DEFAULT_ACADEMIC_YEAR_PAGE_LIMIT = 50;

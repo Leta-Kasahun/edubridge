@@ -78,6 +78,14 @@ export const API_ENDPOINTS = {
   STAFF_QUALIFICATIONS: {
     BASE: "/staff-qualifications",
   },
+  ACADEMIC_YEARS: {
+    BASE: "/academic/years",
+    ACTIVE: "/academic/years/active",
+    BY_ID: (id: string) => `/academic/years/${id}`,
+    SET_ACTIVE: (id: string) => `/academic/years/${id}/set-active`,
+    ARCHIVE: (id: string) => `/academic/years/${id}/archive`,
+    RESTORE: (id: string) => `/academic/years/${id}/restore`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",
