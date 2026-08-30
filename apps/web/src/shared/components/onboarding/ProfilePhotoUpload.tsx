@@ -1,6 +1,6 @@
 import { useState, useRef, ChangeEvent } from "react";
 import Image from "next/image";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   validateImageFile,
@@ -19,7 +19,7 @@ export function ProfilePhotoUpload({
   initialPhotoUrl,
   onPhotoSelect,
   error,
-  label = "Profile Photo (Optional)",
+  label,
 }: ProfilePhotoUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialPhotoUrl || null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -61,13 +61,15 @@ export function ProfilePhotoUpload({
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block">
-        {label}
-      </label>
+      {label && (
+        <label className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block">
+          {label}
+        </label>
+      )}
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3.5">
         {previewUrl ? (
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-border group shrink-0">
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-primary/20 bg-primary/10 group shrink-0">
             <Image
               src={previewUrl}
               alt="Profile preview"
@@ -79,10 +81,10 @@ export function ProfilePhotoUpload({
             <button
               type="button"
               onClick={handleRemovePhoto}
-              className="absolute top-0.5 right-0.5 p-1 rounded-full bg-background/90 text-foreground hover:bg-background transition-colors cursor-pointer"
+              className="absolute top-1 right-1 p-1 rounded-full bg-background/90 text-foreground hover:bg-background transition-colors cursor-pointer shadow-xs"
               aria-label="Remove photo"
             >
-              <X size={10} />
+              <X size={11} />
             </button>
           </div>
         ) : (
@@ -90,28 +92,39 @@ export function ProfilePhotoUpload({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-dashed border-border hover:border-foreground/40 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer",
+              "w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0 cursor-pointer",
               displayError && "border-destructive text-destructive"
             )}
             aria-label="Upload photo"
           >
-            <Upload size={16} />
-            <span className="text-[9px] mt-0.5 font-medium">Upload</span>
+            <Camera size={18} />
           </button>
         )}
 
-        <div className="text-xs text-muted-foreground space-y-0.5">
-          <p className="font-medium text-foreground">Upload your profile photo</p>
-          <p className="text-[11px]">Supports JPG, PNG, WEBP up to 5MB.</p>
-          {!previewUrl && (
+        <div className="text-xs space-y-1">
+          <p className="font-medium text-foreground">Edit your profile photo</p>
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-semibold text-foreground hover:underline cursor-pointer inline-block"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline cursor-pointer"
             >
-              Browse file
+              <Upload size={12} />
+              <span>{previewUrl ? "Change photo" : "Choose photo"}</span>
             </button>
-          )}
+            {previewUrl && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <input

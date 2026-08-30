@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Edit2, Save, X, Check } from "lucide-react";
+import { Edit2, Save, X, Check, User, Phone, MapPin } from "lucide-react";
 import {
   FormField,
   ErrorAlert,
@@ -218,9 +218,12 @@ export function TeacherProfileView() {
       {!isEditing ? (
         <div className="space-y-6">
           <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
-              Personal & Demographics
-            </h2>
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <User size={16} className="text-muted-foreground" />
+              <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
+                Personal & Demographics
+              </h2>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="p-3.5 rounded-xl border border-border bg-background/50">
@@ -254,7 +257,7 @@ export function TeacherProfileView() {
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                   Gender
                 </span>
-                <span className="text-sm font-medium text-foreground mt-1 block uppercase">
+                <span className="text-sm font-medium uppercase text-foreground mt-1 block">
                   {profile.gender}
                 </span>
               </div>
@@ -291,9 +294,12 @@ export function TeacherProfileView() {
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
-              Contact Details
-            </h2>
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <Phone size={16} className="text-muted-foreground" />
+              <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
+                Contact Details
+              </h2>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="p-3.5 rounded-xl border border-border bg-background/50">
@@ -335,9 +341,12 @@ export function TeacherProfileView() {
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
-              Residential Address
-            </h2>
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <MapPin size={16} className="text-muted-foreground" />
+              <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
+                Residential Address
+              </h2>
+            </div>
 
             {profile.address ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -425,29 +434,24 @@ export function TeacherProfileView() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Profile Photo
-            </h3>
-            <ProfilePhotoUpload
-              key={photoUrl ?? "empty"}
-              initialPhotoUrl={photoUrl}
-              onPhotoSelect={async (file) => {
-                if (file) {
-                  try {
-                    const dataUrl = await fileToDataUrl(file);
-                    setPhotoUrl(dataUrl);
-                  } catch {
-                    setPhotoUrl(URL.createObjectURL(file));
-                  }
-                } else {
-                  setPhotoUrl(null);
+          <ProfilePhotoUpload
+            key={photoUrl ?? "empty"}
+            initialPhotoUrl={photoUrl}
+            onPhotoSelect={async (file) => {
+              if (file) {
+                try {
+                  const dataUrl = await fileToDataUrl(file);
+                  setPhotoUrl(dataUrl);
+                } catch {
+                  setPhotoUrl(URL.createObjectURL(file));
                 }
-              }}
-            />
-          </div>
+              } else {
+                setPhotoUrl(null);
+              }
+            }}
+          />
 
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2 border-t border-border">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Personal & Contact Information
             </h3>

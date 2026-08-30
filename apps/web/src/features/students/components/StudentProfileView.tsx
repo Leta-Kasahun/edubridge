@@ -15,6 +15,7 @@ import {
   ErrorAlert,
   AddressHierarchyFields,
   AddressFormValues,
+  ProfilePhotoUpload,
   SubmitButton,
 } from "@/shared/components";
 import {
@@ -23,6 +24,7 @@ import {
   formatDisplayDate,
   getErrorMessage,
 } from "@/shared/utils";
+import { fileToDataUrl } from "@/shared/utils/image.util";
 import {
   useMyStudentProfile,
   useUpdateStudentProfile,
@@ -38,6 +40,7 @@ export function StudentProfileView() {
 
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [nationality, setNationality] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [contactName, setContactName] = useState("");
   const [contactRelationship, setContactRelationship] = useState<ContactRelationship>("FATHER");
   const [contactPhone, setContactPhone] = useState("");
@@ -57,6 +60,7 @@ export function StudentProfileView() {
     if (!profile) return;
     setDateOfBirth(profile.dateOfBirth ? profile.dateOfBirth.split("T")[0] || "" : "");
     setNationality(profile.nationality || "Ethiopian");
+    setPhotoUrl(profile.photoUrl || null);
 
     const primaryContact = profile.contacts?.find((c) => c.isPrimary) || profile.contacts?.[0];
     setContactName(primaryContact?.fullName || "");
@@ -83,6 +87,7 @@ export function StudentProfileView() {
     const payload: UpdateStudentProfilePayload = {
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
       nationality: nationality.trim() || undefined,
+      photoUrl: photoUrl || null,
       address: {
         regionId: addressValues.regionId?.trim() || null,
         zoneId: addressValues.zoneId?.trim() || null,
@@ -476,7 +481,7 @@ export function StudentProfileView() {
                   Edit Student Profile
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Update your personal details, parent contact, and residential location
+                  Update your personal details, photo, parent contact, and residential location
                 </p>
               </div>
               <button
@@ -499,7 +504,24 @@ export function StudentProfileView() {
                 />
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <ProfilePhotoUpload
+                key={photoUrl ?? "empty"}
+                initialPhotoUrl={photoUrl}
+                onPhotoSelect={async (file) => {
+                  if (file) {
+                    try {
+                      const dataUrl = await fileToDataUrl(file);
+                      setPhotoUrl(dataUrl);
+                    } catch {
+                      setPhotoUrl(URL.createObjectURL(file));
+                    }
+                  } else {
+                    setPhotoUrl(null);
+                  }
+                }}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-border">
                 <FormField
                   id="editDob"
                   label="Date of Birth"

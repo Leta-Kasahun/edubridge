@@ -20,10 +20,17 @@ export function OnboardingStepper({
   onStepClick,
   className,
 }: OnboardingStepperProps) {
+  const progressPercent =
+    steps.length > 1 ? ((currentStep - 1) / (steps.length - 1)) * 100 : 0;
+
   return (
     <div className={cn("w-full", className)}>
       <div className="flex items-center justify-between relative">
         <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border -translate-y-1/2 z-0" />
+        <div
+          className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
 
         {steps.map((step) => {
           const isCompleted = step.id < currentStep;
@@ -41,9 +48,13 @@ export function OnboardingStepper({
                 onClick={() => isClickable && onStepClick?.(step.id)}
                 className={cn(
                   "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-all duration-200 border-2",
-                  isCompleted && "bg-foreground text-background border-foreground cursor-pointer",
-                  isCurrent && "bg-background text-foreground border-foreground ring-4 ring-foreground/10",
-                  !isCompleted && !isCurrent && "bg-card text-muted-foreground border-border"
+                  isCompleted &&
+                    "bg-primary text-primary-foreground border-primary cursor-pointer shadow-xs",
+                  isCurrent &&
+                    "bg-card text-primary border-primary ring-4 ring-primary/20 font-bold shadow-xs",
+                  !isCompleted &&
+                    !isCurrent &&
+                    "bg-card text-muted-foreground border-border"
                 )}
                 aria-current={isCurrent ? "step" : undefined}
                 aria-label={`Step ${step.id}: ${step.title}`}
@@ -55,7 +66,7 @@ export function OnboardingStepper({
                 <span
                   className={cn(
                     "text-xs font-semibold tracking-tight",
-                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                    isCurrent ? "text-primary font-bold" : "text-muted-foreground"
                   )}
                 >
                   {step.title}
