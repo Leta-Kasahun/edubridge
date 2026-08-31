@@ -23,21 +23,21 @@ export function DashboardHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-border bg-card/95 backdrop-blur-md px-4 sm:px-6 lg:px-8 shadow-2xs transition-all",
+        "sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-border bg-card/95 backdrop-blur-md px-3 sm:px-6 lg:px-8 shadow-2xs transition-all",
         className
       )}
     >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
         <button
           type="button"
           onClick={toggleSidebarMobile}
-          className="lg:hidden -ml-1 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden shrink-0 cursor-pointer"
+          className="lg:hidden -ml-1 p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden shrink-0 cursor-pointer"
           aria-label="Open navigation sidebar"
         >
-          <Menu size={20} />
+          <Menu size={19} />
         </button>
 
-        <div className="min-w-0 overflow-hidden">
+        <div className="min-w-0 overflow-hidden flex-1">
           <Breadcrumbs
             items={breadcrumbs}
             customLabels={customBreadcrumbLabels}
