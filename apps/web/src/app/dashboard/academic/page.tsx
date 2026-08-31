@@ -6,6 +6,8 @@ import {
   GraduationCap,
   Users,
   BookOpen,
+  ArrowRightLeft,
+  UserCheck,
   ChevronRight,
 } from "lucide-react";
 import { DashboardLayout } from "@/shared/components/layouts";
@@ -52,6 +54,22 @@ const ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
     href: ROUTES.ACADEMIC.SUBJECTS,
     icon: BookOpen,
     badge: "Curriculum",
+  },
+  {
+    title: "Student Assignments",
+    description:
+      "Manage active section enrollments, capacity-checked transfers, and year-end grade promotions.",
+    href: ROUTES.ACADEMIC.ASSIGNMENTS_STUDENTS,
+    icon: ArrowRightLeft,
+    badge: "Transfers & Promotions",
+  },
+  {
+    title: "Teacher Assignments",
+    description:
+      "Allocate subject teachers and homeroom staff across class cohorts with workload tracking.",
+    href: ROUTES.ACADEMIC.ASSIGNMENTS_TEACHERS,
+    icon: UserCheck,
+    badge: "Teaching Load",
   },
 ];
 

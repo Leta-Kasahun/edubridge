@@ -1,0 +1,416 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import {
+  MoreVertical,
+  ArrowRightLeft,
+  History,
+  UserMinus,
+  CheckSquare,
+  Square,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { StudentRosterItem } from "../types/student-assignment.types";
+import { PaginationMeta } from "@/shared/types";
+import { getEnrollmentStatusBadgeClass, formatEnrollmentStatus } from "@/shared/utils";
+
+interface StudentAssignmentsTableProps {
+  readonly items: readonly StudentRosterItem[];
+  readonly selectedStudentIds: readonly string[];
+  readonly pagination?: PaginationMeta;
+  readonly onPageChange?: (page: number) => void;
+  readonly onLimitChange?: (limit: number) => void;
+  readonly onToggleSelect: (studentId: string) => void;
+  readonly onSelectAll: (studentIds: readonly string[]) => void;
+  readonly onClearSelection: () => void;
+  readonly onTransferSingle: (student: StudentRosterItem) => void;
+  readonly onShowHistory: (student: StudentRosterItem) => void;
+  readonly onWithdraw: (student: StudentRosterItem) => void;
+}
+
+export function StudentAssignmentsTable({
+  items,
+  selectedStudentIds,
+  pagination,
+  onPageChange,
+  onLimitChange,
+  onToggleSelect,
+  onSelectAll,
+  onClearSelection,
+  onTransferSingle,
+  onShowHistory,
+  onWithdraw,
+}: StudentAssignmentsTableProps) {
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdownId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const activeItems = items.filter((i) => i.status === "ACTIVE");
+  const isAllSelected =
+    activeItems.length > 0 && activeItems.every((i) => selectedStudentIds.includes(i.studentId));
+  const isIndeterminate =
+    selectedStudentIds.length > 0 && !isAllSelected;
+
+  const handleHeaderCheckbox = () => {
+    if (isAllSelected) {
+      onClearSelection();
+    } else {
+      onSelectAll(activeItems.map((i) => i.studentId));
+    }
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-xs">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground mb-4">
+          <Users size={24} />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">No enrolled students found</h3>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          No students are currently enrolled in the selected academic session, grade, or section filter.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
+              <tr>
+                <th className="py-3 px-4 w-10">
+                  <button
+                    type="button"
+                    onClick={handleHeaderCheckbox}
+                    className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title={isAllSelected ? "Deselect all" : "Select all active"}
+                  >
+                    {isAllSelected ? (
+                      <CheckSquare size={16} className="text-primary" />
+                    ) : isIndeterminate ? (
+                      <div className="h-4 w-4 rounded bg-primary/20 border border-primary flex items-center justify-center">
+                        <div className="h-1.5 w-1.5 bg-primary rounded-xs" />
+                      </div>
+                    ) : (
+                      <Square size={16} />
+                    )}
+                  </button>
+                </th>
+                <th className="py-3 px-4">Student</th>
+                <th className="py-3 px-4">Student Code</th>
+                <th className="py-3 px-4">Grade</th>
+                <th className="py-3 px-4">Section</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right w-16">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {items.map((item) => {
+                const isSelected = selectedStudentIds.includes(item.studentId);
+                const isActionOpen = activeDropdownId === item.enrollmentId;
+                const canSelect = item.status === "ACTIVE";
+
+                return (
+                  <tr
+                    key={item.enrollmentId}
+                    className={`hover:bg-muted/20 transition-colors ${
+                      isSelected ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    <td className="py-3.5 px-4">
+                      {canSelect ? (
+                        <button
+                          type="button"
+                          onClick={() => onToggleSelect(item.studentId)}
+                          className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        >
+                          {isSelected ? (
+                            <CheckSquare size={16} className="text-primary" />
+                          ) : (
+                            <Square size={16} />
+                          )}
+                        </button>
+                      ) : (
+                        <div className="h-4 w-4" />
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-foreground">
+                      {item.fullName}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-muted-foreground">
+                      {item.studentCode}
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-foreground">
+                      Grade {item.gradeLevel}
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-foreground">
+                      {item.sectionName}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getEnrollmentStatusBadgeClass(
+                          item.status
+                        )}`}
+                      >
+                        {formatEnrollmentStatus(item.status)}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdownId(isActionOpen ? null : item.enrollmentId);
+                        }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+                        title="Actions"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+
+                      {isActionOpen && (
+                        <div
+                          ref={dropdownRef}
+                          className="absolute right-4 top-10 w-48 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+                        >
+                          {item.status === "ACTIVE" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                onTransferSingle(item);
+                              }}
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                            >
+                              <ArrowRightLeft size={14} className="text-muted-foreground" />
+                              <span>Transfer Section</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownId(null);
+                              onShowHistory(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                          >
+                            <History size={14} className="text-muted-foreground" />
+                            <span>Enrollment History</span>
+                          </button>
+
+                          {item.status === "ACTIVE" && (
+                            <>
+                              <div className="my-1 border-t border-border" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownId(null);
+                                  onWithdraw(item);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+                              >
+                                <UserMinus size={14} />
+                                <span>Withdraw Student</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile Card View (< md) */}
+      <div className="md:hidden space-y-3">
+        {items.map((item) => {
+          const isSelected = selectedStudentIds.includes(item.studentId);
+          const isActionOpen = activeDropdownId === item.enrollmentId;
+          const canSelect = item.status === "ACTIVE";
+
+          return (
+            <div
+              key={item.enrollmentId}
+              className={`bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 relative ${
+                isSelected ? "border-primary/50 bg-primary/5" : ""
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  {canSelect && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleSelect(item.studentId)}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                    >
+                      {isSelected ? (
+                        <CheckSquare size={18} className="text-primary" />
+                      ) : (
+                        <Square size={18} />
+                      )}
+                    </button>
+                  )}
+                  <div>
+                    <div className="text-xs font-bold text-foreground">{item.fullName}</div>
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      {item.studentCode}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getEnrollmentStatusBadgeClass(
+                      item.status
+                    )}`}
+                  >
+                    {formatEnrollmentStatus(item.status)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveDropdownId(isActionOpen ? null : item.enrollmentId);
+                    }}
+                    className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-xs">
+                <div>
+                  <span className="text-muted-foreground text-[11px]">Grade: </span>
+                  <span className="font-semibold text-foreground">Grade {item.gradeLevel}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-[11px]">Section: </span>
+                  <span className="font-semibold text-foreground">{item.sectionName}</span>
+                </div>
+              </div>
+
+              {isActionOpen && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute right-4 top-12 w-48 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+                >
+                  {item.status === "ACTIVE" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveDropdownId(null);
+                        onTransferSingle(item);
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                    >
+                      <ArrowRightLeft size={14} className="text-muted-foreground" />
+                      <span>Transfer Section</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDropdownId(null);
+                      onShowHistory(item);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <History size={14} className="text-muted-foreground" />
+                    <span>Enrollment History</span>
+                  </button>
+
+                  {item.status === "ACTIVE" && (
+                    <>
+                      <div className="my-1 border-t border-border" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveDropdownId(null);
+                          onWithdraw(item);
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+                      >
+                        <UserMinus size={14} />
+                        <span>Withdraw Student</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {pagination && pagination.total > 0 && (
+        <div className="bg-card rounded-2xl border border-border px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
+          <div className="flex items-center gap-2">
+            <span>
+              Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} students
+            </span>
+            {onLimitChange && (
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-border">
+                <span className="text-[11px]">Rows:</span>
+                <select
+                  value={pagination.limit}
+                  onChange={(e) => onLimitChange(Number(e.target.value))}
+                  className="h-7 px-1.5 rounded-lg bg-background border border-border text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={pagination.page <= 1}
+              onClick={() => onPageChange && onPageChange(pagination.page - 1)}
+              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
+              title="Previous Page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="font-medium text-foreground px-1">
+              Page {pagination.page} of {pagination.totalPages || 1}
+            </span>
+            <button
+              type="button"
+              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => onPageChange && onPageChange(pagination.page + 1)}
+              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
+              title="Next Page"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

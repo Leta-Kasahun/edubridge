@@ -4,3 +4,5 @@ export * from "./academic.constants.js";
 export * from "./grade.constants.js";
 export * from "./section.constants.js";
 export * from "./subject.constants.js";
+export * from "./student-assignment.constants.js";
+export * from "./teacher-assignment.constants.js";

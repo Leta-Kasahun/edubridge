@@ -14,6 +14,7 @@ const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   grades: "Grades",
   sections: "Sections",
   subjects: "Subjects",
+  assignments: "Assignments",
   schools: "Manage Schools",
   provisioning: "Provisioning",
   teachers: "Teacher Provisioning",

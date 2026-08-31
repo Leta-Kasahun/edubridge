@@ -29,6 +29,8 @@ export const ROUTES = {
     GRADES: "/dashboard/academic/grades",
     SECTIONS: "/dashboard/academic/sections",
     SUBJECTS: "/dashboard/academic/subjects",
+    ASSIGNMENTS_STUDENTS: "/dashboard/academic/assignments/students",
+    ASSIGNMENTS_TEACHERS: "/dashboard/academic/assignments/teachers",
   },
   PROVISIONING: {
     BASE: "/dashboard/provisioning",

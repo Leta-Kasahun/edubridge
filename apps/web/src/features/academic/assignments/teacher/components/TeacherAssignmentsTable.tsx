@@ -1,0 +1,353 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import {
+  MoreVertical,
+  ArrowRightLeft,
+  Layers,
+  UserX,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { TeacherAssignmentListItem } from "../types/teacher-assignment.types";
+import { PaginationMeta } from "@/shared/types";
+import {
+  formatTeacherAssignmentRole,
+  getTeacherLoadBadgeClass,
+} from "@/shared/utils";
+
+interface TeacherAssignmentsTableProps {
+  readonly items: readonly TeacherAssignmentListItem[];
+  readonly pagination?: PaginationMeta;
+  readonly onPageChange?: (page: number) => void;
+  readonly onLimitChange?: (limit: number) => void;
+  readonly onReassign: (assignment: TeacherAssignmentListItem) => void;
+  readonly onEndAssignment: (assignment: TeacherAssignmentListItem) => void;
+  readonly onViewLoad: (assignment: TeacherAssignmentListItem) => void;
+}
+
+export function TeacherAssignmentsTable({
+  items,
+  pagination,
+  onPageChange,
+  onLimitChange,
+  onReassign,
+  onEndAssignment,
+  onViewLoad,
+}: TeacherAssignmentsTableProps) {
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdownId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-xs">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground mb-4">
+          <GraduationCap size={24} />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">No teacher assignments found</h3>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          No active teaching assignments match the current academic session or filter criteria.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
+              <tr>
+                <th className="py-3 px-4">Teacher</th>
+                <th className="py-3 px-4">Role</th>
+                <th className="py-3 px-4">Section</th>
+                <th className="py-3 px-4">Subject</th>
+                <th className="py-3 px-4">Active Load</th>
+                <th className="py-3 px-4 text-right w-16">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {items.map((item) => {
+                const isActionOpen = activeDropdownId === item.id;
+
+                return (
+                  <tr key={item.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-foreground">{item.teacherName}</div>
+                      <div className="font-mono text-[11px] text-muted-foreground">
+                        {item.employeeCode}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-foreground">
+                      {formatTeacherAssignmentRole(item.role)}
+                    </td>
+                    <td className="py-3.5 px-4 text-foreground">
+                      Grade {item.gradeLevel} — {item.sectionName}
+                    </td>
+                    <td className="py-3.5 px-4 text-foreground">
+                      {item.subjectName ? (
+                        <div>
+                          <span className="font-medium">{item.subjectName}</span>
+                          <span className="font-mono text-[10px] text-muted-foreground ml-1.5">
+                            ({item.subjectCode})
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <button
+                        type="button"
+                        onClick={() => onViewLoad(item)}
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors cursor-pointer hover:opacity-80 ${getTeacherLoadBadgeClass(
+                          item.teacherActiveLoad
+                        )}`}
+                        title="Click to view full workload"
+                      >
+                        {item.teacherActiveLoad} class{item.teacherActiveLoad > 1 ? "es" : ""}
+                      </button>
+                    </td>
+                    <td className="py-3.5 px-4 text-right relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdownId(isActionOpen ? null : item.id);
+                        }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+                        title="Actions"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+
+                      {isActionOpen && (
+                        <div
+                          ref={dropdownRef}
+                          className="absolute right-4 top-10 w-44 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownId(null);
+                              onViewLoad(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                          >
+                            <Layers size={14} className="text-muted-foreground" />
+                            <span>View Teacher Load</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownId(null);
+                              onReassign(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                          >
+                            <ArrowRightLeft size={14} className="text-muted-foreground" />
+                            <span>Reassign Teacher</span>
+                          </button>
+
+                          <div className="my-1 border-t border-border" />
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownId(null);
+                              onEndAssignment(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+                          >
+                            <UserX size={14} />
+                            <span>End Assignment</span>
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile Card View (< md) */}
+      <div className="md:hidden space-y-3">
+        {items.map((item) => {
+          const isActionOpen = activeDropdownId === item.id;
+
+          return (
+            <div
+              key={item.id}
+              className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 relative"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-foreground">{item.teacherName}</div>
+                  <div className="text-[11px] font-mono text-muted-foreground">
+                    {item.employeeCode}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onViewLoad(item)}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getTeacherLoadBadgeClass(
+                      item.teacherActiveLoad
+                    )}`}
+                  >
+                    {item.teacherActiveLoad} class{item.teacherActiveLoad > 1 ? "es" : ""}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveDropdownId(isActionOpen ? null : item.id);
+                    }}
+                    className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-xs">
+                <div>
+                  <span className="text-muted-foreground text-[11px]">Role: </span>
+                  <span className="font-semibold text-foreground">
+                    {formatTeacherAssignmentRole(item.role)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-[11px]">Section: </span>
+                  <span className="font-semibold text-foreground">
+                    Grade {item.gradeLevel} — {item.sectionName}
+                  </span>
+                </div>
+                {item.subjectName && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground text-[11px]">Subject: </span>
+                    <span className="font-semibold text-foreground">
+                      {item.subjectName} ({item.subjectCode})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {isActionOpen && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute right-4 top-12 w-44 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDropdownId(null);
+                      onViewLoad(item);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <Layers size={14} className="text-muted-foreground" />
+                    <span>View Teacher Load</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDropdownId(null);
+                      onReassign(item);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <ArrowRightLeft size={14} className="text-muted-foreground" />
+                    <span>Reassign Teacher</span>
+                  </button>
+
+                  <div className="my-1 border-t border-border" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDropdownId(null);
+                      onEndAssignment(item);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+                  >
+                    <UserX size={14} />
+                    <span>End Assignment</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {pagination && pagination.total > 0 && (
+        <div className="bg-card rounded-2xl border border-border px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
+          <div className="flex items-center gap-2">
+            <span>
+              Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} assignments
+            </span>
+            {onLimitChange && (
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-border">
+                <span className="text-[11px]">Rows:</span>
+                <select
+                  value={pagination.limit}
+                  onChange={(e) => onLimitChange(Number(e.target.value))}
+                  className="h-7 px-1.5 rounded-lg bg-background border border-border text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={pagination.page <= 1}
+              onClick={() => onPageChange && onPageChange(pagination.page - 1)}
+              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
+              title="Previous Page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="font-medium text-foreground px-1">
+              Page {pagination.page} of {pagination.totalPages || 1}
+            </span>
+            <button
+              type="button"
+              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => onPageChange && onPageChange(pagination.page + 1)}
+              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
+              title="Next Page"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -6,11 +6,11 @@ const router: Router = Router();
 
 router.use(authenticate);
 
-router.get("/", (req, res) => subjectController.listSubjects(req, res));
-router.post("/", (req, res) => subjectController.createSubject(req, res));
-router.get("/:id", (req, res) => subjectController.getSubjectById(req, res));
-router.put("/:id", (req, res) => subjectController.updateSubject(req, res));
-router.post("/:id/toggle-status", (req, res) => subjectController.toggleSubjectStatus(req, res));
-router.post("/:id/assign-grades", (req, res) => subjectController.assignGrades(req, res));
+router.get("/", subjectController.listSubjects);
+router.post("/", subjectController.createSubject);
+router.get("/:id", subjectController.getSubjectById);
+router.put("/:id", subjectController.updateSubject);
+router.post("/:id/toggle-status", subjectController.toggleSubjectStatus);
+router.post("/:id/assign-grades", subjectController.assignGrades);
 
 export const subjectRoutes: Router = router;

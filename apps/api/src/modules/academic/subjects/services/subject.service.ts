@@ -6,6 +6,11 @@ import {
   UpdateSubjectInput,
   SubjectFilterParams,
 } from "../types/subject.types.js";
+import {
+  NotFoundError,
+  BadRequestError,
+  ConflictError,
+} from "../../../../shared/exceptions/index.js";
 
 export class SubjectService {
   async listSubjects(params: SubjectFilterParams): Promise<readonly SubjectRecord[]> {
@@ -15,7 +20,7 @@ export class SubjectService {
   async getSubjectById(id: string, tenantId?: string): Promise<SubjectDetailRecord> {
     const subject = await subjectRepository.findById(id, tenantId);
     if (!subject) {
-      throw new Error("Subject not found");
+      throw new NotFoundError("Subject not found");
     }
     return subject;
   }
@@ -23,7 +28,7 @@ export class SubjectService {
   async createSubject(input: CreateSubjectInput, tenantId?: string): Promise<SubjectRecord> {
     const existing = await subjectRepository.findByCode(input.code);
     if (existing) {
-      throw new Error(`Subject with code "${input.code.toUpperCase()}" already exists.`);
+      throw new ConflictError(`Subject with code "${input.code.toUpperCase()}" already exists.`);
     }
 
     return subjectRepository.create(input, tenantId);
@@ -32,13 +37,13 @@ export class SubjectService {
   async updateSubject(id: string, input: UpdateSubjectInput, tenantId?: string): Promise<SubjectRecord> {
     const existing = await subjectRepository.findById(id, tenantId);
     if (!existing) {
-      throw new Error("Subject not found");
+      throw new NotFoundError("Subject not found");
     }
 
     if (input.isActive === false && existing.isActive) {
       const activeAssignments = await subjectRepository.countActiveAssignments(id, tenantId);
       if (activeAssignments > 0) {
-        throw new Error(
+        throw new BadRequestError(
           `Cannot deactivate "${existing.name}" because it currently has ${activeAssignments} active teacher assignment(s). Reassign or remove teachers first.`
         );
       }
@@ -50,7 +55,7 @@ export class SubjectService {
   async toggleSubjectStatus(id: string, tenantId?: string): Promise<SubjectRecord> {
     const existing = await subjectRepository.findById(id, tenantId);
     if (!existing) {
-      throw new Error("Subject not found");
+      throw new NotFoundError("Subject not found");
     }
 
     const nextStatus = !existing.isActive;
@@ -58,7 +63,7 @@ export class SubjectService {
     if (!nextStatus) {
       const activeAssignments = await subjectRepository.countActiveAssignments(id, tenantId);
       if (activeAssignments > 0) {
-        throw new Error(
+        throw new BadRequestError(
           `Cannot deactivate "${existing.name}" because it currently has ${activeAssignments} active teacher assignment(s). Reassign or remove teachers first.`
         );
       }
@@ -74,7 +79,7 @@ export class SubjectService {
   ): Promise<SubjectDetailRecord> {
     const subject = await subjectRepository.findById(subjectId, tenantId);
     if (!subject) {
-      throw new Error("Subject not found");
+      throw new NotFoundError("Subject not found");
     }
 
     await subjectRepository.assignGrades(subjectId, tenantId, gradeLevels);

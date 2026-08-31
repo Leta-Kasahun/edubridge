@@ -103,6 +103,22 @@ export const API_ENDPOINTS = {
     TOGGLE_STATUS: (id: string) => `/academic/subjects/${id}/toggle-status`,
     ASSIGN_GRADES: (id: string) => `/academic/subjects/${id}/assign-grades`,
   },
+  ACADEMIC_STUDENT_ASSIGNMENTS: {
+    ROSTER: "/academic/assignments/students/roster",
+    SECTIONS_CAPACITY: "/academic/assignments/students/sections-capacity",
+    TRANSFER_SINGLE: (studentId: string) => `/academic/assignments/students/${studentId}/transfer`,
+    TRANSFER_BULK: "/academic/assignments/students/bulk-transfer",
+    PROMOTION_PREVIEW: "/academic/assignments/students/promotion-preview",
+    COMMIT_PROMOTION: "/academic/assignments/students/commit-promotion",
+    WITHDRAW: (studentId: string) => `/academic/assignments/students/${studentId}/withdraw`,
+    HISTORY: (studentId: string) => `/academic/assignments/students/${studentId}/history`,
+  },
+  ACADEMIC_TEACHER_ASSIGNMENTS: {
+    BASE: "/academic/assignments/teachers",
+    REASSIGN: (id: string) => `/academic/assignments/teachers/${id}/reassign`,
+    END: (id: string) => `/academic/assignments/teachers/${id}/end`,
+    LOAD_SUMMARY: (teacherId: string) => `/academic/assignments/teachers/load/${teacherId}`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",
