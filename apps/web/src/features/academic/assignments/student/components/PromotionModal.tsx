@@ -67,14 +67,12 @@ export function PromotionModal({
   useEffect(() => {
     if (isOpen) {
       setFormError(null);
-      if (eligibleTargetYears.length > 0) {
-        setTargetYearId(eligibleTargetYears[0]?.id || "");
-      }
-      if (availableGrades.length > 0) {
-        setSelectedGrade(availableGrades[0] || 7);
-      }
+      const defaultTargetYear = eligibleTargetYears[0]?.id || "";
+      setTargetYearId((prev) => prev || defaultTargetYear);
+      const defaultGrade = availableGrades[0] || 7;
+      setSelectedGrade((prev) => prev || defaultGrade);
     }
-  }, [isOpen, eligibleTargetYears, availableGrades]);
+  }, [isOpen]);
 
   const targetGradeLevel = Math.min(12, selectedGrade + 1);
 
@@ -95,17 +93,34 @@ export function PromotionModal({
         availableSeats: s.capacity,
       };
     });
-  }, [previewData, allSections, grades]);
+  }, [previewData?.targetSections, allSections, grades]);
 
   useEffect(() => {
     if (previewData?.students) {
+      const backendSections = previewData.targetSections || [];
+      const fallbackSections =
+        backendSections.length > 0
+          ? backendSections
+          : allSections.map((s) => {
+              const g = grades.find((gr) => gr.id === s.gradeId);
+              return {
+                sectionId: s.id,
+                sectionName: s.name,
+                gradeId: s.gradeId,
+                gradeLevel: g?.level || 0,
+                capacity: s.capacity,
+                activeCount: 0,
+                availableSeats: s.capacity,
+              };
+            });
+
       setStudentRows(
         previewData.students.map((st) => {
           if (st.proposedSectionId && st.proposedGradeId) {
             return st;
           }
-          const candidateGrade = st.isPromoted ? targetGradeLevel : selectedGrade;
-          const candidateSections = allAvailableTargetSections.filter(
+          const candidateGrade = st.isPromoted ? Math.min(12, selectedGrade + 1) : selectedGrade;
+          const candidateSections = fallbackSections.filter(
             (ts) => ts.gradeLevel === candidateGrade
           );
           const matched =
@@ -113,7 +128,7 @@ export function PromotionModal({
               (ts) => ts.sectionName.toLowerCase() === st.currentSectionName.toLowerCase()
             ) ||
             candidateSections[0] ||
-            allAvailableTargetSections[0];
+            fallbackSections[0];
 
           return {
             ...st,
@@ -125,7 +140,7 @@ export function PromotionModal({
         })
       );
     }
-  }, [previewData, allAvailableTargetSections, targetGradeLevel, selectedGrade]);
+  }, [previewData?.students]);
 
   if (!mounted || !isOpen) return null;
 
