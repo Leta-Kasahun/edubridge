@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, ArrowUpRight, Check, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, ArrowUpRight, Check, AlertTriangle } from "lucide-react";
 import { usePromotionPreview, useCommitPromotion } from "../hooks/useStudentAssignments";
-import { PromotionPreviewRow, CommitPromotionItem } from "../types/student-assignment.types";
+import { useSections } from "@/features/academic/sections";
+import { useGrades } from "@/features/academic/grades";
+import { PromotionPreviewRow, CommitPromotionItem, SectionCapacityInfo } from "../types/student-assignment.types";
 import { SubmitButton, ErrorAlert, LoadingSpinner } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
@@ -32,7 +34,6 @@ export function PromotionModal({
   onPromotionSuccess,
 }: PromotionModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
   const [selectedGrade, setSelectedGrade] = useState<number>(availableGrades[0] || 7);
   const [targetYearId, setTargetYearId] = useState<string>("");
   const [studentRows, setStudentRows] = useState<readonly PromotionPreviewRow[]>([]);
@@ -43,14 +44,19 @@ export function PromotionModal({
     return nonCurrent.length > 0 ? nonCurrent : academicYears;
   }, [academicYears, currentAcademicYearId]);
 
+  const { data: allSections = [] } = useSections({
+    status: "ACTIVE",
+  });
+  const { data: grades = [] } = useGrades({ isActive: true });
+
   const previewQuery = {
     sourceAcademicYearId: currentAcademicYearId,
-    targetAcademicYearId: targetYearId,
+    targetAcademicYearId: targetYearId || currentAcademicYearId,
     gradeLevel: selectedGrade,
   };
 
   const { data: previewData, isLoading: isLoadingPreview, error: previewError } =
-    usePromotionPreview(previewQuery, Boolean(isOpen && targetYearId && selectedGrade));
+    usePromotionPreview(previewQuery, Boolean(isOpen && (targetYearId || currentAcademicYearId) && selectedGrade));
 
   const commitMutation = useCommitPromotion();
 
@@ -60,7 +66,6 @@ export function PromotionModal({
 
   useEffect(() => {
     if (isOpen) {
-      setStep(1);
       setFormError(null);
       if (eligibleTargetYears.length > 0) {
         setTargetYearId(eligibleTargetYears[0]?.id || "");
@@ -71,15 +76,59 @@ export function PromotionModal({
     }
   }, [isOpen, eligibleTargetYears, availableGrades]);
 
+  const targetGradeLevel = Math.min(12, selectedGrade + 1);
+
+  const allAvailableTargetSections: readonly SectionCapacityInfo[] = useMemo(() => {
+    if (previewData?.targetSections && previewData.targetSections.length > 0) {
+      return previewData.targetSections;
+    }
+
+    return allSections.map((s) => {
+      const g = grades.find((gr) => gr.id === s.gradeId);
+      return {
+        sectionId: s.id,
+        sectionName: s.name,
+        gradeId: s.gradeId,
+        gradeLevel: g?.level || 0,
+        capacity: s.capacity,
+        activeCount: 0,
+        availableSeats: s.capacity,
+      };
+    });
+  }, [previewData, allSections, grades]);
+
   useEffect(() => {
     if (previewData?.students) {
-      setStudentRows(previewData.students);
+      setStudentRows(
+        previewData.students.map((st) => {
+          if (st.proposedSectionId && st.proposedGradeId) {
+            return st;
+          }
+          const candidateGrade = st.isPromoted ? targetGradeLevel : selectedGrade;
+          const candidateSections = allAvailableTargetSections.filter(
+            (ts) => ts.gradeLevel === candidateGrade
+          );
+          const matched =
+            candidateSections.find(
+              (ts) => ts.sectionName.toLowerCase() === st.currentSectionName.toLowerCase()
+            ) ||
+            candidateSections[0] ||
+            allAvailableTargetSections[0];
+
+          return {
+            ...st,
+            proposedGradeLevel: candidateGrade,
+            proposedGradeId: matched?.gradeId || st.proposedGradeId,
+            proposedSectionId: matched?.sectionId || null,
+            proposedSectionName: matched?.sectionName || null,
+          };
+        })
+      );
     }
-  }, [previewData]);
+  }, [previewData, allAvailableTargetSections, targetGradeLevel, selectedGrade]);
 
   if (!mounted || !isOpen) return null;
 
-  const targetGradeLevel = Math.min(12, selectedGrade + 1);
   const promotedCount = studentRows.filter((s) => s.isPromoted).length;
   const retainedCount = studentRows.filter((s) => !s.isPromoted).length;
 
@@ -89,12 +138,13 @@ export function PromotionModal({
         if (row.studentId !== studentId) return row;
         const nextPromoted = !row.isPromoted;
         const matchingGradeLevel = nextPromoted ? targetGradeLevel : selectedGrade;
-        const eligibleSections = (previewData?.targetSections || []).filter(
+        const eligibleSections = allAvailableTargetSections.filter(
           (ts) => ts.gradeLevel === matchingGradeLevel
         );
         const autoSection =
           eligibleSections.find((ts) => ts.sectionName.toLowerCase() === row.currentSectionName.toLowerCase()) ||
           eligibleSections[0] ||
+          allAvailableTargetSections[0] ||
           null;
 
         return {
@@ -110,7 +160,7 @@ export function PromotionModal({
   };
 
   const handleSectionChange = (studentId: string, sectionId: string) => {
-    const targetSec = previewData?.targetSections.find((s) => s.sectionId === sectionId);
+    const targetSec = allAvailableTargetSections.find((s) => s.sectionId === sectionId);
     setStudentRows((prev) =>
       prev.map((row) => {
         if (row.studentId !== studentId) return row;
@@ -124,34 +174,27 @@ export function PromotionModal({
     );
   };
 
-  const validateRows = (): boolean => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setFormError(null);
+
     if (!targetYearId) {
       setFormError("Please select a target academic year.");
-      return false;
+      return;
     }
+
     if (studentRows.length === 0) {
       setFormError("No active students found in the selected grade to promote.");
-      return false;
+      return;
     }
+
     const missingSection = studentRows.find((s) => !s.proposedSectionId || !s.proposedGradeId);
     if (missingSection) {
       setFormError(
         `Please ensure all students have an assigned target section (student "${missingSection.fullName}" is unassigned).`
       );
-      return false;
+      return;
     }
-    return true;
-  };
-
-  const handleProceedToStep2 = () => {
-    if (validateRows()) {
-      setStep(2);
-    }
-  };
-
-  const handleCommit = async () => {
-    if (!validateRows()) return;
 
     const items: CommitPromotionItem[] = studentRows.map((r) => ({
       studentId: r.studentId,
@@ -174,26 +217,24 @@ export function PromotionModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl rounded-2xl bg-card border border-border p-5 sm:p-6 shadow-xl z-10 max-h-[92vh] flex flex-col">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-4 shrink-0">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[92vh] flex flex-col">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-3 sm:mb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ArrowUpRight size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">
                 Year-End Grade Promotion
               </h2>
-              <p className="text-xs text-muted-foreground">
-                {step === 1
-                  ? "Step 1: Configure Grade Rollover & Section Placements"
-                  : "Step 2: Review & Commit Promotion"}
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
+                Rollover cohort placements into next academic year
               </p>
             </div>
           </div>
@@ -206,14 +247,14 @@ export function PromotionModal({
           </button>
         </div>
 
-        {formError && <div className="mb-4 shrink-0"><ErrorAlert message={formError} /></div>}
-        {previewError && <div className="mb-4 shrink-0"><ErrorAlert message={getErrorMessage(previewError, "Failed to load promotion preview.")} /></div>}
+        {formError && <div className="mb-3 shrink-0"><ErrorAlert message={formError} /></div>}
+        {previewError && <div className="mb-3 shrink-0"><ErrorAlert message={getErrorMessage(previewError, "Failed to load promotion preview.")} /></div>}
 
-        {step === 1 ? (
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-3.5 pr-0.5 sm:pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3 rounded-xl bg-muted/30 border border-border">
+              <div className="space-y-1">
+                <label className="text-[11px] sm:text-xs font-semibold text-foreground">
                   Source Grade Level
                 </label>
                 <select
@@ -229,8 +270,8 @@ export function PromotionModal({
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+              <div className="space-y-1">
+                <label className="text-[11px] sm:text-xs font-semibold text-foreground">
                   Target Academic Year <span className="text-destructive">*</span>
                 </label>
                 <select
@@ -248,38 +289,48 @@ export function PromotionModal({
               </div>
             </div>
 
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] sm:text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+              <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                Promoting completes active enrollments in the current academic year and registers new enrollments in the target session.
+              </p>
+            </div>
+
             {isLoadingPreview ? (
-              <div className="py-12 flex items-center justify-center">
+              <div className="py-10 flex items-center justify-center">
                 <LoadingSpinner size={24} />
               </div>
             ) : studentRows.length === 0 ? (
-              <div className="p-8 rounded-xl bg-muted/20 border border-border text-center text-xs text-muted-foreground">
+              <div className="p-6 rounded-xl bg-muted/20 border border-border text-center text-xs text-muted-foreground">
                 No active students found in Grade {selectedGrade} to promote.
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs px-0.5">
                   <span className="font-semibold text-foreground">
-                    Students in Grade {selectedGrade} ({studentRows.length})
+                    Students ({studentRows.length})
                   </span>
-                  <span className="text-muted-foreground">
-                    {promotedCount} to Grade {targetGradeLevel}, {retainedCount} retained
+                  <span className="text-[11px] text-muted-foreground">
+                    <strong className="text-foreground">{promotedCount}</strong> promoted • <strong className="text-foreground">{retainedCount}</strong> retained
                   </span>
                 </div>
 
                 <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
                   {studentRows.map((row) => {
                     const candidateGradeLevel = row.isPromoted ? targetGradeLevel : selectedGrade;
-                    const availableTargetSections = (previewData?.targetSections || []).filter(
+                    const availableTargetSections = allAvailableTargetSections.filter(
                       (ts) => ts.gradeLevel === candidateGradeLevel
                     );
+                    const finalSections = availableTargetSections.length > 0
+                      ? availableTargetSections
+                      : allAvailableTargetSections;
 
                     return (
                       <div
                         key={row.studentId}
-                        className="p-3 bg-card hover:bg-muted/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        className="p-3 bg-card hover:bg-muted/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <button
                             type="button"
                             onClick={() => handleTogglePromoted(row.studentId)}
@@ -288,20 +339,20 @@ export function PromotionModal({
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "bg-background border-border text-transparent"
                             }`}
-                            title={row.isPromoted ? "Promoted to next grade" : "Retained in same grade"}
+                            title={row.isPromoted ? "Promoted" : "Retained"}
                           >
                             <Check size={12} strokeWidth={3} />
                           </button>
 
-                          <div>
-                            <div className="font-semibold text-foreground">{row.fullName}</div>
-                            <div className="text-[11px] text-muted-foreground">
-                              {row.studentCode} • Current: {row.currentSectionName}
+                          <div className="truncate">
+                            <div className="font-semibold text-foreground truncate">{row.fullName}</div>
+                            <div className="text-[11px] text-muted-foreground truncate">
+                              {row.studentCode} • Section {row.currentSectionName}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto">
                           <span
                             className={`text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
                               row.isPromoted
@@ -315,10 +366,10 @@ export function PromotionModal({
                           <select
                             value={row.proposedSectionId || ""}
                             onChange={(e) => handleSectionChange(row.studentId, e.target.value)}
-                            className="h-8 px-2.5 rounded-lg bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer min-w-[140px]"
+                            className="h-8 px-2 rounded-lg bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer w-full sm:w-auto sm:min-w-[150px]"
                           >
-                            <option value="">Select target section...</option>
-                            {availableTargetSections.map((sec) => (
+                            <option value="">Select section...</option>
+                            {finalSections.map((sec) => (
                               <option key={sec.sectionId} value={sec.sectionId}>
                                 {sec.sectionName} ({sec.availableSeats !== null ? `${sec.availableSeats} seats` : "No limit"})
                               </option>
@@ -331,86 +382,24 @@ export function PromotionModal({
                 </div>
               </div>
             )}
-
-            <div className="flex items-center justify-between pt-4 border-t border-border mt-4 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleProceedToStep2}
-                  disabled={studentRows.length === 0 || !targetYearId}
-                  className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span>Review Summary</span>
-                  <ChevronRight size={14} />
-                </button>
-                <SubmitButton
-                  isLoading={commitMutation.isPending}
-                  onClick={handleCommit}
-                  disabled={studentRows.length === 0 || !targetYearId}
-                >
-                  Save & Promote
-                </SubmitButton>
-              </div>
-            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
-              <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-              <div>
-                <div className="font-semibold mb-1">Permanent Academic Transition</div>
-                <p className="leading-relaxed">
-                  Committing will complete active enrollments in the current academic year and create new active enrollments in the target academic year. This action is recorded in the permanent institutional audit log.
-                </p>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 rounded-xl bg-muted/30 border border-border text-center">
-                <div className="text-2xl font-bold text-foreground">{studentRows.length}</div>
-                <div className="text-xs text-muted-foreground mt-1">Total Processed</div>
-              </div>
-              <div className="p-4 rounded-xl bg-muted/30 border border-border text-center">
-                <div className="text-2xl font-bold text-primary">{promotedCount}</div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Promoted to Grade {targetGradeLevel}
-                </div>
-              </div>
-              <div className="p-4 rounded-xl bg-muted/30 border border-border text-center">
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {retainedCount}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Retained in Grade {selectedGrade}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-border mt-6">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-              >
-                <ChevronLeft size={14} />
-                <span>Back to Adjustments</span>
-              </button>
-              <SubmitButton
-                isLoading={commitMutation.isPending}
-                onClick={handleCommit}
-              >
-                Save & Commit Promotion
-              </SubmitButton>
-            </div>
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-3.5 sm:mt-4 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
+            >
+              Cancel
+            </button>
+            <SubmitButton
+              isLoading={commitMutation.isPending}
+              disabled={studentRows.length === 0 || !targetYearId}
+            >
+              Commit Promotion ({promotedCount})
+            </SubmitButton>
           </div>
-        )}
+        </form>
       </div>
     </div>,
     document.body

@@ -157,7 +157,7 @@ export class StudentAssignmentRepository {
     academicYearId: string,
     gradeLevel: number
   ): Promise<readonly SectionCapacityInfo[]> {
-    const sections = await prisma.section.findMany({
+    let sections = await prisma.section.findMany({
       where: {
         tenantId,
         academicYearId,
@@ -181,6 +181,32 @@ export class StudentAssignmentRepository {
       },
       orderBy: { name: "asc" },
     });
+
+    if (sections.length === 0) {
+      sections = await prisma.section.findMany({
+        where: {
+          tenantId,
+          grade: { level: gradeLevel },
+          status: "ACTIVE",
+        },
+        include: {
+          grade: {
+            select: {
+              id: true,
+              level: true,
+            },
+          },
+          _count: {
+            select: {
+              enrollments: {
+                where: { status: "ACTIVE" },
+              },
+            },
+          },
+        },
+        orderBy: { name: "asc" },
+      });
+    }
 
     return sections.map((sec) => {
       const activeCount = sec._count.enrollments;
