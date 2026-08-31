@@ -91,6 +91,12 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/academic/grades/${id}`,
     TOGGLE_STATUS: (id: string) => `/academic/grades/${id}/toggle-status`,
   },
+  ACADEMIC_SECTIONS: {
+    BASE: "/academic/sections",
+    BULK: "/academic/sections/bulk",
+    BY_ID: (id: string) => `/academic/sections/${id}`,
+    UPDATE_STATUS: (id: string) => `/academic/sections/${id}/status`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",

@@ -4,6 +4,8 @@ export * from "./navigation";
 export * from "./csv-parser";
 export * from "./credentials-export";
 export * from "./academic.util";
+export * from "./grade.util";
+export * from "./section.util";
 export * from "./date.util";
 export * from "./image.util";
 export * from "./document.util";
