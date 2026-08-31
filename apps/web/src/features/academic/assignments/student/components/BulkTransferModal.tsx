@@ -103,21 +103,21 @@ export function BulkTransferModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-5 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
+      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ArrowRightLeft size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Bulk Section Transfer</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">Bulk Section Transfer</h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
                 Move {selectedCount} selected student{selectedCount > 1 ? "s" : ""} to another section
               </p>
             </div>
@@ -159,7 +159,7 @@ export function BulkTransferModal({
               Target Section <span className="text-destructive">*</span>
             </label>
             {isLoadingSections ? (
-              <div className="h-10 flex items-center justify-center bg-muted/20 border border-border rounded-xl">
+              <div className="h-9 flex items-center justify-center bg-muted/30 border border-border rounded-xl">
                 <LoadingSpinner size={16} />
               </div>
             ) : sections.length === 0 ? (
@@ -170,7 +170,7 @@ export function BulkTransferModal({
               <select
                 value={targetSectionId}
                 onChange={(e) => setTargetSectionId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
                 required
                 disabled={!isUniformGrade}
               >
@@ -216,11 +216,11 @@ export function BulkTransferModal({
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-6">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>

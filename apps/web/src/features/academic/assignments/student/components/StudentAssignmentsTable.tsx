@@ -58,11 +58,36 @@ function StudentRowActions({
     };
   }, [isOpen]);
 
+  const handleTransfer = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(false);
+    onTransferSingle(item);
+  };
+
+  const handleHistory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(false);
+    onShowHistory(item);
+  };
+
+  const handleWithdraw = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(false);
+    onWithdraw(item);
+  };
+
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
         aria-label="Actions"
       >
@@ -70,49 +95,38 @@ function StudentRowActions({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-9 w-48 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95">
-          {item.status === "ACTIVE" && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onTransferSingle(item);
-              }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-            >
-              <ArrowRightLeft size={14} className="text-muted-foreground" />
-              <span>Transfer Section</span>
-            </button>
-          )}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-0 top-9 w-48 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+        >
+          <button
+            type="button"
+            onClick={handleTransfer}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+          >
+            <ArrowRightLeft size={14} className="text-muted-foreground" />
+            <span>Transfer Section</span>
+          </button>
 
           <button
             type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onShowHistory(item);
-            }}
+            onClick={handleHistory}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
           >
             <History size={14} className="text-muted-foreground" />
             <span>Enrollment History</span>
           </button>
 
-          {item.status === "ACTIVE" && (
-            <>
-              <div className="my-1 border-t border-border" />
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onWithdraw(item);
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-              >
-                <UserMinus size={14} />
-                <span>Withdraw Student</span>
-              </button>
-            </>
-          )}
+          <div className="my-1 border-t border-border" />
+
+          <button
+            type="button"
+            onClick={handleWithdraw}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+          >
+            <UserMinus size={14} />
+            <span>Withdraw Student</span>
+          </button>
         </div>
       )}
     </div>
@@ -266,7 +280,7 @@ export function StudentAssignmentsTable({
       </div>
 
       {/* Mobile Card View (< md) */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-2.5">
         {items.map((item) => {
           const isSelected = selectedStudentIds.includes(item.studentId);
           const isActive = item.status === "ACTIVE";
@@ -274,17 +288,17 @@ export function StudentAssignmentsTable({
           return (
             <div
               key={item.enrollmentId}
-              className={`bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 relative ${
+              className={`bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-2.5 relative ${
                 isSelected ? "border-primary/50 bg-primary/5" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 min-w-0 flex-1">
                   <button
                     type="button"
                     disabled={!isActive}
                     onClick={() => onToggleSelect(item.studentId)}
-                    className={`mt-0.5 ${
+                    className={`mt-0.5 shrink-0 ${
                       isActive
                         ? "cursor-pointer text-muted-foreground hover:text-foreground"
                         : "opacity-30 cursor-not-allowed text-muted-foreground"
@@ -297,15 +311,15 @@ export function StudentAssignmentsTable({
                     )}
                   </button>
 
-                  <div>
-                    <div className="text-xs font-bold text-foreground">{item.fullName}</div>
-                    <div className="text-[11px] font-mono text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-foreground truncate">{item.fullName}</div>
+                    <div className="text-[11px] font-mono text-muted-foreground truncate">
                       {item.studentCode}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getEnrollmentStatusBadgeClass(
                       item.status
@@ -322,7 +336,7 @@ export function StudentAssignmentsTable({
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-xs">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 border-t border-border/60 text-xs">
                 <div>
                   <span className="text-muted-foreground text-[11px]">Grade: </span>
                   <span className="font-semibold text-foreground">
@@ -349,13 +363,13 @@ export function StudentAssignmentsTable({
 
       {/* Pagination Controls */}
       {pagination && pagination.total > 0 && (
-        <div className="bg-card rounded-2xl border border-border px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
-          <div className="flex items-center gap-2">
+        <div className="bg-card rounded-2xl border border-border px-3.5 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
+          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
             <span>
               Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} students
             </span>
             {onLimitChange && (
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-border">
+              <div className="flex items-center gap-1.5 pl-2 border-l border-border">
                 <span className="text-[11px]">Rows:</span>
                 <select
                   value={pagination.limit}
@@ -371,7 +385,7 @@ export function StudentAssignmentsTable({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60">
             <button
               type="button"
               disabled={pagination.page <= 1}

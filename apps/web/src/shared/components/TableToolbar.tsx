@@ -57,12 +57,12 @@ export function TableToolbar({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full",
+        "flex flex-col lg:flex-row lg:items-center justify-between gap-3 w-full",
         className
       )}
     >
-      <div className="flex items-center gap-2.5 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
-        <div ref={searchContainerRef} className="relative flex-1 sm:max-w-xs min-w-[180px]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
+        <div ref={searchContainerRef} className="relative w-full sm:max-w-xs min-w-0">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -150,7 +150,7 @@ export function TableToolbar({
                   </button>
 
                   {isOpen && (
-                    <div className="absolute left-0 top-10 w-48 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
+                    <div className="absolute left-0 top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
                       {group.options.map((opt) => {
                         const isSelected = group.selectedValue === opt.value;
 
@@ -170,9 +170,9 @@ export function TableToolbar({
                             )}
                           >
                             <span className="truncate">{opt.label}</span>
-                            {isSelected && <Check size={13} className="text-foreground" />}
+                            {isSelected && <Check size={13} className="text-foreground shrink-0 ml-1" />}
                             {!isSelected && opt.count !== undefined && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
                                 {opt.count}
                               </span>
                             )}
@@ -189,7 +189,7 @@ export function TableToolbar({
       </div>
 
       {actionButton && (
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto">
           {actionButton}
         </div>
       )}

@@ -42,21 +42,21 @@ export function TeacherLoadDetailModal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-5 sm:p-6 shadow-xl z-10 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-4 shrink-0">
+      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-3 sm:mb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Layers size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Teacher Load Details</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">Teacher Load Details</h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
                 {teacherName} {loadSummary?.employeeCode ? `(${loadSummary.employeeCode})` : ""}
               </p>
             </div>
@@ -83,24 +83,24 @@ export function TeacherLoadDetailModal({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-2.5 shrink-0">
-                <div className="p-3 rounded-xl bg-muted/30 border border-border text-center">
-                  <div className="text-xl font-bold text-foreground">
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                  <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.activeAssignmentsCount}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Total Classes</div>
+                  <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">Total Classes</div>
                 </div>
-                <div className="p-3 rounded-xl bg-muted/30 border border-border text-center">
-                  <div className="text-xl font-bold text-foreground">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                  <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.homeroomCount}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Homeroom</div>
+                  <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">Homeroom</div>
                 </div>
-                <div className="p-3 rounded-xl bg-muted/30 border border-border text-center">
-                  <div className="text-xl font-bold text-foreground">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                  <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.subjectAssignmentsCount}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Subjects</div>
+                  <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">Subjects</div>
                 </div>
               </div>
 
@@ -147,11 +147,11 @@ export function TeacherLoadDetailModal({
           )}
         </div>
 
-        <div className="pt-4 border-t border-border mt-4 shrink-0 flex justify-end">
+        <div className="pt-3.5 sm:pt-4 border-t border-border mt-3.5 sm:mt-4 shrink-0 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 h-9 rounded-xl text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-center"
           >
             Close
           </button>

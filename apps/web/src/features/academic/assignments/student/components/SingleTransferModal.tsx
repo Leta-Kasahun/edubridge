@@ -90,21 +90,21 @@ export function SingleTransferModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-5 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
+      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ArrowRightLeft size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Transfer Section</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">Transfer Section</h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
                 Move student to another section in Grade {student.gradeLevel}
               </p>
             </div>
@@ -143,40 +143,35 @@ export function SingleTransferModal({
               Target Section <span className="text-destructive">*</span>
             </label>
             {isLoadingSections ? (
-              <div className="h-10 flex items-center justify-center bg-muted/20 border border-border rounded-xl">
+              <div className="h-9 flex items-center justify-center rounded-xl bg-muted/30 border border-border">
                 <LoadingSpinner size={16} />
               </div>
             ) : eligibleSections.length === 0 ? (
-              <div className="p-3 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground text-center">
-                No other active sections available in Grade {student.gradeLevel}.
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                No alternative active sections available in Grade {student.gradeLevel}.
               </div>
             ) : (
               <select
                 value={targetSectionId}
                 onChange={(e) => setTargetSectionId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
                 required
               >
                 <option value="">Select target section...</option>
-                {eligibleSections.map((sec) => {
-                  const seatsText =
-                    sec.availableSeats !== null
-                      ? sec.availableSeats > 0
-                        ? `${sec.availableSeats} seat(s) available`
-                        : "Full"
-                      : "Uncapped";
-
-                  return (
-                    <option
-                      key={sec.sectionId}
-                      value={sec.sectionId}
-                      disabled={sec.availableSeats !== null && sec.availableSeats < 1}
-                    >
-                      {sec.sectionName} ({sec.activeCount}
-                      {sec.capacity ? `/${sec.capacity}` : ""} students — {seatsText})
-                    </option>
-                  );
-                })}
+                {eligibleSections.map((sec) => (
+                  <option
+                    key={sec.sectionId}
+                    value={sec.sectionId}
+                    disabled={sec.availableSeats !== null && sec.availableSeats < 1}
+                  >
+                    {sec.sectionName} — ({sec.activeCount}/{sec.capacity || "∞"} enrolled
+                    {sec.availableSeats !== null
+                      ? sec.availableSeats < 1
+                        ? " • FULL"
+                        : ` • ${sec.availableSeats} seats left`
+                      : ""})
+                  </option>
+                ))}
               </select>
             )}
           </div>
@@ -195,11 +190,11 @@ export function SingleTransferModal({
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-6">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>

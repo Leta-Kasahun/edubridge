@@ -64,21 +64,21 @@ export function WithdrawStudentModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-5 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b border-border mb-5">
+      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
               <UserMinus size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Withdraw Student</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">Withdraw Student</h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
                 End student enrollment for this academic session
               </p>
             </div>
@@ -136,18 +136,18 @@ export function WithdrawStudentModal({
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-6">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={withdrawMutation.isPending}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-xs font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center h-9 px-4 rounded-xl text-xs font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer disabled:opacity-50"
             >
               {withdrawMutation.isPending ? "Withdrawing..." : "Confirm Withdrawal"}
             </button>

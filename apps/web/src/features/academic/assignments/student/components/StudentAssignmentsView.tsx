@@ -184,12 +184,12 @@ export function StudentAssignmentsView() {
           searchPlaceholder="Search by student name or code..."
           filters={filterGroups}
           actionButton={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 disabled={selectedStudentIds.length === 0}
                 onClick={() => setIsBulkTransferOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-background border border-border hover:bg-muted text-foreground transition-colors cursor-pointer shadow-2xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-background border border-border hover:bg-muted text-foreground transition-colors cursor-pointer shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex-1 sm:flex-initial"
               >
                 <ArrowRightLeft size={14} />
                 <span>Bulk Transfer ({selectedStudentIds.length})</span>
@@ -197,7 +197,7 @@ export function StudentAssignmentsView() {
               <button
                 type="button"
                 onClick={() => setIsPromotionOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap flex-1 sm:flex-initial"
               >
                 <ArrowUpRight size={14} />
                 <span>Run Promotion</span>
