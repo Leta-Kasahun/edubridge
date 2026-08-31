@@ -86,6 +86,11 @@ export const API_ENDPOINTS = {
     ARCHIVE: (id: string) => `/academic/years/${id}/archive`,
     RESTORE: (id: string) => `/academic/years/${id}/restore`,
   },
+  ACADEMIC_GRADES: {
+    BASE: "/academic/grades",
+    BY_ID: (id: string) => `/academic/grades/${id}`,
+    TOGGLE_STATUS: (id: string) => `/academic/grades/${id}/toggle-status`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",

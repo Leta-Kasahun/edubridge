@@ -26,6 +26,7 @@ export const ROUTES = {
   ACADEMIC: {
     BASE: "/dashboard/academic",
     YEARS: "/dashboard/academic/years",
+    GRADES: "/dashboard/academic/grades",
   },
   PROVISIONING: {
     BASE: "/dashboard/provisioning",

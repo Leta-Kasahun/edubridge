@@ -54,6 +54,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Calendar,
     children: [
       { label: "Academic Years", href: ROUTES.ACADEMIC.YEARS },
+      { label: "Grades", href: ROUTES.ACADEMIC.GRADES },
     ],
   },
   {
