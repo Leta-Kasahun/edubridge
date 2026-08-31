@@ -56,6 +56,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
       { label: "Academic Years", href: ROUTES.ACADEMIC.YEARS },
       { label: "Grades", href: ROUTES.ACADEMIC.GRADES },
       { label: "Sections", href: ROUTES.ACADEMIC.SECTIONS },
+      { label: "Subjects", href: ROUTES.ACADEMIC.SUBJECTS },
     ],
   },
   {

@@ -452,5 +452,64 @@ export async function seedAcademicStructureAndStudents(
         }
       }
     }
+
+    await prisma.subject.deleteMany({
+      where: {
+        code: { in: ["AMH", "HPE", "PVA", "IT", "AGRI"] },
+      },
+    });
+
+    const standardSubjects = [
+      { code: "MATH", name: "Mathematics", grades: [7, 8, 9] },
+      { code: "ENG", name: "English", grades: [7, 8, 9] },
+      { code: "GENSCI", name: "General Science", grades: [7, 8] },
+      { code: "SOCST", name: "Social Studies", grades: [7, 8] },
+      { code: "PHYS", name: "Physics", grades: [9] },
+      { code: "CHEM", name: "Chemistry", grades: [9] },
+      { code: "BIO", name: "Biology", grades: [9] },
+      { code: "HIST", name: "History", grades: [9] },
+      { code: "GEOG", name: "Geography", grades: [9] },
+      { code: "ECON", name: "Economics", grades: [9] },
+      { code: "CIVIC", name: "Citizenship Education", grades: [7, 8, 9] },
+    ];
+
+    const gradeMap = new Map<number, string>();
+    for (const gc of gradeConfigs) {
+      const g = await prisma.grade.findUnique({
+        where: { tenantId_level: { tenantId, level: gc.level } },
+      });
+      if (g) gradeMap.set(gc.level, g.id);
+    }
+
+    for (const s of standardSubjects) {
+      const subject = await prisma.subject.upsert({
+        where: { code: s.code },
+        update: { name: s.name },
+        create: {
+          code: s.code,
+          name: s.name,
+          isActive: true,
+        },
+      });
+
+      for (const lvl of s.grades) {
+        const gradeId = gradeMap.get(lvl);
+        if (gradeId) {
+          await prisma.gradeSubject.upsert({
+            where: {
+              gradeId_subjectId: {
+                gradeId,
+                subjectId: subject.id,
+              },
+            },
+            update: {},
+            create: {
+              gradeId,
+              subjectId: subject.id,
+            },
+          });
+        }
+      }
+    }
   });
 }

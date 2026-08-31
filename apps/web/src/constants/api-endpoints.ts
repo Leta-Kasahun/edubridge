@@ -97,6 +97,12 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/academic/sections/${id}`,
     UPDATE_STATUS: (id: string) => `/academic/sections/${id}/status`,
   },
+  ACADEMIC_SUBJECTS: {
+    BASE: "/academic/subjects",
+    BY_ID: (id: string) => `/academic/subjects/${id}`,
+    TOGGLE_STATUS: (id: string) => `/academic/subjects/${id}/toggle-status`,
+    ASSIGN_GRADES: (id: string) => `/academic/subjects/${id}/assign-grades`,
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",

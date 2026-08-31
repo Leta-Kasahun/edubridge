@@ -20,7 +20,7 @@ import { teacherProfileRouter } from "./modules/teacher-profile/route.js";
 import { teacherQualificationRouter } from "./modules/teacher-profile/qualification.route.js";
 import { teacherExperienceRouter } from "./modules/teacher-profile/experience.route.js";
 import { teacherDirectoryRouter } from "./modules/teacher-profile/teacher-directory.route.js";
-import { academicYearRouter, gradeRouter, sectionRouter } from "./modules/academic/index.js";
+import { academicYearRouter, gradeRouter, sectionRouter, subjectRoutes } from "./modules/academic/index.js";
 import { studentProfileRouter } from "./modules/students/route.js";
 
 const app: Express = express();
@@ -61,6 +61,8 @@ app.use("/api/academic/grades", gradeRouter);
 app.use("/api/academic-grades", gradeRouter);
 app.use("/api/academic/sections", sectionRouter);
 app.use("/api/academic-sections", sectionRouter);
+app.use("/api/academic/subjects", subjectRoutes);
+app.use("/api/academic-subjects", subjectRoutes);
 app.use("/api/student-profile", studentProfileRouter);
 app.use("/api/student-profiles", studentProfileRouter);
 
