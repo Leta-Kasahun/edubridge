@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -33,19 +33,38 @@ function NavTreeItem({
   readonly onNavigate: () => void;
 }) {
   const pathname = usePathname();
+  const hasChildren = Boolean(node.children && node.children.length > 0);
+
+  const isChildActive = Boolean(
+    hasChildren &&
+      (node.children?.some(
+        (child) =>
+          pathname === child.href ||
+          (child.href !== ROUTES.DASHBOARD && pathname.startsWith(child.href + "/"))
+      ) ||
+        (node.href !== ROUTES.DASHBOARD &&
+          pathname.startsWith(node.href) &&
+          pathname !== node.href))
+  );
+
   const [isOpen, setIsOpen] = useState(() => {
-    return pathname.startsWith(node.href) && node.href !== ROUTES.DASHBOARD;
+    return (
+      isChildActive ||
+      (pathname.startsWith(node.href) && node.href !== ROUTES.DASHBOARD)
+    );
   });
 
-  const hasChildren = Boolean(node.children && node.children.length > 0);
+  // Automatically keep parent dropdown open whenever a child route is active
+  useEffect(() => {
+    if (isChildActive) {
+      setIsOpen(true);
+    }
+  }, [isChildActive]);
+
   const isActive =
     node.href === ROUTES.DASHBOARD
       ? pathname === ROUTES.DASHBOARD
       : pathname === node.href || (pathname.startsWith(node.href) && !hasChildren);
-
-  const isChildActive = Boolean(
-    hasChildren && pathname.startsWith(node.href) && pathname !== node.href
-  );
 
   const Icon = node.icon;
 

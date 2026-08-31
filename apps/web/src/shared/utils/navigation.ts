@@ -50,7 +50,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
   },
   {
     label: "Academic",
-    href: ROUTES.ACADEMIC.YEARS,
+    href: ROUTES.ACADEMIC.BASE,
     icon: Calendar,
     children: [
       { label: "Academic Years", href: ROUTES.ACADEMIC.YEARS },
