@@ -31,69 +31,58 @@ const studentProvisioningRouteDefinitions: RouteDefinition[] = [
           tenantId: {
             type: "string",
             format: "uuid",
-            description: "School/Tenant UUID (optional if inferred from session)",
+            description: "School/Tenant UUID",
           },
           academicYearId: {
             type: "string",
             format: "uuid",
             description: "Academic year UUID",
-            example: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           },
           gradeId: {
             type: "string",
             format: "uuid",
             description: "Grade level UUID",
-            example: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           },
           sectionId: {
             type: "string",
             format: "uuid",
-            description: "Optional Section UUID (if existing)",
+            description: "Optional Section UUID",
           },
           sectionName: {
             type: "string",
-            description: "Section name (e.g., 'Section A')",
-            example: "Section A",
+            description: "Section name",
           },
           firstName: {
             type: "string",
             description: "First name",
-            example: "Betelhem",
           },
           middleName: {
             type: "string",
             description: "Father / Middle name",
-            example: "Alemu",
           },
           lastName: {
             type: "string",
             description: "Grandfather / Last name",
-            example: "Haile",
           },
           gender: {
             type: "string",
             enum: ["MALE", "FEMALE"],
-            example: "FEMALE",
           },
           studentCode: {
             type: "string",
             description: "Optional custom student code",
-            example: "STU001",
           },
           dateOfBirth: {
             type: "string",
             format: "date",
-            example: "2010-05-15",
           },
           email: {
             type: "string",
             format: "email",
             description: "Optional email address",
-            example: "betelhem.alemu@school.edu.et",
           },
           nationality: {
             type: "string",
-            example: "Ethiopian",
           },
         },
         required: ["academicYearId", "gradeId", "firstName", "middleName", "gender"],
@@ -114,7 +103,7 @@ const studentProvisioningRouteDefinitions: RouteDefinition[] = [
           tenantId: {
             type: "string",
             format: "uuid",
-            description: "School/Tenant UUID (optional if inferred from session)",
+            description: "School/Tenant UUID",
           },
           academicYearId: {
             type: "string",
@@ -128,13 +117,11 @@ const studentProvisioningRouteDefinitions: RouteDefinition[] = [
           },
           csvContent: {
             type: "string",
-            description: "Raw CSV string with headers (firstName, middleName, lastName, gender, section, studentCode, email)",
-            example: "firstName,middleName,lastName,gender,section\nBetelhem,Alemu,Haile,FEMALE,Section A\nNathan,Girma,Bekele,MALE,Section A\nSelam,Kebede,Tadesse,FEMALE,Section B",
+            description: "Raw CSV string with headers",
           },
           fileName: {
             type: "string",
             description: "Optional name of the uploaded file",
-            example: "grade7_students.csv",
           },
         },
         required: ["academicYearId", "gradeId", "csvContent"],

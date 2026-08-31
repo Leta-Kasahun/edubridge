@@ -15,7 +15,6 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
           tenantName: {
             type: "string",
             description: "School/Tenant name",
-            example: "Apex Academy",
           },
           tenantId: {
             type: "string",
@@ -25,18 +24,15 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
           firstName: {
             type: "string",
             description: "First name of school administrator",
-            example: "Abebe",
           },
           lastName: {
             type: "string",
             description: "Last name of school administrator",
-            example: "Kebede",
           },
           email: {
             type: "string",
             format: "email",
             description: "Email address for invitation delivery",
-            example: "admin@apex.edu.et",
           },
         },
         required: ["tenantName", "firstName", "lastName", "email"],
@@ -57,7 +53,6 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
           tenantName: {
             type: "string",
             description: "School/Tenant name",
-            example: "Apex Academy",
           },
           tenantId: {
             type: "string",
@@ -67,18 +62,15 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
           firstName: {
             type: "string",
             description: "First name of school administrator",
-            example: "Abebe",
           },
           lastName: {
             type: "string",
             description: "Last name of school administrator",
-            example: "Kebede",
           },
           email: {
             type: "string",
             format: "email",
             description: "Optional email address",
-            example: "admin@apex.edu.et",
           },
         },
         required: ["tenantName", "firstName", "lastName"],
@@ -100,12 +92,10 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
             type: "string",
             enum: ["INVITATION", "DIRECT_CREDENTIALS"],
             description: "Provisioning method",
-            example: "INVITATION",
           },
           tenantName: {
             type: "string",
             description: "School/Tenant name",
-            example: "Apex Academy",
           },
           tenantId: {
             type: "string",
@@ -115,18 +105,15 @@ const tenantProvisioningRouteDefinitions: RouteDefinition[] = [
           firstName: {
             type: "string",
             description: "First name of school administrator",
-            example: "Abebe",
           },
           lastName: {
             type: "string",
             description: "Last name of school administrator",
-            example: "Kebede",
           },
           email: {
             type: "string",
             format: "email",
             description: "Email address (required for INVITATION)",
-            example: "admin@apex.edu.et",
           },
         },
         required: ["method", "tenantName", "firstName", "lastName"],
