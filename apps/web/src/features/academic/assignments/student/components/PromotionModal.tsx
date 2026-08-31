@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, ArrowUpRight, Check, AlertTriangle, ChevronRight, ChevronLeft } from "lucide-react";
 import { usePromotionPreview, useCommitPromotion } from "../hooks/useStudentAssignments";
@@ -38,9 +38,10 @@ export function PromotionModal({
   const [studentRows, setStudentRows] = useState<readonly PromotionPreviewRow[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const eligibleTargetYears = academicYears.filter(
-    (y) => y.id !== currentAcademicYearId && (y.status === "ACTIVE" || y.status === "UPCOMING")
-  );
+  const eligibleTargetYears = useMemo(() => {
+    const nonCurrent = academicYears.filter((y) => y.id !== currentAcademicYearId);
+    return nonCurrent.length > 0 ? nonCurrent : academicYears;
+  }, [academicYears, currentAcademicYearId]);
 
   const previewQuery = {
     sourceAcademicYearId: currentAcademicYearId,
@@ -61,10 +62,10 @@ export function PromotionModal({
     if (isOpen) {
       setStep(1);
       setFormError(null);
-      if (eligibleTargetYears.length > 0 && !targetYearId) {
+      if (eligibleTargetYears.length > 0) {
         setTargetYearId(eligibleTargetYears[0]?.id || "");
       }
-      if (availableGrades.length > 0 && !selectedGrade) {
+      if (availableGrades.length > 0) {
         setSelectedGrade(availableGrades[0] || 7);
       }
     }
@@ -123,28 +124,34 @@ export function PromotionModal({
     );
   };
 
-  const handleProceedToStep2 = () => {
+  const validateRows = (): boolean => {
     setFormError(null);
     if (!targetYearId) {
       setFormError("Please select a target academic year.");
-      return;
+      return false;
     }
     if (studentRows.length === 0) {
       setFormError("No active students found in the selected grade to promote.");
-      return;
+      return false;
     }
     const missingSection = studentRows.find((s) => !s.proposedSectionId || !s.proposedGradeId);
     if (missingSection) {
       setFormError(
         `Please ensure all students have an assigned target section (student "${missingSection.fullName}" is unassigned).`
       );
-      return;
+      return false;
     }
-    setStep(2);
+    return true;
+  };
+
+  const handleProceedToStep2 = () => {
+    if (validateRows()) {
+      setStep(2);
+    }
   };
 
   const handleCommit = async () => {
-    setFormError(null);
+    if (!validateRows()) return;
 
     const items: CommitPromotionItem[] = studentRows.map((r) => ({
       studentId: r.studentId,
@@ -185,7 +192,7 @@ export function PromotionModal({
               </h2>
               <p className="text-xs text-muted-foreground">
                 {step === 1
-                  ? "Step 1: Configure Grade Rollover & Overrides"
+                  ? "Step 1: Configure Grade Rollover & Section Placements"
                   : "Step 2: Review & Commit Promotion"}
               </p>
             </div>
@@ -199,27 +206,24 @@ export function PromotionModal({
           </button>
         </div>
 
-        {formError && (
-          <div className="mb-4 shrink-0">
-            <ErrorAlert message={formError} />
-          </div>
-        )}
+        {formError && <div className="mb-4 shrink-0"><ErrorAlert message={formError} /></div>}
+        {previewError && <div className="mb-4 shrink-0"><ErrorAlert message={getErrorMessage(previewError, "Failed to load promotion preview.")} /></div>}
 
         {step === 1 ? (
-          <div className="flex-1 flex flex-col min-h-0 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  Source Grade Level <span className="text-destructive">*</span>
+                  Source Grade Level
                 </label>
                 <select
                   value={selectedGrade}
                   onChange={(e) => setSelectedGrade(Number(e.target.value))}
-                  className="w-full h-10 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                  className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
                 >
-                  {availableGrades.map((lvl) => (
-                    <option key={lvl} value={lvl}>
-                      Grade {lvl} (promoting to Grade {Math.min(12, lvl + 1)})
+                  {availableGrades.map((g) => (
+                    <option key={g} value={g}>
+                      Grade {g} (Promoting to Grade {Math.min(12, g + 1)})
                     </option>
                   ))}
                 </select>
@@ -232,128 +236,127 @@ export function PromotionModal({
                 <select
                   value={targetYearId}
                   onChange={(e) => setTargetYearId(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                  className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+                  required
                 >
-                  {eligibleTargetYears.length === 0 ? (
-                    <option value="">No upcoming academic years found</option>
-                  ) : (
-                    eligibleTargetYears.map((yr) => (
-                      <option key={yr.id} value={yr.id}>
-                        {yr.name} ({yr.status})
-                      </option>
-                    ))
-                  )}
+                  {eligibleTargetYears.map((yr) => (
+                    <option key={yr.id} value={yr.id}>
+                      {yr.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 border border-border rounded-xl overflow-hidden flex flex-col bg-background">
-              {isLoadingPreview ? (
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <LoadingSpinner size={24} />
-                </div>
-              ) : previewError ? (
-                <div className="p-4 text-xs text-destructive">
-                  {getErrorMessage(previewError, "Failed to load grade preview.")}
-                </div>
-              ) : studentRows.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center p-8 text-xs text-muted-foreground">
-                  No active students enrolled in Grade {selectedGrade}.
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto">
-                  <table className="w-full text-xs text-left border-collapse">
-                    <thead className="bg-muted/50 border-b border-border sticky top-0 z-10">
-                      <tr>
-                        <th className="py-2.5 px-3 font-semibold text-muted-foreground">Student</th>
-                        <th className="py-2.5 px-3 font-semibold text-muted-foreground">Current Section</th>
-                        <th className="py-2.5 px-3 font-semibold text-muted-foreground">Target Section</th>
-                        <th className="py-2.5 px-3 font-semibold text-muted-foreground text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60">
-                      {studentRows.map((row) => {
-                        const rowGradeLevel = row.isPromoted ? targetGradeLevel : selectedGrade;
-                        const availableTargetSections = (previewData?.targetSections || []).filter(
-                          (ts) => ts.gradeLevel === rowGradeLevel
-                        );
-
-                        return (
-                          <tr key={row.studentId} className="hover:bg-muted/20 transition-colors">
-                            <td className="py-2.5 px-3">
-                              <div className="font-medium text-foreground">{row.fullName}</div>
-                              <div className="font-mono text-[10px] text-muted-foreground">{row.studentCode}</div>
-                            </td>
-                            <td className="py-2.5 px-3 text-muted-foreground">
-                              Grade {row.currentGradeLevel} — {row.currentSectionName}
-                            </td>
-                            <td className="py-2.5 px-3">
-                              <select
-                                value={row.proposedSectionId || ""}
-                                onChange={(e) => handleSectionChange(row.studentId, e.target.value)}
-                                className="h-8 px-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer max-w-[180px] w-full"
-                              >
-                                {availableTargetSections.length === 0 ? (
-                                  <option value="">No sections in G{rowGradeLevel}</option>
-                                ) : (
-                                  availableTargetSections.map((sec) => (
-                                    <option key={sec.sectionId} value={sec.sectionId}>
-                                      {sec.sectionName} (G{sec.gradeLevel})
-                                    </option>
-                                  ))
-                                )}
-                              </select>
-                            </td>
-                            <td className="py-2.5 px-3 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleTogglePromoted(row.studentId)}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer border ${
-                                  row.isPromoted
-                                    ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-                                    : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
-                                }`}
-                              >
-                                {row.isPromoted ? (
-                                  <>
-                                    <Check size={12} />
-                                    <span>Promote (G{targetGradeLevel})</span>
-                                  </>
-                                ) : (
-                                  <span>Retain (G{selectedGrade})</span>
-                                )}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-border shrink-0">
-              <div className="text-xs text-muted-foreground">
-                {studentRows.length} total • {promotedCount} promoted • {retainedCount} retained
+            {isLoadingPreview ? (
+              <div className="py-12 flex items-center justify-center">
+                <LoadingSpinner size={24} />
               </div>
+            ) : studentRows.length === 0 ? (
+              <div className="p-8 rounded-xl bg-muted/20 border border-border text-center text-xs text-muted-foreground">
+                No active students found in Grade {selectedGrade} to promote.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-foreground">
+                    Students in Grade {selectedGrade} ({studentRows.length})
+                  </span>
+                  <span className="text-muted-foreground">
+                    {promotedCount} to Grade {targetGradeLevel}, {retainedCount} retained
+                  </span>
+                </div>
+
+                <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
+                  {studentRows.map((row) => {
+                    const candidateGradeLevel = row.isPromoted ? targetGradeLevel : selectedGrade;
+                    const availableTargetSections = (previewData?.targetSections || []).filter(
+                      (ts) => ts.gradeLevel === candidateGradeLevel
+                    );
+
+                    return (
+                      <div
+                        key={row.studentId}
+                        className="p-3 bg-card hover:bg-muted/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePromoted(row.studentId)}
+                            className={`h-5 w-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                              row.isPromoted
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background border-border text-transparent"
+                            }`}
+                            title={row.isPromoted ? "Promoted to next grade" : "Retained in same grade"}
+                          >
+                            <Check size={12} strokeWidth={3} />
+                          </button>
+
+                          <div>
+                            <div className="font-semibold text-foreground">{row.fullName}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {row.studentCode} • Current: {row.currentSectionName}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
+                              row.isPromoted
+                                ? "bg-primary/10 text-primary border border-primary/20"
+                                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                            }`}
+                          >
+                            {row.isPromoted ? `Grade ${targetGradeLevel}` : `Retain Gr. ${selectedGrade}`}
+                          </span>
+
+                          <select
+                            value={row.proposedSectionId || ""}
+                            onChange={(e) => handleSectionChange(row.studentId, e.target.value)}
+                            className="h-8 px-2.5 rounded-lg bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer min-w-[140px]"
+                          >
+                            <option value="">Select target section...</option>
+                            {availableTargetSections.map((sec) => (
+                              <option key={sec.sectionId} value={sec.sectionId}>
+                                {sec.sectionName} ({sec.availableSeats !== null ? `${sec.availableSeats} seats` : "No limit"})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-4 border-t border-border mt-4 shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
                 <button
                   type="button"
                   onClick={handleProceedToStep2}
                   disabled={studentRows.length === 0 || !targetYearId}
-                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Review Promotion</span>
+                  <span>Review Summary</span>
                   <ChevronRight size={14} />
                 </button>
+                <SubmitButton
+                  isLoading={commitMutation.isPending}
+                  onClick={handleCommit}
+                  disabled={studentRows.length === 0 || !targetYearId}
+                >
+                  Save & Promote
+                </SubmitButton>
               </div>
             </div>
           </div>
@@ -403,7 +406,7 @@ export function PromotionModal({
                 isLoading={commitMutation.isPending}
                 onClick={handleCommit}
               >
-                Commit Year-End Promotion
+                Save & Commit Promotion
               </SubmitButton>
             </div>
           </div>

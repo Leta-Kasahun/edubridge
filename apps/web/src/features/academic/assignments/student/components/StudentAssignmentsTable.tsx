@@ -30,6 +30,95 @@ interface StudentAssignmentsTableProps {
   readonly onWithdraw: (student: StudentRosterItem) => void;
 }
 
+function StudentRowActions({
+  item,
+  onTransferSingle,
+  onShowHistory,
+  onWithdraw,
+}: {
+  readonly item: StudentRosterItem;
+  readonly onTransferSingle: (student: StudentRosterItem) => void;
+  readonly onShowHistory: (student: StudentRosterItem) => void;
+  readonly onWithdraw: (student: StudentRosterItem) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative inline-block text-left" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+        aria-label="Actions"
+      >
+        <MoreVertical size={16} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-9 w-48 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95">
+          {item.status === "ACTIVE" && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onTransferSingle(item);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+            >
+              <ArrowRightLeft size={14} className="text-muted-foreground" />
+              <span>Transfer Section</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              onShowHistory(item);
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+          >
+            <History size={14} className="text-muted-foreground" />
+            <span>Enrollment History</span>
+          </button>
+
+          {item.status === "ACTIVE" && (
+            <>
+              <div className="my-1 border-t border-border" />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onWithdraw(item);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+              >
+                <UserMinus size={14} />
+                <span>Withdraw Student</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StudentAssignmentsTable({
   items,
   selectedStudentIds,
@@ -43,19 +132,6 @@ export function StudentAssignmentsTable({
   onShowHistory,
   onWithdraw,
 }: StudentAssignmentsTableProps) {
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setActiveDropdownId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const activeItems = items.filter((i) => i.status === "ACTIVE");
   const isAllSelected =
     activeItems.length > 0 && activeItems.every((i) => selectedStudentIds.includes(i.studentId));
@@ -78,7 +154,7 @@ export function StudentAssignmentsTable({
         </div>
         <h3 className="text-sm font-semibold text-foreground mb-1">No enrolled students found</h3>
         <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          No students are currently enrolled in the selected academic session, grade, or section filter.
+          No students are currently enrolled under the selected academic year, grade, or section filter criteria.
         </p>
       </div>
     );
@@ -96,14 +172,14 @@ export function StudentAssignmentsTable({
                   <button
                     type="button"
                     onClick={handleHeaderCheckbox}
-                    className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
                     title={isAllSelected ? "Deselect all" : "Select all active"}
                   >
                     {isAllSelected ? (
                       <CheckSquare size={16} className="text-primary" />
                     ) : isIndeterminate ? (
-                      <div className="h-4 w-4 rounded bg-primary/20 border border-primary flex items-center justify-center">
-                        <div className="h-1.5 w-1.5 bg-primary rounded-xs" />
+                      <div className="h-4 w-4 rounded-sm border border-primary bg-primary/20 flex items-center justify-center">
+                        <div className="h-1.5 w-2 bg-primary rounded-xs" />
                       </div>
                     ) : (
                       <Square size={16} />
@@ -112,6 +188,7 @@ export function StudentAssignmentsTable({
                 </th>
                 <th className="py-3 px-4">Student</th>
                 <th className="py-3 px-4">Student Code</th>
+                <th className="py-3 px-4">Gender</th>
                 <th className="py-3 px-4">Grade</th>
                 <th className="py-3 px-4">Section</th>
                 <th className="py-3 px-4">Status</th>
@@ -121,8 +198,7 @@ export function StudentAssignmentsTable({
             <tbody className="divide-y divide-border/60">
               {items.map((item) => {
                 const isSelected = selectedStudentIds.includes(item.studentId);
-                const isActionOpen = activeDropdownId === item.enrollmentId;
-                const canSelect = item.status === "ACTIVE";
+                const isActive = item.status === "ACTIVE";
 
                 return (
                   <tr
@@ -132,29 +208,33 @@ export function StudentAssignmentsTable({
                     }`}
                   >
                     <td className="py-3.5 px-4">
-                      {canSelect ? (
-                        <button
-                          type="button"
-                          onClick={() => onToggleSelect(item.studentId)}
-                          className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                        >
-                          {isSelected ? (
-                            <CheckSquare size={16} className="text-primary" />
-                          ) : (
-                            <Square size={16} />
-                          )}
-                        </button>
-                      ) : (
-                        <div className="h-4 w-4" />
-                      )}
+                      <button
+                        type="button"
+                        disabled={!isActive}
+                        onClick={() => onToggleSelect(item.studentId)}
+                        className={`flex items-center justify-center ${
+                          isActive
+                            ? "cursor-pointer text-muted-foreground hover:text-foreground"
+                            : "opacity-30 cursor-not-allowed text-muted-foreground"
+                        }`}
+                      >
+                        {isSelected ? (
+                          <CheckSquare size={16} className="text-primary" />
+                        ) : (
+                          <Square size={16} />
+                        )}
+                      </button>
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-foreground">
                       {item.fullName}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-muted-foreground">
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
                       {item.studentCode}
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-foreground">
+                    <td className="py-3.5 px-4 text-muted-foreground uppercase text-[11px]">
+                      {item.gender}
+                    </td>
+                    <td className="py-3.5 px-4 text-foreground">
                       Grade {item.gradeLevel}
                     </td>
                     <td className="py-3.5 px-4 font-medium text-foreground">
@@ -169,68 +249,13 @@ export function StudentAssignmentsTable({
                         {formatEnrollmentStatus(item.status)}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdownId(isActionOpen ? null : item.enrollmentId);
-                        }}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
-                        title="Actions"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-
-                      {isActionOpen && (
-                        <div
-                          ref={dropdownRef}
-                          className="absolute right-4 top-10 w-48 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
-                        >
-                          {item.status === "ACTIVE" && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveDropdownId(null);
-                                onTransferSingle(item);
-                              }}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                            >
-                              <ArrowRightLeft size={14} className="text-muted-foreground" />
-                              <span>Transfer Section</span>
-                            </button>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveDropdownId(null);
-                              onShowHistory(item);
-                            }}
-                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                          >
-                            <History size={14} className="text-muted-foreground" />
-                            <span>Enrollment History</span>
-                          </button>
-
-                          {item.status === "ACTIVE" && (
-                            <>
-                              <div className="my-1 border-t border-border" />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveDropdownId(null);
-                                  onWithdraw(item);
-                                }}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-                              >
-                                <UserMinus size={14} />
-                                <span>Withdraw Student</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
+                    <td className="py-3.5 px-4 text-right">
+                      <StudentRowActions
+                        item={item}
+                        onTransferSingle={onTransferSingle}
+                        onShowHistory={onShowHistory}
+                        onWithdraw={onWithdraw}
+                      />
                     </td>
                   </tr>
                 );
@@ -244,8 +269,7 @@ export function StudentAssignmentsTable({
       <div className="md:hidden space-y-3">
         {items.map((item) => {
           const isSelected = selectedStudentIds.includes(item.studentId);
-          const isActionOpen = activeDropdownId === item.enrollmentId;
-          const canSelect = item.status === "ACTIVE";
+          const isActive = item.status === "ACTIVE";
 
           return (
             <div
@@ -255,20 +279,24 @@ export function StudentAssignmentsTable({
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  {canSelect && (
-                    <button
-                      type="button"
-                      onClick={() => onToggleSelect(item.studentId)}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-                    >
-                      {isSelected ? (
-                        <CheckSquare size={18} className="text-primary" />
-                      ) : (
-                        <Square size={18} />
-                      )}
-                    </button>
-                  )}
+                <div className="flex items-start gap-2.5">
+                  <button
+                    type="button"
+                    disabled={!isActive}
+                    onClick={() => onToggleSelect(item.studentId)}
+                    className={`mt-0.5 ${
+                      isActive
+                        ? "cursor-pointer text-muted-foreground hover:text-foreground"
+                        : "opacity-30 cursor-not-allowed text-muted-foreground"
+                    }`}
+                  >
+                    {isSelected ? (
+                      <CheckSquare size={16} className="text-primary" />
+                    ) : (
+                      <Square size={16} />
+                    )}
+                  </button>
+
                   <div>
                     <div className="text-xs font-bold text-foreground">{item.fullName}</div>
                     <div className="text-[11px] font-mono text-muted-foreground">
@@ -285,84 +313,41 @@ export function StudentAssignmentsTable({
                   >
                     {formatEnrollmentStatus(item.status)}
                   </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveDropdownId(isActionOpen ? null : item.enrollmentId);
-                    }}
-                    className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
+                  <StudentRowActions
+                    item={item}
+                    onTransferSingle={onTransferSingle}
+                    onShowHistory={onShowHistory}
+                    onWithdraw={onWithdraw}
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-xs">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-xs">
                 <div>
                   <span className="text-muted-foreground text-[11px]">Grade: </span>
-                  <span className="font-semibold text-foreground">Grade {item.gradeLevel}</span>
+                  <span className="font-semibold text-foreground">
+                    Grade {item.gradeLevel}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px]">Section: </span>
-                  <span className="font-semibold text-foreground">{item.sectionName}</span>
+                  <span className="font-semibold text-foreground">
+                    {item.sectionName}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-[11px]">Gender: </span>
+                  <span className="font-semibold text-foreground uppercase">
+                    {item.gender}
+                  </span>
                 </div>
               </div>
-
-              {isActionOpen && (
-                <div
-                  ref={dropdownRef}
-                  className="absolute right-4 top-12 w-48 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
-                >
-                  {item.status === "ACTIVE" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveDropdownId(null);
-                        onTransferSingle(item);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                    >
-                      <ArrowRightLeft size={14} className="text-muted-foreground" />
-                      <span>Transfer Section</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveDropdownId(null);
-                      onShowHistory(item);
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                  >
-                    <History size={14} className="text-muted-foreground" />
-                    <span>Enrollment History</span>
-                  </button>
-
-                  {item.status === "ACTIVE" && (
-                    <>
-                      <div className="my-1 border-t border-border" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveDropdownId(null);
-                          onWithdraw(item);
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-                      >
-                        <UserMinus size={14} />
-                        <span>Withdraw Student</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
+      {/* Pagination Controls */}
       {pagination && pagination.total > 0 && (
         <div className="bg-card rounded-2xl border border-border px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
           <div className="flex items-center gap-2">

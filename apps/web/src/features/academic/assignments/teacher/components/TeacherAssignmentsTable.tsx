@@ -27,6 +27,90 @@ interface TeacherAssignmentsTableProps {
   readonly onViewLoad: (assignment: TeacherAssignmentListItem) => void;
 }
 
+function TeacherRowActions({
+  item,
+  onReassign,
+  onEndAssignment,
+  onViewLoad,
+}: {
+  readonly item: TeacherAssignmentListItem;
+  readonly onReassign: (assignment: TeacherAssignmentListItem) => void;
+  readonly onEndAssignment: (assignment: TeacherAssignmentListItem) => void;
+  readonly onViewLoad: (assignment: TeacherAssignmentListItem) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative inline-block text-left" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+        aria-label="Actions"
+      >
+        <MoreVertical size={16} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-9 w-44 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95">
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              onViewLoad(item);
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+          >
+            <Layers size={14} className="text-muted-foreground" />
+            <span>View Teacher Load</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              onReassign(item);
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+          >
+            <ArrowRightLeft size={14} className="text-muted-foreground" />
+            <span>Reassign Teacher</span>
+          </button>
+
+          <div className="my-1 border-t border-border" />
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              onEndAssignment(item);
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+          >
+            <UserX size={14} />
+            <span>End Assignment</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TeacherAssignmentsTable({
   items,
   pagination,
@@ -36,19 +120,6 @@ export function TeacherAssignmentsTable({
   onEndAssignment,
   onViewLoad,
 }: TeacherAssignmentsTableProps) {
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setActiveDropdownId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   if (items.length === 0) {
     return (
       <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-xs">
@@ -81,8 +152,6 @@ export function TeacherAssignmentsTable({
             </thead>
             <tbody className="divide-y divide-border/60">
               {items.map((item) => {
-                const isActionOpen = activeDropdownId === item.id;
-
                 return (
                   <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                     <td className="py-3.5 px-4">
@@ -121,63 +190,13 @@ export function TeacherAssignmentsTable({
                         {item.teacherActiveLoad} class{item.teacherActiveLoad > 1 ? "es" : ""}
                       </button>
                     </td>
-                    <td className="py-3.5 px-4 text-right relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdownId(isActionOpen ? null : item.id);
-                        }}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
-                        title="Actions"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-
-                      {isActionOpen && (
-                        <div
-                          ref={dropdownRef}
-                          className="absolute right-4 top-10 w-44 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveDropdownId(null);
-                              onViewLoad(item);
-                            }}
-                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                          >
-                            <Layers size={14} className="text-muted-foreground" />
-                            <span>View Teacher Load</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveDropdownId(null);
-                              onReassign(item);
-                            }}
-                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                          >
-                            <ArrowRightLeft size={14} className="text-muted-foreground" />
-                            <span>Reassign Teacher</span>
-                          </button>
-
-                          <div className="my-1 border-t border-border" />
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveDropdownId(null);
-                              onEndAssignment(item);
-                            }}
-                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-                          >
-                            <UserX size={14} />
-                            <span>End Assignment</span>
-                          </button>
-                        </div>
-                      )}
+                    <td className="py-3.5 px-4 text-right">
+                      <TeacherRowActions
+                        item={item}
+                        onReassign={onReassign}
+                        onEndAssignment={onEndAssignment}
+                        onViewLoad={onViewLoad}
+                      />
                     </td>
                   </tr>
                 );
@@ -190,8 +209,6 @@ export function TeacherAssignmentsTable({
       {/* Mobile Card View (< md) */}
       <div className="md:hidden space-y-3">
         {items.map((item) => {
-          const isActionOpen = activeDropdownId === item.id;
-
           return (
             <div
               key={item.id}
@@ -215,16 +232,12 @@ export function TeacherAssignmentsTable({
                   >
                     {item.teacherActiveLoad} class{item.teacherActiveLoad > 1 ? "es" : ""}
                   </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveDropdownId(isActionOpen ? null : item.id);
-                    }}
-                    className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
+                  <TeacherRowActions
+                    item={item}
+                    onReassign={onReassign}
+                    onEndAssignment={onEndAssignment}
+                    onViewLoad={onViewLoad}
+                  />
                 </div>
               </div>
 
@@ -250,56 +263,12 @@ export function TeacherAssignmentsTable({
                   </div>
                 )}
               </div>
-
-              {isActionOpen && (
-                <div
-                  ref={dropdownRef}
-                  className="absolute right-4 top-12 w-44 rounded-xl bg-card border border-border shadow-lg p-1 z-30 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveDropdownId(null);
-                      onViewLoad(item);
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                  >
-                    <Layers size={14} className="text-muted-foreground" />
-                    <span>View Teacher Load</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveDropdownId(null);
-                      onReassign(item);
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                  >
-                    <ArrowRightLeft size={14} className="text-muted-foreground" />
-                    <span>Reassign Teacher</span>
-                  </button>
-
-                  <div className="my-1 border-t border-border" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveDropdownId(null);
-                      onEndAssignment(item);
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-                  >
-                    <UserX size={14} />
-                    <span>End Assignment</span>
-                  </button>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
+      {/* Pagination Controls */}
       {pagination && pagination.total > 0 && (
         <div className="bg-card rounded-2xl border border-border px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
           <div className="flex items-center gap-2">
