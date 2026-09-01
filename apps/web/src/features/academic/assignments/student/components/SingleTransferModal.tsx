@@ -49,7 +49,6 @@ export function SingleTransferModal({
         }`,
         badge: isFull ? "FULL" : sec.availableSeats !== null ? `${sec.availableSeats} seats` : "Open",
         disabled: isFull,
-        icon: Layers,
       };
     });
   }, [eligibleSections]);
@@ -175,7 +174,6 @@ export function SingleTransferModal({
                 onChange={(val) => setTargetSectionId(val)}
                 options={targetSectionOptions}
                 placeholder="Select target section..."
-                leftIcon={Layers}
               />
             )}
           </div>

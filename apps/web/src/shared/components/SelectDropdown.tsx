@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, ReactNode } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
@@ -10,7 +10,6 @@ export interface SelectDropdownOption {
   readonly label: string;
   readonly description?: string;
   readonly badge?: string;
-  readonly icon?: React.ElementType;
   readonly disabled?: boolean;
 }
 
@@ -23,7 +22,6 @@ export interface SelectDropdownProps {
   readonly error?: string;
   readonly disabled?: boolean;
   readonly required?: boolean;
-  readonly leftIcon?: React.ElementType;
   readonly searchable?: boolean;
   readonly searchPlaceholder?: string;
   readonly emptyMessage?: string;
@@ -40,7 +38,6 @@ export function SelectDropdown({
   error,
   disabled = false,
   required = false,
-  leftIcon: LeftIcon,
   searchable = false,
   searchPlaceholder = "Search options...",
   emptyMessage = "No options found",
@@ -114,11 +111,6 @@ export function SelectDropdown({
           )}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-            {LeftIcon ? (
-              <LeftIcon size={15} className="text-muted-foreground shrink-0" />
-            ) : selectedOption?.icon ? (
-              <selectedOption.icon size={15} className="text-muted-foreground shrink-0" />
-            ) : null}
             <span
               className={cn(
                 "truncate font-medium",
@@ -177,7 +169,6 @@ export function SelectDropdown({
               ) : (
                 filteredOptions.map((opt) => {
                   const isSelected = opt.value === value;
-                  const OptIcon = opt.icon;
 
                   return (
                     <button
@@ -194,7 +185,6 @@ export function SelectDropdown({
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-                        {OptIcon && <OptIcon size={14} className="shrink-0 text-muted-foreground" />}
                         <div className="truncate min-w-0">
                           <p className="truncate">{opt.label}</p>
                           {opt.description && (

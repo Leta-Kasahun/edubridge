@@ -55,7 +55,6 @@ export function BulkTransferModal({
         description: `${sec.activeCount}${sec.capacity ? `/${sec.capacity}` : ""} enrolled • ${seatsBadge}`,
         badge: isInsufficient ? "Insufficient" : seatsBadge,
         disabled: isInsufficient,
-        icon: Layers,
       };
     });
   }, [sections, selectedCount]);
@@ -193,7 +192,6 @@ export function BulkTransferModal({
                 onChange={(val) => setTargetSectionId(val)}
                 options={targetSectionOptions}
                 placeholder="Select target section..."
-                leftIcon={Layers}
               />
             )}
           </div>

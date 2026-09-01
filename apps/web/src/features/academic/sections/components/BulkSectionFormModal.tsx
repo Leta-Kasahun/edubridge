@@ -165,7 +165,6 @@ export function BulkSectionFormModal({
               onChange={(val) => setAcademicYearId(val)}
               options={academicYearOptions}
               placeholder="Select academic year..."
-              leftIcon={Calendar}
             />
 
             <SelectDropdown
@@ -176,7 +175,6 @@ export function BulkSectionFormModal({
               onChange={(val) => setGradeId(val)}
               options={gradeOptions}
               placeholder="Select grade level..."
-              leftIcon={GraduationCap}
             />
           </div>
 

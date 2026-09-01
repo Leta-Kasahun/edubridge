@@ -161,7 +161,6 @@ export function AddStudentModal({
               }}
               options={academicYearOptions}
               placeholder="Select academic year..."
-              leftIcon={Calendar}
             />
 
             <SelectDropdown
@@ -174,7 +173,6 @@ export function AddStudentModal({
               }}
               options={gradeOptions}
               placeholder="Select grade level..."
-              leftIcon={GraduationCap}
             />
           </div>
 
@@ -210,7 +208,6 @@ export function AddStudentModal({
                 onChange={(val) => setSectionId(val)}
                 options={sectionOptions}
                 placeholder={sections.length === 0 ? "No sections available" : "Select class section..."}
-                leftIcon={Layers}
               />
             )}
           </div>

@@ -65,7 +65,6 @@ export function PromotionModal({
       value: String(g),
       label: `Grade ${g} (Promoting to Grade ${Math.min(12, g + 1)})`,
       badge: `G${g} → G${Math.min(12, g + 1)}`,
-      icon: GraduationCap,
     }));
   }, [availableGrades]);
 
@@ -74,7 +73,6 @@ export function PromotionModal({
       value: yr.id,
       label: yr.name,
       badge: yr.status === "ACTIVE" ? "Active" : undefined,
-      icon: Calendar,
     }));
   }, [eligibleTargetYears]);
 
@@ -289,7 +287,6 @@ export function PromotionModal({
                 onChange={(val) => setSelectedGrade(Number(val))}
                 options={sourceGradeOptions}
                 placeholder="Select grade level..."
-                leftIcon={GraduationCap}
               />
 
               <SelectDropdown
@@ -299,7 +296,6 @@ export function PromotionModal({
                 onChange={(val) => setTargetYearId(val)}
                 options={targetYearOptions}
                 placeholder="Select target year..."
-                leftIcon={Calendar}
               />
             </div>
 
@@ -389,7 +385,6 @@ export function PromotionModal({
                               onChange={(val) => handleSectionChange(row.studentId, val)}
                               options={rowSectionOptions}
                               placeholder="Select section..."
-                              leftIcon={Layers}
                             />
                           </div>
                         </div>

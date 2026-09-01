@@ -117,7 +117,6 @@ export function GradeFormModal({
             onChange={(val) => setLevel(val)}
             options={levelOptions}
             placeholder="Select grade level..."
-            leftIcon={GraduationCap}
           />
 
           <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/20 border border-border">

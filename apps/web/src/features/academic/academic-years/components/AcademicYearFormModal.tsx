@@ -224,7 +224,6 @@ export function AcademicYearFormModal({
             onChange={(val) => setStatus(val as AcademicYearStatus)}
             options={statusOptions}
             placeholder="Select status..."
-            leftIcon={Filter}
           />
 
           <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-auto shrink-0">

@@ -69,7 +69,6 @@ export function ReassignTeacherModal({
       label: `${t.firstName} ${t.middleName || ""} ${t.lastName}`.trim(),
       description: t.employeeCode,
       badge: t.employeeCode,
-      icon: User,
     }));
   }, [eligibleTeachers]);
 
@@ -183,7 +182,6 @@ export function ReassignTeacherModal({
             placeholder="Select replacement teacher..."
             searchable
             searchPlaceholder="Search replacement teacher..."
-            leftIcon={User}
           />
 
           <div className="space-y-1.5">

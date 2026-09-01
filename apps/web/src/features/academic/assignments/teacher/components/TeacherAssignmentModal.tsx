@@ -109,7 +109,6 @@ export function TeacherAssignmentModal({
       label: `${t.firstName} ${t.middleName || ""} ${t.lastName}`.trim(),
       description: t.employeeCode,
       badge: t.employeeCode,
-      icon: User,
     }));
   }, [activeTeachers]);
 
@@ -119,7 +118,6 @@ export function TeacherAssignmentModal({
       label: s.name,
       description: `Code: ${s.code}`,
       badge: s.code,
-      icon: BookOpen,
     }));
   }, [allSubjects]);
 
@@ -268,7 +266,6 @@ export function TeacherAssignmentModal({
               }}
               options={academicYearOptions}
               placeholder="Select academic year..."
-              leftIcon={Calendar}
             />
 
             <SelectDropdown
@@ -280,7 +277,6 @@ export function TeacherAssignmentModal({
               placeholder={teacherOptions.length === 0 ? "Loading teachers..." : "Select teacher..."}
               searchable
               searchPlaceholder="Search teacher name or code..."
-              leftIcon={User}
             />
           </div>
 
@@ -329,7 +325,6 @@ export function TeacherAssignmentModal({
               placeholder={subjectOptions.length === 0 ? "No subjects available" : "Select curriculum subject..."}
               searchable
               searchPlaceholder="Search subject name or code..."
-              leftIcon={BookOpen}
             />
           )}
 

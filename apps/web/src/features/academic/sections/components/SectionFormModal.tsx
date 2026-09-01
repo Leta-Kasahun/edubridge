@@ -210,7 +210,6 @@ export function SectionFormModal({
               onChange={(val) => setAcademicYearId(val)}
               options={academicYearOptions}
               placeholder="Select academic year..."
-              leftIcon={Calendar}
             />
 
             <SelectDropdown
@@ -221,7 +220,6 @@ export function SectionFormModal({
               onChange={(val) => setGradeId(val)}
               options={gradeOptions}
               placeholder="Select grade level..."
-              leftIcon={GraduationCap}
             />
           </div>
 
@@ -267,7 +265,6 @@ export function SectionFormModal({
             placeholder="Select homeroom teacher..."
             searchable
             searchPlaceholder="Search teacher..."
-            leftIcon={User}
           />
 
           {isEditing && (
@@ -277,7 +274,6 @@ export function SectionFormModal({
               value={status}
               onChange={(val) => setStatus(val as SectionStatusType)}
               options={statusOptions}
-              leftIcon={Activity}
             />
           )}
 
