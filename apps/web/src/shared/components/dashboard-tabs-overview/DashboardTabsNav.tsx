@@ -1,19 +1,19 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { DashboardTabId, DashboardTabItem } from "./types";
+import type { DashboardTabItem } from "./types";
 
-interface DashboardTabsNavProps {
-  readonly tabs: readonly DashboardTabItem[];
-  readonly activeTab: DashboardTabId;
-  readonly onTabChange: (tabId: DashboardTabId) => void;
+interface DashboardTabsNavProps<T extends string = string> {
+  readonly tabs: readonly DashboardTabItem<T>[];
+  readonly activeTab: T;
+  readonly onTabChange: (tabId: T) => void;
 }
 
-export function DashboardTabsNav({
+export function DashboardTabsNav<T extends string = string>({
   tabs,
   activeTab,
   onTabChange,
-}: DashboardTabsNavProps) {
+}: DashboardTabsNavProps<T>) {
   return (
     <div className="w-full overflow-x-auto pb-1 scrollbar-none">
       <nav

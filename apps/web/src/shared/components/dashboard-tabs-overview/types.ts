@@ -1,13 +1,24 @@
 import type { ElementType } from "react";
 
-export type DashboardTabId =
+export type SchoolAdminTabId =
   | "general"
   | "students"
   | "teachers"
   | "academics";
 
-export interface DashboardTabItem {
-  readonly id: DashboardTabId;
+export type TeacherTabId =
+  | "overview"
+  | "classes"
+  | "qualifications";
+
+export type SystemAdminTabId =
+  | "overview"
+  | "tenants";
+
+export type DashboardTabId = SchoolAdminTabId | TeacherTabId | SystemAdminTabId | string;
+
+export interface DashboardTabItem<T extends string = string> {
+  readonly id: T;
   readonly label: string;
   readonly icon?: ElementType;
   readonly badge?: string | number;
