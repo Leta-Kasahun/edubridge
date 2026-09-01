@@ -26,7 +26,7 @@ export function SchoolAdminDashboard() {
           change="Managed"
           isPositive={true}
           icon={GraduationCap}
-          detail="Provisioned teacher accounts"
+          detail="Onboarded teacher accounts"
         />
         <MetricCard
           title="Students"

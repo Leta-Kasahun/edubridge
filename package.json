@@ -45,6 +45,7 @@
     "db:pull": "pnpm --filter api prisma db pull",
     "db:format": "pnpm --filter api prisma format",
     "db:validate": "pnpm --filter api prisma validate",
+    "db:clean": "pnpm --filter api db:clean",
 
     "setup": "pnpm install"
   }

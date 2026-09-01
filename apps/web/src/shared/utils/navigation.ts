@@ -62,12 +62,12 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Provisioning",
+    label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
     children: [
-      { label: "Teacher Provisioning", href: ROUTES.PROVISIONING.TEACHERS },
-      { label: "Student Provisioning", href: ROUTES.PROVISIONING.STUDENTS },
+      { label: "Teacher Onboarding", href: ROUTES.PROVISIONING.TEACHERS },
+      { label: "Student Onboarding", href: ROUTES.PROVISIONING.STUDENTS },
     ],
   },
   {

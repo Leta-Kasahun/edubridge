@@ -100,7 +100,7 @@ export function TeacherProvisioningForm({
         axiosError.response?.data?.error?.message ||
         (axiosError.message && !axiosError.message.includes("status code")
           ? axiosError.message
-          : "Unable to provision teacher. Please verify the details and try again.");
+          : "Unable to onboard teacher. Please verify the details and try again.");
       setErrorMessage(msg);
     }
   };

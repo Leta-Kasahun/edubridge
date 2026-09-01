@@ -249,7 +249,7 @@ export function TenantProvisioningForm({
         <div className="pt-2">
           <SubmitButton
             isLoading={mutation.isPending}
-            loadingText="Provisioning School..."
+            loadingText="Onboarding School..."
             icon={<Send size={16} />}
             className="w-full"
           >

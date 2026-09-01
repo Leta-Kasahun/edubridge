@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:clean": "tsx prisma/clean-db.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

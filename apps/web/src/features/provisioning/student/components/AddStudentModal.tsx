@@ -300,10 +300,10 @@ export function AddStudentModal({
             </button>
             <SubmitButton
               isLoading={isSubmitting}
-              loadingText="Provisioning..."
+              loadingText="Onboarding..."
               className="w-auto h-9 px-4 text-xs font-semibold"
             >
-              Provision student
+              Onboard student
             </SubmitButton>
           </div>
         </form>

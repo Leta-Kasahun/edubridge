@@ -140,7 +140,7 @@ export function TeacherBulkProvisioningForm({
         axiosError.response?.data?.error?.message ||
         (axiosError.message && !axiosError.message.includes("status code")
           ? axiosError.message
-          : "Bulk provisioning failed. Please check the file and try again.");
+          : "Bulk onboarding failed. Please check the file and try again.");
       setErrorMessage(msg);
     }
   };

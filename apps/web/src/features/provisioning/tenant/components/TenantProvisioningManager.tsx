@@ -85,7 +85,7 @@ export function TenantProvisioningManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
           <div className="w-full max-w-2xl bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-base font-bold text-foreground">Provisioning Completed</h2>
+              <h2 className="text-base font-bold text-foreground">Onboarding Completed</h2>
               <button
                 type="button"
                 onClick={handleResetResults}

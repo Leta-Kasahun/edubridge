@@ -130,7 +130,7 @@ export function StudentDetailModal({
             {formattedCreatedAt && (
               <div className="p-3.5 rounded-xl border border-border bg-background/50 sm:col-span-2">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Provisioned Date
+                  Onboarded Date
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
                   {formattedCreatedAt}
