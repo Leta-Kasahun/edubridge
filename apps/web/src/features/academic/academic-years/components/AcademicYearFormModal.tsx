@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
-import { SubmitButton, ErrorAlert } from "@/shared/components";
+import { X, Calendar, Filter } from "lucide-react";
+import { SubmitButton, ErrorAlert, SelectDropdown, SelectDropdownOption } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { formatDateForInput } from "@/shared/utils/academic-year.util";
 import {
@@ -39,6 +39,13 @@ export function AcademicYearFormModal({
 
   const isEditing = Boolean(yearToEdit);
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  const statusOptions: readonly SelectDropdownOption[] = useMemo(() => [
+    { value: "UPCOMING", label: "Upcoming" },
+    { value: "ACTIVE", label: "Active" },
+    { value: "COMPLETED", label: "Completed" },
+    { value: "ARCHIVED", label: "Archived" },
+  ], []);
 
   useEffect(() => {
     setMounted(true);
@@ -119,35 +126,40 @@ export function AcademicYearFormModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative z-10 w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
-              {isEditing ? "Edit Academic Year" : "Add Academic Year"}
-            </h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {isEditing
-                ? "Update Ethiopian academic calendar dates and status"
-                : "Define a new Ethiopian academic calendar cycle"}
-            </p>
+      <div className="relative z-10 w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 min-w-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Calendar size={18} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
+                {isEditing ? "Edit Academic Year" : "Add Academic Year"}
+              </h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                {isEditing
+                  ? "Update Ethiopian academic calendar dates and status"
+                  : "Define a new Ethiopian academic calendar cycle"}
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer shrink-0"
             aria-label="Close modal"
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[calc(88vh-100px)] overflow-y-auto">
           {formError && <ErrorAlert message={formError} />}
 
           <div className="space-y-1.5">
@@ -158,8 +170,8 @@ export function AcademicYearFormModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. 2018 E.C. Academic Year"
-              className="h-10 w-full rounded-xl border border-input bg-background px-3 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              placeholder="e.g. 2018 E.C"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               required
             />
           </div>
@@ -173,12 +185,12 @@ export function AcademicYearFormModal({
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="e.g. AY-2018"
-              className="h-10 w-full rounded-xl border border-input bg-background px-3 text-xs sm:text-sm font-mono font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors uppercase"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-mono font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all uppercase"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground block">
                 Start Date <span className="text-destructive">*</span>
@@ -187,7 +199,7 @@ export function AcademicYearFormModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 w-full rounded-xl border border-input bg-background px-3 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:border-primary transition-colors"
+                className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 required
               />
             </div>
@@ -200,41 +212,34 @@ export function AcademicYearFormModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 w-full rounded-xl border border-input bg-background px-3 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:border-primary transition-colors"
+                className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground block">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as AcademicYearStatus)}
-              className="h-10 w-full rounded-xl border border-input bg-background px-3 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:border-primary transition-colors"
-            >
-              <option value="UPCOMING">Upcoming</option>
-              <option value="ACTIVE">Active</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-          </div>
+          <SelectDropdown
+            label="Academic Year Status"
+            value={status}
+            onChange={(val) => setStatus(val as AcademicYearStatus)}
+            options={statusOptions}
+            placeholder="Select status..."
+            leftIcon={Filter}
+          />
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-auto shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-10 px-4 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-4 h-10 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-center"
             >
               Cancel
             </button>
             <SubmitButton
               isLoading={isSubmitting}
               loadingText={isEditing ? "Saving..." : "Creating..."}
-              className="w-auto h-10 px-5 text-xs font-semibold"
+              className="w-full sm:w-auto h-10 px-5 text-xs sm:text-sm font-semibold"
             >
               {isEditing ? "Save Changes" : "Create Academic Year"}
             </SubmitButton>

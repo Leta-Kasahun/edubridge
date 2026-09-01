@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, User } from "lucide-react";
 import {
   FormField,
   LoadingSpinner,
@@ -310,20 +310,36 @@ export function TeacherOnboardingWizard({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <label
-                  htmlFor="gender"
-                  className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block"
+                  className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block select-none"
                 >
-                  Gender
+                  Gender <span className="text-primary">*</span>
                 </label>
-                <select
-                  id="gender"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as Gender)}
-                  className="h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:border-foreground/40 focus:bg-background transition-colors"
-                >
-                  <option value="FEMALE">Female</option>
-                  <option value="MALE">Male</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2.5 h-11 sm:h-12">
+                  <button
+                    type="button"
+                    onClick={() => setGender("FEMALE")}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${
+                      gender === "FEMALE"
+                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                        : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                    }`}
+                  >
+                    <User size={16} className="shrink-0" />
+                    <span>Female</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender("MALE")}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${
+                      gender === "MALE"
+                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                        : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                    }`}
+                  >
+                    <User size={16} className="shrink-0" />
+                    <span>Male</span>
+                  </button>
+                </div>
               </div>
 
               <FormField

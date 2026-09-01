@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { X, Calendar, GraduationCap, Layers, User } from "lucide-react";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import {
   AcademicStructureAcademicYear,
   AcademicStructureGrade,
@@ -52,12 +53,40 @@ export function AddStudentModal({
   const [studentCode, setStudentCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  const currentYear = useMemo(() => {
+    return academicYears.find((y) => y.id === academicYearId) || academicYears[0] || null;
+  }, [academicYears, academicYearId]);
 
-  const currentYear = academicYears.find((y) => y.id === academicYearId) || academicYears[0];
   const grades: readonly AcademicStructureGrade[] = currentYear?.grades || [];
-  const currentGrade = grades.find((g) => g.id === gradeId) || grades[0];
+  const currentGrade = grades.find((g) => g.id === gradeId) || grades[0] || null;
   const sections = currentGrade?.sections || [];
+
+  const academicYearOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return academicYears.map((ay) => ({
+      value: ay.id,
+      label: ay.name,
+      badge: ay.isCurrent ? "Current" : undefined,
+    }));
+  }, [academicYears]);
+
+  const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return grades.map((g) => ({
+      value: g.id,
+      label: `Grade ${g.level}`,
+      badge: `G${g.level}`,
+    }));
+  }, [grades]);
+
+  const sectionOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return sections.map((s) => ({
+      value: s.id,
+      label: s.name,
+      description: `${s.studentCount} students enrolled`,
+      badge: `${s.studentCount} sts`,
+    }));
+  }, [sections]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,14 +126,14 @@ export function AddStudentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
-      <div className="w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+      <div className="w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto min-w-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-card shrink-0">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
               Add New Student
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">
               Provision student credentials and assign to section
             </p>
           </div>
@@ -118,55 +147,42 @@ export function AddStudentModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 max-h-[calc(85vh-120px)] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[calc(88vh-100px)] overflow-y-auto">
           {error && <ErrorAlert message={error} />}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Academic Year *
-              </label>
-              <select
-                value={academicYearId}
-                onChange={(e) => {
-                  setAcademicYearId(e.target.value);
-                  setSectionId("");
-                }}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                {academicYears.map((ay) => (
-                  <option key={ay.id} value={ay.id}>
-                    {ay.name} {ay.isCurrent ? "(Current)" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectDropdown
+              label="Academic Year"
+              required
+              value={academicYearId}
+              onChange={(val) => {
+                setAcademicYearId(val);
+                setSectionId("");
+              }}
+              options={academicYearOptions}
+              placeholder="Select academic year..."
+              leftIcon={Calendar}
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Grade Level *
-              </label>
-              <select
-                value={gradeId || currentGrade?.id || ""}
-                onChange={(e) => {
-                  setGradeId(e.target.value);
-                  setSectionId("");
-                }}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                {grades.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    Grade {g.level}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectDropdown
+              label="Grade Level"
+              required
+              value={gradeId || currentGrade?.id || ""}
+              onChange={(val) => {
+                setGradeId(val);
+                setSectionId("");
+              }}
+              options={gradeOptions}
+              placeholder="Select grade level..."
+              leftIcon={GraduationCap}
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-foreground">
-                Section *
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-1 flex-wrap">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Layers size={13} className="text-muted-foreground" />
+                Class Section <span className="text-destructive">*</span>
               </label>
               <button
                 type="button"
@@ -174,65 +190,61 @@ export function AddStudentModal({
                   setIsCustomSection(!isCustomSection);
                   setSectionName("");
                 }}
-                className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer"
+                className="text-[11px] text-muted-foreground hover:text-primary font-medium cursor-pointer"
               >
-                {isCustomSection ? "Choose from existing" : "+ New section name"}
+                {isCustomSection ? "Choose from existing" : "+ New custom section"}
               </button>
             </div>
 
             {isCustomSection ? (
               <input
                 type="text"
-                placeholder="e.g. Section D, C"
+                placeholder="e.g. Section D, Section C"
                 value={sectionName}
                 onChange={(e) => setSectionName(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3.5 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               />
             ) : (
-              <select
+              <SelectDropdown
                 value={sectionId || sections[0]?.id || ""}
-                onChange={(e) => setSectionId(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                {sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.studentCount} students)
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSectionId(val)}
+                options={sectionOptions}
+                placeholder={sections.length === 0 ? "No sections available" : "Select class section..."}
+                leftIcon={Layers}
+              />
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                First Name *
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">
+                First Name <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 placeholder="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 autoFocus
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Middle / Father *
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">
+                Middle / Father <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 placeholder="Father name"
                 value={middleName}
                 onChange={(e) => setMiddleName(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">
                 Grandfather
               </label>
               <input
@@ -240,44 +252,46 @@ export function AddStudentModal({
                 placeholder="Grandfather"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Gender *
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">
+                Gender <span className="text-destructive">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setGender("FEMALE")}
-                  className={`h-9.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                    gender === "FEMALE"
-                      ? "bg-muted text-foreground border-border font-bold"
-                      : "bg-card text-muted-foreground border-border hover:bg-muted/40"
-                  }`}
-                >
-                  Female
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGender("MALE")}
-                  className={`h-9.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                    gender === "MALE"
-                      ? "bg-muted text-foreground border-border font-bold"
-                      : "bg-card text-muted-foreground border-border hover:bg-muted/40"
-                  }`}
-                >
-                  Male
-                </button>
-              </div>
+                <div className="grid grid-cols-2 gap-2 h-10">
+                  <button
+                    type="button"
+                    onClick={() => setGender("FEMALE")}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.99] ${
+                      gender === "FEMALE"
+                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                        : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                    }`}
+                  >
+                    <User size={15} className="shrink-0" />
+                    <span>Female</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender("MALE")}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.99] ${
+                      gender === "MALE"
+                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                        : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                    }`}
+                  >
+                    <User size={15} className="shrink-0" />
+                    <span>Male</span>
+                  </button>
+                </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-foreground">
                 Student Code (Optional)
               </label>
               <input
@@ -285,25 +299,25 @@ export function AddStudentModal({
                 placeholder="Auto-generated if blank"
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-auto shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-10 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
             <SubmitButton
               isLoading={isSubmitting}
               loadingText="Onboarding..."
-              className="w-auto h-9 px-4 text-xs font-semibold"
+              className="w-full sm:w-auto h-10 px-5 text-xs sm:text-sm font-semibold"
             >
-              Onboard student
+              Onboard Student
             </SubmitButton>
           </div>
         </form>

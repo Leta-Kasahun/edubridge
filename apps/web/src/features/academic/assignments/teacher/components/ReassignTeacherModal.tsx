@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, ArrowRightLeft } from "lucide-react";
+import { X, ArrowRightLeft, User } from "lucide-react";
 import { useReassignTeacher } from "../hooks/useTeacherAssignments";
 import { TeacherAssignmentListItem } from "../types/teacher-assignment.types";
 import { useStaffQualificationsDirectory } from "@/features/staff-qualifications";
 import { useTeachers } from "@/features/provisioning/teacher/hooks/useTeacherProvisioning";
-import { SubmitButton, ErrorAlert } from "@/shared/components";
+import { SubmitButton, ErrorAlert, SelectDropdown, SelectDropdownOption } from "@/shared/components";
 import { getErrorMessage, formatTeacherAssignmentRole } from "@/shared/utils";
 
 interface ReassignTeacherModalProps {
@@ -59,6 +59,20 @@ export function ReassignTeacherModal({
     return [];
   }, [staffDirectoryResponse, teacherProvisionResponse]);
 
+  const eligibleTeachers = useMemo(() => {
+    return teachers.filter((t) => (!t.status || t.status === "ACTIVE") && t.id !== assignment?.teacherId);
+  }, [teachers, assignment?.teacherId]);
+
+  const teacherOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return eligibleTeachers.map((t) => ({
+      value: t.id,
+      label: `${t.firstName} ${t.middleName || ""} ${t.lastName}`.trim(),
+      description: t.employeeCode,
+      badge: t.employeeCode,
+      icon: User,
+    }));
+  }, [eligibleTeachers]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -72,8 +86,6 @@ export function ReassignTeacherModal({
   }, [isOpen]);
 
   if (!mounted || !isOpen || !assignment) return null;
-
-  const eligibleTeachers = teachers.filter((t) => t.id !== assignment.teacherId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,21 +116,21 @@ export function ReassignTeacherModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-4 sm:mb-5">
-          <div className="flex items-center gap-2.5">
+      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-3.5 sm:p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto my-auto min-w-0">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-3.5 sm:mb-5 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ArrowRightLeft size={18} />
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-foreground">Reassign Teacher</h2>
-              <p className="text-[11px] sm:text-xs text-muted-foreground">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-foreground truncate">Reassign Teacher</h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                 Transfer class responsibilities to a replacement staff member
               </p>
             </div>
@@ -126,16 +138,16 @@ export function ReassignTeacherModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
+            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
           >
             <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           {formError && <ErrorAlert message={formError} />}
 
-          <div className="p-3.5 rounded-xl bg-muted/30 border border-border space-y-2 text-xs">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-muted/30 border border-border space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Current Teacher</span>
               <span className="font-semibold text-foreground">{assignment.teacherName}</span>
@@ -162,24 +174,17 @@ export function ReassignTeacherModal({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Replacement Teacher <span className="text-destructive">*</span>
-            </label>
-            <select
-              value={replacementTeacherId}
-              onChange={(e) => setReplacementTeacherId(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
-              required
-            >
-              <option value="">Select replacement teacher...</option>
-              {eligibleTeachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.firstName} {t.middleName || ""} {t.lastName} ({t.employeeCode})
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectDropdown
+            label="Replacement Teacher"
+            required
+            value={replacementTeacherId}
+            onChange={(val) => setReplacementTeacherId(val)}
+            options={teacherOptions}
+            placeholder="Select replacement teacher..."
+            searchable
+            searchPlaceholder="Search replacement teacher..."
+            leftIcon={User}
+          />
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">
@@ -190,16 +195,16 @@ export function ReassignTeacherModal({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Provide reason for reassigning teacher (recorded in audit log)..."
               rows={3}
-              className="w-full p-3 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all resize-none"
+              className="w-full p-3 rounded-xl bg-background border border-border text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all resize-none min-h-[70px]"
               required
             />
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border mt-6">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-5 sm:mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
+              className="w-full sm:w-auto px-4 h-9 sm:h-10 rounded-xl text-xs sm:text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>

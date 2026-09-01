@@ -210,24 +210,37 @@ export function TeacherProvisioningForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2 w-full">
               <label
-                htmlFor="teacherGenderSelect"
                 className="text-xs font-semibold uppercase tracking-wider text-foreground/80 select-none block"
               >
                 Gender <span className="text-primary">*</span>
               </label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3.5 flex items-center pointer-events-none text-muted-foreground/80">
-                  <User size={18} />
-                </div>
-                <select
-                  id="teacherGenderSelect"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as TeacherGender)}
-                  className="h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 pl-11 pr-3.5 text-sm sm:text-base font-normal shadow-xs transition-all duration-200 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 text-foreground cursor-pointer focus:outline-hidden"
+              <div className="grid grid-cols-2 gap-2 h-11 sm:h-12">
+                <button
+                  type="button"
+                  onClick={() => setGender("FEMALE")}
+                  className={cn(
+                    "rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer flex items-center justify-center gap-2",
+                    gender === "FEMALE"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                      : "bg-background/50 text-muted-foreground border-input hover:text-foreground hover:bg-muted"
+                  )}
                 >
-                  <option value="FEMALE">Female</option>
-                  <option value="MALE">Male</option>
-                </select>
+                  <User size={16} />
+                  Female
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender("MALE")}
+                  className={cn(
+                    "rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer flex items-center justify-center gap-2",
+                    gender === "MALE"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                      : "bg-background/50 text-muted-foreground border-input hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <User size={16} />
+                  Male
+                </button>
               </div>
             </div>
 

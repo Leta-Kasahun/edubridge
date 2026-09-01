@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, Plus, Check } from "lucide-react";
+import { X, Plus, Check, Calendar, GraduationCap } from "lucide-react";
 import { useAcademicYears } from "@/features/academic/academic-years";
 import { useGrades } from "@/features/academic/grades";
 import { useBulkCreateSections } from "../hooks/useSections";
 import { STANDARD_SECTION_NAMES } from "@/shared/constants/section.constants";
-import { ErrorAlert, SubmitButton } from "@/shared/components";
+import { ErrorAlert, SubmitButton, SelectDropdown, SelectDropdownOption } from "@/shared/components";
 
 interface BulkSectionFormModalProps {
   readonly isOpen: boolean;
@@ -36,6 +36,22 @@ export function BulkSectionFormModal({
   const [customNameInput, setCustomNameInput] = useState("");
   const [capacity, setCapacity] = useState("50");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const academicYearOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return academicYears.map((y) => ({
+      value: y.id,
+      label: y.name,
+      badge: y.status === "ACTIVE" ? "Active" : undefined,
+    }));
+  }, [academicYears]);
+
+  const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return grades.map((g) => ({
+      value: g.id,
+      label: `Grade ${g.level} (${g.category})`,
+      badge: `G${g.level}`,
+    }));
+  }, [grades]);
 
   useEffect(() => {
     setMounted(true);
@@ -111,19 +127,19 @@ export function BulkSectionFormModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative z-10 w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
-          <div className="min-w-0 pr-4">
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
+      <div className="relative z-10 w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 min-w-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-card shrink-0">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
               Bulk Generate Sections
             </h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">
               Quickly create multiple class cohorts for a grade level
             </p>
           </div>
@@ -137,45 +153,108 @@ export function BulkSectionFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 max-h-[calc(85vh-100px)] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[calc(88vh-100px)] overflow-y-auto">
           {errorMessage && <ErrorAlert message={errorMessage} />}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground block">
-                Academic Year <span className="text-destructive">*</span>
-              </label>
-              <select
-                disabled={isPending}
-                value={academicYearId}
-                onChange={(e) => setAcademicYearId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-muted/40 border border-border text-foreground focus:outline-hidden focus:border-primary"
-              >
-                {academicYears.map((y) => (
-                  <option key={y.id} value={y.id}>
-                    {y.name} {y.status === "ACTIVE" ? "(Active)" : ""}
-                  </option>
-                ))}
-              </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <SelectDropdown
+              label="Academic Year"
+              required
+              disabled={isPending}
+              value={academicYearId}
+              onChange={(val) => setAcademicYearId(val)}
+              options={academicYearOptions}
+              placeholder="Select academic year..."
+              leftIcon={Calendar}
+            />
+
+            <SelectDropdown
+              label="Grade Level"
+              required
+              disabled={isPending}
+              value={gradeId}
+              onChange={(val) => setGradeId(val)}
+              options={gradeOptions}
+              placeholder="Select grade level..."
+              leftIcon={GraduationCap}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+              <span>Section Names to Create <span className="text-destructive">*</span></span>
+              <span className="text-[11px] font-normal text-muted-foreground">
+                {selectedNames.length} selected
+              </span>
+            </label>
+
+            <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-muted/20 border border-border">
+              {STANDARD_SECTION_NAMES.map((name) => {
+                const isSelected = selectedNames.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => toggleStandardName(name)}
+                    className={`h-8 w-8 text-xs font-semibold rounded-lg border transition-all cursor-pointer flex items-center justify-center ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-background text-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground block">
-                Grade Level <span className="text-destructive">*</span>
-              </label>
-              <select
+            <div className="flex gap-2">
+              <input
+                type="text"
                 disabled={isPending}
-                value={gradeId}
-                onChange={(e) => setGradeId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-muted/40 border border-border text-foreground focus:outline-hidden focus:border-primary"
+                placeholder="Add custom name (e.g. D1, Rose)"
+                value={customNameInput}
+                onChange={(e) => setCustomNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCustom(e);
+                  }
+                }}
+                className="flex-1 h-9 px-3 text-xs rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+              />
+              <button
+                type="button"
+                disabled={isPending || !customNameInput.trim()}
+                onClick={handleAddCustom}
+                className="h-9 px-3 text-xs font-medium rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
               >
-                {grades.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    Grade {g.level} ({g.category})
-                  </option>
-                ))}
-              </select>
+                <Plus size={14} />
+                Add
+              </button>
             </div>
+
+            {selectedNames.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {selectedNames.map((name) => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                  >
+                    Section {name}
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => toggleStandardName(name)}
+                      className="hover:text-destructive cursor-pointer ml-0.5"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -190,105 +269,26 @@ export function BulkSectionFormModal({
               placeholder="e.g. 50"
               value={capacity}
               onChange={(e) => setCapacity(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl bg-muted/40 border border-border text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary"
+              className="w-full h-10 px-3.5 text-xs sm:text-sm rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground block">
-              Select Sections to Generate
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {STANDARD_SECTION_NAMES.map((letter) => {
-                const isSelected = selectedNames.includes(letter);
-                return (
-                  <button
-                    key={letter}
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => toggleStandardName(letter)}
-                    className={`h-8 px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border cursor-pointer ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/40 text-foreground border-border hover:bg-muted"
-                    }`}
-                  >
-                    {isSelected && <Check size={12} className="stroke-[3]" />}
-                    <span>Section {letter}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="text"
-                disabled={isPending}
-                placeholder="Custom section identifier (e.g. Red, 1)"
-                value={customNameInput}
-                onChange={(e) => setCustomNameInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddCustom(e);
-                }}
-                className="flex-1 px-3 py-2 text-xs rounded-xl bg-muted/40 border border-border text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary"
-              />
-              <button
-                type="button"
-                disabled={isPending || !customNameInput.trim()}
-                onClick={handleAddCustom}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-muted/40 border border-border text-foreground hover:bg-muted disabled:opacity-50 flex items-center gap-1 cursor-pointer"
-              >
-                <Plus size={14} />
-                <span>Add</span>
-              </button>
-            </div>
-
-            {selectedNames.length > 0 && (
-              <div className="p-3 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground flex flex-wrap items-center gap-1.5">
-                <span className="font-semibold text-foreground mr-1">
-                  Selected ({selectedNames.length}):
-                </span>
-                {selectedNames.map((name) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-foreground border border-border font-bold text-[11px]"
-                  >
-                    {name}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedNames((prev) => prev.filter((n) => n !== name))
-                      }
-                      className="hover:text-destructive transition-colors ml-0.5 cursor-pointer"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-auto shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-10 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
-            <div className="w-48">
-              <SubmitButton
-                isLoading={isPending}
-                loadingText="Generating..."
-                size="sm"
-                disabled={selectedNames.length === 0}
-                className="h-10 rounded-xl text-xs font-semibold"
-              >
-                Generate {selectedNames.length} Sections
-              </SubmitButton>
-            </div>
+            <SubmitButton
+              isLoading={isPending}
+              loadingText="Generating..."
+              className="w-full sm:w-auto h-10 px-5 text-xs sm:text-sm font-semibold"
+            >
+              Generate {selectedNames.length} Sections
+            </SubmitButton>
           </div>
         </form>
       </div>
