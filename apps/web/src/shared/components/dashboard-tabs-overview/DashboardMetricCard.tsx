@@ -9,7 +9,7 @@ export function DashboardMetricCard({
   isLoading = false,
 }: MetricSummaryItem) {
   return (
-    <div className="bg-card text-card-foreground rounded-2xl border border-border p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between min-h-[105px] sm:min-h-[115px]">
+    <div className="bg-card text-card-foreground rounded-2xl border border-border p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between h-full min-h-[115px] w-full">
       <div>
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">
           {title}
