@@ -10,3 +10,4 @@ export * from "./layouts";
 export * from "./onboarding";
 export * from "./document";
 export * from "./SelectDropdown";
+export * from "./dashboard-tabs-overview";
