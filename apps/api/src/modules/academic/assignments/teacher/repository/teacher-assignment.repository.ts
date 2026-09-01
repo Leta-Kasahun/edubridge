@@ -2,6 +2,7 @@ import { prisma } from "../../../../../lib/prisma.js";
 import { Prisma } from "../../../../../generated/prisma/client.js";
 import {
   TeacherAssignmentListItem,
+  SingleTeacherAssignmentInput,
   CreateTeacherAssignmentInput,
   TeacherLoadSummary,
   TeacherAssignmentFilterParams,
@@ -217,7 +218,7 @@ export class TeacherAssignmentRepository {
 
   async createAssignment(
     tenantId: string,
-    input: CreateTeacherAssignmentInput,
+    input: SingleTeacherAssignmentInput,
     userId?: string
   ): Promise<TeacherAssignmentListItem> {
     return prisma.$transaction(async (tx) => {

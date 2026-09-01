@@ -1,12 +1,20 @@
 import { z } from "zod";
 
-export const createTeacherAssignmentSchema = z.object({
-  teacherId: z.string().uuid("Invalid teacher ID"),
-  academicYearId: z.string().uuid("Invalid academic year ID"),
-  sectionId: z.string().uuid("Invalid section ID"),
-  subjectId: z.string().uuid("Invalid subject ID").optional().nullable(),
-  role: z.enum(["HOMEROOM_TEACHER", "SUBJECT_TEACHER", "OTHER"]),
-});
+export const createTeacherAssignmentSchema = z
+  .object({
+    teacherId: z.string().uuid("Invalid teacher ID"),
+    academicYearId: z.string().uuid("Invalid academic year ID"),
+    sectionId: z.string().uuid("Invalid section ID").optional(),
+    sectionIds: z.array(z.string().uuid("Invalid section ID")).optional(),
+    subjectId: z.string().uuid("Invalid subject ID").optional().nullable(),
+    role: z.enum(["HOMEROOM_TEACHER", "SUBJECT_TEACHER", "OTHER"]),
+  })
+  .refine(
+    (data) => Boolean(data.sectionId) || (Boolean(data.sectionIds) && (data.sectionIds?.length ?? 0) > 0),
+    {
+      message: "At least one class section must be selected",
+    }
+  );
 
 export const reassignTeacherAssignmentSchema = z.object({
   replacementTeacherId: z.string().uuid("Invalid replacement teacher ID"),

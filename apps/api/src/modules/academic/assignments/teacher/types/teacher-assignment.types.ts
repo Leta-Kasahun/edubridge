@@ -26,10 +26,19 @@ export interface TeacherAssignmentListItem {
   readonly endDate: Date | null;
 }
 
-export interface CreateTeacherAssignmentInput {
+export interface SingleTeacherAssignmentInput {
   readonly teacherId: string;
   readonly academicYearId: string;
   readonly sectionId: string;
+  readonly subjectId?: string | null;
+  readonly role: TeacherAssignmentRoleType;
+}
+
+export interface CreateTeacherAssignmentInput {
+  readonly teacherId: string;
+  readonly academicYearId: string;
+  readonly sectionId?: string;
+  readonly sectionIds?: readonly string[];
   readonly subjectId?: string | null;
   readonly role: TeacherAssignmentRoleType;
 }

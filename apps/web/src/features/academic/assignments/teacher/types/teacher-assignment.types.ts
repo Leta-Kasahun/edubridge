@@ -29,7 +29,8 @@ export interface TeacherAssignmentListItem {
 export interface CreateTeacherAssignmentInput {
   readonly teacherId: string;
   readonly academicYearId: string;
-  readonly sectionId: string;
+  readonly sectionId?: string;
+  readonly sectionIds?: readonly string[];
   readonly subjectId?: string | null;
   readonly role: TeacherAssignmentRoleType;
 }
