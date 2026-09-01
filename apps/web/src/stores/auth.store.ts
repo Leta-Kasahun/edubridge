@@ -14,6 +14,7 @@ export interface AuthState {
   tenantId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isHydrated: boolean;
 }
 
 export interface AuthActions {
@@ -27,6 +28,7 @@ export interface AuthActions {
   setAccessToken: (accessToken: string, expiresIn?: number) => void;
   setTenantId: (tenantId: string | null) => void;
   setLoading: (isLoading: boolean) => void;
+  setHydrated: (isHydrated: boolean) => void;
   logout: () => void;
 }
 
@@ -38,6 +40,7 @@ const initialState: AuthState = {
   tenantId: null,
   isAuthenticated: false,
   isLoading: false,
+  isHydrated: false,
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -53,6 +56,7 @@ export const useAuthStore = create<AuthStore>()(
           tenantId: tenantId ?? user.tenantId ?? null,
           isAuthenticated: true,
           isLoading: false,
+          isHydrated: true,
         });
       },
       setUser: (user) =>
@@ -76,14 +80,18 @@ export const useAuthStore = create<AuthStore>()(
         set({ tenantId });
       },
       setLoading: (isLoading) => set({ isLoading }),
+      setHydrated: (isHydrated) => set({ isHydrated }),
       logout: () => {
         clearAuthStorage();
-        set({ ...initialState });
+        set({ ...initialState, isHydrated: true });
       },
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true);
+      },
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
@@ -98,4 +106,12 @@ if (typeof window !== "undefined") {
   window.addEventListener("auth:unauthorized", () => {
     useAuthStore.getState().logout();
   });
+
+  if (useAuthStore.persist.hasHydrated()) {
+    useAuthStore.getState().setHydrated(true);
+  } else {
+    useAuthStore.persist.onFinishHydration(() => {
+      useAuthStore.getState().setHydrated(true);
+    });
+  }
 }

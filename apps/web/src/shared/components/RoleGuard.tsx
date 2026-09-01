@@ -21,7 +21,7 @@ export function RoleGuard({
   fallback,
 }: RoleGuardProps) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { user, isAuthenticated, isLoading, isHydrated } = useAuthStore();
 
   const userRoles = user?.roles ?? [];
   const isSystemAdmin = userRoles.includes("SYSTEM_ADMIN");
@@ -29,12 +29,12 @@ export function RoleGuard({
     isSystemAdmin || allowedRoles.some((role) => userRoles.includes(role));
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isHydrated && !isLoading && !isAuthenticated) {
       router.replace(ROUTES.AUTH.LOGIN);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isHydrated, router]);
 
-  if (isLoading) {
+  if (!isHydrated || isLoading) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
