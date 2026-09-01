@@ -53,18 +53,27 @@ export class TeacherAssignmentService {
         throw new BadRequestError("Subject selection is required for subject teacher assignments");
       }
 
-      const gradeSubject = await prisma.gradeSubject.findUnique({
+      const subject = await prisma.subject.findFirst({
+        where: { id: input.subjectId, isActive: true },
+      });
+
+      if (!subject) {
+        throw new NotFoundError("Subject not found or inactive");
+      }
+
+      await prisma.gradeSubject.upsert({
         where: {
           gradeId_subjectId: {
             gradeId: section.grade.id,
             subjectId: input.subjectId,
           },
         },
+        create: {
+          gradeId: section.grade.id,
+          subjectId: input.subjectId,
+        },
+        update: {},
       });
-
-      if (!gradeSubject) {
-        throw new BadRequestError("Selected subject is not mapped to this class section's grade level");
-      }
     }
 
     const existing = await teacherAssignmentRepository.findActiveAssignment(

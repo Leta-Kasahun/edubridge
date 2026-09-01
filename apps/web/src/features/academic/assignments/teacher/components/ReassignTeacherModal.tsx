@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, ArrowRightLeft } from "lucide-react";
 import { useReassignTeacher } from "../hooks/useTeacherAssignments";
 import { TeacherAssignmentListItem } from "../types/teacher-assignment.types";
 import { useStaffQualificationsDirectory } from "@/features/staff-qualifications";
+import { useTeachers } from "@/features/provisioning/teacher/hooks/useTeacherProvisioning";
 import { SubmitButton, ErrorAlert } from "@/shared/components";
 import { getErrorMessage, formatTeacherAssignmentRole } from "@/shared/utils";
 
@@ -28,10 +29,35 @@ export function ReassignTeacherModal({
   const reassignMutation = useReassignTeacher();
 
   const { data: staffDirectoryResponse } = useStaffQualificationsDirectory({
-    status: "ACTIVE",
     limit: 100,
   });
-  const teachers = staffDirectoryResponse?.data || [];
+  const { data: teacherProvisionResponse } = useTeachers({
+    limit: 100,
+  });
+
+  const teachers = useMemo(() => {
+    if (staffDirectoryResponse?.data && staffDirectoryResponse.data.length > 0) {
+      return staffDirectoryResponse.data.map((t) => ({
+        id: t.id,
+        firstName: t.firstName,
+        middleName: t.middleName,
+        lastName: t.lastName,
+        employeeCode: t.employeeCode,
+        status: t.status,
+      }));
+    }
+    if (teacherProvisionResponse?.data && teacherProvisionResponse.data.length > 0) {
+      return teacherProvisionResponse.data.map((t) => ({
+        id: t.teacherProfileId || t.id,
+        firstName: t.firstName,
+        middleName: t.middleName,
+        lastName: t.lastName,
+        employeeCode: t.employeeCode,
+        status: t.teacherStatus || t.status,
+      }));
+    }
+    return [];
+  }, [staffDirectoryResponse, teacherProvisionResponse]);
 
   useEffect(() => {
     setMounted(true);

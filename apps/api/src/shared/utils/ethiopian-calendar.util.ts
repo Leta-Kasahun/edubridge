@@ -33,8 +33,8 @@ export function generateEthiopianAcademicYears(
 
     years.push({
       year: y,
-      name: `${y}`,
-      code: `AY-${y}-${tenantCode}`,
+      name: `${y} E.C`,
+      code: `AY-${y}-${tenantCode.toUpperCase()}`,
       startDate: new Date(`${gregorianStartYear}-09-11`),
       endDate: new Date(`${gregorianEndYear}-06-30`),
       isCurrent,

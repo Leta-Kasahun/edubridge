@@ -5,6 +5,10 @@ import { createPortal } from "react-dom";
 import { X, UserCheck } from "lucide-react";
 import { useCreateTeacherAssignment } from "../hooks/useTeacherAssignments";
 import { useStaffQualificationsDirectory } from "@/features/staff-qualifications";
+import { useTeachers } from "@/features/provisioning/teacher/hooks/useTeacherProvisioning";
+import { useAcademicYears } from "@/features/academic/academic-years";
+import { useGrades } from "@/features/academic/grades";
+import { useSections } from "@/features/academic/sections";
 import { useSubjects } from "@/features/academic/subjects";
 import { SectionRecord } from "@/features/academic/sections/types/section.types";
 import { GradeItem } from "@/features/academic/grades/types/grade.types";
@@ -21,22 +25,20 @@ interface AcademicYearOption {
 interface TeacherAssignmentModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly defaultAcademicYearId: string;
-  readonly academicYears: readonly AcademicYearOption[];
-  readonly sections: readonly SectionRecord[];
-  readonly grades: readonly GradeItem[];
+  readonly defaultAcademicYearId?: string;
+  readonly academicYears?: readonly AcademicYearOption[];
+  readonly sections?: readonly SectionRecord[];
+  readonly grades?: readonly GradeItem[];
 }
 
 export function TeacherAssignmentModal({
   isOpen,
   onClose,
   defaultAcademicYearId,
-  academicYears,
-  sections,
-  grades,
+  academicYears: propAcademicYears,
 }: TeacherAssignmentModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [academicYearId, setAcademicYearId] = useState(defaultAcademicYearId);
+  const [academicYearId, setAcademicYearId] = useState(defaultAcademicYearId || "");
   const [teacherId, setTeacherId] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [subjectId, setSubjectId] = useState("");
@@ -45,11 +47,53 @@ export function TeacherAssignmentModal({
 
   const createMutation = useCreateTeacherAssignment();
 
+  const { data: yearsResponse } = useAcademicYears();
+  const academicYears = propAcademicYears && propAcademicYears.length > 0
+    ? propAcademicYears
+    : yearsResponse?.data || [];
+
+  const { data: grades = [] } = useGrades({ isActive: true });
+
+  const { data: sections = [] } = useSections({
+    academicYearId: academicYearId || undefined,
+  });
+
   const { data: staffDirectoryResponse } = useStaffQualificationsDirectory({
-    status: "ACTIVE",
     limit: 100,
   });
-  const teachers = staffDirectoryResponse?.data || [];
+  const { data: teacherProvisionResponse } = useTeachers({
+    limit: 100,
+  });
+
+  const teachers = useMemo(() => {
+    if (staffDirectoryResponse?.data && staffDirectoryResponse.data.length > 0) {
+      return staffDirectoryResponse.data.map((t) => ({
+        id: t.id,
+        firstName: t.firstName,
+        middleName: t.middleName,
+        lastName: t.lastName,
+        employeeCode: t.employeeCode,
+        status: t.status,
+      }));
+    }
+    if (teacherProvisionResponse?.data && teacherProvisionResponse.data.length > 0) {
+      return teacherProvisionResponse.data.map((t) => ({
+        id: t.teacherProfileId || t.id,
+        firstName: t.firstName,
+        middleName: t.middleName,
+        lastName: t.lastName,
+        employeeCode: t.employeeCode,
+        status: t.teacherStatus || t.status,
+      }));
+    }
+    return [];
+  }, [staffDirectoryResponse, teacherProvisionResponse]);
+
+  const activeTeachers = useMemo(() => {
+    return teachers.filter((t) => !t.status || t.status === "ACTIVE");
+  }, [teachers]);
+
+  const { data: allSubjects = [] } = useSubjects({ isActive: true });
 
   const selectedSection = useMemo(() => {
     return sections.find((s) => s.id === sectionId);
@@ -61,9 +105,18 @@ export function TeacherAssignmentModal({
     return g?.level;
   }, [selectedSection, grades]);
 
-  const { data: subjects = [] } = useSubjects({
-    gradeLevel: selectedSectionGradeLevel,
-  });
+  const availableSubjects = useMemo(() => {
+    if (allSubjects.length === 0) return [];
+    if (selectedSectionGradeLevel !== undefined) {
+      const mapped = allSubjects.filter((s) =>
+        s.assignedGradeLevels?.includes(selectedSectionGradeLevel)
+      );
+      if (mapped.length > 0) {
+        return mapped;
+      }
+    }
+    return allSubjects;
+  }, [allSubjects, selectedSectionGradeLevel]);
 
   useEffect(() => {
     setMounted(true);
@@ -71,14 +124,16 @@ export function TeacherAssignmentModal({
 
   useEffect(() => {
     if (isOpen) {
-      setAcademicYearId(defaultAcademicYearId);
+      const activeYear = academicYears.find((y) => y.status === "ACTIVE");
+      const fallbackYearId = defaultAcademicYearId || activeYear?.id || academicYears[0]?.id || "";
+      setAcademicYearId(fallbackYearId);
       setTeacherId("");
       setSectionId("");
       setSubjectId("");
       setRole("SUBJECT_TEACHER");
       setFormError(null);
     }
-  }, [isOpen, defaultAcademicYearId]);
+  }, [isOpen, defaultAcademicYearId, academicYears]);
 
   if (!mounted || !isOpen) return null;
 
@@ -153,10 +208,15 @@ export function TeacherAssignmentModal({
             </label>
             <select
               value={academicYearId}
-              onChange={(e) => setAcademicYearId(e.target.value)}
+              onChange={(e) => {
+                setAcademicYearId(e.target.value);
+                setSectionId("");
+                setSubjectId("");
+              }}
               className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
               required
             >
+              <option value="">Select academic year...</option>
               {academicYears.map((yr) => (
                 <option key={yr.id} value={yr.id}>
                   {yr.name}
@@ -175,8 +235,10 @@ export function TeacherAssignmentModal({
               className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
               required
             >
-              <option value="">Select teacher...</option>
-              {teachers.map((t) => (
+              <option value="">
+                {activeTeachers.length === 0 ? "Loading teachers..." : "Select teacher..."}
+              </option>
+              {activeTeachers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.firstName} {t.middleName || ""} {t.lastName} ({t.employeeCode})
                 </option>
@@ -230,7 +292,9 @@ export function TeacherAssignmentModal({
               className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
               required
             >
-              <option value="">Select class section...</option>
+              <option value="">
+                {sections.length === 0 ? "No sections available for selected year" : "Select class section..."}
+              </option>
               {sections.map((sec) => {
                 const g = grades.find((gr) => gr.id === sec.gradeId);
                 return (
@@ -252,12 +316,11 @@ export function TeacherAssignmentModal({
                 onChange={(e) => setSubjectId(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
                 required
-                disabled={!sectionId}
               >
                 <option value="">
-                  {sectionId ? "Select curriculum subject..." : "Select class section first..."}
+                  {availableSubjects.length === 0 ? "No subjects available" : "Select curriculum subject..."}
                 </option>
-                {subjects.map((sub) => (
+                {availableSubjects.map((sub) => (
                   <option key={sub.id} value={sub.id}>
                     {sub.name} ({sub.code})
                   </option>
