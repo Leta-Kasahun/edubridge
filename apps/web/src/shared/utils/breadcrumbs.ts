@@ -21,6 +21,8 @@ const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   students: "Student Onboarding",
   profile: "My Profile",
   onboarding: "Onboarding",
+  curriculum: "Curriculum",
+  curricula: "Curricula & Versions",
   settings: "Settings",
   security: "Security Policy",
   roles: "Roles & Access",

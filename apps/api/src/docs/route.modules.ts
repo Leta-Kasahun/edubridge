@@ -13,6 +13,7 @@ import { registerSubjectDocs } from "../modules/academic/subjects/subject.doc.js
 import { registerStudentAssignmentDocs } from "../modules/academic/assignments/student/student-assignment.doc.js";
 import { registerTeacherAssignmentDocs } from "../modules/academic/assignments/teacher/teacher-assignment.doc.js";
 import { registerSecurityPolicyDocs } from "../modules/security-policy/security-policy.doc.js";
+import { registerCurriculumDocs } from "../modules/curriculum/curricula/curriculum.doc.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
@@ -30,4 +31,5 @@ export function registerAllModules(): void {
   registerSubjectDocs();
   registerStudentAssignmentDocs();
   registerTeacherAssignmentDocs();
+  registerCurriculumDocs();
 }

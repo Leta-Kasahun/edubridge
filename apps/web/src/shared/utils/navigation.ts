@@ -7,6 +7,7 @@ import {
   UserPlus,
   Award,
   Calendar,
+  BookOpen,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -29,6 +30,14 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Schools",
     href: ROUTES.SCHOOLS,
     icon: Building2,
+  },
+  {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+    ],
   },
   {
     label: "Settings",
@@ -62,6 +71,14 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+    ],
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -92,6 +109,14 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
+  },
+  {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+    ],
   },
   {
     label: "My Profile",

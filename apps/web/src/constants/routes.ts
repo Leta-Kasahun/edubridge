@@ -39,6 +39,10 @@ export const ROUTES = {
   },
   PROFILE: "/dashboard/profile",
   QUALIFICATIONS: "/dashboard/qualifications",
+  CURRICULUM: {
+    BASE: "/dashboard/curriculum",
+    CURRICULA: "/dashboard/curriculum/curricula",
+  },
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",

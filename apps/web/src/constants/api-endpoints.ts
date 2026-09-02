@@ -125,6 +125,14 @@ export const API_ENDPOINTS = {
     COMPLETE: "/student-profile/complete",
     BY_ID: (id: string) => `/student-profile/${id}`,
   },
+  CURRICULA: {
+    BASE: "/curriculum/curricula",
+    BY_ID: (id: string) => `/curriculum/curricula/${id}`,
+    STATUS: (id: string) => `/curriculum/curricula/${id}/status`,
+    VERSIONS: (id: string) => `/curriculum/curricula/${id}/versions`,
+    VERSION_BY_ID: (id: string, versionId: string) => `/curriculum/curricula/${id}/versions/${versionId}`,
+    VERSION_STATUS: (id: string, versionId: string) => `/curriculum/curricula/${id}/versions/${versionId}/status`,
+  },
   HEALTH: "/health",
 } as const;
 
