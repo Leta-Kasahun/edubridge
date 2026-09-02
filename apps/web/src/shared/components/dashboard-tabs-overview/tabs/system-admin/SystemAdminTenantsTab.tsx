@@ -17,7 +17,7 @@ export function SystemAdminTenantsTab() {
   const totalTeachers = tenantsList.reduce((acc, t) => acc + (t.totalTeachers || 0), 0);
   const totalStudents = tenantsList.reduce((acc, t) => acc + (t.totalStudents || 0), 0);
 
-  const colors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
+  const colors = ["#10B981", "#0EA5E9", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const tenantSlices: readonly ChartSliceItem[] = tenantsList.slice(0, 6).map((t, idx) => ({
     name: t.name,
     value: (t.totalStudents || 0) + (t.totalTeachers || 0) || 1,
@@ -25,7 +25,7 @@ export function SystemAdminTenantsTab() {
   }));
 
   const statusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Institutions", value: activeTenants, color: "#059669" },
+    { name: "Active Institutions", value: activeTenants, color: "#10B981" },
     { name: "Suspended Institutions", value: suspendedTenants, color: "#e11d48" },
   ];
 

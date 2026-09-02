@@ -43,25 +43,25 @@ export function GeneralOverviewTab() {
   const femaleTeachers = teachersList.filter((t) => t.gender === "FEMALE").length;
 
   const studentStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeStudentsCount, color: "#059669" },
+    { name: "Active", value: activeStudentsCount, color: "#10B981" },
     { name: "Pending", value: pendingStudentsCount, color: "#f59e0b" },
     { name: "Other", value: otherStudentsCount, color: "#94a3b8" },
   ];
 
   const studentGenderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleStudents, color: "#0284c7" },
-    { name: "Female", value: femaleStudents, color: "#e11d48" },
+    { name: "Male", value: maleStudents, color: "#0EA5E9" },
+    { name: "Female", value: femaleStudents, color: "#F97316" },
   ];
 
   const teacherStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeTeachersCount, color: "#059669" },
+    { name: "Active", value: activeTeachersCount, color: "#10B981" },
     { name: "Pending", value: pendingTeachersCount, color: "#f59e0b" },
     { name: "Inactive", value: otherTeachersCount, color: "#94a3b8" },
   ];
 
   const teacherGenderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleTeachers, color: "#0284c7" },
-    { name: "Female", value: femaleTeachers, color: "#e11d48" },
+    { name: "Male", value: maleTeachers, color: "#0EA5E9" },
+    { name: "Female", value: femaleTeachers, color: "#F97316" },
   ];
 
   const isLoadingMetrics = isStudentsLoading || isTeachersLoading || isGradesLoading || isSectionsLoading;

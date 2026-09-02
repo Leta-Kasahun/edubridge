@@ -10,9 +10,19 @@ export const THEME_FONTS = {
 
 export const THEME_COLORS = {
   brand: {
-    primary: '#059669',
-    hover: '#047857',
-    activeBg: '#ECFDF5',
+    primary: '#0EA5E9',
+    hover: '#0284C7',
+    activeBg: '#F0F9FF',
+  },
+  accent: {
+    primary: '#F97316',
+    hover: '#EA580C',
+    activeBg: '#FFF7ED',
+  },
+  success: {
+    main: '#10B981',
+    hover: '#059669',
+    lightBg: '#ECFDF5',
   },
   text: {
     primary: '#0F172A',
@@ -20,15 +30,16 @@ export const THEME_COLORS = {
     secondary: '#64748B',
     disabled: '#94A3B8',
     placeholder: '#94A3B8',
-    brand: '#059669',
+    brand: '#0EA5E9',
     error: '#DC2626',
+    success: '#10B981',
   },
   surfaces: {
     mainBg: '#F8FAFC',
     surface: '#FFFFFF',
-    hover: '#F1F5F9',
+    hover: '#F0F9FF',
     border: '#E2E8F0',
-    activeBg: '#ECFDF5',
+    activeBg: '#F0F9FF',
   },
   error: {
     main: '#DC2626',
@@ -49,9 +60,9 @@ export const THEME_COLORS = {
       text: '#FFFFFF',
     },
     active: {
-      bg: '#064E3B',
-      text: '#6EE7B7',
-      icon: '#6EE7B7',
+      bg: '#075985',
+      text: '#38BDF8',
+      icon: '#38BDF8',
     },
     divider: '#1E293B',
   },
@@ -149,7 +160,7 @@ export const THEME_SPACING = {
 } as const;
 
 export const THEME_FOCUS = {
-  color: '#059669',
+  color: '#0EA5E9',
   width: '2px',
   offset: '2px',
   style: 'solid',

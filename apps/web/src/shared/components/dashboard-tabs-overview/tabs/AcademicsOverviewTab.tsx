@@ -26,11 +26,11 @@ export function AcademicsOverviewTab() {
   const activeGrades = gradesList.filter((g) => g.isActive).length;
 
   const sectionStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Sections", value: activeSections, color: "#059669" },
+    { name: "Active Sections", value: activeSections, color: "#10B981" },
     { name: "Archived / Inactive", value: inactiveSections, color: "#94a3b8" },
   ];
 
-  const colors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
+  const colors = ["#10B981", "#0EA5E9", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = gradesList.slice(0, 6).map((g, idx) => ({
     name: `Grade ${g.level}`,
     value: g.sectionCount || 1,
@@ -41,7 +41,7 @@ export function AcademicsOverviewTab() {
   const archivedYearsCount = Math.max(0, yearsList.length - activeYearsCount);
 
   const academicYearSlices: readonly ChartSliceItem[] = [
-    { name: "Active Session", value: activeYearsCount, color: "#059669" },
+    { name: "Active Session", value: activeYearsCount, color: "#10B981" },
     { name: "Past Sessions", value: archivedYearsCount, color: "#94a3b8" },
   ];
 
@@ -49,7 +49,7 @@ export function AcademicsOverviewTab() {
   const inactiveSubjects = Math.max(0, subjectsList.length - activeSubjects);
 
   const subjectTypeSlices: readonly ChartSliceItem[] = [
-    { name: "Active Courses", value: activeSubjects, color: "#059669" },
+    { name: "Active Courses", value: activeSubjects, color: "#10B981" },
     { name: "Inactive / Draft", value: inactiveSubjects, color: "#f59e0b" },
   ];
 

@@ -29,18 +29,18 @@ export function StudentsOverviewTab() {
   const femaleStudents = studentsList.filter((s) => s.gender === "FEMALE").length;
 
   const enrollmentSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeStudents, color: "#059669" },
+    { name: "Active", value: activeStudents, color: "#10B981" },
     { name: "Pending", value: pendingStudents, color: "#f59e0b" },
     { name: "Suspended", value: suspendedStudents, color: "#e11d48" },
   ];
 
   const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleStudents, color: "#0284c7" },
-    { name: "Female", value: femaleStudents, color: "#e11d48" },
+    { name: "Male", value: maleStudents, color: "#0EA5E9" },
+    { name: "Female", value: femaleStudents, color: "#F97316" },
   ];
 
   const grades = gradesData ?? [];
-  const gradeColors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
+  const gradeColors = ["#10B981", "#0EA5E9", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = grades.slice(0, 6).map((g, index) => {
     const count = studentsList.filter((s) => s.enrollment?.gradeLevel === g.level).length;
     return {
@@ -51,7 +51,7 @@ export function StudentsOverviewTab() {
   });
 
   const activationSlices: readonly ChartSliceItem[] = [
-    { name: "Logged In", value: activeStudents, color: "#059669" },
+    { name: "Logged In", value: activeStudents, color: "#10B981" },
     { name: "First Login Pending", value: pendingStudents, color: "#f59e0b" },
   ];
 

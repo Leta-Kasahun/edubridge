@@ -30,23 +30,23 @@ export function TeacherOverviewTab() {
   const otherStudents = Math.max(0, studentsList.length - activeStudents - pendingStudents);
 
   const studentStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeStudents, color: "#059669" },
+    { name: "Active", value: activeStudents, color: "#10B981" },
     { name: "Pending", value: pendingStudents, color: "#f59e0b" },
     { name: "Other", value: otherStudents, color: "#94a3b8" },
   ];
 
   const studentGenderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleStudents, color: "#0284c7" },
-    { name: "Female", value: femaleStudents, color: "#e11d48" },
+    { name: "Male", value: maleStudents, color: "#0EA5E9" },
+    { name: "Female", value: femaleStudents, color: "#F97316" },
   ];
 
   const sectionStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Classes", value: activeSections, color: "#059669" },
+    { name: "Active Classes", value: activeSections, color: "#10B981" },
     { name: "Other Classes", value: Math.max(0, sectionsList.length - activeSections), color: "#94a3b8" },
   ];
 
   const subjectSlices: readonly ChartSliceItem[] = [
-    { name: "Active Courses", value: activeSubjects, color: "#059669" },
+    { name: "Active Courses", value: activeSubjects, color: "#10B981" },
     { name: "Other Courses", value: Math.max(0, subjectsList.length - activeSubjects), color: "#f59e0b" },
   ];
 

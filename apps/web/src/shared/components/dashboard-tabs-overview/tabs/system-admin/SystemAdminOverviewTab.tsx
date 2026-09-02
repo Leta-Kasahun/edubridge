@@ -21,17 +21,17 @@ export function SystemAdminOverviewTab() {
   const totalUsers = totalTeachers + totalStudents;
 
   const tenantStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Schools", value: activeTenants, color: "#059669" },
+    { name: "Active Schools", value: activeTenants, color: "#10B981" },
     { name: "Suspended", value: suspendedTenants, color: "#e11d48" },
   ];
 
   const userDistributionSlices: readonly ChartSliceItem[] = [
-    { name: "Enrolled Students", value: totalStudents, color: "#0284c7" },
-    { name: "Faculty Staff", value: totalTeachers, color: "#059669" },
+    { name: "Enrolled Students", value: totalStudents, color: "#0EA5E9" },
+    { name: "Faculty Staff", value: totalTeachers, color: "#10B981" },
   ];
 
   const securitySlices: readonly ChartSliceItem[] = [
-    { name: "2FA Enforcement", value: policy?.otpEnabled ? 1 : 0, color: "#059669" },
+    { name: "2FA Enforcement", value: policy?.otpEnabled ? 1 : 0, color: "#10B981" },
     { name: "Standard Login", value: !policy?.otpEnabled ? 1 : 0, color: "#f59e0b" },
   ];
 

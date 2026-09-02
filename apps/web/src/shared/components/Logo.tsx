@@ -153,10 +153,10 @@ export function Logo({
                 sizeConfig.textClass
               )}
             >
-              <span className="bg-gradient-to-r from-[#0284C7] via-[#2563EB] to-[#1D4ED8] dark:from-[#38BDF8] dark:via-[#60A5FA] dark:to-[#818CF8] bg-clip-text text-transparent font-extrabold">
+              <span className="bg-gradient-to-r from-[#38BDF8] via-[#00A3FF] to-[#0284C7] dark:from-[#7DD3FC] dark:via-[#38BDF8] dark:to-[#00A3FF] bg-clip-text text-transparent font-extrabold">
                 edu
               </span>
-              <span className="bg-gradient-to-r from-[#F59E0B] via-[#F97316] to-[#EA580C] dark:from-[#FBBF24] dark:via-[#FB923C] dark:to-[#F97316] bg-clip-text text-transparent font-extrabold">
+              <span className="bg-gradient-to-r from-[#FB923C] via-[#F97316] to-[#EA580C] dark:from-[#FDBA74] dark:via-[#FB923C] dark:to-[#F97316] bg-clip-text text-transparent font-extrabold">
                 bridge
               </span>
             </span>

@@ -38,14 +38,14 @@ function NavTreeItem({
 
   const isChildActive = Boolean(
     hasChildren &&
-      (node.children?.some(
-        (child) =>
-          pathname === child.href ||
-          (child.href !== ROUTES.DASHBOARD && pathname.startsWith(child.href + "/"))
-      ) ||
-        (node.href !== ROUTES.DASHBOARD &&
-          pathname.startsWith(node.href) &&
-          pathname !== node.href))
+    (node.children?.some(
+      (child) =>
+        pathname === child.href ||
+        (child.href !== ROUTES.DASHBOARD && pathname.startsWith(child.href + "/"))
+    ) ||
+      (node.href !== ROUTES.DASHBOARD &&
+        pathname.startsWith(node.href) &&
+        pathname !== node.href))
   );
 
   const [isOpen, setIsOpen] = useState(() => {
@@ -89,10 +89,10 @@ function NavTreeItem({
             depth === 0 ? "px-2.5 py-2" : depth === 1 ? "pl-8 pr-2.5 py-1.5" : "pl-11 pr-2 py-1.5",
             collapsed && !mobileOpen ? "justify-center px-1.5" : "",
             isActive
-              ? "bg-[#064E3B] text-[#6EE7B7] font-semibold"
+              ? "bg-[#0C4A6E] text-[#38BDF8] font-semibold"
               : isChildActive
-              ? "text-white font-medium bg-[#1E293B]/40"
-              : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white"
+                ? "text-white font-medium bg-[#1E293B]/40"
+                : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white"
           )}
         >
           {Icon ? (
@@ -100,14 +100,14 @@ function NavTreeItem({
               size={18}
               className={cn(
                 "shrink-0 transition-colors",
-                isActive ? "text-[#6EE7B7]" : "text-[#94A3B8] group-hover:text-white"
+                isActive ? "text-[#38BDF8]" : "text-[#94A3B8] group-hover:text-white"
               )}
             />
           ) : (
             <span
               className={cn(
                 "h-1.5 w-1.5 rounded-full shrink-0",
-                isActive ? "bg-[#6EE7B7]" : "bg-[#94A3B8]/60 group-hover:bg-white"
+                isActive ? "bg-[#38BDF8]" : "bg-[#94A3B8]/60 group-hover:bg-white"
               )}
             />
           )}
@@ -121,7 +121,7 @@ function NavTreeItem({
               className={cn(
                 "px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
                 isActive
-                  ? "bg-[#6EE7B7]/20 text-[#6EE7B7]"
+                  ? "bg-[#0284C7]/20 text-[#38BDF8]"
                   : "bg-[#1E293B] text-[#94A3B8] group-hover:text-white"
               )}
             >
@@ -176,8 +176,8 @@ export function Sidebar() {
   const roleLabel = isSystemAdmin
     ? "System Admin"
     : userRoles[0]
-    ? userRoles[0].replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : "School Admin";
+      ? userRoles[0].replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "School Admin";
 
   const orgName = isSystemAdmin
     ? "EduBridge Platform"
@@ -220,7 +220,7 @@ export function Sidebar() {
               <Link
                 href={ROUTES.HOME}
                 onClick={closeMobile}
-                className="flex items-center gap-2.5 overflow-hidden rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7]"
+                className="flex items-center gap-2.5 overflow-hidden rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8]"
                 title="EduBridge Home"
               >
                 <Logo
@@ -230,7 +230,7 @@ export function Sidebar() {
                   frame="none"
                   priority
                 />
-                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#064E3B] text-[#6EE7B7] border border-[#064E3B]/80 truncate max-w-[110px] shadow-2xs">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#075985] text-[#38BDF8] border border-[#0EA5E9]/40 truncate max-w-[110px] shadow-2xs">
                   {roleLabel}
                 </span>
               </Link>
@@ -239,7 +239,7 @@ export function Sidebar() {
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors cursor-pointer"
+                  className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
                   aria-label="Collapse sidebar"
                   title="Collapse sidebar"
                 >
@@ -261,7 +261,7 @@ export function Sidebar() {
               <Link
                 href={ROUTES.HOME}
                 title="EduBridge Home"
-                className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] rounded-lg"
+                className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] rounded-lg"
               >
                 <Logo
                   variant="mark"
@@ -274,7 +274,7 @@ export function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors cursor-pointer"
+                className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
@@ -287,14 +287,14 @@ export function Sidebar() {
         {(!sidebarCollapsed || sidebarMobileOpen) && (
           <div className="px-3.5 py-3 border-b border-[#1E293B]">
             <div className="flex items-center gap-3 p-2 rounded-lg bg-[#1E293B]/60 border border-[#1E293B]">
-              <div className="h-8 w-8 rounded-lg bg-[#0F172A] text-[#6EE7B7] flex items-center justify-center shrink-0 border border-[#1E293B]">
+              <div className="h-8 w-8 rounded-lg bg-[#0F172A] text-[#38BDF8] flex items-center justify-center shrink-0 border border-[#1E293B]">
                 {isSystemAdmin ? <ShieldCheck size={16} /> : <School size={16} />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-white truncate">
                   {orgName}
                 </p>
-                <span className="inline-block text-[10px] text-[#6EE7B7] font-medium">
+                <span className="inline-block text-[10px] text-[#38BDF8] font-medium">
                   {orgSubtitle}
                 </span>
               </div>

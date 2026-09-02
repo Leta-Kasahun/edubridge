@@ -30,18 +30,18 @@ export function TeachersOverviewTab() {
   const otherTeachers = Math.max(0, teachersList.length - activeTeachers - suspendedTeachers);
 
   const statusSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeTeachers, color: "#059669" },
+    { name: "Active", value: activeTeachers, color: "#10B981" },
     { name: "Pending", value: otherTeachers, color: "#f59e0b" },
     { name: "Suspended", value: suspendedTeachers, color: "#e11d48" },
   ];
 
   const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleTeachers, color: "#0284c7" },
-    { name: "Female", value: femaleTeachers, color: "#e11d48" },
+    { name: "Male", value: maleTeachers, color: "#0EA5E9" },
+    { name: "Female", value: femaleTeachers, color: "#F97316" },
   ];
 
   const verificationSlices: readonly ChartSliceItem[] = [
-    { name: "Verified", value: verifiedTeachers, color: "#059669" },
+    { name: "Verified", value: verifiedTeachers, color: "#10B981" },
     { name: "Pending Verify", value: unverifiedTeachers, color: "#f59e0b" },
   ];
 

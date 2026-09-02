@@ -27,7 +27,7 @@ export function TeacherClassesTab() {
   }));
 
   const sectionStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Classes", value: activeSections, color: "#059669" },
+    { name: "Active Classes", value: activeSections, color: "#10B981" },
     { name: "Archived / Other", value: Math.max(0, sectionsList.length - activeSections), color: "#94a3b8" },
   ];
 
@@ -35,15 +35,15 @@ export function TeacherClassesTab() {
   const femaleStudents = studentsList.filter((s) => s.gender === "FEMALE").length;
 
   const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male Pupils", value: maleStudents, color: "#0284c7" },
-    { name: "Female Pupils", value: femaleStudents, color: "#e11d48" },
+    { name: "Male Pupils", value: maleStudents, color: "#0EA5E9" },
+    { name: "Female Pupils", value: femaleStudents, color: "#F97316" },
   ];
 
   const studentStatusSlices: readonly ChartSliceItem[] = [
     {
       name: "Enrolled Active",
       value: studentsList.filter((s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE").length,
-      color: "#059669",
+      color: "#10B981",
     },
     {
       name: "Pending Setup",
