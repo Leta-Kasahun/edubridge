@@ -11,8 +11,6 @@ export default function LoginPage() {
     <AuthCard
       title="Welcome Back"
       description="Sign in to your account to continue"
-      backHref={ROUTES.HOME}
-      backLabel="Back to Home"
     >
       <LoginForm
         onSuccess={() => {

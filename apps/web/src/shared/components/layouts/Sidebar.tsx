@@ -18,6 +18,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { getNavigationTree, NavNode } from "@/shared/utils/navigation";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/shared/components/Logo";
 
 function NavTreeItem({
   node,
@@ -54,7 +55,6 @@ function NavTreeItem({
     );
   });
 
-  // Automatically keep parent dropdown open whenever a child route is active
   useEffect(() => {
     if (isChildActive) {
       setIsOpen(true);
@@ -218,32 +218,28 @@ export function Sidebar() {
           {(!sidebarCollapsed || sidebarMobileOpen) ? (
             <>
               <Link
-                href={ROUTES.DASHBOARD}
+                href={ROUTES.HOME}
                 onClick={closeMobile}
                 className="flex items-center gap-2.5 overflow-hidden rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7]"
+                title="EduBridge Home"
               >
-                <div className="h-8 w-8 shrink-0 rounded-lg bg-[#064E3B] text-[#6EE7B7] flex items-center justify-center border border-[#064E3B]">
-                  {isSystemAdmin ? (
-                    <ShieldCheck size={18} className="stroke-[2.3]" />
-                  ) : (
-                    <GraduationCap size={18} className="stroke-[2.3]" />
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-white tracking-tight truncate leading-none">
-                    Edu<span className="text-[#6EE7B7]">Bridge</span>
-                  </span>
-                  <span className="text-[10px] font-medium text-[#94A3B8] truncate mt-0.5">
-                    {roleLabel}
-                  </span>
-                </div>
+                <Logo
+                  variant="full"
+                  size="sm"
+                  theme="dark"
+                  frame="none"
+                  priority
+                />
+                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#064E3B] text-[#6EE7B7] border border-[#064E3B]/80 truncate max-w-[110px] shadow-2xs">
+                  {roleLabel}
+                </span>
               </Link>
 
               <div className="flex items-center">
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors"
+                  className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors cursor-pointer"
                   aria-label="Collapse sidebar"
                   title="Collapse sidebar"
                 >
@@ -253,7 +249,7 @@ export function Sidebar() {
                 <button
                   type="button"
                   onClick={closeMobile}
-                  className="lg:hidden p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden"
+                  className="lg:hidden p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden cursor-pointer"
                   aria-label="Close navigation"
                 >
                   <X size={20} className="text-white" />
@@ -261,15 +257,30 @@ export function Sidebar() {
               </div>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              className="hidden lg:flex p-2 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors"
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
-            >
-              <PanelLeftOpen size={20} className="text-white" />
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <Link
+                href={ROUTES.HOME}
+                title="EduBridge Home"
+                className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] rounded-lg"
+              >
+                <Logo
+                  variant="mark"
+                  size="xs"
+                  theme="dark"
+                  frame="none"
+                  priority
+                />
+              </Link>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6EE7B7] transition-colors cursor-pointer"
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <PanelLeftOpen size={18} className="text-white" />
+              </button>
+            </div>
           )}
         </div>
 

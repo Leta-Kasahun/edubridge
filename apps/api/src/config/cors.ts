@@ -7,15 +7,25 @@ export const corsConfig: CorsOptions = {
       callback(null, true);
       return;
     }
+
     if (env.CORS_ORIGIN === "*" || env.NODE_ENV === "development") {
       callback(null, true);
       return;
     }
-    const allowed = env.CORS_ORIGIN.split(",").map((o) => o.trim());
-    if (allowed.includes(requestOrigin)) {
+
+    const rawOrigins = env.CORS_ORIGIN || "";
+    const allowed = rawOrigins
+      .split(",")
+      .map((o) => o.trim().replace(/\/+$/, ""))
+      .filter(Boolean);
+
+    const normalizedOrigin = requestOrigin.trim().replace(/\/+$/, "");
+
+    if (allowed.includes("*") || allowed.includes(normalizedOrigin)) {
       callback(null, true);
       return;
     }
+
     callback(null, false);
   },
   credentials: true,

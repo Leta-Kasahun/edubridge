@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { GraduationCap, Mail, Phone, MapPin, Globe, Sparkles } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Sparkles } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import { Logo } from "@/shared/components";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,13 +11,13 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
-            <Link href={ROUTES.HOME} className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <GraduationCap size={18} className="stroke-[2.2]" />
-              </div>
-              <span className="text-base font-bold tracking-tight text-foreground">
-                Edu<span className="text-primary">Bridge</span>
-              </span>
+            <Link href={ROUTES.HOME} className="inline-block group">
+              <Logo
+                variant="full"
+                size="sm"
+                frame="none"
+                subtext="Educational Intelligence Platform"
+              />
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed">
               AI-supported exam preparation and practice questions for Grade 8 and Grade 12 students in Ethiopia.

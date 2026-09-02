@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GraduationCap, ArrowRight, Menu, X, ShieldCheck } from "lucide-react";
+import { ArrowRight, Menu, X, ShieldCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { UserMenu } from "@/shared/components";
+import { UserMenu, Logo } from "@/shared/components";
 import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -39,12 +39,13 @@ export function Header({ className }: { className?: string }) {
           className="flex items-center gap-2.5 group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
           onClick={closeMobileMenu}
         >
-          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center transition-all group-hover:bg-primary group-hover:text-primary-foreground shadow-2xs">
-            <GraduationCap size={22} className="stroke-[2.3]" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Edu<span className="text-primary">Bridge</span>
-          </span>
+          <Logo
+            variant="full"
+            size="sm"
+            frame="none"
+            priority
+            textClassName="hidden min-[360px]:flex"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">

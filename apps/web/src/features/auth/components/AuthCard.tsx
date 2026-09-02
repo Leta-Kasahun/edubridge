@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
+import { Logo } from "@/shared/components/Logo";
 
 export interface AuthCardProps {
   title: string | ReactNode;
@@ -12,9 +12,7 @@ export interface AuthCardProps {
   footer?: ReactNode;
   imageSrc?: string;
   imageAlt?: string;
-  backHref?: string;
-  backLabel?: string;
-  showBack?: boolean;
+  showLogo?: boolean;
   className?: string;
 }
 
@@ -25,9 +23,7 @@ export function AuthCard({
   footer,
   imageSrc = "/auth.png",
   imageAlt = "EduBridge Authentication",
-  backHref = ROUTES.HOME,
-  backLabel = "Back to Home",
-  showBack = true,
+  showLogo = true,
   className,
 }: AuthCardProps) {
   return (
@@ -42,21 +38,23 @@ export function AuthCard({
           className="object-cover object-center"
         />
 
-        {showBack && (
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-            <Link
-              href={backHref}
-              className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-white/85 bg-black/40 hover:bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-white/20 transition-all duration-200 shadow-xs active:scale-95"
-            >
-              <ArrowLeft size={16} className="text-white" />
-              <span className="text-white font-medium">{backLabel}</span>
-            </Link>
-          </div>
-        )}
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+          <Link href={ROUTES.HOME} className="flex items-center" title="EduBridge Home">
+            <Logo variant="full" size="sm" theme="dark" frame="none" priority />
+          </Link>
+        </div>
       </div>
 
       <div className="order-2 w-full min-h-full flex items-center justify-center p-6 sm:p-10 md:p-14 lg:p-16 xl:p-20 overflow-y-auto">
         <div className="w-full max-w-md xl:max-w-lg space-y-6 sm:space-y-8 my-auto">
+          {showLogo && (
+            <div className="flex justify-center lg:hidden pb-1">
+              <Link href={ROUTES.HOME} title="EduBridge Home">
+                <Logo variant="full" size="sm" frame="none" priority />
+              </Link>
+            </div>
+          )}
+
           <div className="space-y-2 text-center">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground font-heading">
               {title}

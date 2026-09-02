@@ -103,6 +103,266 @@ enum LookupCategory {
   CUSTOM
 }
 
+
+enum CurriculumStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CurriculumVersionStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CurriculumScope {
+  TENANT
+  SYSTEM
+}
+
+enum ContentType {
+  TEXT
+  LESSON
+  NOTE
+  VIDEO
+  PDF
+  IMAGE
+  LINK
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentSourceType {
+  TEACHER
+  SYSTEM
+  AI
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+  NUMERIC
+  MATCHING
+  ORDERING
+}
+
+enum QuestionStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionSourceType {
+  TEACHER
+  SYSTEM
+  AI
+  IMPORTED
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionGradingStatus {
+  AUTO_GRADED
+  MANUAL_GRADING
+  GRADED
+}
+
+enum AssessmentType {
+  PRACTICE
+  QUIZ
+  ASSIGNMENT
+  EXAM
+  DIAGNOSTIC
+  MOCK_EXAM
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+enum QuestionBankStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+enum GradingMode {
+  AUTOMATIC
+  MANUAL
+  MIXED
+}
+
+enum AssessmentAssignmentStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  GRADING
+  GRADED
+  ABANDONED
+}
+
+enum AnswerStatus {
+  UNANSWERED
+  ANSWERED
+  FLAGGED
+  GRADED
+}
+
+enum EvidenceSourceType {
+  ASSESSMENT
+  PRACTICE
+  EXAM
+  MOCK_EXAM
+  MANUAL
+}
+
+enum MasteryLevel {
+  NOT_STARTED
+  DEVELOPING
+  PROFICIENT
+  MASTERED
+}
+
+enum ExamScope {
+  GENERAL
+  SCHOOL
+  REGIONAL
+  NATIONAL
+}
+
+enum ExamContextStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ContactRelationship {
+  FATHER
+  MOTHER
+  GUARDIAN
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  GRADUATED
+  TRANSFERRED
+  WITHDRAWN
+  SUSPENDED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  RESIGNED
+  SUSPENDED
+}
+
+enum AcademicYearStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum SectionStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  TRANSFERRED
+  WITHDRAWN
+  SUSPENDED
+}
+
+enum TeacherAssignmentRole {
+  HOMEROOM_TEACHER
+  SUBJECT_TEACHER
+  OTHER
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+}
+
+enum ImportEntityType {
+  STUDENT
+  TEACHER
+  CURRICULUM
+  QUESTION_BANK
+  CONTENT
+}
+
+enum ImportSource {
+  CSV
+  XLSX
+  MANUAL
+}
+
+enum ImportBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+enum ImportRowStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum QualificationLevel {
+  CERTIFICATE
+  DIPLOMA
+  BACHELOR
+  MASTER
+  DOCTORATE
+  OTHER
+}
+
 model Tenant {
   id        String       @id @default(uuid()) @db.Uuid
   name      String
@@ -113,7 +373,15 @@ model Tenant {
   woredaId  String?      @db.Uuid
   cityId    String?      @db.Uuid
   addressId String?      @unique @db.Uuid
-
+curricula              Curriculum[]
+learningContents       LearningContent[]
+questionBanks          QuestionBank[]
+examContexts           ExamContext[]
+assessments            Assessment[]
+learningEvidence       LearningEvidence[]
+topicPerformances      StudentTopicPerformance[]
+topicMasteries         StudentTopicMastery[]
+masteryHistory         MasteryHistory[]
   memberships     TenantMembership[]
   roles           Role[]
   lookups         Lookup[]
@@ -161,6 +429,17 @@ model User {
 
   studentProfile StudentProfile?
   teacherProfile TeacherProfile?
+  createdLearningContents LearningContent[]
+  contentVersionsCreated ContentVersion[] @relation("ContentVersionCreator")
+  contentVersionsReviewed ContentVersion[] @relation("ContentVersionReviewer")
+  uploadedAttachments ContentAttachment[]
+  createdQuestionBanks QuestionBank[]
+  createdQuestions Question[] @relation("QuestionCreator")
+  questionVersionsCreated QuestionVersion[] @relation("QuestionVersionCreator")
+  createdAssessments Assessment[]
+  assessmentAssignmentsCreated AssessmentAssignment[]
+  manuallyGradedAnswers StudentAnswer[]
+
   importBatches  ImportBatch[]   @relation("ImportCreatedBy")
 
   memberships            TenantMembership[]
@@ -612,6 +891,12 @@ model StudentProfile {
 
   contacts    StudentContact[]
   enrollments StudentEnrollment[]
+  assessmentAttempts AssessmentAttempt[]
+
+  learningEvidence  LearningEvidence[]
+  topicPerformances StudentTopicPerformance[]
+  topicMasteries    StudentTopicMastery[]
+  masteryHistory    MasteryHistory[]
 
   @@unique([tenantId, studentCode])
   @@index([tenantId, status])
@@ -724,7 +1009,7 @@ model Section {
   tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   grade        Grade        @relation(fields: [gradeId], references: [id], onDelete: Cascade)
-
+  assessmentAssignments AssessmentAssignment[]
   enrollments StudentEnrollment[]
   assignments TeacherAssignment[]
 
@@ -841,7 +1126,8 @@ model Grade {
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sections      Section[]
   gradeSubjects GradeSubject[]
-
+  curriculumSubjects CurriculumSubject[]
+examContexts       ExamContext[] 
   @@unique([tenantId, level])
   @@index([tenantId, isActive])
 }
@@ -871,7 +1157,9 @@ model Subject {
   gradeSubjects GradeSubject[]
   assignments   TeacherAssignment[]
   experiences   TeacherExperience[]
-
+  
+  curriculumSubjects CurriculumSubject[]
+examContexts       ExamContext[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -879,14 +1167,7 @@ model Subject {
   @@index([isActive])
 }
 
-enum QualificationLevel {
-  CERTIFICATE
-  DIPLOMA
-  BACHELOR
-  MASTER
-  DOCTORATE
-  OTHER
-}
+
 
 model TeacherQualification {
   id             String             @id @default(uuid()) @db.Uuid
@@ -931,92 +1212,1035 @@ model TeacherExperience {
   @@index([subjectId])
 }
 
-enum Gender {
-  MALE
-  FEMALE
+model Curriculum {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String?          @db.Uuid
+  code        String
+  name        String
+  description String?
+  scope       CurriculumScope  @default(TENANT)
+  status      CurriculumStatus @default(DRAFT)
+
+  authorityName String?
+  externalId    String?
+
+  tenant Tenant? @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  versions CurriculumVersion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@index([scope, status])
+  @@index([externalId])
 }
 
-enum ContactRelationship {
-  FATHER
-  MOTHER
-  GUARDIAN
-  OTHER
+model CurriculumVersion {
+  id           String                  @id @default(uuid()) @db.Uuid
+  curriculumId String                  @db.Uuid
+
+  code         String
+  name         String
+  description  String?
+
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+
+  status CurriculumVersionStatus @default(DRAFT)
+
+  externalId String?
+
+  curriculum Curriculum @relation(
+    fields: [curriculumId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  subjects     CurriculumSubject[]
+  examContexts ExamContext[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([curriculumId, code])
+  @@index([curriculumId, status])
+  @@index([status, effectiveFrom])
+  @@index([externalId])
 }
 
-enum StudentStatus {
-  ACTIVE
-  INACTIVE
-  GRADUATED
-  TRANSFERRED
-  WITHDRAWN
-  SUSPENDED
+model CurriculumSubject {
+  id                   String @id @default(uuid()) @db.Uuid
+  curriculumVersionId  String @db.Uuid
+  gradeId              String @db.Uuid
+  subjectId            String @db.Uuid
+
+  externalId String?
+
+  curriculumVersion CurriculumVersion @relation(
+    fields: [curriculumVersionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  grade Grade @relation(
+    fields: [gradeId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  subject Subject @relation(
+    fields: [subjectId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  units CurriculumUnit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([curriculumVersionId, gradeId, subjectId])
+  @@index([gradeId, subjectId])
+  @@index([subjectId])
+  @@index([curriculumVersionId])
+}
+model CurriculumUnit {
+  id                  String @id @default(uuid()) @db.Uuid
+  curriculumSubjectId String @db.Uuid
+
+  code        String
+  title       String
+  description String?
+  orderIndex  Int
+
+  externalId String?
+
+  curriculumSubject CurriculumSubject @relation(
+    fields: [curriculumSubjectId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topics CurriculumTopic[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([curriculumSubjectId, code])
+  @@index([curriculumSubjectId, orderIndex])
+  @@index([externalId])
 }
 
-enum TeacherStatus {
-  ACTIVE
-  INACTIVE
-  TRANSFERRED
-  RESIGNED
-  SUSPENDED
+model CurriculumTopic {
+  id       String @id @default(uuid()) @db.Uuid
+  unitId   String @db.Uuid
+
+  code        String
+  title       String
+  description String?
+  orderIndex  Int
+
+  externalId String?
+
+  unit CurriculumUnit @relation(
+    fields: [unitId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  objectives LearningObjective[]
+
+  contents ContentTopic[]
+  questions QuestionTopic[]
+
+  evidences LearningEvidence[]
+  performances StudentTopicPerformance[]
+  masteries StudentTopicMastery[]
+  masteryHistory MasteryHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unitId, code])
+  @@index([unitId, orderIndex])
+  @@index([externalId])
 }
 
-enum AcademicYearStatus {
-  UPCOMING
-  ACTIVE
-  COMPLETED
-  ARCHIVED
+model LearningObjective {
+  id       String @id @default(uuid()) @db.Uuid
+  topicId  String @db.Uuid
+
+  code        String
+  statement   String
+  description String?
+  orderIndex  Int
+
+  externalId String?
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  contents ContentObjective[]
+  questions QuestionObjective[]
+
+  evidences LearningEvidence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([topicId, code])
+  @@index([topicId, orderIndex])
+  @@index([externalId])
 }
 
-enum SectionStatus {
-  ACTIVE
-  INACTIVE
-  ARCHIVED
+
+model LearningContent {
+  id        String      @id @default(uuid()) @db.Uuid
+  tenantId  String      @db.Uuid
+
+  type      ContentType
+  source    ContentSourceType @default(TEACHER)
+  status    ContentStatus     @default(DRAFT)
+
+  title       String
+  description String?
+
+  authorId String @db.Uuid
+
+  currentVersion Int @default(1)
+
+  publishedAt DateTime?
+  archivedAt  DateTime?
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  author User @relation(
+    fields: [authorId],
+    references: [id]
+  )
+
+  versions ContentVersion[]
+
+  topics ContentTopic[]
+  objectives ContentObjective[]
+
+  attachments ContentAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([tenantId, authorId])
+  @@index([authorId])
 }
 
-enum EnrollmentStatus {
-  ACTIVE
-  COMPLETED
-  TRANSFERRED
-  WITHDRAWN
-  SUSPENDED
+model ContentVersion {
+  id        String @id @default(uuid()) @db.Uuid
+  contentId String @db.Uuid
+
+  version Int
+
+  body Json
+
+  changeNote String?
+
+  createdById String @db.Uuid
+
+  reviewedById String? @db.Uuid
+  reviewedAt   DateTime?
+
+  publishedAt DateTime?
+
+  content LearningContent @relation(
+    fields: [contentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    "ContentVersionCreator",
+    fields: [createdById],
+    references: [id]
+  )
+
+  reviewedBy User? @relation(
+    "ContentVersionReviewer",
+    fields: [reviewedById],
+    references: [id]
+  )
+
+  createdAt DateTime @default(now())
+
+  @@unique([contentId, version])
+  @@index([contentId, version])
+  @@index([createdById])
+  @@index([reviewedById])
 }
 
-enum TeacherAssignmentRole {
-  HOMEROOM_TEACHER
-  SUBJECT_TEACHER
-  OTHER
+model ContentTopic {
+  contentId String @db.Uuid
+  topicId   String @db.Uuid
+
+  isPrimary Boolean @default(false)
+
+  content LearningContent @relation(
+    fields: [contentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@id([contentId, topicId])
+  @@index([topicId])
 }
 
-enum AssignmentStatus {
-  ACTIVE
-  INACTIVE
-  COMPLETED
+model ContentObjective {
+  contentId   String @db.Uuid
+  objectiveId String @db.Uuid
+
+  content LearningContent @relation(
+    fields: [contentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  objective LearningObjective @relation(
+    fields: [objectiveId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@id([contentId, objectiveId])
+  @@index([objectiveId])
 }
 
-enum ImportEntityType {
-  STUDENT
-  TEACHER
+model ContentAttachment {
+  id        String @id @default(uuid()) @db.Uuid
+  contentId String @db.Uuid
+
+  fileName     String
+  mimeType     String
+  storageKey   String
+  sizeBytes    BigInt
+
+  metadata Json?
+
+  uploadedById String @db.Uuid
+
+  content LearningContent @relation(
+    fields: [contentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  uploadedBy User @relation(
+    fields: [uploadedById],
+    references: [id]
+  )
+
+  createdAt DateTime @default(now())
+
+  @@index([contentId])
+  @@index([uploadedById])
 }
 
-enum ImportSource {
-  CSV
-  XLSX
-  MANUAL
+
+
+
+
+model QuestionBank {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+
+  name        String
+  description String?
+
+  status QuestionBankStatus @default(DRAFT)
+
+  createdById String @db.Uuid
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    fields: [createdById],
+    references: [id]
+  )
+
+  questions Question[]
+
+  examContexts ExamContext[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdById])
 }
 
-enum ImportBatchStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  COMPLETED_WITH_ERRORS
-  FAILED
-  CANCELLED
+
+model Question {
+  id          String @id @default(uuid()) @db.Uuid
+  questionBankId String @db.Uuid
+
+  source QuestionSourceType @default(TEACHER)
+
+  status QuestionStatus @default(DRAFT)
+
+  currentVersion Int @default(1)
+
+  createdById String @db.Uuid
+
+  questionBank QuestionBank @relation(
+    fields: [questionBankId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    "QuestionCreator",
+    fields: [createdById],
+    references: [id]
+  )
+
+  versions QuestionVersion[]
+
+  topics QuestionTopic[]
+  objectives QuestionObjective[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([questionBankId, status])
+  @@index([createdById])
 }
 
-enum ImportRowStatus {
-  PENDING
-  PROCESSING
-  SUCCESS
-  FAILED
-  SKIPPED
+
+model QuestionVersion {
+  id         String @id @default(uuid()) @db.Uuid
+  questionId String @db.Uuid
+
+  version Int
+
+  type       QuestionType
+  difficulty DifficultyLevel @default(MEDIUM)
+
+  questionText String
+
+  explanation String?
+
+  points Decimal @db.Decimal(8, 2)
+
+  gradingStatus QuestionGradingStatus @default(AUTO_GRADED)
+
+  configuration Json?
+
+  createdById String @db.Uuid
+
+  publishedAt DateTime?
+
+  question Question @relation(
+    fields: [questionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    "QuestionVersionCreator",
+    fields: [createdById],
+    references: [id]
+  )
+
+  options QuestionOption[]
+
+  assessmentQuestions AssessmentQuestion[]
+  studentAnswers      StudentAnswer[]
+  learningEvidences   LearningEvidence[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([questionId, version])
+  @@index([questionId, version])
+  @@index([type, difficulty])
+  @@index([createdById])
+}
+
+model QuestionOption {
+  id                String @id @default(uuid()) @db.Uuid
+  questionVersionId String @db.Uuid
+
+  optionKey String
+  optionText String
+
+  orderIndex Int
+
+  isCorrect Boolean @default(false)
+
+  questionVersion QuestionVersion @relation(
+    fields: [questionVersionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@unique([questionVersionId, optionKey])
+  @@index([questionVersionId, orderIndex])
+}
+
+model QuestionTopic {
+  questionId String @db.Uuid
+  topicId    String @db.Uuid
+
+  isPrimary Boolean @default(false)
+
+  question Question @relation(
+    fields: [questionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@id([questionId, topicId])
+  @@index([topicId])
+}
+
+model QuestionObjective {
+  questionId  String @db.Uuid
+  objectiveId String @db.Uuid
+
+  question Question @relation(
+    fields: [questionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  objective LearningObjective @relation(
+    fields: [objectiveId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@id([questionId, objectiveId])
+  @@index([objectiveId])
+}
+
+model ExamContext {
+  id             String @id @default(uuid()) @db.Uuid
+  tenantId       String @db.Uuid
+
+  code           String
+  name           String
+
+  scope          ExamScope
+
+  gradeId        String? @db.Uuid
+  subjectId      String? @db.Uuid
+
+  examYear       Int?
+
+  regionName     String?
+  authorityName  String?
+
+  curriculumVersionId String? @db.Uuid
+
+  status ExamContextStatus @default(DRAFT)
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  grade Grade? @relation(
+    fields: [gradeId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  subject Subject? @relation(
+    fields: [subjectId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  curriculumVersion CurriculumVersion? @relation(
+    fields: [curriculumVersionId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  questionBanks QuestionBank[]
+
+  assessments Assessment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, scope, status])
+  @@index([tenantId, gradeId, subjectId])
+  @@index([curriculumVersionId])
+  @@index([examYear])
+}
+
+
+model Assessment {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+
+  title       String
+  description String?
+
+  type   AssessmentType
+  status AssessmentStatus @default(DRAFT)
+
+  gradingMode GradingMode @default(AUTOMATIC)
+
+  timeLimitMinutes Int?
+  maxAttempts      Int?
+
+  randomizeQuestions Boolean @default(false)
+  randomizeOptions   Boolean @default(false)
+
+  showResults Boolean @default(true)
+
+  availableFrom DateTime?
+  availableUntil DateTime?
+
+  createdById String @db.Uuid
+
+  examContextId String? @db.Uuid
+  evidences LearningEvidence[]
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    fields: [createdById],
+    references: [id]
+  )
+
+  examContext ExamContext? @relation(
+    fields: [examContextId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  questions AssessmentQuestion[]
+
+  assignments AssessmentAssignment[]
+
+  attempts AssessmentAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([tenantId, createdById])
+  @@index([examContextId])
+  @@index([availableFrom, availableUntil])
+}
+
+model AssessmentQuestion {
+  assessmentId      String @db.Uuid
+  questionVersionId String @db.Uuid
+
+  orderIndex Int
+
+  points Decimal @db.Decimal(8, 2)
+
+  assessment Assessment @relation(
+    fields: [assessmentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  questionVersion QuestionVersion @relation(
+    fields: [questionVersionId],
+    references: [id]
+  )
+
+  @@id([assessmentId, questionVersionId])
+  @@unique([assessmentId, orderIndex])
+  @@index([questionVersionId])
+}
+
+
+model AssessmentAssignment {
+  id           String @id @default(uuid()) @db.Uuid
+  assessmentId String @db.Uuid
+  sectionId    String @db.Uuid
+
+  status AssessmentAssignmentStatus @default(DRAFT)
+
+  assignedAt DateTime @default(now())
+  dueAt      DateTime?
+
+  createdById String @db.Uuid
+
+  assessment Assessment @relation(
+    fields: [assessmentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  section Section @relation(
+    fields: [sectionId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdBy User @relation(
+    fields: [createdById],
+    references: [id]
+  )
+
+  attempts AssessmentAttempt[]
+
+  @@unique([assessmentId, sectionId])
+  @@index([sectionId, status])
+  @@index([assessmentId, status])
+}
+
+model AssessmentAttempt {
+  id                     String @id @default(uuid()) @db.Uuid
+
+  assessmentId           String @db.Uuid
+  assignmentId           String @db.Uuid
+  studentId              String @db.Uuid
+
+  attemptNumber Int
+
+  status AttemptStatus @default(IN_PROGRESS)
+
+  startedAt   DateTime @default(now())
+  submittedAt DateTime?
+  gradedAt    DateTime?
+
+  score       Decimal? @db.Decimal(10, 2)
+  maxScore    Decimal? @db.Decimal(10, 2)
+  percentage  Decimal? @db.Decimal(5, 2)
+
+  gradingVersion String?
+
+  assessment Assessment @relation(
+    fields: [assessmentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  assignment AssessmentAssignment @relation(
+    fields: [assignmentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  student StudentProfile @relation(
+    fields: [studentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  answers StudentAnswer[]
+
+  evidences LearningEvidence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([assignmentId, studentId, attemptNumber])
+  @@index([studentId, status])
+  @@index([assessmentId, status])
+  @@index([assignmentId, studentId])
+  @@index([studentId, submittedAt])
+}
+
+model StudentAnswer {
+  id                String @id @default(uuid()) @db.Uuid
+
+  attemptId         String @db.Uuid
+  questionVersionId String @db.Uuid
+
+  answer Json?
+
+  status AnswerStatus @default(UNANSWERED)
+
+  isCorrect Boolean?
+
+  awardedPoints Decimal? @db.Decimal(8, 2)
+  maxPoints     Decimal? @db.Decimal(8, 2)
+
+  feedback String?
+
+  gradedById String? @db.Uuid
+  gradedAt   DateTime?
+
+  attempt AssessmentAttempt @relation(
+    fields: [attemptId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  questionVersion QuestionVersion @relation(
+    fields: [questionVersionId],
+    references: [id]
+  )
+
+  gradedBy User? @relation(
+    fields: [gradedById],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([attemptId, questionVersionId])
+  @@index([questionVersionId])
+  @@index([attemptId, status])
+  @@index([gradedById])
+}
+
+
+model LearningEvidence {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId  String @db.Uuid
+  studentId String @db.Uuid
+
+  attemptId String? @db.Uuid
+
+  assessmentId String? @db.Uuid
+
+  questionVersionId String? @db.Uuid
+
+  topicId     String @db.Uuid
+  objectiveId String? @db.Uuid
+
+  sourceType EvidenceSourceType
+
+  isCorrect Boolean?
+
+  awardedPoints Decimal? @db.Decimal(8, 2)
+  maxPoints     Decimal? @db.Decimal(8, 2)
+
+  observedAt DateTime @default(now())
+
+  metadata Json?
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  student StudentProfile @relation(
+    fields: [studentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  attempt AssessmentAttempt? @relation(
+    fields: [attemptId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  assessment Assessment? @relation(
+    fields: [assessmentId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  questionVersion QuestionVersion? @relation(
+    fields: [questionVersionId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  objective LearningObjective? @relation(
+    fields: [objectiveId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, studentId, observedAt])
+  @@index([studentId, topicId, observedAt])
+  @@index([studentId, objectiveId, observedAt])
+  @@index([assessmentId])
+  @@index([attemptId])
+  @@index([questionVersionId])
+}
+
+model StudentTopicPerformance {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId  String @db.Uuid
+  studentId String @db.Uuid
+  topicId   String @db.Uuid
+
+  questionCount   Int @default(0)
+  correctCount    Int @default(0)
+  incorrectCount  Int @default(0)
+
+  pointsEarned Decimal @default(0) @db.Decimal(12, 2)
+  pointsPossible Decimal @default(0) @db.Decimal(12, 2)
+
+  accuracy Decimal? @db.Decimal(5, 2)
+
+  lastObservedAt DateTime?
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  student StudentProfile @relation(
+    fields: [studentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, topicId])
+  @@index([tenantId, studentId])
+  @@index([studentId, topicId])
+  @@index([topicId])
+}
+
+
+model StudentTopicMastery {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId  String @db.Uuid
+  studentId String @db.Uuid
+  topicId   String @db.Uuid
+
+  level MasteryLevel @default(NOT_STARTED)
+
+  masteryScore Decimal? @db.Decimal(5, 2)
+
+  evidenceCount Int @default(0)
+
+  calculatedAt DateTime @default(now())
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  student StudentProfile @relation(
+    fields: [studentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  history MasteryHistory[]
+
+  @@unique([studentId, topicId])
+  @@index([tenantId, studentId, level])
+  @@index([studentId, topicId])
+  @@index([topicId, level])
+}
+
+model MasteryHistory {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId  String @db.Uuid
+  studentId String @db.Uuid
+  topicId   String @db.Uuid
+
+  masteryId String? @db.Uuid
+
+  level MasteryLevel
+
+  masteryScore Decimal? @db.Decimal(5, 2)
+
+  evidenceCount Int
+
+  calculatedAt DateTime @default(now())
+
+  calculationVersion String?
+
+  metadata Json?
+
+  tenant Tenant @relation(
+    fields: [tenantId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  student StudentProfile @relation(
+    fields: [studentId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  topic CurriculumTopic @relation(
+    fields: [topicId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  mastery StudentTopicMastery? @relation(
+    fields: [masteryId],
+    references: [id],
+    onDelete: SetNull
+  )
+
+  @@index([studentId, topicId, calculatedAt])
+  @@index([tenantId, studentId, calculatedAt])
 }

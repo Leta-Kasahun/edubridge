@@ -26,8 +26,6 @@ function VerifyOtpContent() {
     <AuthCard
       title="Two-Factor Verification"
       description="Enter the 6-digit security code sent to your registered account to continue"
-      backHref={ROUTES.AUTH.LOGIN}
-      backLabel="Back to Sign In"
       footer={
         <div className="text-center text-xs sm:text-sm">
           <span className="text-muted-foreground">Having trouble? </span>

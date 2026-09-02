@@ -25,8 +25,6 @@ function FirstLoginSetupContent() {
     <AuthCard
       title="First-Time Account Setup"
       description="Configure your personal password to activate and access your school portal"
-      backHref={ROUTES.AUTH.LOGIN}
-      backLabel="Back to Sign In"
       footer={
         <div className="text-center text-xs sm:text-sm">
           <span className="text-muted-foreground">Already have your password configured? </span>

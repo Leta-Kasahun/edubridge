@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Logo } from "@/shared/components/Logo";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -23,9 +24,12 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center flex flex-col items-center justify-center space-y-6">
-        <span className="text-xs sm:text-sm font-semibold tracking-widest text-emerald-300 uppercase px-3 py-1 rounded-full bg-slate-900/60 border border-emerald-500/30 backdrop-blur-xs">
-          EDUBRIDGE
-        </span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/75 border border-sky-500/30 backdrop-blur-md shadow-lg shadow-black/20">
+          <Logo variant="mark" size="xs" frame="none" priority />
+          <span className="text-xs sm:text-sm font-semibold tracking-wider text-sky-200 uppercase">
+            EduBridge Enterprise
+          </span>
+        </div>
 
         <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight text-white uppercase select-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]">
           EDUBRIDGE

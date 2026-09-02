@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Menu, Bell } from "lucide-react";
 import { UserMenu } from "@/shared/components/UserMenu";
 import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
+import { Logo } from "@/shared/components/Logo";
 import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { useUiStore } from "@/stores/ui.store";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
@@ -36,6 +39,12 @@ export function DashboardHeader({
         >
           <Menu size={19} />
         </button>
+
+        <div className="lg:hidden flex items-center shrink-0">
+          <Link href={ROUTES.HOME} title="EduBridge Home">
+            <Logo variant="mark" size="xs" frame="none" />
+          </Link>
+        </div>
 
         <div className="min-w-0 overflow-hidden flex-1">
           <Breadcrumbs

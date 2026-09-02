@@ -73,8 +73,6 @@ export default function ResetPasswordPage() {
           ? "Check your inbox for the one-time verification code (OTP)"
           : "Enter your registered email address to receive a verification code"
       }
-      backHref={ROUTES.AUTH.LOGIN}
-      backLabel="Back to Sign In"
       footer={
         <div className="text-center text-xs sm:text-sm">
           <span className="text-muted-foreground">Remembered your password? </span>
