@@ -46,6 +46,7 @@ export function SubjectFormModal({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (initialSubject) {
       setName(initialSubject.name);
       setCode(initialSubject.code);

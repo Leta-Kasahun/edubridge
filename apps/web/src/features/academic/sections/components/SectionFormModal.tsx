@@ -93,6 +93,7 @@ export function SectionFormModal({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (initialSection) {
       setAcademicYearId(initialSection.academicYearId);
       setGradeId(initialSection.gradeId);
@@ -110,7 +111,7 @@ export function SectionFormModal({
       setStatus("ACTIVE");
     }
     setErrorMessage(null);
-  }, [initialSection, isOpen, defaultAcademicYearId, defaultGradeId, academicYears, grades]);
+  }, [isOpen, initialSection, defaultAcademicYearId, defaultGradeId]);
 
   if (!isOpen || !mounted) return null;
 

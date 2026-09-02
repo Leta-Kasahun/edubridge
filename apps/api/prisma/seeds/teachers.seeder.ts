@@ -1,6 +1,6 @@
-import { prisma, pool, runWithoutTenant } from "../src/lib/prisma.js";
-import { hashPassword } from "../src/shared/auth/password.js";
-import { Gender, QualificationLevel } from "../src/generated/prisma/client.js";
+import { prisma, runWithoutTenant } from "../../src/lib/prisma.js";
+import { hashPassword } from "../../src/shared/auth/password.js";
+import { Gender, QualificationLevel } from "../../src/generated/prisma/client.js";
 
 interface TeacherSeedItem {
   readonly firstName: string;
@@ -259,25 +259,20 @@ const ETHIOPIAN_TEACHERS: readonly TeacherSeedItem[] = [
   },
 ];
 
-async function seedTeachers() {
-  console.log("🇪🇹 Starting Ethiopian teachers seeding...");
-
+export async function seedTeachers(targetTenantId?: string) {
   await runWithoutTenant(async () => {
+    const whereClause = targetTenantId
+      ? { id: targetTenantId, status: "ACTIVE" as const }
+      : { status: "ACTIVE" as const };
+
     const tenants = await prisma.tenant.findMany({
-      where: { status: "ACTIVE" },
+      where: whereClause,
       select: { id: true, code: true, name: true },
     });
-
-    if (tenants.length === 0) {
-      console.error("❌ No active tenants found in database.");
-      return;
-    }
 
     const defaultPasswordHash = await hashPassword("EduBridge2026!#");
 
     for (const tenant of tenants) {
-      console.log(`\n🏫 Seeding 10 teachers for tenant: ${tenant.name} (${tenant.code})`);
-
       let teacherRole = await prisma.role.findFirst({
         where: {
           tenantId: tenant.id,
@@ -422,21 +417,7 @@ async function seedTeachers() {
             endDate: item.experience.endDate,
           },
         });
-
-        console.log(`   ✅ Seeded teacher: ${item.firstName} ${item.middleName} ${item.lastName} (${employeeCode})`);
       }
     }
-
-    console.log("\n🎉 Successfully seeded 10 active Ethiopian teachers with full qualifications & experience!");
   });
 }
-
-seedTeachers()
-  .catch((e) => {
-    console.error("❌ Teacher seeding failed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
-  });

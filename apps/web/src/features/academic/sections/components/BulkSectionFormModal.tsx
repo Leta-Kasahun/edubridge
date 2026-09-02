@@ -58,6 +58,7 @@ export function BulkSectionFormModal({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
     const activeYear = academicYears.find((y) => y.status === "ACTIVE");
     setAcademicYearId(defaultAcademicYearId || activeYear?.id || (academicYears[0]?.id ?? ""));
     setGradeId(defaultGradeId || (grades[0]?.id ?? ""));
@@ -65,7 +66,7 @@ export function BulkSectionFormModal({
     setCustomNameInput("");
     setCapacity("50");
     setErrorMessage(null);
-  }, [isOpen, defaultAcademicYearId, defaultGradeId, academicYears, grades]);
+  }, [isOpen, defaultAcademicYearId, defaultGradeId]);
 
   if (!isOpen || !mounted) return null;
 

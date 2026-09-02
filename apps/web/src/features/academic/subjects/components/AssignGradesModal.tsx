@@ -40,6 +40,7 @@ export function AssignGradesModal({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (subject) {
       setSelectedGrades([...subject.assignedGradeLevels]);
     }

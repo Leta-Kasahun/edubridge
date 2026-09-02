@@ -16,7 +16,9 @@ export class GradeRepository {
     const { tenantId, isActive, category, academicYearId } = params;
 
     const where: Prisma.GradeWhereInput = {};
-    if (tenantId) where.tenantId = tenantId;
+    if (tenantId) {
+      where.OR = [{ tenantId }, { tenantId: null }];
+    }
     if (isActive !== undefined) where.isActive = isActive;
 
     if (category === "ELEMENTARY") {
@@ -40,7 +42,10 @@ export class GradeRepository {
       where,
       include: {
         sections: {
-          where: targetYearId ? { academicYearId: targetYearId } : {},
+          where: {
+            ...(tenantId ? { tenantId } : {}),
+            ...(targetYearId ? { academicYearId: targetYearId } : {}),
+          },
           include: {
             _count: {
               select: {
@@ -58,7 +63,16 @@ export class GradeRepository {
       orderBy: { level: "asc" },
     });
 
-    return grades.map((g) => {
+    const gradeMapByLevel = new Map<number, (typeof grades)[0]>();
+    for (const g of grades) {
+      const existing = gradeMapByLevel.get(g.level);
+      if (!existing || (g.tenantId === tenantId && existing.tenantId !== tenantId)) {
+        gradeMapByLevel.set(g.level, g);
+      }
+    }
+    const resolvedGrades = Array.from(gradeMapByLevel.values()).sort((a, b) => a.level - b.level);
+
+    return resolvedGrades.map((g) => {
       const totalStudents = g.sections.reduce(
         (sum, sec) => sum + sec._count.enrollments,
         0
@@ -97,10 +111,16 @@ export class GradeRepository {
     }
 
     const g = await prisma.grade.findFirst({
-      where: { id, tenantId },
+      where: {
+        id,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
       include: {
         sections: {
-          where: targetYearId ? { academicYearId: targetYearId } : {},
+          where: {
+            tenantId,
+            ...(targetYearId ? { academicYearId: targetYearId } : {}),
+          },
           include: {
             _count: {
               select: {
@@ -162,10 +182,15 @@ export class GradeRepository {
     tenantId: string,
     level: number
   ): Promise<GradeRecord | null> {
-    const g = await prisma.grade.findFirst({
-      where: { tenantId, level },
+    const grades = await prisma.grade.findMany({
+      where: {
+        level,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
       include: {
-        sections: true,
+        sections: {
+          where: { tenantId },
+        },
         _count: {
           select: {
             gradeSubjects: true,
@@ -174,7 +199,12 @@ export class GradeRepository {
       },
     });
 
-    if (!g) return null;
+    if (grades.length === 0) return null;
+
+    const g =
+      grades.find((item) => item.tenantId === tenantId) ||
+      grades.find((item) => item.tenantId === null) ||
+      grades[0];
 
     return {
       id: g.id,
@@ -225,7 +255,10 @@ export class GradeRepository {
 
   async toggleActive(tenantId: string, id: string): Promise<GradeRecord> {
     const grade = await prisma.grade.findFirst({
-      where: { id, tenantId },
+      where: {
+        id,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
     });
 
     if (!grade) {
@@ -236,7 +269,9 @@ export class GradeRepository {
       where: { id },
       data: { isActive: !grade.isActive },
       include: {
-        sections: true,
+        sections: {
+          where: { tenantId },
+        },
         _count: {
           select: {
             gradeSubjects: true,

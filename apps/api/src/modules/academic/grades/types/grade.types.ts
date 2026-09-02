@@ -10,7 +10,7 @@ export interface GradeSectionSummary {
 
 export interface GradeRecord {
   readonly id: string;
-  readonly tenantId: string;
+  readonly tenantId: string | null;
   readonly level: number;
   readonly category: string;
   readonly availableStreams: readonly GradeStreamType[];

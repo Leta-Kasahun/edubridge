@@ -1008,7 +1008,7 @@ model Section {
 
   tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  grade        Grade        @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  grade        Grade        @relation(fields: [gradeId], references: [id], onDelete: Restrict)
   assessmentAssignments AssessmentAssignment[]
   enrollments StudentEnrollment[]
   assignments TeacherAssignment[]
@@ -1117,19 +1117,20 @@ model ImportRow {
 // ============================================================
 model Grade {
   id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
+  tenantId  String?  @db.Uuid
   level     Int
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sections      Section[]
   gradeSubjects GradeSubject[]
   curriculumSubjects CurriculumSubject[]
-examContexts       ExamContext[] 
+  examContexts       ExamContext[] 
   @@unique([tenantId, level])
   @@index([tenantId, isActive])
+  @@index([level])
 }
 
 model GradeSubject {
@@ -1224,11 +1225,7 @@ model Curriculum {
   authorityName String?
   externalId    String?
 
-  tenant Tenant? @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   versions CurriculumVersion[]
 
@@ -1256,11 +1253,7 @@ model CurriculumVersion {
 
   externalId String?
 
-  curriculum Curriculum @relation(
-    fields: [curriculumId],
-    references: [id],
-    onDelete: Cascade
-  )
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
 
   subjects     CurriculumSubject[]
   examContexts ExamContext[]
@@ -1282,23 +1275,9 @@ model CurriculumSubject {
 
   externalId String?
 
-  curriculumVersion CurriculumVersion @relation(
-    fields: [curriculumVersionId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  grade Grade @relation(
-    fields: [gradeId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  subject Subject @relation(
-    fields: [subjectId],
-    references: [id],
-    onDelete: Cascade
-  )
+  curriculumVersion CurriculumVersion @relation(fields: [curriculumVersionId], references: [id], onDelete: Cascade)
+  grade Grade @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   units CurriculumUnit[]
 
@@ -1309,7 +1288,9 @@ model CurriculumSubject {
   @@index([gradeId, subjectId])
   @@index([subjectId])
   @@index([curriculumVersionId])
+  @@index([curriculumVersionId, subjectId])
 }
+
 model CurriculumUnit {
   id                  String @id @default(uuid()) @db.Uuid
   curriculumSubjectId String @db.Uuid
@@ -1321,11 +1302,7 @@ model CurriculumUnit {
 
   externalId String?
 
-  curriculumSubject CurriculumSubject @relation(
-    fields: [curriculumSubjectId],
-    references: [id],
-    onDelete: Cascade
-  )
+  curriculumSubject CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
 
   topics CurriculumTopic[]
 
@@ -1348,11 +1325,7 @@ model CurriculumTopic {
 
   externalId String?
 
-  unit CurriculumUnit @relation(
-    fields: [unitId],
-    references: [id],
-    onDelete: Cascade
-  )
+  unit CurriculumUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   objectives LearningObjective[]
 
@@ -1383,11 +1356,7 @@ model LearningObjective {
 
   externalId String?
 
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   contents ContentObjective[]
   questions QuestionObjective[]
@@ -1421,16 +1390,8 @@ model LearningContent {
   publishedAt DateTime?
   archivedAt  DateTime?
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  author User @relation(
-    fields: [authorId],
-    references: [id]
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
 
   versions ContentVersion[]
 
@@ -1465,23 +1426,9 @@ model ContentVersion {
 
   publishedAt DateTime?
 
-  content LearningContent @relation(
-    fields: [contentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    "ContentVersionCreator",
-    fields: [createdById],
-    references: [id]
-  )
-
-  reviewedBy User? @relation(
-    "ContentVersionReviewer",
-    fields: [reviewedById],
-    references: [id]
-  )
+  content LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  createdBy User @relation("ContentVersionCreator", fields: [createdById], references: [id])
+  reviewedBy User? @relation("ContentVersionReviewer", fields: [reviewedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1497,17 +1444,8 @@ model ContentTopic {
 
   isPrimary Boolean @default(false)
 
-  content LearningContent @relation(
-    fields: [contentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
+  content LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@id([contentId, topicId])
   @@index([topicId])
@@ -1517,17 +1455,8 @@ model ContentObjective {
   contentId   String @db.Uuid
   objectiveId String @db.Uuid
 
-  content LearningContent @relation(
-    fields: [contentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  objective LearningObjective @relation(
-    fields: [objectiveId],
-    references: [id],
-    onDelete: Cascade
-  )
+  content LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  objective LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
 
   @@id([contentId, objectiveId])
   @@index([objectiveId])
@@ -1546,26 +1475,14 @@ model ContentAttachment {
 
   uploadedById String @db.Uuid
 
-  content LearningContent @relation(
-    fields: [contentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  uploadedBy User @relation(
-    fields: [uploadedById],
-    references: [id]
-  )
+  content LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
 
   createdAt DateTime @default(now())
 
   @@index([contentId])
   @@index([uploadedById])
 }
-
-
-
-
 
 model QuestionBank {
   id       String @id @default(uuid()) @db.Uuid
@@ -1578,16 +1495,8 @@ model QuestionBank {
 
   createdById String @db.Uuid
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    fields: [createdById],
-    references: [id]
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
 
   questions Question[]
 
@@ -1599,7 +1508,6 @@ model QuestionBank {
   @@index([tenantId, status])
   @@index([tenantId, createdById])
 }
-
 
 model Question {
   id          String @id @default(uuid()) @db.Uuid
@@ -1613,17 +1521,8 @@ model Question {
 
   createdById String @db.Uuid
 
-  questionBank QuestionBank @relation(
-    fields: [questionBankId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    "QuestionCreator",
-    fields: [createdById],
-    references: [id]
-  )
+  questionBank QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+  createdBy User @relation("QuestionCreator", fields: [createdById], references: [id])
 
   versions QuestionVersion[]
 
@@ -1636,7 +1535,6 @@ model Question {
   @@index([questionBankId, status])
   @@index([createdById])
 }
-
 
 model QuestionVersion {
   id         String @id @default(uuid()) @db.Uuid
@@ -1661,17 +1559,8 @@ model QuestionVersion {
 
   publishedAt DateTime?
 
-  question Question @relation(
-    fields: [questionId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    "QuestionVersionCreator",
-    fields: [createdById],
-    references: [id]
-  )
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdBy User @relation("QuestionVersionCreator", fields: [createdById], references: [id])
 
   options QuestionOption[]
 
@@ -1698,11 +1587,7 @@ model QuestionOption {
 
   isCorrect Boolean @default(false)
 
-  questionVersion QuestionVersion @relation(
-    fields: [questionVersionId],
-    references: [id],
-    onDelete: Cascade
-  )
+  questionVersion QuestionVersion @relation(fields: [questionVersionId], references: [id], onDelete: Cascade)
 
   @@unique([questionVersionId, optionKey])
   @@index([questionVersionId, orderIndex])
@@ -1714,17 +1599,8 @@ model QuestionTopic {
 
   isPrimary Boolean @default(false)
 
-  question Question @relation(
-    fields: [questionId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@id([questionId, topicId])
   @@index([topicId])
@@ -1734,17 +1610,8 @@ model QuestionObjective {
   questionId  String @db.Uuid
   objectiveId String @db.Uuid
 
-  question Question @relation(
-    fields: [questionId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  objective LearningObjective @relation(
-    fields: [objectiveId],
-    references: [id],
-    onDelete: Cascade
-  )
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  objective LearningObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
 
   @@id([questionId, objectiveId])
   @@index([objectiveId])
@@ -1771,29 +1638,10 @@ model ExamContext {
 
   status ExamContextStatus @default(DRAFT)
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  grade Grade? @relation(
-    fields: [gradeId],
-    references: [id],
-    onDelete: SetNull
-  )
-
-  subject Subject? @relation(
-    fields: [subjectId],
-    references: [id],
-    onDelete: SetNull
-  )
-
-  curriculumVersion CurriculumVersion? @relation(
-    fields: [curriculumVersionId],
-    references: [id],
-    onDelete: SetNull
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  grade Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  curriculumVersion CurriculumVersion? @relation(fields: [curriculumVersionId], references: [id], onDelete: SetNull)
 
   questionBanks QuestionBank[]
 
@@ -1808,7 +1656,6 @@ model ExamContext {
   @@index([curriculumVersionId])
   @@index([examYear])
 }
-
 
 model Assessment {
   id       String @id @default(uuid()) @db.Uuid
@@ -1837,22 +1684,9 @@ model Assessment {
 
   examContextId String? @db.Uuid
   evidences LearningEvidence[]
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    fields: [createdById],
-    references: [id]
-  )
-
-  examContext ExamContext? @relation(
-    fields: [examContextId],
-    references: [id],
-    onDelete: SetNull
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+  examContext ExamContext? @relation(fields: [examContextId], references: [id], onDelete: SetNull)
 
   questions AssessmentQuestion[]
 
@@ -1878,22 +1712,13 @@ model AssessmentQuestion {
 
   points Decimal @db.Decimal(8, 2)
 
-  assessment Assessment @relation(
-    fields: [assessmentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  questionVersion QuestionVersion @relation(
-    fields: [questionVersionId],
-    references: [id]
-  )
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionVersion QuestionVersion @relation(fields: [questionVersionId], references: [id])
 
   @@id([assessmentId, questionVersionId])
   @@unique([assessmentId, orderIndex])
   @@index([questionVersionId])
 }
-
 
 model AssessmentAssignment {
   id           String @id @default(uuid()) @db.Uuid
@@ -1907,22 +1732,9 @@ model AssessmentAssignment {
 
   createdById String @db.Uuid
 
-  assessment Assessment @relation(
-    fields: [assessmentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  section Section @relation(
-    fields: [sectionId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  createdBy User @relation(
-    fields: [createdById],
-    references: [id]
-  )
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
 
   attempts AssessmentAttempt[]
 
@@ -1952,23 +1764,9 @@ model AssessmentAttempt {
 
   gradingVersion String?
 
-  assessment Assessment @relation(
-    fields: [assessmentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  assignment AssessmentAssignment @relation(
-    fields: [assignmentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  student StudentProfile @relation(
-    fields: [studentId],
-    references: [id],
-    onDelete: Cascade
-  )
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assignment AssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   answers StudentAnswer[]
 
@@ -2004,22 +1802,9 @@ model StudentAnswer {
   gradedById String? @db.Uuid
   gradedAt   DateTime?
 
-  attempt AssessmentAttempt @relation(
-    fields: [attemptId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  questionVersion QuestionVersion @relation(
-    fields: [questionVersionId],
-    references: [id]
-  )
-
-  gradedBy User? @relation(
-    fields: [gradedById],
-    references: [id],
-    onDelete: SetNull
-  )
+  attempt AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionVersion QuestionVersion @relation(fields: [questionVersionId], references: [id])
+  gradedBy User? @relation(fields: [gradedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2029,7 +1814,6 @@ model StudentAnswer {
   @@index([attemptId, status])
   @@index([gradedById])
 }
-
 
 model LearningEvidence {
   id String @id @default(uuid()) @db.Uuid
@@ -2057,47 +1841,13 @@ model LearningEvidence {
 
   metadata Json?
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  student StudentProfile @relation(
-    fields: [studentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  attempt AssessmentAttempt? @relation(
-    fields: [attemptId],
-    references: [id],
-    onDelete: SetNull
-  )
-
-  assessment Assessment? @relation(
-    fields: [assessmentId],
-    references: [id],
-    onDelete: SetNull
-  )
-
-  questionVersion QuestionVersion? @relation(
-    fields: [questionVersionId],
-    references: [id],
-    onDelete: SetNull
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  objective LearningObjective? @relation(
-    fields: [objectiveId],
-    references: [id],
-    onDelete: SetNull
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  assessment Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  questionVersion QuestionVersion? @relation(fields: [questionVersionId], references: [id], onDelete: SetNull)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  objective LearningObjective? @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -2127,23 +1877,9 @@ model StudentTopicPerformance {
 
   lastObservedAt DateTime?
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  student StudentProfile @relation(
-    fields: [studentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2153,7 +1889,6 @@ model StudentTopicPerformance {
   @@index([studentId, topicId])
   @@index([topicId])
 }
-
 
 model StudentTopicMastery {
   id String @id @default(uuid()) @db.Uuid
@@ -2170,23 +1905,9 @@ model StudentTopicMastery {
 
   calculatedAt DateTime @default(now())
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  student StudentProfile @relation(
-    fields: [studentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
 
   history MasteryHistory[]
 
@@ -2217,29 +1938,10 @@ model MasteryHistory {
 
   metadata Json?
 
-  tenant Tenant @relation(
-    fields: [tenantId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  student StudentProfile @relation(
-    fields: [studentId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  topic CurriculumTopic @relation(
-    fields: [topicId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  mastery StudentTopicMastery? @relation(
-    fields: [masteryId],
-    references: [id],
-    onDelete: SetNull
-  )
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic CurriculumTopic @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  mastery StudentTopicMastery? @relation(fields: [masteryId], references: [id], onDelete: SetNull)
 
   @@index([studentId, topicId, calculatedAt])
   @@index([tenantId, studentId, calculatedAt])

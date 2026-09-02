@@ -1,6 +1,6 @@
-import { prisma, pool, runWithoutTenant } from "../src/lib/prisma.js";
-import { hashPassword } from "../src/shared/auth/password.js";
-import { Gender, ContactRelationship } from "../src/generated/prisma/client.js";
+import { prisma, runWithoutTenant } from "../../src/lib/prisma.js";
+import { hashPassword } from "../../src/shared/auth/password.js";
+import { Gender } from "../../src/generated/prisma/client.js";
 
 const MALE_FIRST_NAMES = [
   "Abel", "Biruk", "Dawit", "Eyob", "Fitsum", "Girma", "Henok", "Kalid",
@@ -30,27 +30,20 @@ const GRANDFATHER_NAMES = [
   "Bedada", "Mamo", "Hailemariam", "Gebremariam", "Fekadu", "Kassahun", "Beyene"
 ];
 
-async function seedStudents() {
-  console.log("🇪🇹 Seeding 5 Active Students per Section for all tenants in Ethiopian Standards...");
-
+export async function seedStudents(targetTenantId?: string) {
   await runWithoutTenant(async () => {
+    const whereClause = targetTenantId
+      ? { id: targetTenantId, status: "ACTIVE" as const }
+      : { status: "ACTIVE" as const };
+
     const tenants = await prisma.tenant.findMany({
-      where: { status: "ACTIVE" },
+      where: whereClause,
       select: { id: true, code: true, name: true },
     });
-
-    if (tenants.length === 0) {
-      console.error("❌ No active tenants found in database.");
-      return;
-    }
 
     const defaultPasswordHash = await hashPassword("EduBridge2026!#");
 
     for (const tenant of tenants) {
-      console.log(`\n========================================`);
-      console.log(`🏫 Seeding Students for Tenant: ${tenant.name} (${tenant.code})`);
-      console.log(`========================================`);
-
       let studentRole = await prisma.role.findFirst({
         where: {
           tenantId: tenant.id,
@@ -77,10 +70,7 @@ async function seedStudents() {
         },
       });
 
-      if (!activeYear) {
-        console.warn(`⚠️  No active academic year found for tenant ${tenant.code}. Skipping student seeding.`);
-        continue;
-      }
+      if (!activeYear) continue;
 
       const sections = await prisma.section.findMany({
         where: {
@@ -96,20 +86,11 @@ async function seedStudents() {
         ],
       });
 
-      if (sections.length === 0) {
-        console.warn(`⚠️  No sections found for active year in tenant ${tenant.code}. Skipping.`);
-        continue;
-      }
-
-      console.log(`Found ${sections.length} active class section(s). Seeding 5 students each...`);
-
       let studentIndex = 1;
 
       for (const section of sections) {
-        console.log(`   📚 Section: ${section.name} (Grade ${section.grade.level})`);
-
         for (let i = 1; i <= 5; i++) {
-          const isFemale = (studentIndex % 2) === 0;
+          const isFemale = studentIndex % 2 === 0;
           const gender: Gender = isFemale ? "FEMALE" : "MALE";
           const firstNamesPool = isFemale ? FEMALE_FIRST_NAMES : MALE_FIRST_NAMES;
 
@@ -258,20 +239,6 @@ async function seedStudents() {
           studentIndex++;
         }
       }
-
-      console.log(`   ✅ Seeded ${studentIndex - 1} students across all sections in tenant ${tenant.code}.`);
     }
-
-    console.log("\n🎉 Successfully seeded 5 active Ethiopian students per section with complete profiles & enrollments!");
   });
 }
-
-seedStudents()
-  .catch((e) => {
-    console.error("❌ Student seeding failed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
-  });
