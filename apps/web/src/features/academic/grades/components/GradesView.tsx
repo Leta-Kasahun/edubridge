@@ -112,7 +112,7 @@ export function GradesView() {
               className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
-              <span>Add Grade</span>
+              <span>Grade</span>
             </button>
           }
         />
