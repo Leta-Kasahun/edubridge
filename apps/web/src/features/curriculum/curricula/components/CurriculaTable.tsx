@@ -9,18 +9,12 @@ import {
   CheckCircle2,
   Archive,
   FileEdit,
-  Globe,
-  Building2,
-  Layers,
-  Calendar,
 } from "lucide-react";
 import {
   CurriculumItem,
-  CurriculumScope,
   CurriculumStatus,
 } from "../types/curriculum.types";
 import { LoadingSpinner } from "@/shared/components";
-import { cn } from "@/lib/utils";
 
 interface CurriculaTableProps {
   readonly items: readonly CurriculumItem[];
@@ -31,44 +25,24 @@ interface CurriculaTableProps {
   readonly isUpdatingStatus?: boolean;
 }
 
-function ScopeBadge({ scope }: { readonly scope: CurriculumScope }) {
-  if (scope === "SYSTEM") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border border-border">
-        <Globe size={11} className="text-muted-foreground" />
-        <span>National</span>
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border border-border">
-      <Building2 size={11} className="text-muted-foreground" />
-      <span>School</span>
-    </span>
-  );
-}
-
 function StatusBadge({ status }: { readonly status: CurriculumStatus }) {
   switch (status) {
     case "ACTIVE":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border border-border">
-          <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-          <span>Active</span>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border border-border">
+          Active
         </span>
       );
     case "DRAFT":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-          <span>Draft</span>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+          Draft
         </span>
       );
     case "ARCHIVED":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
-          <span>Archived</span>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+          Archived
         </span>
       );
   }
@@ -121,7 +95,7 @@ function CurriculumRowActions({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-9 w-48 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
+        <div className="absolute right-0 top-9 w-40 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
           <button
             type="button"
             onClick={() => {
@@ -131,7 +105,7 @@ function CurriculumRowActions({
             className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
           >
             <Eye size={13} className="text-muted-foreground" />
-            <span>View Versions & Details</span>
+            <span>View</span>
           </button>
 
           {!isSystemScope && (
@@ -145,7 +119,7 @@ function CurriculumRowActions({
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
               >
                 <Edit2 size={13} className="text-muted-foreground" />
-                <span>Edit Metadata</span>
+                <span>Edit</span>
               </button>
 
               <button
@@ -157,10 +131,10 @@ function CurriculumRowActions({
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
               >
                 <PlusCircle size={13} className="text-muted-foreground" />
-                <span>Create New Version</span>
+                <span>Version</span>
               </button>
 
-              <div className="my-1 border-t border-border" />
+              <div className="h-px bg-border my-1" />
 
               {item.status !== "ACTIVE" && (
                 <button
@@ -169,10 +143,10 @@ function CurriculumRowActions({
                     setIsOpen(false);
                     onStatusChange(item, "ACTIVE");
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
                 >
-                  <CheckCircle2 size={13} />
-                  <span>Set Active</span>
+                  <CheckCircle2 size={13} className="text-muted-foreground" />
+                  <span>Activate</span>
                 </button>
               )}
 
@@ -183,10 +157,10 @@ function CurriculumRowActions({
                     setIsOpen(false);
                     onStatusChange(item, "DRAFT");
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
                 >
                   <FileEdit size={13} />
-                  <span>Set Draft</span>
+                  <span>Draft</span>
                 </button>
               )}
 
@@ -222,9 +196,6 @@ export function CurriculaTable({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-card rounded-2xl border border-border">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-          <Layers size={24} />
-        </div>
         <h3 className="text-sm font-bold text-foreground mb-1">
           No Curricula Found
         </h3>
@@ -237,7 +208,6 @@ export function CurriculaTable({
 
   return (
     <div className="w-full">
-      {/* Mobile Card List (under md breakpoint down to 320px) */}
       <div className="grid grid-cols-1 gap-3 md:hidden">
         {items.map((item) => (
           <div
@@ -250,7 +220,6 @@ export function CurriculaTable({
                   <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-muted text-foreground border border-border">
                     {item.code}
                   </span>
-                  <ScopeBadge scope={item.scope} />
                   <StatusBadge status={item.status} />
                 </div>
                 <h4 className="text-sm font-bold text-foreground truncate">
@@ -273,22 +242,15 @@ export function CurriculaTable({
             </div>
 
             <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Layers size={13} />
-                <span>
-                  {item.versionCount} {item.versionCount === 1 ? "Version" : "Versions"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar size={13} />
-                <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
-              </div>
+              <span>
+                {item.activeVersionName || (item.versionNames && item.versionNames[0]) || `${item.versionCount} versions`}
+              </span>
+              <span>{item.authorityName || "—"}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Desktop / Tablet Table (md and above) */}
       <div className="hidden md:block bg-card rounded-2xl border border-border shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -296,12 +258,10 @@ export function CurriculaTable({
               <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
                 <th className="py-3 px-4">Code</th>
                 <th className="py-3 px-4">Curriculum Name</th>
-                <th className="py-3 px-4">Scope</th>
+                <th className="py-3 px-4">Version</th>
+                <th className="py-3 px-4">Authority</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Versions</th>
-                <th className="py-3 px-4">Authority / Source</th>
-                <th className="py-3 px-4">Last Updated</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -325,23 +285,14 @@ export function CurriculaTable({
                       </div>
                     )}
                   </td>
-                  <td className="py-3.5 px-4">
-                    <ScopeBadge scope={item.scope} />
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <StatusBadge status={item.status} />
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground">
-                      <Layers size={11} className="text-muted-foreground" />
-                      {item.versionCount}
-                    </span>
+                  <td className="py-3.5 px-4 text-foreground font-medium text-xs">
+                    {item.activeVersionName || (item.versionNames && item.versionNames.length > 0 ? item.versionNames.join(", ") : "—")}
                   </td>
                   <td className="py-3.5 px-4 text-muted-foreground text-xs">
                     {item.authorityName || "—"}
                   </td>
-                  <td className="py-3.5 px-4 text-muted-foreground text-[11px]">
-                    {new Date(item.updatedAt).toLocaleDateString()}
+                  <td className="py-3.5 px-4">
+                    <StatusBadge status={item.status} />
                   </td>
                   <td className="py-3.5 px-4 text-right">
                     <CurriculumRowActions

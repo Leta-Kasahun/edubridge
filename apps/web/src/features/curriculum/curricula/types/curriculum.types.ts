@@ -29,6 +29,8 @@ export interface CurriculumItem {
   readonly externalId: string | null;
   readonly versionCount: number;
   readonly activeVersionId: string | null;
+  readonly activeVersionName: string | null;
+  readonly versionNames: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }

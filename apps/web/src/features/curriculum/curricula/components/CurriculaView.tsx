@@ -117,10 +117,9 @@ export function CurriculaView() {
       icon: Layers,
       options: [
         { label: "All", value: "ALL" },
-        { label: "Version 1 (2018 E.C)", value: "v1" },
-        { label: "Version 2 (2018 E.C)", value: "v2" },
-        { label: "Version 3 (2018 E.C)", value: "v3" },
-        { label: "Version 1 (2017 E.C)", value: "2017" },
+        { label: "Version 1", value: "Version 1" },
+        { label: "Version 2", value: "Version 2" },
+        { label: "2018", value: "2018" },
       ],
     },
     {

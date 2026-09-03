@@ -98,14 +98,14 @@ export const generateCurriculumCode = (
   sequence: number,
   ethiopianYear?: number
 ): string => {
-  const cleanPrefix = (prefix.replace(/[^a-zA-Z0-9]/g, "").slice(0, 3) || "CUR").toUpperCase().padEnd(3, "X");
+  const cleanPrefix = (prefix.replace(/[^a-zA-Z]/g, "").slice(0, 3) || "CUR").toUpperCase().padEnd(3, "C");
   const ethYear = String(ethiopianYear ?? getCurrentEthiopianYear()).slice(-2);
-  const seq = String(sequence).padStart(4, "0");
-  return `${cleanPrefix}-${ethYear}-${seq}`;
+  const seq = String(sequence % 10 || 1);
+  return `${cleanPrefix}${ethYear}${seq}`.slice(0, 6);
 };
 
 export const generateCurriculumVersionCode = (versionNumber: number): string => {
-  return `v${versionNumber}.0`;
+  return `V${versionNumber}`;
 };
 
 export const generateCurriculumVersionName = (
@@ -113,7 +113,7 @@ export const generateCurriculumVersionName = (
   ethiopianYear?: number
 ): string => {
   const ethYear = ethiopianYear ?? getCurrentEthiopianYear();
-  return `Version ${versionNumber}.0 (${ethYear} E.C)`;
+  return `Version ${versionNumber} (${ethYear})`;
 };
 
 export const getNextCurriculumSequence = async (tenantId: string | null): Promise<number> => {
@@ -128,34 +128,28 @@ export const getNextCurriculumSequence = async (tenantId: string | null): Promis
 };
 
 export const getCurriculumCodePrefix = async (
-  tenantId: string | null,
+  _tenantId: string | null,
   fallbackName?: string
 ): Promise<string> => {
-  if (tenantId) {
-    return runWithoutTenant(async () => {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { code: true },
-      });
-      if (tenant?.code) {
-        return tenant.code.slice(0, 3).toUpperCase();
-      }
-      return fallbackName ? generateTenantCode(fallbackName) : "CUR";
-    });
+  if (fallbackName) {
+    const letters = fallbackName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase();
+    if (letters.length >= 2) return letters.padEnd(3, "C");
   }
-  return fallbackName ? generateTenantCode(fallbackName) : "ETH";
+  return "CUR";
 };
 
 export const generateUnitCode = (orderIndex: number): string => {
-  return `U-${orderIndex}`;
+  return `U${orderIndex}`;
 };
 
 export const generateTopicCode = (unitCode: string, orderIndex: number): string => {
-  return `${unitCode}-T${orderIndex}`;
+  const cleanUnit = unitCode.replace(/[^a-zA-Z0-9]/g, "");
+  return `${cleanUnit}T${orderIndex}`;
 };
 
 export const generateObjectiveCode = (topicCode: string, orderIndex: number): string => {
-  return `${topicCode}-LO${orderIndex}`;
+  const cleanTopic = topicCode.replace(/[^a-zA-Z0-9]/g, "");
+  return `${cleanTopic}O${orderIndex}`;
 };
 
 

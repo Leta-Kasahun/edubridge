@@ -88,29 +88,33 @@ export class CurriculumRepository {
             },
           },
           versions: {
-            where: { status: "ACTIVE" },
-            select: { id: true },
-            take: 1,
+            orderBy: { createdAt: "desc" },
+            select: { id: true, name: true, status: true },
           },
         },
       }),
     ]);
 
-    const data: readonly CurriculumRecord[] = items.map((c) => ({
-      id: c.id,
-      tenantId: c.tenantId,
-      code: c.code,
-      name: c.name,
-      description: c.description,
-      scope: c.scope,
-      status: c.status,
-      authorityName: c.authorityName,
-      externalId: c.externalId,
-      versionCount: c._count.versions,
-      activeVersionId: c.versions[0]?.id ?? null,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-    }));
+    const data: readonly CurriculumRecord[] = items.map((c) => {
+      const activeVer = c.versions.find((v) => v.status === "ACTIVE") ?? c.versions[0] ?? null;
+      return {
+        id: c.id,
+        tenantId: c.tenantId,
+        code: c.code,
+        name: c.name,
+        description: c.description,
+        scope: c.scope,
+        status: c.status,
+        authorityName: c.authorityName,
+        externalId: c.externalId,
+        versionCount: c._count.versions,
+        activeVersionId: activeVer?.id ?? null,
+        activeVersionName: activeVer?.name ?? null,
+        versionNames: c.versions.map((v) => v.name),
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      };
+    });
 
     return {
       data,

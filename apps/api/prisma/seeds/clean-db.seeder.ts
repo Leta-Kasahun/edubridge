@@ -58,6 +58,13 @@ export async function cleanDatabase() {
     await prisma.importRow.deleteMany({});
     await prisma.importBatch.deleteMany({});
 
+    await prisma.learningObjective.deleteMany({});
+    await prisma.curriculumTopic.deleteMany({});
+    await prisma.curriculumUnit.deleteMany({});
+    await prisma.curriculumSubject.deleteMany({});
+    await prisma.curriculumVersion.deleteMany({});
+    await prisma.curriculum.deleteMany({});
+
     await prisma.section.deleteMany({});
     await prisma.gradeSubject.deleteMany({});
     await prisma.grade.deleteMany({});
