@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, BookOpen } from "lucide-react";
 import {
   CurriculumItem,
+  CurriculumDetailItem,
   CreateCurriculumPayload,
   UpdateCurriculumPayload,
 } from "../types/curriculum.types";
@@ -16,12 +17,14 @@ interface CurriculumFormModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly itemToEdit: CurriculumItem | null;
+  readonly onSuccess?: (item: CurriculumDetailItem) => void;
 }
 
 export function CurriculumFormModal({
   isOpen,
   onClose,
   itemToEdit,
+  onSuccess,
 }: CurriculumFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
@@ -83,7 +86,8 @@ export function CurriculumFormModal({
           authorityName: authorityName.trim() || null,
           externalId: externalId.trim() || null,
         };
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        onSuccess?.(created);
       }
       onClose();
     } catch (err: unknown) {

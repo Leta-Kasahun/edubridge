@@ -21,6 +21,7 @@ interface CurriculumVersionFormModalProps {
   readonly onClose: () => void;
   readonly curriculum: CurriculumItem | null;
   readonly versionToEdit?: CurriculumVersionItem | null;
+  readonly onSuccess?: (item: CurriculumVersionItem) => void;
 }
 
 export function CurriculumVersionFormModal({
@@ -28,6 +29,7 @@ export function CurriculumVersionFormModal({
   onClose,
   curriculum,
   versionToEdit,
+  onSuccess,
 }: CurriculumVersionFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
@@ -113,7 +115,8 @@ export function CurriculumVersionFormModal({
           effectiveTo: effectiveTo || null,
           externalId: externalId.trim() || null,
         };
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        onSuccess?.(created);
       }
       onClose();
     } catch (err: unknown) {

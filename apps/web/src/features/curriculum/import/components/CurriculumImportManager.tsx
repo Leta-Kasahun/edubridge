@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { BookOpen, Layers } from "lucide-react";
+import { BookOpen, Layers, Plus } from "lucide-react";
 import { useCurricula, useCurriculumDetails } from "../../curricula/hooks/useCurricula";
 import { usePreviewCurriculumImport, useCommitCurriculumImport } from "../hooks/useCurriculumImport";
+import {
+  CurriculumFormModal,
+  CurriculumVersionFormModal,
+} from "../../curricula/components";
 import { CurriculumImportUpload } from "./CurriculumImportUpload";
 import { CurriculumImportPreviewTable } from "./CurriculumImportPreviewTable";
 import { CurriculumImportResultCard } from "./CurriculumImportResultCard";
@@ -12,6 +16,11 @@ import {
   CurriculumImportPreview,
   CurriculumImportCommitResult,
 } from "../types/import.types";
+import {
+  CurriculumItem,
+  CurriculumDetailItem,
+  CurriculumVersionItem,
+} from "../../curricula/types/curriculum.types";
 import {
   ErrorAlert,
   LoadingSpinner,
@@ -28,6 +37,9 @@ export function CurriculumImportManager() {
   const [previewData, setPreviewData] = useState<CurriculumImportPreview | null>(null);
   const [commitResult, setCommitResult] = useState<CurriculumImportCommitResult | null>(null);
 
+  const [isCreateCurriculumOpen, setIsCreateCurriculumOpen] = useState(false);
+  const [isCreateVersionOpen, setIsCreateVersionOpen] = useState(false);
+
   const {
     data: curriculaData,
     isLoading: isLoadingCurricula,
@@ -43,6 +55,10 @@ export function CurriculumImportManager() {
         setSelectedCurriculumId(first.id);
       }
     }
+  }, [curricula, selectedCurriculumId]);
+
+  const selectedCurriculum = useMemo<CurriculumItem | null>(() => {
+    return curricula.find((c) => c.id === selectedCurriculumId) || null;
   }, [curricula, selectedCurriculumId]);
 
   const {
@@ -118,6 +134,22 @@ export function CurriculumImportManager() {
     if (step === "PREVIEW") setStep("UPLOAD");
   };
 
+  const handleCurriculumCreated = (newCurr: CurriculumDetailItem) => {
+    setSelectedCurriculumId(newCurr.id);
+    if (newCurr.versions && newCurr.versions.length > 0) {
+      const firstVer = newCurr.versions[0];
+      if (firstVer) {
+        setSelectedVersionId(firstVer.id);
+      }
+    } else {
+      setSelectedVersionId("");
+    }
+  };
+
+  const handleVersionCreated = (newVer: CurriculumVersionItem) => {
+    setSelectedVersionId(newVer.id);
+  };
+
   const curriculumOptions: readonly SelectDropdownOption[] = useMemo(
     () =>
       curricula.map((c) => ({
@@ -156,13 +188,33 @@ export function CurriculumImportManager() {
 
   if (curricula.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-3 shadow-xs">
+      <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-4 shadow-xs">
         <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
           <BookOpen size={24} />
         </div>
-        <h2 className="text-base font-bold text-foreground">
-          No Curricula Available
-        </h2>
+        <div className="space-y-1">
+          <h2 className="text-base font-bold text-foreground">
+            No Curricula Available
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Create a curriculum to begin importing academic structures.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsCreateCurriculumOpen(true)}
+          className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+        >
+          <Plus size={13} />
+          <span>Create Curriculum</span>
+        </button>
+
+        <CurriculumFormModal
+          isOpen={isCreateCurriculumOpen}
+          onClose={() => setIsCreateCurriculumOpen(false)}
+          itemToEdit={null}
+          onSuccess={handleCurriculumCreated}
+        />
       </div>
     );
   }
@@ -171,13 +223,36 @@ export function CurriculumImportManager() {
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
       {step !== "SUCCESS" && (
         <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Layers size={18} />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Layers size={18} />
+              </div>
+              <h2 className="text-base font-bold text-foreground">
+                Target Destination
+              </h2>
             </div>
-            <h2 className="text-base font-bold text-foreground">
-              Target Curriculum
-            </h2>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCreateCurriculumOpen(true)}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Plus size={12} />
+                <span>New Curriculum</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCreateVersionOpen(true)}
+                disabled={!selectedCurriculumId}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Plus size={12} />
+                <span>New Version</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
@@ -232,6 +307,20 @@ export function CurriculumImportManager() {
           onReset={handleReset}
         />
       )}
+
+      <CurriculumFormModal
+        isOpen={isCreateCurriculumOpen}
+        onClose={() => setIsCreateCurriculumOpen(false)}
+        itemToEdit={null}
+        onSuccess={handleCurriculumCreated}
+      />
+
+      <CurriculumVersionFormModal
+        isOpen={isCreateVersionOpen}
+        onClose={() => setIsCreateVersionOpen(false)}
+        curriculum={selectedCurriculum}
+        onSuccess={handleVersionCreated}
+      />
     </div>
   );
 }
