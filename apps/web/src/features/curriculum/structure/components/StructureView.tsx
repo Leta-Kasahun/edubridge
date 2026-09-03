@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   BookOpen,
   Layers,
   Plus,
   Trash2,
-  AlertCircle,
   GraduationCap,
 } from "lucide-react";
 import {
@@ -25,7 +24,12 @@ import { UnitItem } from "./UnitItem";
 import { UnitFormModal } from "./UnitFormModal";
 import { SubjectFormModal } from "./SubjectFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import {
+  LoadingSpinner,
+  ErrorAlert,
+  SelectDropdown,
+  SelectDropdownOption,
+} from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
 export function StructureView() {
@@ -58,7 +62,6 @@ export function StructureView() {
 
   const {
     data: curriculumDetail,
-    isLoading: isLoadingDetail,
   } = useCurriculumDetails(selectedCurriculumId || null);
 
   const versions = curriculumDetail?.versions ?? [];
@@ -160,6 +163,26 @@ export function StructureView() {
     });
   };
 
+  const curriculumOptions: readonly SelectDropdownOption[] = useMemo(
+    () =>
+      curricula.map((c) => ({
+        value: c.id,
+        label: c.name,
+        badge: c.code,
+      })),
+    [curricula]
+  );
+
+  const versionOptions: readonly SelectDropdownOption[] = useMemo(
+    () =>
+      versions.map((v) => ({
+        value: v.id,
+        label: v.name,
+        badge: v.code,
+      })),
+    [versions]
+  );
+
   if (isLoadingCurricula) {
     return (
       <div className="min-h-[400px] flex items-center justify-center p-8">
@@ -179,85 +202,58 @@ export function StructureView() {
   if (curricula.length === 0) {
     return (
       <div className="max-w-7xl mx-auto w-full p-4 sm:p-6">
-        <div className="bg-card rounded-2xl border border-border p-8 text-center space-y-4 shadow-xs">
+        <div className="bg-card rounded-2xl border border-border p-8 text-center space-y-3 shadow-xs">
           <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
             <BookOpen size={24} />
           </div>
-          <div className="space-y-1">
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
-              No Curricula Available
-            </h2>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Please create a curriculum package first in the Curricula section before configuring units and topics.
-            </p>
-          </div>
+          <h2 className="text-base font-bold text-foreground">
+            No Curricula Available
+          </h2>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 max-w-7xl mx-auto w-full pb-12">
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-              <Layers className="text-primary" size={20} />
-              <span>Curriculum Structure</span>
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Organize and manage academic units, learning topics, and competency objectives.
-            </p>
+    <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
+      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Layers size={18} />
           </div>
+          <h1 className="text-base sm:text-lg font-bold text-foreground">
+            Curriculum Structure
+          </h1>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Curriculum Package
-            </label>
-            <select
-              value={selectedCurriculumId}
-              onChange={(e) => handleCurriculumChange(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg text-xs bg-muted/40 border border-border text-foreground focus:outline-hidden focus:border-primary transition-colors cursor-pointer"
-            >
-              {curricula.map((curr) => (
-                <option key={curr.id} value={curr.id}>
-                  {curr.name} ({curr.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Version
-            </label>
-            <select
-              value={selectedVersionId}
-              onChange={(e) => handleVersionChange(e.target.value)}
-              disabled={versions.length === 0}
-              className="w-full h-9 px-3 rounded-lg text-xs bg-muted/40 border border-border text-foreground focus:outline-hidden focus:border-primary transition-colors cursor-pointer"
-            >
-              {versions.map((ver) => (
-                <option key={ver.id} value={ver.id}>
-                  {ver.name} ({ver.code}) {ver.status === "ACTIVE" ? "— Active" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
+          <SelectDropdown
+            label="Curriculum"
+            value={selectedCurriculumId}
+            onChange={handleCurriculumChange}
+            options={curriculumOptions}
+            placeholder="Select curriculum..."
+          />
+          <SelectDropdown
+            label="Version"
+            value={selectedVersionId}
+            onChange={handleVersionChange}
+            options={versionOptions}
+            placeholder={versions.length === 0 ? "No versions" : "Select version..."}
+            disabled={versions.length === 0}
+          />
         </div>
       </div>
 
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <GraduationCap size={18} className="text-primary" />
             <h2 className="text-xs sm:text-sm font-bold text-foreground">
-              Configured Subjects
+              Subjects
             </h2>
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {subjects.length} subjects
+              {subjects.length}
             </span>
           </div>
 
@@ -283,14 +279,9 @@ export function StructureView() {
             <div className="h-10 w-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
               <BookOpen size={20} />
             </div>
-            <div className="space-y-1">
-              <p className="text-xs sm:text-sm font-bold text-foreground">
-                No subjects configured in this version
-              </p>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                Add grade-level subjects to begin building unit and topic hierarchies.
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm font-bold text-foreground">
+              No subjects configured in this version
+            </p>
             <button
               type="button"
               onClick={() => setIsAddSubjectOpen(true)}
@@ -345,7 +336,7 @@ export function StructureView() {
                   Grade {selectedSubject.gradeLevel} — {selectedSubject.subjectName} ({selectedSubject.subjectCode})
                 </h3>
                 <p className="text-[11px] text-muted-foreground">
-                  {units.length} units configured for this subject
+                  {units.length} units
                 </p>
               </div>
             </div>
@@ -381,18 +372,13 @@ export function StructureView() {
           ) : unitsError ? (
             <ErrorAlert message={getErrorMessage(unitsError, "Failed to load units.")} />
           ) : units.length === 0 ? (
-            <div className="bg-card rounded-2xl border border-dashed border-border p-8 sm:p-12 text-center space-y-3 shadow-xs">
+            <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-3 shadow-xs">
               <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
                 <Layers size={20} />
               </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-foreground">
-                  No units defined for this subject yet
-                </h4>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Add foundational units to group learning topics and objectives systematically.
-                </p>
-              </div>
+              <p className="text-xs sm:text-sm font-bold text-foreground">
+                No units defined for this subject yet
+              </p>
               <button
                 type="button"
                 onClick={() => {
