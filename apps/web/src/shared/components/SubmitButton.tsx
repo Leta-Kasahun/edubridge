@@ -32,14 +32,17 @@ export function SubmitButton({
       size={size}
       disabled={disabled || isLoading}
       className={cn(
-        "w-full h-11 sm:h-12 rounded-xl text-sm sm:text-base font-semibold shadow-sm transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2",
+        "rounded-xl font-semibold shadow-xs transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2",
+        size === "sm"
+          ? "w-auto h-9 text-xs px-4"
+          : "w-full h-11 sm:h-12 text-sm sm:text-base",
         className
       )}
       {...props}
     >
       {isLoading ? (
-        <span className="flex items-center justify-center gap-2.5">
-          <LoadingSpinner size={18} />
+        <span className="flex items-center justify-center gap-2">
+          <LoadingSpinner size={size === "sm" ? 14 : 18} />
           <span>{loadingText || children}</span>
         </span>
       ) : (

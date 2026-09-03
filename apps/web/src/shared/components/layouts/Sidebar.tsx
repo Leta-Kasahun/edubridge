@@ -4,14 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  GraduationCap,
   PanelLeftClose,
   PanelLeftOpen,
   ChevronDown,
   ChevronRight,
   X,
-  School,
-  ShieldCheck,
 } from "lucide-react";
 import { useUiStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -230,29 +227,26 @@ export function Sidebar() {
                   frame="none"
                   priority
                 />
-                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#075985] text-[#38BDF8] border border-[#0EA5E9]/40 truncate max-w-[110px] shadow-2xs">
-                  {roleLabel}
-                </span>
               </Link>
 
               <div className="flex items-center">
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
+                  className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
                   aria-label="Collapse sidebar"
                   title="Collapse sidebar"
                 >
-                  <PanelLeftClose size={20} className="text-white" />
+                  <PanelLeftClose size={18} />
                 </button>
 
                 <button
                   type="button"
                   onClick={closeMobile}
-                  className="lg:hidden p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden cursor-pointer"
+                  className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1E293B] focus:outline-hidden cursor-pointer"
                   aria-label="Close navigation"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={18} />
                 </button>
               </div>
             </>
@@ -274,11 +268,11 @@ export function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded-lg text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
+                className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1E293B] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#38BDF8] transition-colors cursor-pointer"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <PanelLeftOpen size={18} className="text-white" />
+                <PanelLeftOpen size={16} />
               </button>
             </div>
           )}
@@ -286,18 +280,18 @@ export function Sidebar() {
 
         {(!sidebarCollapsed || sidebarMobileOpen) && (
           <div className="px-3.5 py-3 border-b border-[#1E293B]">
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-[#1E293B]/60 border border-[#1E293B]">
-              <div className="h-8 w-8 rounded-lg bg-[#0F172A] text-[#38BDF8] flex items-center justify-center shrink-0 border border-[#1E293B]">
-                {isSystemAdmin ? <ShieldCheck size={16} /> : <School size={16} />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-white truncate">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#1E293B]/70 to-[#0F172A]/90 border border-[#1E293B] shadow-2xs space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-bold text-slate-100 truncate tracking-tight">
                   {orgName}
-                </p>
-                <span className="inline-block text-[10px] text-[#38BDF8] font-medium">
-                  {orgSubtitle}
+                </h3>
+                <span className="text-[9.5px] font-semibold px-2 py-0.5 rounded-md bg-[#0284C7]/20 text-[#38BDF8] border border-[#0284C7]/30 shrink-0">
+                  {roleLabel}
                 </span>
               </div>
+              <p className="text-[10.5px] text-slate-400 font-medium truncate">
+                {orgSubtitle}
+              </p>
             </div>
           </div>
         )}

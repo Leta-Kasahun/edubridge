@@ -261,10 +261,10 @@ export function StructureView() {
             type="button"
             onClick={() => setIsAddSubjectOpen(true)}
             disabled={!selectedVersionId}
-            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
           >
             <Plus size={13} />
-            <span>Add Subject</span>
+            <span>Subject</span>
           </button>
         </div>
 
@@ -285,10 +285,10 @@ export function StructureView() {
             <button
               type="button"
               onClick={() => setIsAddSubjectOpen(true)}
-              className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 h-7.5 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
             >
               <Plus size={13} />
-              <span>Add First Subject</span>
+              <span>Subject</span>
             </button>
           </div>
         ) : (
@@ -346,7 +346,7 @@ export function StructureView() {
                 type="button"
                 onClick={() => setSubjectToDelete(selectedSubject)}
                 title="Remove subject from version"
-                className="h-8 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
+                className="h-7.5 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <Trash2 size={13} />
                 <span className="hidden sm:inline">Remove Subject</span>
@@ -357,10 +357,10 @@ export function StructureView() {
                   setUnitToEdit(null);
                   setIsAddUnitOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
               >
-                <Plus size={14} />
-                <span>Add Unit</span>
+                <Plus size={13} />
+                <span>Unit</span>
               </button>
             </div>
           </div>
@@ -385,10 +385,10 @@ export function StructureView() {
                   setUnitToEdit(null);
                   setIsAddUnitOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
                 <Plus size={13} />
-                <span>Add First Unit</span>
+                <span>Unit</span>
               </button>
             </div>
           ) : (

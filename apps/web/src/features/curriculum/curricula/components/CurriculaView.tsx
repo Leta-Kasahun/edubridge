@@ -168,7 +168,7 @@ export function CurriculaView() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
-              <span>Add Curriculum</span>
+              <span>Curriculum</span>
             </button>
           }
         />

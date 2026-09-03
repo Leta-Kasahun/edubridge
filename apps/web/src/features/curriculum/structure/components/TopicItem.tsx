@@ -143,10 +143,10 @@ export function TopicItem({
               setIsAddObjectiveOpen(true);
             }}
             title="Add learning objective"
-            className="inline-flex items-center gap-1 h-7 px-2 rounded-md text-[11px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
           >
             <Plus size={12} />
-            <span className="hidden sm:inline">Objective</span>
+            <span>Objective</span>
           </button>
           <button
             type="button"
@@ -195,10 +195,10 @@ export function TopicItem({
               <button
                 type="button"
                 onClick={() => setIsAddObjectiveOpen(true)}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
                 <Plus size={12} />
-                <span>Add Objective</span>
+                <span>Objective</span>
               </button>
             </div>
           ) : (

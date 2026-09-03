@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Layers, PlusCircle, Calendar, CheckCircle2, Archive, FileEdit, BookOpen } from "lucide-react";
+import { X, Layers, Plus, Calendar, CheckCircle2, Archive, FileEdit, BookOpen } from "lucide-react";
 import {
   CurriculumItem,
   CurriculumVersionItem,
@@ -174,8 +174,8 @@ export function CurriculumDetailModal({
                   onClick={() => onAddVersion(curriculumItem)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <PlusCircle size={13} />
-                  <span>New Version</span>
+                  <Plus size={13} />
+                  <span>Version</span>
                 </button>
               )}
             </div>

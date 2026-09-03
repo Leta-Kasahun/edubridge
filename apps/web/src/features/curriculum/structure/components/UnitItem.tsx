@@ -148,10 +148,10 @@ export function UnitItem({
               setIsAddTopicOpen(true);
             }}
             title="Add topic"
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
           >
             <Plus size={13} />
-            <span className="hidden sm:inline">Add Topic</span>
+            <span>Topic</span>
           </button>
           <button
             type="button"
@@ -200,10 +200,10 @@ export function UnitItem({
               <button
                 type="button"
                 onClick={() => setIsAddTopicOpen(true)}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
                 <Plus size={13} />
-                <span>Add First Topic</span>
+                <span>Topic</span>
               </button>
             </div>
           ) : (

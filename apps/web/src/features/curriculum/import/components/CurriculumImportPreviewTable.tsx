@@ -61,15 +61,16 @@ export function CurriculumImportPreviewTable({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 sm:flex-none h-9 px-3.5 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="flex-1 sm:flex-none h-9 px-4 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
           >
             Cancel
           </button>
           <SubmitButton
+            size="sm"
             isLoading={isCommitting}
             disabled={!preview.canCommit || preview.invalidRowsCount > 0}
             onClick={onCommit}
-            className="flex-1 sm:flex-none !w-auto h-9 text-xs font-semibold px-4 rounded-xl shrink-0 whitespace-nowrap"
+            className="flex-1 sm:flex-none shrink-0"
           >
             {`Import ${preview.validRowsCount} Item${preview.validRowsCount === 1 ? "" : "s"}`}
           </SubmitButton>
