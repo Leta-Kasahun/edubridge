@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Upload, UserPlus, Calendar, ShieldCheck, Users } from "lucide-react";
+import { Upload, Plus, Calendar, ShieldCheck, Users } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { ACCOUNT_STATUS_FILTER_OPTIONS } from "@/shared/utils";
 import { AcademicStructureAcademicYear } from "../types/student-provisioning.types";
@@ -119,8 +119,8 @@ export function StudentToolbar({
             onClick={onOpenAddStudent}
             className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
           >
-            <UserPlus size={14} />
-            <span>Add student</span>
+            <Plus size={14} />
+            <span>Student</span>
           </button>
         </div>
       }

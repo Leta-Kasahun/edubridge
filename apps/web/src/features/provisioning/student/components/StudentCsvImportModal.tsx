@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { X, Upload, FileText, Download, CheckCircle2 } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { X, Upload, FileText, Download, CheckCircle2, Plus } from "lucide-react";
 import { parseImportFile } from "@/shared/utils/csv-parser";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import {
   AcademicStructureAcademicYear,
   AcademicStructureGrade,
@@ -76,12 +77,49 @@ export function StudentCsvImportModal({
     }
   }, [isOpen, selectedAcademicYearId, selectedGradeId]);
 
-  if (!isOpen) return null;
+  const currentYear = useMemo(() => {
+    return academicYears.find((y) => y.id === academicYearId) || academicYears[0] || null;
+  }, [academicYears, academicYearId]);
 
-  const currentYear = academicYears.find((y) => y.id === academicYearId) || academicYears[0];
   const grades: readonly AcademicStructureGrade[] = currentYear?.grades || [];
-  const currentGrade = grades.find((g) => g.id === gradeId) || grades[0];
+  const currentGrade = useMemo(() => {
+    return grades.find((g) => g.id === gradeId) || grades[0] || null;
+  }, [grades, gradeId]);
+
   const sections = currentGrade?.sections || [];
+
+  const academicYearOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return academicYears.map((ay) => ({
+      value: ay.id,
+      label: ay.name,
+      badge: ay.isCurrent ? "Current" : undefined,
+    }));
+  }, [academicYears]);
+
+  const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return grades.map((g) => ({
+      value: g.id,
+      label: `Grade ${g.level}`,
+      badge: `G${g.level}`,
+    }));
+  }, [grades]);
+
+  const sectionOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return [
+      {
+        value: "",
+        label: "Auto-distribute by capacity (Random)",
+      },
+      ...sections.map((s) => ({
+        value: s.id,
+        label: s.name,
+        description: `${s.studentCount} students enrolled`,
+        badge: `${s.studentCount} sts`,
+      })),
+    ];
+  }, [sections]);
+
+  if (!isOpen) return null;
 
   const handleDownloadCsvSample = () => {
     const blob = new Blob([SAMPLE_CSV], { type: "text/csv;charset=utf-8;" });
@@ -164,14 +202,14 @@ export function StudentCsvImportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
-      <div className="w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+      <div className="w-full max-w-lg bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto min-w-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-card shrink-0">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
               Import Students (Excel / CSV)
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">
               Bulk enroll students for Grade {currentGrade?.level || "selected"}
             </p>
           </div>
@@ -185,56 +223,40 @@ export function StudentCsvImportModal({
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4 max-h-[calc(85vh-120px)] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[calc(88vh-100px)] overflow-y-auto">
           {error && <ErrorAlert message={error} />}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Academic Year *
-              </label>
-              <select
-                value={academicYearId}
-                onChange={(e) => {
-                  setAcademicYearId(e.target.value);
-                  setSectionId("");
-                  setSectionName("");
-                }}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                {academicYears.map((ay) => (
-                  <option key={ay.id} value={ay.id}>
-                    {ay.name} {ay.isCurrent ? "(Current)" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectDropdown
+              label="Academic Year"
+              required
+              value={academicYearId}
+              onChange={(val) => {
+                setAcademicYearId(val);
+                setSectionId("");
+                setSectionName("");
+              }}
+              options={academicYearOptions}
+              placeholder="Select academic year..."
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
-                Grade Level *
-              </label>
-              <select
-                value={gradeId || currentGrade?.id || ""}
-                onChange={(e) => {
-                  setGradeId(e.target.value);
-                  setSectionId("");
-                  setSectionName("");
-                }}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                {grades.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    Grade {g.level}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectDropdown
+              label="Grade Level"
+              required
+              value={gradeId || currentGrade?.id || ""}
+              onChange={(val) => {
+                setGradeId(val);
+                setSectionId("");
+                setSectionName("");
+              }}
+              options={gradeOptions}
+              placeholder="Select grade level..."
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-foreground">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-1 flex-wrap mb-1">
+              <label className="text-xs font-semibold text-foreground">
                 Section (Optional)
               </label>
               <button
@@ -244,9 +266,10 @@ export function StudentCsvImportModal({
                   setSectionName("");
                   setSectionId("");
                 }}
-                className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
-                {isCustomSection ? "Choose from existing" : "+ New section name"}
+                <Plus size={11} />
+                <span>{isCustomSection ? "Existing" : "Section"}</span>
               </button>
             </div>
 
@@ -256,25 +279,19 @@ export function StudentCsvImportModal({
                 placeholder="e.g. Section D, C"
                 value={sectionName}
                 onChange={(e) => setSectionName(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-border"
+                className="w-full h-10 px-3.5 text-xs sm:text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
               />
             ) : (
-              <select
+              <SelectDropdown
                 value={sectionId}
-                onChange={(e) => setSectionId(e.target.value)}
-                className="w-full h-9.5 px-3 text-xs bg-background border border-border rounded-xl text-foreground focus:outline-hidden focus:border-border"
-              >
-                <option value="">Auto-distribute by capacity (Random)</option>
-                {sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.studentCount} students)
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSectionId(val)}
+                options={sectionOptions}
+                placeholder="Auto-distribute by capacity (Random)"
+              />
             )}
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-border gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-muted/20 border border-border gap-2.5">
             <div className="flex items-center gap-2 min-w-0">
               <FileText size={15} className="text-muted-foreground shrink-0" />
               <div className="min-w-0">
@@ -290,7 +307,7 @@ export function StudentCsvImportModal({
               <button
                 type="button"
                 onClick={handleDownloadExcelSample}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
               >
                 <Download size={13} />
                 <span>Excel (.xlsx)</span>
@@ -298,7 +315,7 @@ export function StudentCsvImportModal({
               <button
                 type="button"
                 onClick={handleDownloadCsvSample}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
               >
                 <Download size={13} />
                 <span>CSV</span>
@@ -308,7 +325,7 @@ export function StudentCsvImportModal({
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-border hover:border-foreground/40 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-background/50 flex flex-col items-center justify-center gap-2"
+            className="border-2 border-dashed border-border hover:border-foreground/40 rounded-2xl p-5 sm:p-6 text-center cursor-pointer transition-colors bg-background/50 flex flex-col items-center justify-center gap-2"
           >
             <input
               ref={fileInputRef}
@@ -334,7 +351,7 @@ export function StudentCsvImportModal({
             <div className="p-3 rounded-xl bg-background/50 border border-border flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 min-w-0">
                 <CheckCircle2 size={15} className="text-foreground shrink-0" />
-                <span className="font-medium text-foreground truncate max-w-[200px]">{file?.name}</span>
+                <span className="font-medium text-foreground truncate max-w-[180px] sm:max-w-[240px]">{file?.name}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-foreground font-semibold">
@@ -349,11 +366,11 @@ export function StudentCsvImportModal({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-3.5 sm:pt-4 border-t border-border mt-auto shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 h-10 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
@@ -363,7 +380,7 @@ export function StudentCsvImportModal({
               isLoading={isSubmitting}
               loadingText="Processing..."
               onClick={handleUploadSubmit}
-              className="w-auto h-9 px-4 text-xs font-semibold"
+              className="w-full sm:w-auto h-10 px-5 text-xs sm:text-sm font-semibold"
             >
               Import & generate credentials
             </SubmitButton>
