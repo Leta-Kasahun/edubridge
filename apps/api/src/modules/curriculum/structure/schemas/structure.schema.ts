@@ -17,7 +17,8 @@ export const createUnitSchema = z.object({
     .regex(
       CURRICULUM_CODE_REGEX,
       "Unit code may only contain letters, numbers, hyphens and underscores"
-    ),
+    )
+    .optional(),
   title: z
     .string()
     .min(1, "Unit title is required")
@@ -46,7 +47,8 @@ export const createTopicSchema = z.object({
     .regex(
       CURRICULUM_CODE_REGEX,
       "Topic code may only contain letters, numbers, hyphens and underscores"
-    ),
+    )
+    .optional(),
   title: z
     .string()
     .min(1, "Topic title is required")
@@ -75,7 +77,8 @@ export const createObjectiveSchema = z.object({
     .regex(
       CURRICULUM_CODE_REGEX,
       "Objective code may only contain letters, numbers, hyphens and underscores"
-    ),
+    )
+    .optional(),
   statement: z
     .string()
     .min(3, "Objective statement must be at least 3 characters")
@@ -102,3 +105,35 @@ export const reorderStructureItemsSchema = z.object({
     .array(z.string().uuid("Invalid item ID"))
     .min(1, "At least one ID is required"),
 });
+
+export const reorderStructureSchema = reorderStructureItemsSchema;
+
+export const versionIdParamSchema = z.object({
+  versionId: z.string().uuid("Invalid version ID"),
+});
+
+export const subjectIdParamSchema = z.object({
+  subjectId: z.string().uuid("Invalid subject ID"),
+});
+
+export const unitIdParamSchema = z.object({
+  unitId: z.string().uuid("Invalid unit ID"),
+});
+
+export const topicIdParamSchema = z.object({
+  topicId: z.string().uuid("Invalid topic ID"),
+});
+
+export const objectiveIdParamSchema = z.object({
+  objectiveId: z.string().uuid("Invalid objective ID"),
+});
+
+export const idParamSchema = z.record(z.string(), z.string());
+
+export const structureFilterSchema = z.object({
+  search: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+
+

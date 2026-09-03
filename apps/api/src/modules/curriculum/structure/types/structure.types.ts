@@ -80,7 +80,7 @@ export interface CreateCurriculumSubjectInput {
 
 export interface CreateUnitInput {
   readonly curriculumSubjectId: string;
-  readonly code: string;
+  readonly code?: string;
   readonly title: string;
   readonly description?: string | null;
   readonly orderIndex?: number;
@@ -95,7 +95,7 @@ export interface UpdateUnitInput {
 
 export interface CreateTopicInput {
   readonly unitId: string;
-  readonly code: string;
+  readonly code?: string;
   readonly title: string;
   readonly description?: string | null;
   readonly orderIndex?: number;
@@ -110,7 +110,7 @@ export interface UpdateTopicInput {
 
 export interface CreateObjectiveInput {
   readonly topicId: string;
-  readonly code: string;
+  readonly code?: string;
   readonly statement: string;
   readonly description?: string | null;
   readonly orderIndex?: number;
@@ -128,3 +128,18 @@ export interface ReorderStructureItemsInput {
   readonly parentId: string;
   readonly orderedIds: readonly string[];
 }
+
+export interface StructureFilterParams {
+  readonly search?: string;
+  readonly page?: number;
+  readonly limit?: number;
+}
+
+export interface PaginatedStructureResult<T> {
+  readonly data: readonly T[];
+  readonly total: number;
+  readonly page: number;
+  readonly limit: number;
+  readonly totalPages: number;
+}
+

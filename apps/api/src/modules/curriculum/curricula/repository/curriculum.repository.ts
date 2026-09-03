@@ -26,6 +26,7 @@ export class CurriculumRepository {
       search,
       scope,
       status,
+      version,
       page = 1,
       limit = DEFAULT_CURRICULUM_PAGE_LIMIT,
     } = params;
@@ -44,6 +45,18 @@ export class CurriculumRepository {
 
     if (status) {
       where.status = status;
+    }
+
+    if (version && version.trim()) {
+      const vTerm = version.trim();
+      where.versions = {
+        some: {
+          OR: [
+            { code: { contains: vTerm, mode: "insensitive" } },
+            { name: { contains: vTerm, mode: "insensitive" } },
+          ],
+        },
+      };
     }
 
     if (search && search.trim()) {
@@ -224,12 +237,13 @@ export class CurriculumRepository {
     input: CreateCurriculumInput
   ): Promise<CurriculumDetailRecord> {
     const targetTenantId = input.scope === "SYSTEM" ? null : tenantId;
+    const finalCode = input.code || "CUR";
 
     const result = await prisma.$transaction(async (tx) => {
       const curriculum = await tx.curriculum.create({
         data: {
           tenantId: targetTenantId,
-          code: input.code,
+          code: finalCode,
           name: input.name,
           description: input.description,
           scope: input.scope ?? "TENANT",
@@ -242,8 +256,8 @@ export class CurriculumRepository {
       const initialVersion = await tx.curriculumVersion.create({
         data: {
           curriculumId: curriculum.id,
-          code: input.initialVersionCode || "v1",
-          name: input.initialVersionName || "Version 1",
+          code: input.initialVersionCode || "v1.0",
+          name: input.initialVersionName || "Version 1.0",
           status: "DRAFT",
         },
       });
@@ -434,11 +448,14 @@ export class CurriculumRepository {
     curriculumId: string,
     input: CreateCurriculumVersionInput
   ): Promise<CurriculumVersionRecord> {
+    const versionCode = input.code || "v1.0";
+    const versionName = input.name || "Version 1.0";
+
     const created = await prisma.curriculumVersion.create({
       data: {
         curriculumId,
-        code: input.code,
-        name: input.name,
+        code: versionCode,
+        name: versionName,
         description: input.description,
         effectiveFrom: input.effectiveFrom ? new Date(input.effectiveFrom) : null,
         effectiveTo: input.effectiveTo ? new Date(input.effectiveTo) : null,
@@ -464,7 +481,7 @@ export class CurriculumRepository {
       effectiveTo: created.effectiveTo,
       status: created.status,
       externalId: created.externalId,
-      subjectCount: created._count.subjects,
+      subjectCount: (created as { _count?: { subjects: number } })._count?.subjects ?? 0,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     };

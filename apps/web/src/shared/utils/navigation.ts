@@ -36,7 +36,9 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.CURRICULUM.BASE,
     icon: BookOpen,
     children: [
-      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
     ],
   },
   {
@@ -75,7 +77,9 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.CURRICULUM.BASE,
     icon: BookOpen,
     children: [
-      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
     ],
   },
   {
@@ -115,7 +119,8 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.CURRICULUM.BASE,
     icon: BookOpen,
     children: [
-      { label: "Curricula & Versions", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
     ],
   },
   {

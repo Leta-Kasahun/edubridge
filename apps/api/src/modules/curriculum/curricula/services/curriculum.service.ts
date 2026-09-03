@@ -23,6 +23,13 @@ import {
   BadRequestError,
 } from "../../../../shared/exceptions/index.js";
 import { normalizeCurriculumCode } from "../../../../shared/utils/curriculum-tree.util.js";
+import {
+  generateCurriculumCode,
+  generateCurriculumVersionCode,
+  generateCurriculumVersionName,
+  getNextCurriculumSequence,
+  getCurriculumCodePrefix,
+} from "../../../../shared/utils/generators.js";
 
 export class CurriculumService {
   constructor(
@@ -54,22 +61,40 @@ export class CurriculumService {
     tenantId: string,
     input: CreateCurriculumInput
   ): Promise<CurriculumDetailRecord> {
-    const normalizedCode = normalizeCurriculumCode(input.code);
     const targetTenantId = input.scope === "SYSTEM" ? null : tenantId;
 
-    const existing = await this.repo.findByCode(targetTenantId, normalizedCode);
-    if (existing) {
-      throw new ConflictError(
-        `Curriculum with code "${normalizedCode}" already exists`
-      );
+    let finalCode = input.code ? normalizeCurriculumCode(input.code) : "";
+    if (!finalCode) {
+      const prefix = await getCurriculumCodePrefix(targetTenantId, input.name);
+      let seq = await getNextCurriculumSequence(targetTenantId);
+      let candidate = generateCurriculumCode(prefix, seq);
+      while (await this.repo.findByCode(targetTenantId, candidate)) {
+        seq += 1;
+        candidate = generateCurriculumCode(prefix, seq);
+      }
+      finalCode = candidate;
+    } else {
+      const existing = await this.repo.findByCode(targetTenantId, finalCode);
+      if (existing) {
+        throw new ConflictError(
+          `Curriculum with code "${finalCode}" already exists`
+        );
+      }
     }
+
+    const initialVersionCode = input.initialVersionCode
+      ? normalizeCurriculumCode(input.initialVersionCode)
+      : generateCurriculumVersionCode(1);
+
+    const initialVersionName =
+      input.initialVersionName || generateCurriculumVersionName(1);
 
     return this.repo.create(tenantId, {
       ...input,
-      code: normalizedCode,
-      initialVersionCode: input.initialVersionCode
-        ? normalizeCurriculumCode(input.initialVersionCode)
-        : "v1",
+      scope: input.scope ?? "TENANT",
+      code: finalCode,
+      initialVersionCode,
+      initialVersionName,
     });
   }
 
@@ -121,16 +146,31 @@ export class CurriculumService {
       throw new BadRequestError("Cannot add versions to system-level curricula");
     }
 
-    const normalizedCode = normalizeCurriculumCode(input.code);
-    const existingVersion = await this.repo.findVersionByCode(
-      curriculumId,
-      normalizedCode
-    );
-    if (existingVersion) {
-      throw new ConflictError(
-        `Version with code "${normalizedCode}" already exists for this curriculum`
+    const existingCount = curriculum.versions.length;
+    let nextIndex = existingCount + 1;
+    let finalVersionCode = input.code ? normalizeCurriculumCode(input.code) : "";
+
+    if (!finalVersionCode) {
+      let candidate = generateCurriculumVersionCode(nextIndex);
+      while (await this.repo.findVersionByCode(curriculumId, candidate)) {
+        nextIndex += 1;
+        candidate = generateCurriculumVersionCode(nextIndex);
+      }
+      finalVersionCode = candidate;
+    } else {
+      const existingVersion = await this.repo.findVersionByCode(
+        curriculumId,
+        finalVersionCode
       );
+      if (existingVersion) {
+        throw new ConflictError(
+          `Version with code "${finalVersionCode}" already exists for this curriculum`
+        );
+      }
     }
+
+    const finalVersionName =
+      input.name || generateCurriculumVersionName(nextIndex);
 
     if (input.effectiveFrom && input.effectiveTo) {
       const from = new Date(input.effectiveFrom);
@@ -142,7 +182,8 @@ export class CurriculumService {
 
     return this.repo.createVersion(curriculumId, {
       ...input,
-      code: normalizedCode,
+      code: finalVersionCode,
+      name: finalVersionName,
     });
   }
 

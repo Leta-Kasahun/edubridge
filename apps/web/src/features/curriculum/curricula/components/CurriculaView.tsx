@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Plus,
-  Globe,
+  Layers,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -12,7 +12,6 @@ import {
   CurriculumItem,
   CurriculumVersionItem,
   CurriculumFilters,
-  CurriculumScope,
   CurriculumStatus,
 } from "../types/curriculum.types";
 import {
@@ -60,11 +59,10 @@ export function CurriculaView() {
     }));
   };
 
-  const handleScopeSelect = (scopeValue: string) => {
+  const handleVersionSelect = (versionValue: string) => {
     setFilters((prev) => ({
       ...prev,
-      scope:
-        scopeValue === "ALL" ? undefined : (scopeValue as CurriculumScope),
+      version: versionValue === "ALL" ? undefined : versionValue,
       page: 1,
     }));
   };
@@ -112,15 +110,17 @@ export function CurriculaView() {
 
   const filterGroups: readonly FilterGroup[] = [
     {
-      id: "scope",
-      label: "Scope",
-      selectedValue: filters.scope || "ALL",
-      onSelect: handleScopeSelect,
-      icon: Globe,
+      id: "version",
+      label: "Versions",
+      selectedValue: filters.version || "ALL",
+      onSelect: handleVersionSelect,
+      icon: Layers,
       options: [
-        { label: "All Scopes", value: "ALL" },
-        { label: "National System", value: "SYSTEM" },
-        { label: "School Custom", value: "TENANT" },
+        { label: "All", value: "ALL" },
+        { label: "Version 1 (2018 E.C)", value: "v1" },
+        { label: "Version 2 (2018 E.C)", value: "v2" },
+        { label: "Version 3 (2018 E.C)", value: "v3" },
+        { label: "Version 1 (2017 E.C)", value: "2017" },
       ],
     },
     {
@@ -130,7 +130,7 @@ export function CurriculaView() {
       onSelect: handleStatusSelect,
       icon: CheckCircle2,
       options: [
-        { label: "All Statuses", value: "ALL" },
+        { label: "All", value: "ALL" },
         { label: "Active", value: "ACTIVE" },
         { label: "Draft", value: "DRAFT" },
         { label: "Archived", value: "ARCHIVED" },
@@ -148,15 +148,15 @@ export function CurriculaView() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         <ErrorAlert message={getErrorMessage(error, "Failed to load curricula.")} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
+    <div className="space-y-3.5 sm:space-y-4 max-w-7xl mx-auto w-full pb-10">
+      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={filters.search || ""}
           onSearchChange={handleSearchChange}
@@ -166,7 +166,7 @@ export function CurriculaView() {
             <button
               type="button"
               onClick={handleOpenAdd}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
               <span>Add Curriculum</span>

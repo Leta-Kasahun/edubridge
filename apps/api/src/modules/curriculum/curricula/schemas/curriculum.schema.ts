@@ -16,7 +16,8 @@ export const createCurriculumSchema = z.object({
     .regex(
       CURRICULUM_CODE_REGEX,
       "Code may only contain letters, numbers, hyphens and underscores"
-    ),
+    )
+    .optional(),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
@@ -30,9 +31,8 @@ export const createCurriculumSchema = z.object({
     .min(1)
     .max(50)
     .regex(CURRICULUM_CODE_REGEX)
-    .optional()
-    .default("v1"),
-  initialVersionName: z.string().min(1).max(100).optional().default("Version 1"),
+    .optional(),
+  initialVersionName: z.string().min(1).max(100).optional(),
 });
 
 export const updateCurriculumSchema = z.object({
@@ -49,16 +49,18 @@ export const updateCurriculumSchema = z.object({
 export const createCurriculumVersionSchema = z.object({
   code: z
     .string()
-    .min(1, "Version code is required")
-    .max(50, "Version code cannot exceed 50 characters")
+    .min(1)
+    .max(50)
     .regex(
       CURRICULUM_CODE_REGEX,
       "Version code may only contain letters, numbers, hyphens and underscores"
-    ),
+    )
+    .optional(),
   name: z
     .string()
-    .min(1, "Version name is required")
-    .max(100, "Version name cannot exceed 100 characters"),
+    .min(1)
+    .max(100)
+    .optional(),
   description: z.string().max(1000).optional().nullable(),
   effectiveFrom: z.coerce.date().optional().nullable(),
   effectiveTo: z.coerce.date().optional().nullable(),
@@ -89,6 +91,7 @@ export const curriculumFilterSchema = z.object({
   search: z.string().optional(),
   scope: z.enum(CURRICULUM_SCOPES).optional(),
   status: z.enum(CURRICULUM_STATUSES).optional(),
+  version: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce
     .number()

@@ -40,7 +40,7 @@ export interface CurriculumDetailRecord extends CurriculumRecord {
 }
 
 export interface CreateCurriculumInput {
-  readonly code: string;
+  readonly code?: string;
   readonly name: string;
   readonly description?: string | null;
   readonly scope?: CurriculumScopeType;
@@ -58,8 +58,8 @@ export interface UpdateCurriculumInput {
 }
 
 export interface CreateCurriculumVersionInput {
-  readonly code: string;
-  readonly name: string;
+  readonly code?: string;
+  readonly name?: string;
   readonly description?: string | null;
   readonly effectiveFrom?: Date | string | null;
   readonly effectiveTo?: Date | string | null;
@@ -79,6 +79,7 @@ export interface CurriculumFilterParams {
   readonly search?: string;
   readonly scope?: CurriculumScopeType;
   readonly status?: CurriculumStatusType;
+  readonly version?: string;
   readonly page?: number;
   readonly limit?: number;
 }

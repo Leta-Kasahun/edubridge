@@ -5,6 +5,7 @@ import {
   Layers,
   ChevronRight,
   BookOpen,
+  FileSpreadsheet,
 } from "lucide-react";
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
@@ -20,12 +21,28 @@ interface CurriculumSectionItem {
 
 const CURRICULUM_SECTIONS: readonly CurriculumSectionItem[] = [
   {
-    title: "Curricula & Versions",
+    title: "Curricula",
     description:
       "Manage national curriculum frameworks, school custom curricula, and immutable version lifecycle.",
     href: ROUTES.CURRICULUM.CURRICULA,
     icon: Layers,
     badge: "Versioned Packages",
+  },
+  {
+    title: "Structure",
+    description:
+      "Configure academic units, granular topics, and competency learning objectives hierarchically.",
+    href: ROUTES.CURRICULUM.STRUCTURE,
+    icon: BookOpen,
+    badge: "Units & Topics",
+  },
+  {
+    title: "Import",
+    description:
+      "Import curriculum units, topics, and learning objectives into target versions using standard CSV and Excel templates.",
+    href: ROUTES.CURRICULUM.IMPORT,
+    icon: FileSpreadsheet,
+    badge: "Batch Import",
   },
 ];
 

@@ -12,6 +12,7 @@ const curriculumRouteDefinitions: readonly RouteDefinition[] = [
       { name: "search", in: "query", schema: { type: "string" } },
       { name: "scope", in: "query", schema: { type: "string", enum: ["TENANT", "SYSTEM"] } },
       { name: "status", in: "query", schema: { type: "string", enum: ["DRAFT", "ACTIVE", "ARCHIVED"] } },
+      { name: "version", in: "query", schema: { type: "string" } },
       { name: "page", in: "query", schema: { type: "integer", default: 1 } },
       { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
     ],
@@ -56,7 +57,7 @@ const curriculumRouteDefinitions: readonly RouteDefinition[] = [
           initialVersionCode: { type: "string" },
           initialVersionName: { type: "string" },
         },
-        required: ["code", "name"],
+        required: ["name"],
       },
     },
     responses: {
@@ -141,7 +142,6 @@ const curriculumRouteDefinitions: readonly RouteDefinition[] = [
           effectiveTo: { type: "string", format: "date" },
           externalId: { type: "string" },
         },
-        required: ["code", "name"],
       },
     },
     responses: {

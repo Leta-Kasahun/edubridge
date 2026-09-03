@@ -14,6 +14,7 @@
     "db:seed:teachers": "tsx prisma/seed-teachers.ts",
     "db:seed:academic": "tsx prisma/seed-academic-structure.ts",
     "db:seed:students": "tsx prisma/seed-students.ts",
+    "db:seed:curriculum": "tsx prisma/seed-curriculum.ts",
     "db:clean": "tsx prisma/clean-db.ts"
   },
   "prisma": {

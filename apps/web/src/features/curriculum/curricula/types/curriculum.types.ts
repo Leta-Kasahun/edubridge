@@ -38,7 +38,7 @@ export interface CurriculumDetailItem extends CurriculumItem {
 }
 
 export interface CreateCurriculumPayload {
-  readonly code: string;
+  readonly code?: string;
   readonly name: string;
   readonly description?: string | null;
   readonly scope?: CurriculumScope;
@@ -56,8 +56,8 @@ export interface UpdateCurriculumPayload {
 }
 
 export interface CreateCurriculumVersionPayload {
-  readonly code: string;
-  readonly name: string;
+  readonly code?: string;
+  readonly name?: string;
   readonly description?: string | null;
   readonly effectiveFrom?: string | null;
   readonly effectiveTo?: string | null;
@@ -76,6 +76,7 @@ export interface CurriculumFilters {
   readonly search?: string;
   readonly scope?: CurriculumScope;
   readonly status?: CurriculumStatus;
+  readonly version?: string;
   readonly page?: number;
   readonly limit?: number;
 }

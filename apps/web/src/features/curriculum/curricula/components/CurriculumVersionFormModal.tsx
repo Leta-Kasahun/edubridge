@@ -30,7 +30,6 @@ export function CurriculumVersionFormModal({
   versionToEdit,
 }: CurriculumVersionFormModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -55,7 +54,6 @@ export function CurriculumVersionFormModal({
   useEffect(() => {
     if (!isOpen) return;
     if (versionToEdit) {
-      setCode(versionToEdit.code);
       setName(versionToEdit.name);
       setDescription(versionToEdit.description || "");
       setEffectiveFrom(
@@ -70,7 +68,6 @@ export function CurriculumVersionFormModal({
       );
       setExternalId(versionToEdit.externalId || "");
     } else {
-      setCode("");
       setName("");
       setDescription("");
       setEffectiveFrom("");
@@ -86,12 +83,7 @@ export function CurriculumVersionFormModal({
     e.preventDefault();
     setFormError(null);
 
-    if (!isEditing && !code.trim()) {
-      setFormError("Version code is required (e.g. v2, 2024-R1)");
-      return;
-    }
-
-    if (!name.trim()) {
+    if (isEditing && !name.trim()) {
       setFormError("Version name is required");
       return;
     }
@@ -115,8 +107,7 @@ export function CurriculumVersionFormModal({
         await updateMutation.mutateAsync(payload);
       } else {
         const payload: CreateCurriculumVersionPayload = {
-          code: code.trim(),
-          name: name.trim(),
+          name: name.trim() || undefined,
           description: description.trim() || null,
           effectiveFrom: effectiveFrom || null,
           effectiveTo: effectiveTo || null,
@@ -138,7 +129,6 @@ export function CurriculumVersionFormModal({
         aria-hidden="true"
       />
       <div className="relative z-10 w-full max-w-md bg-card rounded-2xl border border-border shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 min-w-0 flex flex-col max-h-[90vh]">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border bg-card shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -163,41 +153,20 @@ export function CurriculumVersionFormModal({
           </button>
         </div>
 
-        {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1 text-xs">
           {formError && <ErrorAlert message={formError} />}
-
-          {!isEditing && (
-            <div>
-              <label
-                htmlFor="v-code"
-                className="block text-xs font-semibold uppercase tracking-wider text-foreground/80 mb-1.5 select-none"
-              >
-                Version Code <span className="text-destructive">*</span>
-              </label>
-              <input
-                id="v-code"
-                type="text"
-                placeholder="e.g. v2, 2024-revised"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm font-mono shadow-2xs transition-all placeholder:text-muted-foreground/60 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-hidden"
-                disabled={isLoading}
-              />
-            </div>
-          )}
 
           <div>
             <label
               htmlFor="v-name"
               className="block text-xs font-semibold uppercase tracking-wider text-foreground/80 mb-1.5 select-none"
             >
-              Version Name <span className="text-destructive">*</span>
+              {isEditing ? "Version Name" : "Version Name (Optional)"}
             </label>
             <input
               id="v-name"
               type="text"
-              placeholder="e.g. 2024 National Standard Edition"
+              placeholder={isEditing ? "e.g. Version 2.0 (2018 E.C)" : "Auto-generated if left blank"}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm shadow-2xs transition-all placeholder:text-muted-foreground/60 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-hidden"

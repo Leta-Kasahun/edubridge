@@ -22,7 +22,7 @@ import { teacherExperienceRouter } from "./modules/teacher-profile/experience.ro
 import { teacherDirectoryRouter } from "./modules/teacher-profile/teacher-directory.route.js";
 import { academicYearRouter, gradeRouter, sectionRouter, subjectRoutes, studentAssignmentRouter, teacherAssignmentRouter } from "./modules/academic/index.js";
 import { studentProfileRouter } from "./modules/students/route.js";
-import { curriculumRouter } from "./modules/curriculum/index.js";
+import { curriculumRouter, structureRouter, curriculumImportRouter } from "./modules/curriculum/index.js";
 
 const app: Express = express();
 
@@ -72,6 +72,10 @@ app.use("/api/student-profile", studentProfileRouter);
 app.use("/api/student-profiles", studentProfileRouter);
 app.use("/api/curriculum/curricula", curriculumRouter);
 app.use("/api/curricula", curriculumRouter);
+app.use("/api/curriculum/structure", structureRouter);
+app.use("/api/curriculum-structure", structureRouter);
+app.use("/api/curriculum/import", curriculumImportRouter);
+app.use("/api/curriculum-import", curriculumImportRouter);
 
 app.use(errorHandler);
 

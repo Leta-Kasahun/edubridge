@@ -18,6 +18,14 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   "TeacherQualification",
   "TeacherExperience",
   "ImportBatch",
+  "ExamContext",
+  "LearningContent",
+  "QuestionBank",
+  "Assessment",
+  "LearningEvidence",
+  "StudentTopicPerformance",
+  "StudentTopicMastery",
+  "MasteryHistory",
 ]);
 
 export const FILTER_WHERE_OPERATIONS = new Set<string>([
