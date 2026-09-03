@@ -63,15 +63,20 @@ export function useUpdateCurriculum(id: string) {
   });
 }
 
-export function useChangeCurriculumStatus(id: string) {
+export function useChangeCurriculumStatus() {
   const queryClient = useQueryClient();
 
-  return useMutation<CurriculumItem, Error, CurriculumStatus>({
-    mutationFn: (status) => curriculumService.changeCurriculumStatus(id, status),
-    onSuccess: () => {
+  return useMutation<
+    CurriculumItem,
+    Error,
+    { id: string; status: CurriculumStatus }
+  >({
+    mutationFn: ({ id, status }) =>
+      curriculumService.changeCurriculumStatus(id, status),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: CURRICULA_QUERY_KEY });
       queryClient.invalidateQueries({
-        queryKey: [...CURRICULA_QUERY_KEY, "detail", id],
+        queryKey: [...CURRICULA_QUERY_KEY, "detail", variables.id],
       });
     },
   });
@@ -107,11 +112,15 @@ export function useUpdateCurriculumVersion(curriculumId: string, versionId: stri
   });
 }
 
-export function useChangeVersionStatus(curriculumId: string, versionId: string) {
+export function useChangeVersionStatus(curriculumId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<CurriculumVersionItem, Error, CurriculumVersionStatus>({
-    mutationFn: (status) =>
+  return useMutation<
+    CurriculumVersionItem,
+    Error,
+    { versionId: string; status: CurriculumVersionStatus }
+  >({
+    mutationFn: ({ versionId, status }) =>
       curriculumService.changeVersionStatus(curriculumId, versionId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CURRICULA_QUERY_KEY });

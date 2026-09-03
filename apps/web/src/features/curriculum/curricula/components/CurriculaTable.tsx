@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   MoreVertical,
   Eye,
@@ -64,29 +65,74 @@ function CurriculumRowActions({
   readonly isUpdating: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
 
   const isSystemScope = item.scope === "SYSTEM" && item.tenantId === null;
 
+  const updatePosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = isSystemScope ? 45 : 210;
+      const menuWidth = 160;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+
+      const top = openUpwards
+        ? rect.top - menuHeight - 4
+        : rect.bottom + 4;
+      const left = Math.max(8, rect.right - menuWidth);
+
+      setCoords({ top, left });
+    }
+  };
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      updatePosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleScrollOrResize = () => {
+      setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         disabled={isUpdating}
         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
         aria-label="Actions"
@@ -94,94 +140,107 @@ function CurriculumRowActions({
         {isUpdating ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-9 w-40 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onViewDetails(item);
+      {isOpen &&
+        coords &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 9999,
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+            className="w-40 bg-card border border-border rounded-xl shadow-2xl p-1 animate-in fade-in-0 zoom-in-95"
           >
-            <Eye size={13} className="text-muted-foreground" />
-            <span>View</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onViewDetails(item);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+            >
+              <Eye size={13} className="text-muted-foreground" />
+              <span>View</span>
+            </button>
 
-          {!isSystemScope && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onEdit(item);
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
-              >
-                <Edit2 size={13} className="text-muted-foreground" />
-                <span>Edit</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  onAddVersion(item);
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
-              >
-                <PlusCircle size={13} className="text-muted-foreground" />
-                <span>Version</span>
-              </button>
-
-              <div className="h-px bg-border my-1" />
-
-              {item.status !== "ACTIVE" && (
+            {!isSystemScope && (
+              <>
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onStatusChange(item, "ACTIVE");
+                    onEdit(item);
                   }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
                 >
-                  <CheckCircle2 size={13} className="text-muted-foreground" />
-                  <span>Activate</span>
+                  <Edit2 size={13} className="text-muted-foreground" />
+                  <span>Edit</span>
                 </button>
-              )}
 
-              {item.status !== "DRAFT" && (
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onStatusChange(item, "DRAFT");
+                    onAddVersion(item);
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
                 >
-                  <FileEdit size={13} />
-                  <span>Draft</span>
+                  <PlusCircle size={13} className="text-muted-foreground" />
+                  <span>Version</span>
                 </button>
-              )}
 
-              {item.status !== "ARCHIVED" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onStatusChange(item, "ARCHIVED");
-                  }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
-                >
-                  <Archive size={13} />
-                  <span>Archive</span>
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
+                <div className="h-px bg-border my-1" />
+
+                {item.status !== "ACTIVE" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onStatusChange(item, "ACTIVE");
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  >
+                    <CheckCircle2 size={13} className="text-muted-foreground" />
+                    <span>Activate</span>
+                  </button>
+                )}
+
+                {item.status !== "DRAFT" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onStatusChange(item, "DRAFT");
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  >
+                    <FileEdit size={13} />
+                    <span>Draft</span>
+                  </button>
+                )}
+
+                {item.status !== "ARCHIVED" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onStatusChange(item, "ARCHIVED");
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left font-medium"
+                  >
+                    <Archive size={13} />
+                    <span>Archive</span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 

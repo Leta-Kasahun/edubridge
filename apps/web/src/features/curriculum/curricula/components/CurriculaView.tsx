@@ -46,7 +46,7 @@ export function CurriculaView() {
     useState<CurriculumVersionItem | null>(null);
 
   const { data, isLoading, error, isFetching } = useCurricula(filters);
-  const changeStatusMutation = useChangeCurriculumStatus("");
+  const changeStatusMutation = useChangeCurriculumStatus();
 
   const items = data?.data ?? [];
   const pagination = data?.pagination;
@@ -82,7 +82,7 @@ export function CurriculaView() {
     item: CurriculumItem,
     status: CurriculumStatus
   ) => {
-    await changeStatusMutation.mutateAsync(status);
+    await changeStatusMutation.mutateAsync({ id: item.id, status });
   };
 
   const handleOpenAdd = () => {
@@ -117,9 +117,9 @@ export function CurriculaView() {
       icon: Layers,
       options: [
         { label: "All", value: "ALL" },
-        { label: "Version 1", value: "Version 1" },
-        { label: "Version 2", value: "Version 2" },
-        { label: "2018", value: "2018" },
+        { label: "V1", value: "V1" },
+        { label: "V2", value: "V2" },
+        { label: "V3", value: "V3" },
       ],
     },
     {

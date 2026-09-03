@@ -34,6 +34,9 @@ export const curriculumService = {
     if (filters.status) {
       params.append("status", filters.status);
     }
+    if (filters.version && filters.version.trim()) {
+      params.append("version", filters.version.trim());
+    }
     if (filters.page) {
       params.append("page", String(filters.page));
     }

@@ -41,6 +41,7 @@ interface CurriculumSeedData {
   readonly name: string;
   readonly code: string;
   readonly description: string;
+  readonly authorityName: string;
   readonly versions: readonly CurriculumVersionSeedData[];
 }
 
@@ -49,6 +50,7 @@ const ETHIOPIAN_CURRICULUM_SEEDS: readonly CurriculumSeedData[] = [
     name: "Ethiopian General Secondary Curriculum",
     code: "SEC181",
     description: "National General Secondary Education Curriculum Framework for Grades 9-10 based on the 2018 E.C. standards.",
+    authorityName: "Ministry of Education",
     versions: [
       {
         code: "V1",
@@ -385,6 +387,7 @@ const ETHIOPIAN_CURRICULUM_SEEDS: readonly CurriculumSeedData[] = [
     name: "Ethiopian Preparatory Natural Science Curriculum",
     code: "NAT181",
     description: "Advanced Natural Science Stream Curriculum for Grades 11-12 preparing students for higher education.",
+    authorityName: "Ministry of Education",
     versions: [
       {
         code: "V1",
@@ -557,6 +560,7 @@ export async function seedCurriculum(targetTenantId?: string): Promise<void> {
           update: {
             name: currSeed.name,
             description: currSeed.description,
+            authorityName: currSeed.authorityName,
             status: "ACTIVE",
           },
           create: {
@@ -564,6 +568,7 @@ export async function seedCurriculum(targetTenantId?: string): Promise<void> {
             name: currSeed.name,
             code: currSeed.code,
             description: currSeed.description,
+            authorityName: currSeed.authorityName,
             scope: "TENANT",
             status: "ACTIVE",
           },

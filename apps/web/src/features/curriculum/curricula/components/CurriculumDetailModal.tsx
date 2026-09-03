@@ -62,8 +62,7 @@ export function CurriculumDetailModal({
   const curriculumId = curriculumItem?.id ?? null;
   const { data: detailData, isLoading } = useCurriculumDetails(curriculumId);
   const changeVersionStatusMutation = useChangeVersionStatus(
-    curriculumId ?? "",
-    ""
+    curriculumId ?? ""
   );
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export function CurriculumDetailModal({
     status: CurriculumVersionStatus
   ) => {
     if (!curriculumId) return;
-    await changeVersionStatusMutation.mutateAsync(status);
+    await changeVersionStatusMutation.mutateAsync({ versionId, status });
   };
 
   return createPortal(
