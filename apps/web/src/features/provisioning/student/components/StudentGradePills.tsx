@@ -55,7 +55,7 @@ export function StudentGradePills({
         className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-medium bg-card/60 border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer"
       >
         <Plus size={13} />
-        <span>Add grade</span>
+        <span>Grade</span>
       </button>
     </div>
   );
