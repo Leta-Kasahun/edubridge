@@ -6,6 +6,7 @@ import { seedSecurityPolicy } from "./seeds/security-policy.seeder.js";
 import { seedAcademicStructure } from "./seeds/academic-structure.seeder.js";
 import { seedTeachers } from "./seeds/teachers.seeder.js";
 import { seedStudents } from "./seeds/students.seeder.js";
+import { seedCurriculum } from "./seeds/curriculum.seeder.js";
 import { seedSystemAdmin } from "./seeds/admin.seeder.js";
 import { seedTestUsers } from "./seeds/users.seeder.js";
 
@@ -41,6 +42,7 @@ async function main() {
   }
 
   await seedAcademicStructure();
+  await seedCurriculum();
   await seedTeachers();
   await seedStudents();
 

@@ -206,6 +206,8 @@ export class GradeRepository {
       grades.find((item) => item.tenantId === null) ||
       grades[0];
 
+    if (!g) return null;
+
     return {
       id: g.id,
       tenantId: g.tenantId,

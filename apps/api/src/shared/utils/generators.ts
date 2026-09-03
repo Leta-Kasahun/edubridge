@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { prisma, runWithoutTenant } from "../../lib/prisma.js";
+import { getCurrentEthiopianYear } from "./ethiopian-calendar.util.js";
 
 export const generateTenantCode = (name: string): string => {
   return name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 3).toUpperCase();
@@ -91,3 +92,64 @@ export const getNextSequence = async (tenantCode: string, role: string): Promise
     return count + 1;
   });
 };
+
+export const generateCurriculumCode = (
+  prefix: string,
+  sequence: number,
+  ethiopianYear?: number
+): string => {
+  const cleanPrefix = (prefix.replace(/[^a-zA-Z]/g, "").slice(0, 3) || "CUR").toUpperCase().padEnd(3, "C");
+  const ethYear = String(ethiopianYear ?? getCurrentEthiopianYear()).slice(-2);
+  const seq = String(sequence % 10 || 1);
+  return `${cleanPrefix}${ethYear}${seq}`.slice(0, 6);
+};
+
+export const generateCurriculumVersionCode = (versionNumber: number): string => {
+  return `V${versionNumber}`;
+};
+
+export const generateCurriculumVersionName = (
+  versionNumber: number,
+  ethiopianYear?: number
+): string => {
+  const ethYear = ethiopianYear ?? getCurrentEthiopianYear();
+  return `Version ${versionNumber} (${ethYear})`;
+};
+
+export const getNextCurriculumSequence = async (tenantId: string | null): Promise<number> => {
+  return runWithoutTenant(async () => {
+    const count = await prisma.curriculum.count({
+      where: {
+        tenantId: tenantId ?? null,
+      },
+    });
+    return count + 1;
+  });
+};
+
+export const getCurriculumCodePrefix = async (
+  _tenantId: string | null,
+  fallbackName?: string
+): Promise<string> => {
+  if (fallbackName) {
+    const letters = fallbackName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase();
+    if (letters.length >= 2) return letters.padEnd(3, "C");
+  }
+  return "CUR";
+};
+
+export const generateUnitCode = (orderIndex: number): string => {
+  return `U${orderIndex}`;
+};
+
+export const generateTopicCode = (unitCode: string, orderIndex: number): string => {
+  const cleanUnit = unitCode.replace(/[^a-zA-Z0-9]/g, "");
+  return `${cleanUnit}T${orderIndex}`;
+};
+
+export const generateObjectiveCode = (topicCode: string, orderIndex: number): string => {
+  const cleanTopic = topicCode.replace(/[^a-zA-Z0-9]/g, "");
+  return `${cleanTopic}O${orderIndex}`;
+};
+
+

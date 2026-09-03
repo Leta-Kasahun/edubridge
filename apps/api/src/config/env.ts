@@ -12,7 +12,7 @@ export const env = {
   REDIS_PASSWORD: process.env.REDIS_PASSWORD ?? "",
   JWT_SECRET: process.env.JWT_SECRET ?? "",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET ?? "",
-  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN ?? "15m",
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN ?? "43200m",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN ?? "7d",
   CORS_ORIGIN: process.env.CORS_ORIGIN ?? "*",
   RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
@@ -24,6 +24,9 @@ export const env = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL ?? "",
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ?? "",
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ?? "",
 } as const;
 
 export type Env = typeof env;

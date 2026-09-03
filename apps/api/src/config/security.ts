@@ -20,7 +20,7 @@ export const defaultSecurityPolicy = {
   requireOtpForLogin: false,
   requireOtpForEmailChange: true,
   requireOtpForVerification: true,
-  accessTokenExpiryMinutes: 15,
+  accessTokenExpiryMinutes: 43200,
   refreshTokenExpiryDays: 7,
   maxConcurrentSessions: 5,
   sessionTimeoutMinutes: 60,

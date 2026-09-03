@@ -7,6 +7,7 @@ import {
   UserPlus,
   Award,
   Calendar,
+  BookOpen,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -29,6 +30,16 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Schools",
     href: ROUTES.SCHOOLS,
     icon: Building2,
+  },
+  {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
+    ],
   },
   {
     label: "Settings",
@@ -62,6 +73,16 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
+    ],
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -92,6 +113,15 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
+  },
+  {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.BASE,
+    icon: BookOpen,
+    children: [
+      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
+      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+    ],
   },
   {
     label: "My Profile",

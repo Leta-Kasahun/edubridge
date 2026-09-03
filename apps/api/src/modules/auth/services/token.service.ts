@@ -22,7 +22,7 @@ export class TokenService {
     refreshExpiresInDays?: number;
   }): { tokens: AuthTokens; refreshTokenHash: string; refreshExpiresAt: Date } {
     const tokenId = crypto.randomUUID();
-    const accessMinutes = params.accessExpiresInMinutes ?? 15;
+    const accessMinutes = params.accessExpiresInMinutes ?? 43200;
     const refreshDays = params.refreshExpiresInDays ?? 7;
 
     const accessTtl = `${accessMinutes}m`;

@@ -7,3 +7,6 @@ export * from "./date.util.js";
 export * from "./file-upload.util.js";
 export * from "./phone.util.js";
 export * from "./address.util.js";
+export * from "./file-validator.util.js";
+export * from "./media-optimizer.util.js";
+export * from "./curriculum-tree.util.js";
