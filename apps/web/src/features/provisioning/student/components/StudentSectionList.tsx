@@ -57,9 +57,9 @@ export function StudentSectionList({
         <button
           type="button"
           onClick={onOpenAddSection}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+          className="inline-flex items-center gap-1.5 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
         >
-          <Plus size={14} />
+          <Plus size={13} />
           <span>Section</span>
         </button>
       </div>
@@ -84,9 +84,9 @@ export function StudentSectionList({
       <button
         type="button"
         onClick={onOpenAddSection}
-        className="w-full py-3.5 px-4 rounded-2xl border border-dashed border-border bg-card/40 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors flex items-center justify-center gap-2 text-xs font-medium cursor-pointer"
+        className="w-full py-2.5 px-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold cursor-pointer"
       >
-        <Plus size={14} />
+        <Plus size={13} />
         <span>Section</span>
       </button>
     </div>

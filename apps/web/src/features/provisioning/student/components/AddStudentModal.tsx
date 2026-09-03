@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X, Calendar, GraduationCap, Layers, User } from "lucide-react";
+import { X, Calendar, GraduationCap, Layers, User, Plus } from "lucide-react";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
@@ -177,7 +177,7 @@ export function AddStudentModal({
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-1 flex-wrap">
+            <div className="flex items-center justify-between gap-1 flex-wrap mb-1">
               <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Layers size={13} className="text-muted-foreground" />
                 Class Section <span className="text-destructive">*</span>
@@ -188,9 +188,10 @@ export function AddStudentModal({
                   setIsCustomSection(!isCustomSection);
                   setSectionName("");
                 }}
-                className="text-[11px] text-muted-foreground hover:text-primary font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
-                {isCustomSection ? "Choose from existing" : "+ New custom section"}
+                <Plus size={11} />
+                <span>{isCustomSection ? "Existing" : "Section"}</span>
               </button>
             </div>
 

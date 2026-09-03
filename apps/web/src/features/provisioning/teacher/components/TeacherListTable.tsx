@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  UserPlus,
+  Plus,
   Upload,
   ChevronLeft,
   ChevronRight,
@@ -125,8 +125,8 @@ export function TeacherListTable({
         onClick={onAddTeacher}
         className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
       >
-        <UserPlus size={14} />
-        <span>Add teacher</span>
+        <Plus size={14} />
+        <span>Teacher</span>
       </button>
     </div>
   );
@@ -165,9 +165,10 @@ export function TeacherListTable({
               <button
                 type="button"
                 onClick={onAddTeacher}
-                className="px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer shadow-xs hover:bg-primary/90 transition-colors"
               >
-                Add teacher
+                <Plus size={13} />
+                <span>Teacher</span>
               </button>
             </div>
           </div>
