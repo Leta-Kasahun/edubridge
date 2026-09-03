@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  FileText,
+  BookMarked,
   FileSpreadsheet,
   ChevronRight,
 } from "lucide-react";
@@ -24,7 +24,7 @@ const LEARNING_CONTENT_SECTIONS: readonly LearningContentSectionItem[] = [
     description:
       "Curate textbooks, teacher guides, interactive digital lessons, and supplemental teaching resources.",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
-    icon: FileText,
+    icon: BookMarked,
     badge: "Digital Library",
   },
   {
