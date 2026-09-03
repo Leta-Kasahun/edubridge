@@ -1,14 +1,11 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
-  BookOpen,
   ArrowRight,
   RotateCcw,
   Layers,
-  Sparkles,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { CurriculumImportCommitResult } from "../types/import.types";
@@ -23,75 +20,67 @@ export function CurriculumImportResultCard({
   onReset,
 }: CurriculumImportResultCardProps) {
   return (
-    <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/50 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm text-center max-w-2xl mx-auto space-y-6">
-      <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
-        <CheckCircle2 className="w-8 h-8" />
+    <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-xs text-center max-w-xl mx-auto space-y-5">
+      <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+        <CheckCircle2 size={24} />
       </div>
 
       <div className="space-y-1">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-          Curriculum Imported Successfully
+        <h2 className="text-base sm:text-lg font-bold text-foreground">
+          Import Successful
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Processed {result.totalProcessedRows} row(s) and established the structure hierarchy.
+        <p className="text-xs text-muted-foreground">
+          Processed {result.totalProcessedRows} row(s) into curriculum structure.
         </p>
       </div>
 
-      {/* Stats Breakdown */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2">
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Subjects</p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="p-3 rounded-xl bg-muted/40 border border-border">
+          <p className="text-[11px] text-muted-foreground font-medium">Subjects</p>
+          <p className="text-lg font-bold text-foreground mt-0.5">
             {result.createdSubjectsCount}
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Units Created</p>
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+        <div className="p-3 rounded-xl bg-muted/40 border border-border">
+          <p className="text-[11px] text-muted-foreground font-medium">Units</p>
+          <p className="text-lg font-bold text-foreground mt-0.5">
             {result.createdUnitsCount}
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Topics Created</p>
-          <p className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+        <div className="p-3 rounded-xl bg-muted/40 border border-border">
+          <p className="text-[11px] text-muted-foreground font-medium">Topics</p>
+          <p className="text-lg font-bold text-foreground mt-0.5">
             {result.createdTopicsCount}
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Objectives</p>
-          <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+        <div className="p-3 rounded-xl bg-muted/40 border border-border">
+          <p className="text-[11px] text-muted-foreground font-medium">Objectives</p>
+          <p className="text-lg font-bold text-foreground mt-0.5">
             {result.createdObjectivesCount}
           </p>
         </div>
       </div>
 
-      {result.skippedDuplicatesCount > 0 && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {result.skippedDuplicatesCount} duplicate objective(s) were automatically skipped.
-        </p>
-      )}
-
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
         <button
           type="button"
           onClick={onReset}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
         >
-          <RotateCcw className="w-4 h-4" />
-          Import Another File
+          <RotateCcw size={13} />
+          <span>Import Another File</span>
         </button>
 
         <Link
           href={ROUTES.CURRICULUM.STRUCTURE}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-2xs transition-colors"
         >
-          <Layers className="w-4 h-4" />
-          View in Structure
-          <ArrowRight className="w-4 h-4" />
+          <Layers size={13} />
+          <span>View Structure</span>
+          <ArrowRight size={13} />
         </Link>
       </div>
     </div>

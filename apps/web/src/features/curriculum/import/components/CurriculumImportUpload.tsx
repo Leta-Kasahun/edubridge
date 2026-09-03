@@ -4,13 +4,10 @@ import React, { useState, useRef } from "react";
 import {
   Upload,
   FileSpreadsheet,
-  Download,
   Trash2,
   FileText,
-  AlertCircle,
 } from "lucide-react";
-import { SubmitButton } from "@/shared/components/SubmitButton";
-import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SubmitButton, ErrorAlert } from "@/shared/components";
 import { parseImportFile } from "@/shared/utils/csv-parser";
 import { curriculumImportService } from "../services/import.service";
 
@@ -91,49 +88,42 @@ export function CurriculumImportUpload({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Download Template
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Use the standard Ethiopian curriculum template to prepare your structure.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
+    <div className="space-y-4">
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+          <h2 className="text-sm sm:text-base font-bold text-foreground">
+            Download Template
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => curriculumImportService.downloadCsvTemplate()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
-              <FileText className="w-3.5 h-3.5 text-blue-500" />
-              Download CSV
+              <FileText size={13} className="text-primary" />
+              <span>CSV Template</span>
             </button>
             <button
               type="button"
               onClick={() => curriculumImportService.downloadExcelTemplate()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
-              Download Excel (.xlsx)
+              <FileSpreadsheet size={13} className="text-emerald-500" />
+              <span>Excel (.xlsx) Template</span>
             </button>
           </div>
         </div>
 
         {(localError || error) && (
-          <div className="mt-5">
-            <ErrorAlert message={localError || error || "An error occurred"} />
-          </div>
+          <ErrorAlert message={localError || error || "An error occurred"} />
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className="group relative flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all cursor-pointer text-center"
+            className="group flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed border-border hover:border-primary/60 rounded-xl bg-muted/20 hover:bg-primary/5 transition-all cursor-pointer text-center"
           >
             <input
               ref={fileInputRef}
@@ -145,28 +135,25 @@ export function CurriculumImportUpload({
               }}
               className="hidden"
             />
-            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Upload className="w-6 h-6" />
+            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
+              <Upload size={20} />
             </div>
-            <p className="text-sm font-medium text-slate-900 dark:text-white">
-              Click to select or drag and drop your file here
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Supports CSV (.csv) and Excel (.xlsx, .xls) up to 15MB
+            <p className="text-xs sm:text-sm font-semibold text-foreground">
+              Choose or drop CSV or Excel file here
             </p>
           </div>
 
           {file && (
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
-                  <FileSpreadsheet className="w-4 h-4" />
+            <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/40">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <FileSpreadsheet size={16} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  <p className="text-xs font-bold text-foreground truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] text-muted-foreground">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
@@ -174,19 +161,19 @@ export function CurriculumImportUpload({
               <button
                 type="button"
                 onClick={handleRemoveFile}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                 title="Remove file"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 size={14} />
               </button>
             </div>
           )}
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-1">
             <SubmitButton
               isLoading={isPending}
               disabled={!file || !csvContent}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-9 sm:h-9 text-xs font-semibold px-4"
             >
               Preview & Validate
             </SubmitButton>

@@ -1,14 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Upload,
-  BookOpen,
-  Layers,
-  ChevronDown,
-  AlertCircle,
-  FileSpreadsheet,
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { BookOpen, Layers } from "lucide-react";
 import { useCurricula, useCurriculumDetails } from "../../curricula/hooks/useCurricula";
 import { usePreviewCurriculumImport, useCommitCurriculumImport } from "../hooks/useCurriculumImport";
 import { CurriculumImportUpload } from "./CurriculumImportUpload";
@@ -19,8 +12,12 @@ import {
   CurriculumImportPreview,
   CurriculumImportCommitResult,
 } from "../types/import.types";
-import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import {
+  ErrorAlert,
+  LoadingSpinner,
+  SelectDropdown,
+  SelectDropdownOption,
+} from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
 export function CurriculumImportManager() {
@@ -51,15 +48,15 @@ export function CurriculumImportManager() {
   const {
     data: curriculumDetail,
     isLoading: isLoadingDetail,
-  } = useCurriculumDetails(selectedCurriculumId);
+  } = useCurriculumDetails(selectedCurriculumId || null);
 
   const versions = curriculumDetail?.versions ?? [];
 
   useEffect(() => {
     if (versions.length > 0) {
       const draftOrActive =
-        versions.find((v) => v.status === "DRAFT") ||
         versions.find((v) => v.status === "ACTIVE") ||
+        versions.find((v) => v.status === "DRAFT") ||
         versions[0];
       if (draftOrActive && (!selectedVersionId || !versions.some((v) => v.id === selectedVersionId))) {
         setSelectedVersionId(draftOrActive.id);
@@ -110,20 +107,48 @@ export function CurriculumImportManager() {
     commitMutation.reset();
   };
 
+  const handleCurriculumChange = (currId: string) => {
+    setSelectedCurriculumId(currId);
+    setSelectedVersionId("");
+    if (step === "PREVIEW") setStep("UPLOAD");
+  };
+
+  const handleVersionChange = (verId: string) => {
+    setSelectedVersionId(verId);
+    if (step === "PREVIEW") setStep("UPLOAD");
+  };
+
+  const curriculumOptions: readonly SelectDropdownOption[] = useMemo(
+    () =>
+      curricula.map((c) => ({
+        value: c.id,
+        label: c.name,
+        badge: c.code,
+      })),
+    [curricula]
+  );
+
+  const versionOptions: readonly SelectDropdownOption[] = useMemo(
+    () =>
+      versions.map((v) => ({
+        value: v.id,
+        label: v.name,
+        badge: v.code,
+      })),
+    [versions]
+  );
+
   if (isLoadingCurricula) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
+      <div className="min-h-[300px] flex items-center justify-center p-8">
         <LoadingSpinner size={32} />
-        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-          Loading curriculum catalog...
-        </p>
       </div>
     );
   }
 
   if (curriculaError) {
     return (
-      <div className="py-8">
+      <div className="py-4">
         <ErrorAlert message={getErrorMessage(curriculaError, "Failed to load curricula.")} />
       </div>
     );
@@ -131,82 +156,50 @@ export function CurriculumImportManager() {
 
   if (curricula.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center bg-white dark:bg-slate-900">
-        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
-          <BookOpen className="w-6 h-6" />
+      <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-3 shadow-xs">
+        <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+          <BookOpen size={24} />
         </div>
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+        <h2 className="text-base font-bold text-foreground">
           No Curricula Available
-        </h3>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-          Please create a curriculum package first in the Curricula section before importing structure data.
-        </p>
+        </h2>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Target Version Selector */}
+    <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
       {step !== "SUCCESS" && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                Target Curriculum
-              </span>
-              <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white mt-0.5">
-                Select Destination Version
-              </h2>
+        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Layers size={18} />
             </div>
+            <h2 className="text-base font-bold text-foreground">
+              Target Curriculum
+            </h2>
+          </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative min-w-[200px]">
-                <select
-                  value={selectedCurriculumId}
-                  onChange={(e) => {
-                    setSelectedCurriculumId(e.target.value);
-                    if (step === "PREVIEW") setStep("UPLOAD");
-                  }}
-                  className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 pr-8 text-xs sm:text-sm font-medium text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  {curricula.map((curr) => (
-                    <option key={curr.id} value={curr.id}>
-                      {curr.name} ({curr.code})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              </div>
-
-              <div className="relative min-w-[180px]">
-                <select
-                  value={selectedVersionId}
-                  disabled={versions.length === 0 || isLoadingDetail}
-                  onChange={(e) => {
-                    setSelectedVersionId(e.target.value);
-                    if (step === "PREVIEW") setStep("UPLOAD");
-                  }}
-                  className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 pr-8 text-xs sm:text-sm font-medium text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {versions.length === 0 ? (
-                    <option value="">No versions available</option>
-                  ) : (
-                    versions.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} ({v.code}) - {v.status}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
+            <SelectDropdown
+              label="Curriculum"
+              value={selectedCurriculumId}
+              onChange={handleCurriculumChange}
+              options={curriculumOptions}
+              placeholder="Select curriculum..."
+            />
+            <SelectDropdown
+              label="Version"
+              value={selectedVersionId}
+              onChange={handleVersionChange}
+              options={versionOptions}
+              placeholder={versions.length === 0 ? "No versions available" : "Select version..."}
+              disabled={versions.length === 0 || isLoadingDetail}
+            />
           </div>
         </div>
       )}
 
-      {/* Step Views */}
       {step === "UPLOAD" && (
         <CurriculumImportUpload
           isPending={previewMutation.isPending}

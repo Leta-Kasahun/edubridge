@@ -1,21 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   CheckCircle2,
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
-  BookOpen,
   Layers,
   FileText,
-  ListOrdered,
 } from "lucide-react";
-import { SubmitButton } from "@/shared/components/SubmitButton";
-import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SubmitButton, ErrorAlert } from "@/shared/components";
 import {
   CurriculumImportPreview,
-  ValidatedCurriculumImportRow,
 } from "../types/import.types";
 
 export interface CurriculumImportPreviewTableProps {
@@ -44,30 +40,30 @@ export function CurriculumImportPreviewTable({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-2xl border border-border shadow-xs">
         <div>
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-1.5"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Upload different file
+            <ArrowLeft size={13} />
+            <span>Upload different file</span>
           </button>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          <h2 className="text-base font-bold text-foreground">
             Validation & Preview
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Version: <span className="font-semibold text-slate-700 dark:text-slate-300">{preview.versionName}</span> ({preview.versionCode})
+          <p className="text-xs text-muted-foreground">
+            Version: <span className="font-semibold text-foreground">{preview.versionName}</span> ({preview.versionCode})
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            className="h-8 px-3 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -75,8 +71,9 @@ export function CurriculumImportPreviewTable({
             isLoading={isCommitting}
             disabled={!preview.canCommit || preview.invalidRowsCount > 0}
             onClick={onCommit}
+            className="h-8 text-xs font-semibold px-3.5"
           >
-            {`Import ${preview.validRowsCount} Valid Item${preview.validRowsCount === 1 ? "" : "s"}`}
+            {`Import ${preview.validRowsCount} Item${preview.validRowsCount === 1 ? "" : "s"}`}
           </SubmitButton>
         </div>
       </div>
@@ -85,63 +82,61 @@ export function CurriculumImportPreviewTable({
         <ErrorAlert message={commitError} />
       )}
 
-      {/* Summary Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <FileText className="w-4 h-4 text-blue-500" />
-            Total Rows
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
+            <FileText size={14} className="text-primary" />
+            <span>Total Rows</span>
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="mt-1.5 text-xl font-bold text-foreground">
             {preview.totalRows}
           </div>
         </div>
 
-        <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10 p-3.5 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-            <CheckCircle2 className="w-4 h-4" />
-            Valid Rows
+        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
+            <CheckCircle2 size={14} className="text-emerald-500" />
+            <span>Valid</span>
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+          <div className="mt-1.5 text-xl font-bold text-emerald-600 dark:text-emerald-400">
             {preview.validRowsCount}
           </div>
         </div>
 
-        <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/30 dark:bg-red-950/10 p-3.5 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-medium">
-            <AlertCircle className="w-4 h-4" />
-            Invalid Rows
+        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
+            <AlertCircle size={14} className="text-destructive" />
+            <span>Invalid</span>
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold text-red-700 dark:text-red-300">
+          <div className="mt-1.5 text-xl font-bold text-destructive">
             {preview.invalidRowsCount}
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <Layers className="w-4 h-4 text-purple-500" />
-            Structure Count
+        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
+            <Layers size={14} className="text-primary" />
+            <span>Structure</span>
           </div>
-          <div className="mt-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+          <div className="mt-1.5 text-xs font-semibold text-foreground">
             {preview.uniqueUnitsCount} Units • {preview.uniqueTopicsCount} Topics
           </div>
         </div>
       </div>
 
-      {/* Validation Issue Alerts */}
       {preview.issues.length > 0 && (
-        <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            Issues Found ({preview.issues.length})
+        <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-2">
+          <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
+            <AlertTriangle size={14} className="text-amber-500" />
+            <span>Issues Found ({preview.issues.length})</span>
           </div>
-          <div className="max-h-40 overflow-y-auto space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
+          <div className="max-h-36 overflow-y-auto space-y-1 text-xs text-muted-foreground">
             {preview.issues.slice(0, 10).map((issue, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <span className={`inline-block px-1.5 py-0.5 rounded font-mono text-[10px] uppercase font-bold shrink-0 ${
                   issue.severity === "ERROR"
-                    ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
-                    : "bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300"
+                    ? "bg-destructive/10 text-destructive border border-destructive/20"
+                    : "bg-muted text-foreground border border-border"
                 }`}>
                   Row {issue.rowNumber}
                 </span>
@@ -149,7 +144,7 @@ export function CurriculumImportPreviewTable({
               </div>
             ))}
             {preview.issues.length > 10 && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 italic pt-1">
+              <p className="text-[11px] text-muted-foreground italic pt-1">
                 ...and {preview.issues.length - 10} more issue(s)
               </p>
             )}
@@ -157,27 +152,26 @@ export function CurriculumImportPreviewTable({
         </div>
       )}
 
-      {/* Rows Table */}
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900">
+      <div className="bg-card rounded-2xl border border-border shadow-2xs overflow-hidden">
+        <div className="flex items-center gap-2 p-3 border-b border-border bg-muted/30">
           <button
             type="button"
             onClick={() => setActiveTab("ALL")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === "ALL"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-foreground shadow-2xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            All Rows ({preview.totalRows})
+            All ({preview.totalRows})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("VALID")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === "VALID"
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Valid ({preview.validRowsCount})
@@ -185,10 +179,10 @@ export function CurriculumImportPreviewTable({
           <button
             type="button"
             onClick={() => setActiveTab("INVALID")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === "INVALID"
-                ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-semibold shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-destructive shadow-2xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Invalid ({preview.invalidRowsCount})
@@ -196,74 +190,57 @@ export function CurriculumImportPreviewTable({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs text-slate-600 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+          <table className="w-full min-w-[640px] text-left text-xs border-collapse">
+            <thead className="bg-muted/40 text-muted-foreground font-semibold border-b border-border">
               <tr>
-                <th className="py-3 px-3 sm:px-4">#</th>
-                <th className="py-3 px-3 sm:px-4">Grade</th>
-                <th className="py-3 px-3 sm:px-4">Subject</th>
-                <th className="py-3 px-3 sm:px-4">Unit</th>
-                <th className="py-3 px-3 sm:px-4">Topic</th>
-                <th className="py-3 px-3 sm:px-4">Learning Objective</th>
-                <th className="py-3 px-3 sm:px-4 text-center">Status</th>
+                <th className="py-2.5 px-3">#</th>
+                <th className="py-2.5 px-3">Grade</th>
+                <th className="py-2.5 px-3">Subject</th>
+                <th className="py-2.5 px-3">Unit</th>
+                <th className="py-2.5 px-3">Topic</th>
+                <th className="py-2.5 px-3">Learning Objective</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {filteredRows.map((row) => (
                 <tr
                   key={row.rowNumber}
-                  className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors ${
-                    !row.isValid ? "bg-red-50/20 dark:bg-red-950/10" : ""
+                  className={`hover:bg-muted/30 transition-colors ${
+                    !row.isValid ? "bg-destructive/5" : ""
                   }`}
                 >
-                  <td className="py-3 px-3 sm:px-4 font-mono text-slate-400">
+                  <td className="py-2.5 px-3 font-mono text-muted-foreground">
                     {row.rowNumber}
                   </td>
-                  <td className="py-3 px-3 sm:px-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                  <td className="py-2.5 px-3 font-semibold text-foreground whitespace-nowrap">
                     {row.gradeLevel ? `Grade ${row.gradeLevel}` : "—"}
                   </td>
-                  <td className="py-3 px-3 sm:px-4 font-medium text-slate-900 dark:text-white">
+                  <td className="py-2.5 px-3 font-semibold text-foreground">
                     {row.subjectName || "—"}
                   </td>
-                  <td className="py-3 px-3 sm:px-4">
-                    <div className="font-medium text-slate-800 dark:text-slate-200">
+                  <td className="py-2.5 px-3">
+                    <div className="font-medium text-foreground">
                       {row.unitTitle || "—"}
                     </div>
-                    {row.unitCode && (
-                      <span className="inline-block px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-mono bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                        {row.unitCode}
-                      </span>
-                    )}
                   </td>
-                  <td className="py-3 px-3 sm:px-4">
-                    <div className="font-medium text-slate-800 dark:text-slate-200">
+                  <td className="py-2.5 px-3">
+                    <div className="font-medium text-foreground">
                       {row.topicTitle || "—"}
                     </div>
-                    {row.topicCode && (
-                      <span className="inline-block px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-mono bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                        {row.topicCode}
-                      </span>
-                    )}
                   </td>
-                  <td className="py-3 px-3 sm:px-4">
-                    <div className="text-slate-700 dark:text-slate-300 line-clamp-2">
+                  <td className="py-2.5 px-3">
+                    <div className="text-muted-foreground line-clamp-2">
                       {row.objectiveStatement || "—"}
                     </div>
-                    {row.objectiveCode && (
-                      <span className="inline-block px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        {row.objectiveCode}
-                      </span>
-                    )}
                   </td>
-                  <td className="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
+                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
                     {row.isValid ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-foreground border border-border">
                         Valid
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300">
-                        <AlertCircle className="w-3 h-3" />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
                         Invalid
                       </span>
                     )}
