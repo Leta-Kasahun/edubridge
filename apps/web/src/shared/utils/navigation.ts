@@ -8,6 +8,7 @@ import {
   Award,
   Calendar,
   BookOpen,
+  BookMarked,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -39,6 +40,15 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
       { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
       { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
       { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
+    ],
+  },
+  {
+    label: "Learning Content",
+    href: ROUTES.LEARNING_CONTENT.BASE,
+    icon: BookMarked,
+    children: [
+      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
+      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
     ],
   },
   {
@@ -83,6 +93,15 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
+    label: "Learning Content",
+    href: ROUTES.LEARNING_CONTENT.BASE,
+    icon: BookMarked,
+    children: [
+      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
+      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
+    ],
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -121,6 +140,15 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     children: [
       { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
       { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+    ],
+  },
+  {
+    label: "Learning Content",
+    href: ROUTES.LEARNING_CONTENT.BASE,
+    icon: BookMarked,
+    children: [
+      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
+      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
     ],
   },
   {

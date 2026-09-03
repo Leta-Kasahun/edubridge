@@ -45,6 +45,11 @@ export const ROUTES = {
     STRUCTURE: "/dashboard/curriculum/structure",
     IMPORT: "/dashboard/curriculum/import",
   },
+  LEARNING_CONTENT: {
+    BASE: "/dashboard/learning-content",
+    MATERIALS: "/dashboard/learning-content/materials",
+    IMPORT: "/dashboard/learning-content/import",
+  },
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",
