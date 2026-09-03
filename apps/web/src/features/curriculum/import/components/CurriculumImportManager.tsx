@@ -233,24 +233,24 @@ export function CurriculumImportManager() {
               </h2>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setIsCreateCurriculumOpen(true)}
-                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
               >
-                <Plus size={12} />
-                <span>New Curriculum</span>
+                <Plus size={13} />
+                <span>Curriculum</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsCreateVersionOpen(true)}
                 disabled={!selectedCurriculumId}
-                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none shrink-0"
               >
-                <Plus size={12} />
-                <span>New Version</span>
+                <Plus size={13} />
+                <span>Version</span>
               </button>
             </div>
           </div>
