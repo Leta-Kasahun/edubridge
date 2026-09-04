@@ -42,6 +42,7 @@ import { ContentFormModal } from "./ContentFormModal";
 import { ContentVersionModal } from "./ContentVersionModal";
 import { ContentDetailModal } from "./ContentDetailModal";
 import { ContentUploadModal } from "./ContentUploadModal";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import {
   TableToolbar,
   FilterGroup,
@@ -101,6 +102,12 @@ export function ContentListView() {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [uploadTargetItem, setUploadTargetItem] =
     useState<LearningContentListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    readonly type: "single" | "batch";
+    readonly id?: string;
+    readonly title?: string;
+    readonly count?: number;
+  } | null>(null);
 
   const { data, isLoading, error, isFetching } = useContentList(filters);
   const { data: subjects = [] } = useSubjects();
@@ -321,11 +328,12 @@ export function ContentListView() {
     setIsVersionModalOpen(true);
   };
 
-  const handleDelete = async (item: LearningContentListItem) => {
-    if (!confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      return;
-    }
-    await deleteMutation.mutateAsync(item.id);
+  const handleDelete = (item: LearningContentListItem) => {
+    setDeleteTarget({
+      type: "single",
+      id: item.id,
+      title: item.title,
+    });
   };
 
   const handleBatchSubmit = async () => {
@@ -342,18 +350,25 @@ export function ContentListView() {
     setSelectedIds(new Set());
   };
 
-  const handleBatchDelete = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedIds.size} selected materials?`
-      )
-    ) {
-      return;
+  const handleBatchDelete = () => {
+    if (selectedIds.size === 0) return;
+    setDeleteTarget({
+      type: "batch",
+      count: selectedIds.size,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === "single" && deleteTarget.id) {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+    } else if (deleteTarget.type === "batch") {
+      for (const id of selectedIds) {
+        await deleteMutation.mutateAsync(id);
+      }
+      setSelectedIds(new Set());
     }
-    for (const id of selectedIds) {
-      await deleteMutation.mutateAsync(id);
-    }
-    setSelectedIds(new Set());
+    setDeleteTarget(null);
   };
 
   const filterGroups: readonly FilterGroup[] = useMemo(() => {
@@ -508,7 +523,7 @@ export function ContentListView() {
               className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <CheckCircle size={11} className="text-emerald-500" />
-              <span>Publish</span>
+              <span>Activate</span>
             </button>
             <button
               type="button"
@@ -644,6 +659,24 @@ export function ContentListView() {
         isOpen={Boolean(uploadTargetItem)}
         onClose={() => setUploadTargetItem(null)}
         item={uploadTargetItem}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title={
+          deleteTarget?.type === "batch"
+            ? "Delete Selected Materials"
+            : "Delete Material"
+        }
+        description={
+          deleteTarget?.type === "batch"
+            ? `Are you sure you want to delete ${deleteTarget.count} selected materials? All associated files in cloud storage will be permanently removed.`
+            : "Are you sure you want to delete this learning material? All associated files in cloud storage will be permanently removed."
+        }
+        itemName={deleteTarget?.title}
+        isPending={deleteMutation.isPending}
       />
     </div>
   );

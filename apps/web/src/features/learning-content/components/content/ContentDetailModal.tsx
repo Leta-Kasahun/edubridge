@@ -31,6 +31,7 @@ import {
 import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
 import { ContentScopeBadge } from "./ContentScopeBadge";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { LoadingSpinner, ErrorAlert } from "@/shared/components";
 import { getErrorMessage, formatFileSize } from "@/shared/utils";
 
@@ -53,6 +54,10 @@ export function ContentDetailModal({
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [deleteAttachmentTarget, setDeleteAttachmentTarget] = useState<{
+    readonly id: string;
+    readonly fileName: string;
+  } | null>(null);
 
   const { data: detail, isLoading, error } = useContentDetail(
     isOpen && item ? item.id : null
@@ -86,11 +91,12 @@ export function ContentDetailModal({
     }
   };
 
-  const handleDeleteAttachment = async (attachmentId: string) => {
-    if (!confirm("Are you sure you want to delete this attachment?")) return;
+  const handleConfirmDeleteAttachment = async () => {
+    if (!deleteAttachmentTarget) return;
     setActionError(null);
     try {
-      await deleteAttachmentMutation.mutateAsync(attachmentId);
+      await deleteAttachmentMutation.mutateAsync(deleteAttachmentTarget.id);
+      setDeleteAttachmentTarget(null);
     } catch (err) {
       setActionError(getErrorMessage(err));
     }
@@ -283,8 +289,17 @@ export function ContentDetailModal({
                       </span>
                       <span className="font-semibold text-foreground">
                         {displayItem.publishedAt
-                          ? new Date(displayItem.publishedAt).toLocaleDateString()
-                          : "—"}
+                          ? new Date(displayItem.publishedAt).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )
+                          : displayItem.status === "DRAFT"
+                          ? "Draft (Not Published)"
+                          : "Not Published"}
                       </span>
                     </div>
                   </div>
@@ -414,7 +429,12 @@ export function ContentDetailModal({
                           </a>
                           <button
                             type="button"
-                            onClick={() => handleDeleteAttachment(att.id)}
+                            onClick={() =>
+                              setDeleteAttachmentTarget({
+                                id: att.id,
+                                fileName: att.fileName,
+                              })
+                            }
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                             title="Delete"
                           >
@@ -547,10 +567,10 @@ export function ContentDetailModal({
                 type="button"
                 onClick={handleSubmitForReview}
                 disabled={submitMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
               >
                 <Send size={13} />
-                <span>Submit for Review</span>
+                <span>Submit</span>
               </button>
             )}
 
@@ -559,10 +579,10 @@ export function ContentDetailModal({
                 type="button"
                 onClick={handlePublish}
                 disabled={publishMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
               >
                 <Check size={13} />
-                <span>Publish</span>
+                <span>Activate</span>
               </button>
             )}
 
@@ -588,6 +608,15 @@ export function ContentDetailModal({
           </button>
         </div>
       </div>
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteAttachmentTarget)}
+        onClose={() => setDeleteAttachmentTarget(null)}
+        onConfirm={handleConfirmDeleteAttachment}
+        title="Delete Attachment"
+        description="Are you sure you want to delete this attachment? The file will be permanently deleted from cloud storage."
+        itemName={deleteAttachmentTarget?.fileName}
+        isPending={deleteAttachmentMutation.isPending}
+      />
     </div>,
     document.body
   );

@@ -638,6 +638,7 @@ export class ContentRepository {
 
       if (status === "PUBLISHED") {
         updateData.publishedAt = now;
+        updateData.archivedAt = null;
       } else if (status === "ARCHIVED") {
         updateData.archivedAt = now;
       }
@@ -724,6 +725,15 @@ export class ContentRepository {
         where: { id, tenantId },
       });
 
+      return true;
+    });
+  }
+
+  async deleteContentRecord(tenantId: string, id: string): Promise<boolean> {
+    return runWithTenant({ tenantId }, async () => {
+      await prisma.learningContent.delete({
+        where: { id, tenantId },
+      });
       return true;
     });
   }

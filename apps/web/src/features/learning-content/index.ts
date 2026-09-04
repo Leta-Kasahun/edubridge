@@ -12,4 +12,5 @@ export * from "./components/content/ContentScopeBadge";
 export * from "./components/content/ContentUploadModal";
 export * from "./components/content/ContentGradeTabs";
 export * from "./components/content/ContentSubjectAccordion";
+export * from "./components/content/ConfirmDeleteModal";
 export * from "./utils/content-format.util";

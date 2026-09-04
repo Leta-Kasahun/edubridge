@@ -792,11 +792,28 @@ export class ContentService {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
 
-    if (existing.status === "DRAFT") {
-      const deleted = await this.repository.deleteDraftContent(tenantId, id);
+    if (existing.status === "DRAFT" || existing.status === "ARCHIVED") {
+      if (existing.attachments && existing.attachments.length > 0) {
+        for (const att of existing.attachments) {
+          if (att.storageKey) {
+            try {
+              await this.attachmentService.deleteStorageFile(
+                att.storageKey,
+                att.mimeType
+              );
+            } catch {
+            }
+          }
+        }
+      }
+
+      const deleted = await this.repository.deleteContentRecord(tenantId, id);
       return {
         deleted,
-        message: "Draft content deleted successfully",
+        message:
+          existing.status === "DRAFT"
+            ? "Draft content deleted successfully"
+            : "Archived content deleted successfully",
       };
     }
 

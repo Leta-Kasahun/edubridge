@@ -206,6 +206,16 @@ export class ContentAttachmentService {
     );
     return attachments.map((att) => this.formatAttachmentResponse(att));
   }
+
+  async deleteStorageFile(
+    storageKey: string,
+    mimeType?: string
+  ): Promise<void> {
+    const resourceType = mimeType
+      ? this.storage.resolveResourceType(mimeType)
+      : undefined;
+    await this.storage.deleteFile(storageKey, resourceType);
+  }
 }
 
 export const contentAttachmentService = new ContentAttachmentService();

@@ -209,12 +209,12 @@ export function ContentRowActions({
                 }}
                 className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
               >
-                <Send size={13} className="text-amber-500" />
-                <span>Submit for Review</span>
+                <Send size={13} className="text-primary" />
+                <span>Submit</span>
               </button>
             )}
 
-            {(item.status === "DRAFT" || item.status === "PENDING_REVIEW") && (
+            {item.status !== "PUBLISHED" && (
               <button
                 type="button"
                 onClick={() => {
@@ -223,8 +223,8 @@ export function ContentRowActions({
                 }}
                 className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
               >
-                <Check size={13} className="text-emerald-500" />
-                <span>Publish</span>
+                <Check size={13} className="text-primary" />
+                <span>Activate</span>
               </button>
             )}
 
