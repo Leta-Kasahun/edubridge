@@ -129,6 +129,20 @@ enum ContentType {
   PDF
   IMAGE
   LINK
+  TEXTBOOK
+  REFERENCE_BOOK
+  WORKSHEET
+  EXERCISE
+  PAST_EXAM_PAPER
+  TEACHER_GUIDE
+  STUDY_GUIDE
+}
+
+enum ContentScope {
+  SUBJECT
+  GRADE_SUBJECT
+  UNIT
+  TOPIC
 }
 
 enum ContentStatus {
@@ -1127,7 +1141,8 @@ model Grade {
   sections      Section[]
   gradeSubjects GradeSubject[]
   curriculumSubjects CurriculumSubject[]
-  examContexts       ExamContext[] 
+  examContexts       ExamContext[]
+  learningContents   LearningContent[]
   @@unique([tenantId, level])
   @@index([tenantId, isActive])
   @@index([level])
@@ -1160,7 +1175,8 @@ model Subject {
   experiences   TeacherExperience[]
   
   curriculumSubjects CurriculumSubject[]
-examContexts       ExamContext[]
+  examContexts       ExamContext[]
+  learningContents   LearningContent[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1255,8 +1271,9 @@ model CurriculumVersion {
 
   curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
 
-  subjects     CurriculumSubject[]
-  examContexts ExamContext[]
+  subjects         CurriculumSubject[]
+  examContexts     ExamContext[]
+  learningContents LearningContent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1304,7 +1321,8 @@ model CurriculumUnit {
 
   curriculumSubject CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
 
-  topics CurriculumTopic[]
+  topics           CurriculumTopic[]
+  learningContents LearningContent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1377,6 +1395,7 @@ model LearningContent {
   tenantId  String      @db.Uuid
 
   type      ContentType
+  scope     ContentScope @default(TOPIC)
   source    ContentSourceType @default(TEACHER)
   status    ContentStatus     @default(DRAFT)
 
@@ -1390,8 +1409,18 @@ model LearningContent {
   publishedAt DateTime?
   archivedAt  DateTime?
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id])
+  subjectId           String?            @db.Uuid
+  gradeId             String?            @db.Uuid
+  curriculumVersionId String?            @db.Uuid
+  unitId              String?            @db.Uuid
+  targetGradeLevels   Int[]              @default([])
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  author            User               @relation(fields: [authorId], references: [id])
+  subject           Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  grade             Grade?             @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  curriculumVersion CurriculumVersion? @relation(fields: [curriculumVersionId], references: [id], onDelete: SetNull)
+  unit              CurriculumUnit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
 
   versions ContentVersion[]
 
@@ -1405,8 +1434,19 @@ model LearningContent {
 
   @@index([tenantId, status])
   @@index([tenantId, type])
+  @@index([tenantId, scope])
+  @@index([tenantId, scope, status])
+  @@index([tenantId, subjectId])
+  @@index([tenantId, gradeId])
+  @@index([tenantId, unitId])
+  @@index([tenantId, gradeId, subjectId])
+  @@index([tenantId, curriculumVersionId])
   @@index([tenantId, authorId])
   @@index([authorId])
+  @@index([subjectId])
+  @@index([gradeId])
+  @@index([unitId])
+  @@index([curriculumVersionId])
 }
 
 model ContentVersion {

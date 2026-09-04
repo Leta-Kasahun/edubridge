@@ -155,6 +155,20 @@ export const API_ENDPOINTS = {
     COMMIT: "/curriculum/import/commit",
     TEMPLATE: "/curriculum/import/template",
   },
+  LEARNING_CONTENT: {
+    BASE: "/learning-content/content",
+    BY_ID: (id: string) => `/learning-content/content/${id}`,
+    MAPPINGS: (id: string) => `/learning-content/content/${id}/mappings`,
+    VERSIONS: (id: string) => `/learning-content/content/${id}/versions`,
+    VERSION_BY_NUMBER: (id: string, versionNumber: number | string) =>
+      `/learning-content/content/${id}/versions/${versionNumber}`,
+    SUBMIT: (id: string) => `/learning-content/content/${id}/submit`,
+    PUBLISH: (id: string) => `/learning-content/content/${id}/publish`,
+    ARCHIVE: (id: string) => `/learning-content/content/${id}/archive`,
+    ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,
+    ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
+      `/learning-content/content/${id}/attachments/${attachmentId}`,
+  },
   HEALTH: "/health",
 } as const;
 

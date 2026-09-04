@@ -7,3 +7,4 @@ export * from "./subject.constants.js";
 export * from "./student-assignment.constants.js";
 export * from "./teacher-assignment.constants.js";
 export * from "./curriculum.constants.js";
+export * from "./learning-content.constants.js";

@@ -8,13 +8,13 @@ import {
   StorageResourceType,
 } from "./storage.types.js";
 import {
-  cloudinaryStorageProvider,
-  CloudinaryStorageProvider,
-} from "./cloudinary.storage.js";
+  b2StorageProvider,
+  B2StorageProvider,
+} from "./b2.storage.js";
 
 export class StorageService {
   constructor(
-    private readonly provider: IStorageProvider = cloudinaryStorageProvider
+    private readonly provider: IStorageProvider = b2StorageProvider
   ) {}
 
   resolveResourceType(mimeType: string): StorageResourceType {
@@ -30,6 +30,13 @@ export class StorageService {
 
   getCurriculumFolderPath(tenantId: string, curriculumId: string): string {
     return `edubridge/tenants/${tenantId}/curriculum/${curriculumId}`;
+  }
+
+  async uploadFileStream(
+    stream: NodeJS.ReadableStream,
+    options: UploadOptions = {}
+  ): Promise<StorageUploadResult> {
+    return this.provider.uploadStream(stream, options);
   }
 
   async uploadFileBuffer(
@@ -62,4 +69,4 @@ export class StorageService {
 }
 
 export const storageService = new StorageService();
-export { CloudinaryStorageProvider };
+export { B2StorageProvider };

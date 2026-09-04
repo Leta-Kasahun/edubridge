@@ -12,6 +12,8 @@ export interface UploadOptions {
   readonly folder?: string;
   readonly publicId?: string;
   readonly resourceType?: StorageResourceType;
+  readonly mimeType?: string;
+  readonly originalFilename?: string;
   readonly overwrite?: boolean;
   readonly tags?: readonly string[];
 }
@@ -56,6 +58,11 @@ export interface MediaTransformationOptions {
 export interface IStorageProvider {
   uploadBuffer(
     buffer: Buffer,
+    options?: UploadOptions
+  ): Promise<StorageUploadResult>;
+
+  uploadStream(
+    stream: NodeJS.ReadableStream,
     options?: UploadOptions
   ): Promise<StorageUploadResult>;
 
