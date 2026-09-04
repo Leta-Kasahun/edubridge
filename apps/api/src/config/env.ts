@@ -1,5 +1,8 @@
 import dotenv from "dotenv";
+import path from "node:path";
 
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 dotenv.config();
 
 export const env = {
@@ -24,9 +27,12 @@ export const env = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL ?? "",
-  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ?? "",
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ?? "",
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ?? "",
+  B2_ENDPOINT: (process.env.B2_ENDPOINT ?? process.env.S3_ENDPOINT ?? "").trim(),
+  B2_BUCKET_NAME: (process.env.B2_BUCKET_NAME ?? process.env.S3_BUCKET_NAME ?? "").trim(),
+  B2_KEY_ID: (process.env.B2_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID ?? "").trim(),
+  B2_APPLICATION_KEY: (process.env.B2_APPLICATION_KEY ?? process.env.AWS_SECRET_ACCESS_KEY ?? "").trim(),
+  B2_REGION: (process.env.B2_REGION ?? process.env.AWS_REGION ?? "").trim(),
+  B2_PUBLIC_URL_PREFIX: (process.env.B2_PUBLIC_URL_PREFIX ?? "").trim(),
 } as const;
 
 export type Env = typeof env;

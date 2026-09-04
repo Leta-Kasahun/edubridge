@@ -36,7 +36,13 @@ export class ContentAttachmentController {
       const { tenantId, userId } = extractUserContext(req);
       const id = req.params.id as string;
 
-      const file = req.file;
+      const file = req.file as
+        | (Express.Multer.File & {
+            readonly storageKey?: string;
+            readonly secureUrl?: string;
+          })
+        | undefined;
+
       if (!file) {
         throw new BadRequestError("No file provided for upload");
       }
@@ -49,6 +55,8 @@ export class ContentAttachmentController {
           originalname: file.originalname,
           mimetype: file.mimetype,
           size: file.size,
+          storageKey: file.storageKey,
+          deliveryUrl: file.secureUrl,
           buffer: file.buffer,
         }
       );

@@ -81,11 +81,16 @@ export class ContentAttachmentService {
       readonly originalname: string;
       readonly mimetype: string;
       readonly size: number;
-      readonly buffer: Buffer;
+      readonly storageKey?: string;
+      readonly deliveryUrl?: string;
+      readonly buffer?: Buffer;
     }
   ): Promise<ContentAttachmentResponse> {
     const content = await this.repository.findById(tenantId, contentId);
     if (!content) {
+      if (file.storageKey) {
+        await this.storage.deleteFile(file.storageKey);
+      }
       throw new NotFoundError(`Learning content item ${contentId} not found`);
     }
 
@@ -100,21 +105,38 @@ export class ContentAttachmentService {
     );
 
     if (!validation.isValid) {
+      if (file.storageKey) {
+        await this.storage.deleteFile(file.storageKey);
+      }
       throw new BadRequestError(
         validation.error || "File validation failed"
       );
     }
 
-    const uniqueId = `${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
-    const folder = this.storage.getContentFolderPath(tenantId, contentId);
-    const resourceType = this.storage.resolveResourceType(validation.mimeType);
+    let finalStorageKey = file.storageKey;
+    let format = validation.sanitizedFileName.split(".").pop() || "";
+    let resourceType = this.storage.resolveResourceType(validation.mimeType);
 
-    const uploadResult = await this.storage.uploadFileBuffer(file.buffer, {
-      folder,
-      publicId: uniqueId,
-      resourceType,
-      tags: ["learning-content", tenantId, contentId],
-    });
+    if (!finalStorageKey) {
+      if (!file.buffer) {
+        throw new BadRequestError("No file buffer or storage key provided for upload");
+      }
+      const uniqueId = `${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+      const folder = this.storage.getContentFolderPath(tenantId, contentId);
+
+      const uploadResult = await this.storage.uploadFileBuffer(file.buffer, {
+        folder,
+        publicId: uniqueId,
+        resourceType,
+        mimeType: validation.mimeType,
+        originalFilename: file.originalname,
+        tags: ["learning-content", tenantId, contentId],
+      });
+
+      finalStorageKey = uploadResult.publicId;
+      format = uploadResult.format;
+      resourceType = uploadResult.resourceType as typeof resourceType;
+    }
 
     const attachment = await this.repository.createAttachment(
       tenantId,
@@ -123,11 +145,11 @@ export class ContentAttachmentService {
       {
         fileName: validation.sanitizedFileName,
         mimeType: validation.mimeType,
-        storageKey: uploadResult.publicId,
+        storageKey: finalStorageKey,
         sizeBytes: BigInt(file.size),
         metadata: {
-          format: uploadResult.format,
-          resourceType: uploadResult.resourceType,
+          format,
+          resourceType,
           originalName: file.originalname,
         },
       }

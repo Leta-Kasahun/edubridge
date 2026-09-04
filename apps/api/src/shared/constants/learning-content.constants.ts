@@ -47,7 +47,7 @@ export type ContentSourceTypeEnum = (typeof CONTENT_SOURCE_TYPES)[number];
 export const DEFAULT_CONTENT_PAGE_LIMIT = 20;
 export const MAX_CONTENT_PAGE_LIMIT = 100;
 
-export const MAX_ATTACHMENT_SIZE_BYTES = 100 * 1024 * 1024;
+export const MAX_ATTACHMENT_SIZE_BYTES = 500 * 1024 * 1024;
 export const MAX_ATTACHMENTS_PER_CONTENT = 20;
 
 export const ALLOWED_ATTACHMENT_CATEGORIES = [

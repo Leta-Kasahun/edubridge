@@ -4,13 +4,15 @@ import { authenticate } from "../../../middleware/auth.js";
 import { requireRoles } from "../../../middleware/rbac.js";
 import { contentController } from "./controllers/content.controller.js";
 import { contentAttachmentController } from "./controllers/content-attachment.controller.js";
+import { createB2MulterStorage } from "./utils/b2-multer.storage.js";
+import { MAX_ATTACHMENT_SIZE_BYTES } from "../../../shared/constants/learning-content.constants.js";
 
 const router: Router = Router();
 
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: createB2MulterStorage(),
   limits: {
-    fileSize: 100 * 1024 * 1024,
+    fileSize: MAX_ATTACHMENT_SIZE_BYTES,
   },
 });
 
