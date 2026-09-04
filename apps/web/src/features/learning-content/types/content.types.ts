@@ -151,6 +151,7 @@ export interface ContentFilters {
   readonly topicId?: string;
   readonly objectiveId?: string;
   readonly curriculumVersionId?: string;
+  readonly academicYearId?: string;
 }
 
 export interface CreateLearningContentDto {

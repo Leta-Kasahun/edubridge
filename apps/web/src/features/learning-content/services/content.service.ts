@@ -52,6 +52,12 @@ export const contentService = {
     if (filters.curriculumVersionId) {
       params.append("curriculumVersionId", filters.curriculumVersionId);
     }
+    if (filters.academicYearId) {
+      params.append("academicYearId", filters.academicYearId);
+    }
+    if (filters.targetGradeLevel !== undefined) {
+      params.append("targetGradeLevel", String(filters.targetGradeLevel));
+    }
     if (filters.page) {
       params.append("page", String(filters.page));
     }

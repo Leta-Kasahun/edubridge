@@ -10,4 +10,6 @@ export * from "./components/content/ContentDetailModal";
 export * from "./components/content/ContentListView";
 export * from "./components/content/ContentScopeBadge";
 export * from "./components/content/ContentUploadModal";
+export * from "./components/content/ContentGradeTabs";
+export * from "./components/content/ContentSubjectAccordion";
 export * from "./utils/content-format.util";

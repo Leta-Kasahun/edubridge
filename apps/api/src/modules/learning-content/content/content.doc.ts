@@ -22,6 +22,7 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
       { name: "topicId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "objectiveId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "curriculumVersionId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "academicYearId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "page", in: "query", schema: { type: "integer", default: 1 } },
       { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
     ],

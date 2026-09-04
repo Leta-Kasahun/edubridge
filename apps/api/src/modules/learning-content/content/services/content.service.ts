@@ -208,14 +208,9 @@ export class ContentService {
         );
       }
 
-      if (!gradeId && targetGradeLevels.length > 0) {
-        const matchingGrade = await prisma.grade.findFirst({
-          where: { level: targetGradeLevels[0] },
-          select: { id: true },
-        });
-        if (matchingGrade) {
-          gradeId = matchingGrade.id;
-        }
+      const primaryLevel = targetGradeLevels[0];
+      if (!gradeId && primaryLevel !== undefined) {
+        gradeId = await this.repository.findGradeIdByLevel(primaryLevel);
       }
 
       const subjectExists = await this.repository.verifySubjectExists(subjectId);

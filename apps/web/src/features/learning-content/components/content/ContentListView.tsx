@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   ChevronLeft,
@@ -11,13 +11,16 @@ import {
   Trash2,
   Send,
   CheckCircle,
+  Calendar,
+  BookOpen,
+  ShieldCheck,
+  Folder,
 } from "lucide-react";
 import {
   LearningContentListItem,
   LearningContentDetailItem,
   ContentFilters,
   ContentType,
-  ContentScope,
   ContentStatus,
 } from "../../types/content.types";
 import {
@@ -29,7 +32,12 @@ import {
 } from "../../hooks/useLearningContent";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
-import { ContentTable } from "./ContentTable";
+import { useAcademicYears } from "@/features/academic/academic-years/hooks/useAcademicYears";
+import { ContentGradeTabs, GradeTabItem } from "./ContentGradeTabs";
+import {
+  ContentSubjectAccordion,
+  SubjectAccordionGroup,
+} from "./ContentSubjectAccordion";
 import { ContentFormModal } from "./ContentFormModal";
 import { ContentVersionModal } from "./ContentVersionModal";
 import { ContentDetailModal } from "./ContentDetailModal";
@@ -41,14 +49,6 @@ import {
   ErrorAlert,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
-
-const SCOPE_FILTER_OPTIONS = [
-  { value: "ALL", label: "All" },
-  { value: "SUBJECT", label: "Subject" },
-  { value: "GRADE_SUBJECT", label: "Grade" },
-  { value: "UNIT", label: "Unit" },
-  { value: "TOPIC", label: "Topic" },
-];
 
 const TYPE_FILTER_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -80,8 +80,13 @@ const STATUS_FILTER_OPTIONS = [
 export function ContentListView() {
   const [filters, setFilters] = useState<ContentFilters>({
     page: 1,
-    limit: 10,
+    limit: 50,
   });
+
+  const [selectedGradeId, setSelectedGradeId] = useState<string>("ALL");
+  const [selectedAcademicYearId, setSelectedAcademicYearId] =
+    useState<string>("ALL");
+  const [openSubjectIds, setOpenSubjectIds] = useState<Set<string>>(new Set());
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedPath, setCopiedPath] = useState(false);
@@ -100,6 +105,9 @@ export function ContentListView() {
   const { data, isLoading, error, isFetching } = useContentList(filters);
   const { data: subjects = [] } = useSubjects();
   const { data: grades = [] } = useGrades();
+  const { data: academicYearsData } = useAcademicYears();
+
+  const academicYears = academicYearsData?.data ?? [];
 
   const submitMutation = useSubmitContent();
   const publishMutation = usePublishContent();
@@ -109,45 +117,128 @@ export function ContentListView() {
   const items = data?.data ?? [];
   const pagination = data?.pagination;
 
-  const subjectFilterOptions = useMemo(() => [
-    { value: "ALL", label: "All" },
-    ...subjects.map((s) => ({ value: s.id, label: s.name })),
-  ], [subjects]);
+  const gradeTabs: readonly GradeTabItem[] = useMemo(() => {
+    return grades
+      .slice()
+      .sort((a, b) => a.level - b.level)
+      .map((g) => {
+        const count = items.filter(
+          (item) =>
+            item.gradeId === g.id ||
+            item.gradeLevel === g.level ||
+            (item.targetGradeLevels && item.targetGradeLevels.includes(g.level))
+        ).length;
+        return {
+          id: g.id,
+          level: g.level,
+          count,
+        };
+      });
+  }, [grades, items]);
 
-  const gradeFilterOptions = useMemo(() => [
-    { value: "ALL", label: "All" },
-    ...grades.map((g) => ({ value: g.id, label: `Grade ${g.level}` })),
-  ], [grades]);
+  const activeGrade = useMemo(() => {
+    if (selectedGradeId === "ALL") return null;
+    return grades.find((g) => g.id === selectedGradeId) || null;
+  }, [grades, selectedGradeId]);
+
+  const filteredByGradeItems = useMemo(() => {
+    if (!activeGrade) return items;
+    return items.filter(
+      (item) =>
+        item.gradeId === activeGrade.id ||
+        item.gradeLevel === activeGrade.level ||
+        (item.targetGradeLevels &&
+          item.targetGradeLevels.includes(activeGrade.level))
+    );
+  }, [items, activeGrade]);
+
+  const subjectGroups: readonly SubjectAccordionGroup[] = useMemo(() => {
+    const map = new Map<string, LearningContentListItem[]>();
+    const knownSubjects = new Map<string, { name: string; code: string }>();
+
+    for (const sub of subjects) {
+      knownSubjects.set(sub.id, { name: sub.name, code: sub.code });
+      map.set(sub.id, []);
+    }
+
+    const unassigned: LearningContentListItem[] = [];
+
+    for (const item of filteredByGradeItems) {
+      if (item.subjectId && map.has(item.subjectId)) {
+        map.get(item.subjectId)!.push(item);
+      } else if (item.subjectId && !map.has(item.subjectId)) {
+        map.set(item.subjectId, [item]);
+        knownSubjects.set(item.subjectId, {
+          name: item.subjectName || "Subject",
+          code: "",
+        });
+      } else if (item.subjectName) {
+        const found = Array.from(knownSubjects.entries()).find(
+          ([, val]) => val.name.toLowerCase() === item.subjectName!.toLowerCase()
+        );
+        if (found) {
+          map.get(found[0])!.push(item);
+        } else {
+          unassigned.push(item);
+        }
+      } else {
+        unassigned.push(item);
+      }
+    }
+
+    const result: SubjectAccordionGroup[] = [];
+
+    for (const [id, subjectInfo] of knownSubjects.entries()) {
+      const groupMaterials = map.get(id) || [];
+      if (groupMaterials.length > 0 || selectedGradeId !== "ALL") {
+        result.push({
+          id,
+          name: subjectInfo.name,
+          code: subjectInfo.code,
+          materials: groupMaterials,
+        });
+      }
+    }
+
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    if (unassigned.length > 0) {
+      result.push({
+        id: "general-resources",
+        name: "General & Cross-Subject Resources",
+        code: "GEN",
+        materials: unassigned,
+      });
+    }
+
+    return result;
+  }, [filteredByGradeItems, subjects, selectedGradeId]);
+
+  useEffect(() => {
+    if (subjectGroups.length > 0 && openSubjectIds.size === 0) {
+      const firstWithMaterials =
+        subjectGroups.find((g) => g.materials.length > 0) || subjectGroups[0];
+      if (firstWithMaterials) {
+        setOpenSubjectIds(new Set([firstWithMaterials.id]));
+      }
+    }
+  }, [subjectGroups, openSubjectIds.size]);
 
   const activePathString = useMemo(() => {
     const parts = ["Materials"];
 
-    if (filters.subjectId) {
-      const matchedSub = subjects.find((s) => s.id === filters.subjectId);
-      if (matchedSub) {
-        parts.push(matchedSub.name);
-      }
+    if (activeGrade) {
+      parts.push(`Grade ${activeGrade.level}`);
+    } else {
+      parts.push("All Grades");
     }
 
-    if (filters.gradeId) {
-      const matchedGrade = grades.find((g) => g.id === filters.gradeId);
-      if (matchedGrade) {
-        parts.push(`Grade ${matchedGrade.level}`);
-      }
-    }
-
-    if (filters.scope) {
-      const scopeMap: Record<string, string> = {
-        SUBJECT: "Subject",
-        GRADE_SUBJECT: "Grade",
-        UNIT: "Unit",
-        TOPIC: "Topic",
-      };
-      parts.push(scopeMap[filters.scope] || filters.scope);
+    if (filters.type) {
+      parts.push(filters.type);
     }
 
     return parts.join(" / ");
-  }, [filters, subjects, grades]);
+  }, [activeGrade, filters.type]);
 
   const handleCopyPath = () => {
     navigator.clipboard.writeText(activePathString);
@@ -159,14 +250,6 @@ export function ContentListView() {
     setFilters((prev) => ({
       ...prev,
       search: search || undefined,
-      page: 1,
-    }));
-  };
-
-  const handleScopeSelect = (scopeVal: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      scope: scopeVal === "ALL" ? undefined : (scopeVal as ContentScope),
       page: 1,
     }));
   };
@@ -187,20 +270,21 @@ export function ContentListView() {
     }));
   };
 
-  const handleSubjectSelect = (subVal: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      subjectId: subVal === "ALL" ? undefined : subVal,
-      page: 1,
-    }));
+  const handleSelectGradeTab = (gradeId: string) => {
+    setSelectedGradeId(gradeId);
+    setSelectedIds(new Set());
   };
 
-  const handleGradeSelect = (gradeVal: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      gradeId: gradeVal === "ALL" ? undefined : gradeVal,
-      page: 1,
-    }));
+  const handleToggleSubject = (id: string) => {
+    setOpenSubjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const handleToggleSelect = (id: string) => {
@@ -215,17 +299,12 @@ export function ContentListView() {
     });
   };
 
-  const handleToggleSelectAll = () => {
-    if (items.length === 0) return;
-    const allSelected = items.every((i) => selectedIds.has(i.id));
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(items.map((i) => i.id)));
-    }
+  const handleOpenAdd = () => {
+    setItemToEdit(null);
+    setIsCreateModalOpen(true);
   };
 
-  const handleOpenAdd = () => {
+  const handleOpenAddForSubject = () => {
     setItemToEdit(null);
     setIsCreateModalOpen(true);
   };
@@ -264,7 +343,11 @@ export function ContentListView() {
   };
 
   const handleBatchDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${selectedIds.size} selected materials?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedIds.size} selected materials?`
+      )
+    ) {
       return;
     }
     for (const id of selectedIds) {
@@ -273,43 +356,53 @@ export function ContentListView() {
     setSelectedIds(new Set());
   };
 
-  const filterGroups: FilterGroup[] = [
-    {
-      id: "scope",
-      label: "Scope",
-      options: SCOPE_FILTER_OPTIONS,
-      selectedValue: filters.scope || "ALL",
-      onSelect: handleScopeSelect,
-    },
-    {
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    const list: FilterGroup[] = [];
+
+    if (academicYears.length > 0) {
+      list.push({
+        id: "academicYear",
+        label: "Academic Year",
+        options: [
+          { label: "All", value: "ALL" },
+          ...academicYears.map((y) => ({
+            label: y.name.replace(/Academic Year/i, "").trim() || y.name,
+            value: y.id,
+          })),
+        ],
+        selectedValue: selectedAcademicYearId,
+        onSelect: (val) => {
+          setSelectedAcademicYearId(val);
+          setFilters((prev) => ({
+            ...prev,
+            academicYearId: val === "ALL" ? undefined : val,
+            page: 1,
+          }));
+        },
+        icon: Calendar,
+      });
+    }
+
+    list.push({
       id: "type",
       label: "Type",
       options: TYPE_FILTER_OPTIONS,
       selectedValue: filters.type || "ALL",
       onSelect: handleTypeSelect,
-    },
-    {
-      id: "subject",
-      label: "Subject",
-      options: subjectFilterOptions,
-      selectedValue: filters.subjectId || "ALL",
-      onSelect: handleSubjectSelect,
-    },
-    {
-      id: "grade",
-      label: "Grade",
-      options: gradeFilterOptions,
-      selectedValue: filters.gradeId || "ALL",
-      onSelect: handleGradeSelect,
-    },
-    {
+      icon: BookOpen,
+    });
+
+    list.push({
       id: "status",
       label: "Status",
       options: STATUS_FILTER_OPTIONS,
       selectedValue: filters.status || "ALL",
       onSelect: handleStatusSelect,
-    },
-  ];
+      icon: ShieldCheck,
+    });
+
+    return list;
+  }, [academicYears, selectedAcademicYearId, filters.type, filters.status]);
 
   if (isLoading) {
     return (
@@ -322,13 +415,15 @@ export function ContentListView() {
   if (error) {
     return (
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={getErrorMessage(error, "Failed to load learning materials.")} />
+        <ErrorAlert
+          message={getErrorMessage(error, "Failed to load learning materials.")}
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3.5 max-w-7xl mx-auto w-full pb-10">
+    <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
       <div className="bg-card rounded-xl border border-border px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs shadow-2xs">
         <div className="flex items-center gap-2 min-w-0">
           <FolderTree size={14} className="text-muted-foreground shrink-0" />
@@ -351,7 +446,8 @@ export function ContentListView() {
 
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[11px] text-muted-foreground hidden sm:inline font-medium">
-            {pagination ? `${pagination.total} materials` : ""}
+            {filteredByGradeItems.length}{" "}
+            {filteredByGradeItems.length === 1 ? "material" : "materials"}
           </span>
         </div>
       </div>
@@ -374,6 +470,13 @@ export function ContentListView() {
           }
         />
       </div>
+
+      <ContentGradeTabs
+        grades={gradeTabs}
+        selectedGradeId={selectedGradeId}
+        onSelectGrade={handleSelectGradeTab}
+        totalCount={items.length}
+      />
 
       {selectedIds.size > 0 && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl px-3.5 py-2 flex items-center justify-between gap-3 text-xs animate-in fade-in-0">
@@ -419,27 +522,61 @@ export function ContentListView() {
         </div>
       )}
 
-      <ContentTable
-        items={items}
-        selectedIds={selectedIds}
-        onToggleSelect={handleToggleSelect}
-        onToggleSelectAll={handleToggleSelectAll}
-        onViewDetail={(item) => setDetailItem(item)}
-        onEdit={handleOpenEdit}
-        onOpenUpload={(item) => setUploadTargetItem(item)}
-        onSaveNewVersion={handleOpenNewVersion}
-        onSubmitForReview={(item) => submitMutation.mutate(item.id)}
-        onPublish={(item) => publishMutation.mutate(item.id)}
-        onArchive={(item) => archiveMutation.mutate(item.id)}
-        onDelete={handleDelete}
-        onOpenAddModal={handleOpenAdd}
-      />
+      {subjectGroups.length === 0 ? (
+        <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+            <Folder size={20} />
+          </div>
+          <h3 className="text-sm font-bold text-foreground mb-1">
+            No Materials Found
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-sm mb-4">
+            {activeGrade
+              ? `No subjects or materials found for Grade ${activeGrade.level}.`
+              : "No learning materials match the selected filters."}
+          </p>
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+          >
+            <Plus size={13} />
+            <span>New Material</span>
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {subjectGroups.map((subject) => (
+            <ContentSubjectAccordion
+              key={subject.id}
+              subject={subject}
+              isOpen={openSubjectIds.has(subject.id)}
+              onToggle={() => handleToggleSubject(subject.id)}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onViewDetail={(item) => setDetailItem(item)}
+              onEdit={handleOpenEdit}
+              onOpenUpload={(item) => setUploadTargetItem(item)}
+              onSaveNewVersion={handleOpenNewVersion}
+              onSubmitForReview={(item) => submitMutation.mutate(item.id)}
+              onPublish={(item) => publishMutation.mutate(item.id)}
+              onArchive={(item) => archiveMutation.mutate(item.id)}
+              onDelete={handleDelete}
+              onAddMaterial={handleOpenAddForSubject}
+            />
+          ))}
+        </div>
+      )}
 
       {pagination && pagination.totalPages > 1 && (
         <div className="bg-card rounded-2xl border border-border p-3 sm:px-4 flex items-center justify-between text-xs text-muted-foreground shadow-xs">
           <span>
-            Page <strong className="text-foreground">{pagination.page}</strong> of{" "}
-            <strong className="text-foreground">{pagination.totalPages}</strong> ({pagination.total} total)
+            Page <strong className="text-foreground">{pagination.page}</strong>{" "}
+            of{" "}
+            <strong className="text-foreground">
+              {pagination.totalPages}
+            </strong>{" "}
+            ({pagination.total} total)
           </span>
           <div className="flex items-center gap-1.5">
             <button
@@ -484,6 +621,16 @@ export function ContentListView() {
         itemToEdit={itemToEdit}
       />
 
+      <ContentDetailModal
+        isOpen={Boolean(detailItem)}
+        onClose={() => setDetailItem(null)}
+        item={detailItem}
+        onOpenNewVersionModal={(item: LearningContentDetailItem) => {
+          setDetailItem(null);
+          handleOpenNewVersion(item);
+        }}
+      />
+
       <ContentVersionModal
         isOpen={isVersionModalOpen}
         onClose={() => {
@@ -491,16 +638,6 @@ export function ContentListView() {
           setVersionTargetItem(null);
         }}
         item={versionTargetItem}
-      />
-
-      <ContentDetailModal
-        isOpen={Boolean(detailItem)}
-        onClose={() => setDetailItem(null)}
-        item={detailItem}
-        onOpenNewVersionModal={(item) => {
-          setDetailItem(null);
-          handleOpenNewVersion(item);
-        }}
       />
 
       <ContentUploadModal

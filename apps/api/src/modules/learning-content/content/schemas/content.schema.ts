@@ -174,6 +174,10 @@ export const ContentFilterQuerySchema = z.object({
     .string()
     .uuid("Invalid curriculum version ID")
     .optional(),
+  academicYearId: z
+    .string()
+    .uuid("Invalid academic year ID")
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce
     .number()

@@ -75,6 +75,7 @@ export interface ContentFilterQuery {
   readonly objectiveId?: string;
   readonly authorId?: string;
   readonly curriculumVersionId?: string;
+  readonly academicYearId?: string;
   readonly targetGradeLevel?: number;
   readonly page?: number;
   readonly limit?: number;

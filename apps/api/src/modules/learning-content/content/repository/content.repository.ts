@@ -79,6 +79,14 @@ export class ContentRepository {
     return grade !== null;
   }
 
+  async findGradeIdByLevel(level: number): Promise<string | null> {
+    const grade = await prisma.grade.findFirst({
+      where: { level },
+      select: { id: true },
+    });
+    return grade?.id ?? null;
+  }
+
   async findCurriculumVersionForGradeSubject(
     gradeId: string,
     subjectId: string
@@ -186,6 +194,33 @@ export class ContentRepository {
             { grade: { level: filters.targetGradeLevel } },
           ],
         });
+      }
+
+      if (filters.academicYearId) {
+        const sections = await prisma.section.findMany({
+          where: { academicYearId: filters.academicYearId, tenantId },
+          select: { gradeId: true, grade: { select: { level: true } } },
+        });
+
+        const activeGradeIds = Array.from(
+          new Set(sections.map((s) => s.gradeId))
+        );
+        const activeLevels = Array.from(
+          new Set(sections.map((s) => s.grade.level))
+        );
+
+        if (activeGradeIds.length > 0) {
+          conditions.push({
+            OR: [
+              { gradeId: { in: activeGradeIds } },
+              { targetGradeLevels: { hasSome: activeLevels } },
+            ],
+          });
+        } else {
+          conditions.push({
+            id: "00000000-0000-0000-0000-000000000000",
+          });
+        }
       }
 
       const where: Prisma.LearningContentWhereInput = {

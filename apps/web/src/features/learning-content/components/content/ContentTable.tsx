@@ -40,17 +40,7 @@ interface ContentTableProps {
   readonly onOpenAddModal: () => void;
 }
 
-function ContentRowActions({
-  item,
-  onViewDetail,
-  onEdit,
-  onOpenUpload,
-  onSaveNewVersion,
-  onSubmitForReview,
-  onPublish,
-  onArchive,
-  onDelete,
-}: {
+export interface ContentRowActionsProps {
   readonly item: LearningContentListItem;
   readonly onViewDetail: (item: LearningContentListItem) => void;
   readonly onEdit: (item: LearningContentListItem) => void;
@@ -60,7 +50,19 @@ function ContentRowActions({
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
-}) {
+}
+
+export function ContentRowActions({
+  item,
+  onViewDetail,
+  onEdit,
+  onOpenUpload,
+  onSaveNewVersion,
+  onSubmitForReview,
+  onPublish,
+  onArchive,
+  onDelete,
+}: ContentRowActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
