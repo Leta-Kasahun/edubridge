@@ -169,12 +169,6 @@ export const API_ENDPOINTS = {
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,
   },
-  LEARNING_CONTENT_IMPORT: {
-    BASE: "/learning-content/import",
-    PREVIEW: "/learning-content/import/preview",
-    COMMIT: "/learning-content/import/commit",
-    TEMPLATE: "/learning-content/import/template",
-  },
   HEALTH: "/health",
 } as const;
 

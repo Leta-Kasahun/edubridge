@@ -48,7 +48,6 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: BookMarked,
     children: [
       { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
     ],
   },
   {
@@ -98,7 +97,6 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: BookMarked,
     children: [
       { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
     ],
   },
   {
@@ -148,7 +146,6 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: BookMarked,
     children: [
       { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-      { label: "Import", href: ROUTES.LEARNING_CONTENT.IMPORT },
     ],
   },
   {

@@ -44,7 +44,7 @@ const DEFAULT_MAX_SIZE_MAP: Readonly<Record<AllowedMediaCategory, number>> = {
   image: 10 * 1024 * 1024,
   video: 100 * 1024 * 1024,
   audio: 25 * 1024 * 1024,
-  pdf: 25 * 1024 * 1024,
+  pdf: 100 * 1024 * 1024,
   document: 20 * 1024 * 1024,
   spreadsheet: 15 * 1024 * 1024,
 };

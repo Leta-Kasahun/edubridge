@@ -181,6 +181,29 @@ export function useUploadAttachment(id: string) {
   });
 }
 
+export function useUploadContentAttachment() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ContentAttachmentItem,
+    Error,
+    { readonly contentId: string; readonly file: File }
+  >({
+    mutationFn: ({ contentId, file }) =>
+      contentService.uploadAttachment(contentId, file),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: LEARNING_CONTENT_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...LEARNING_CONTENT_QUERY_KEY,
+          "detail",
+          variables.contentId,
+        ],
+      });
+    },
+  });
+}
+
 export function useDeleteAttachment(id: string) {
   const queryClient = useQueryClient();
 

@@ -30,6 +30,7 @@ import {
 } from "../../hooks/useLearningContent";
 import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
+import { ContentScopeBadge } from "./ContentScopeBadge";
 import { LoadingSpinner, ErrorAlert } from "@/shared/components";
 import { getErrorMessage, formatFileSize } from "@/shared/utils";
 
@@ -141,6 +142,7 @@ export function ContentDetailModal({
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <ContentTypeBadge type={displayItem.type} />
+                <ContentScopeBadge scope={displayItem.scope} />
                 <ContentStatusBadge status={displayItem.status} />
                 <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-muted text-foreground border border-border">
                   v{displayItem.currentVersion}
@@ -433,9 +435,54 @@ export function ContentDetailModal({
 
               {activeTab === "mappings" && (
                 <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-muted/20 border border-border text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-foreground">Scope</span>
+                      <ContentScopeBadge scope={displayItem.scope} />
+                    </div>
+                    {displayItem.subjectName && (
+                      <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                        <span>Subject:</span>
+                        <strong className="text-foreground">{displayItem.subjectName}</strong>
+                      </div>
+                    )}
+                    {displayItem.targetGradeLevels &&
+                      displayItem.targetGradeLevels.length > 0 && (
+                        <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                          <span>Target Grades:</span>
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {displayItem.targetGradeLevels.map((lvl) => (
+                              <span
+                                key={lvl}
+                                className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px] border border-primary/20"
+                              >
+                                Grade {lvl}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    {displayItem.gradeLevel &&
+                      (!displayItem.targetGradeLevels ||
+                        displayItem.targetGradeLevels.length <= 1) && (
+                        <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                          <span>Grade:</span>
+                          <strong className="text-foreground">
+                            Grade {displayItem.gradeLevel}
+                          </strong>
+                        </div>
+                      )}
+                    {displayItem.unitTitle && (
+                      <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                        <span>Unit:</span>
+                        <strong className="text-foreground">{displayItem.unitTitle}</strong>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <h3 className="text-xs font-bold text-foreground">
-                      Curriculum Topics
+                      Topics
                     </h3>
                     {detail?.topics.map((t) => (
                       <div

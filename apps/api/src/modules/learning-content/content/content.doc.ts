@@ -1,21 +1,26 @@
 import { routeRegistry, RouteDefinition } from "../../../docs/route.registry.js";
+import { CONTENT_TYPES, CONTENT_SCOPES } from "../../../shared/constants/index.js";
 
 const contentRouteDefinitions: readonly RouteDefinition[] = [
   {
     path: "/api/learning-content/content",
     method: "GET",
     summary: "List Learning Content",
-    description: "Retrieve paginated learning content filtered by curriculum topic, objective, subject, type, or status.",
+    description: "Retrieve paginated learning content filtered by scope, grade, subject, unit, topic, objective, type, or status.",
     tags: ["Learning Content - Materials"],
     security: true,
     parameters: [
       { name: "search", in: "query", schema: { type: "string" } },
-      { name: "type", in: "query", schema: { type: "string", enum: ["TEXT", "LESSON", "NOTE", "VIDEO", "PDF", "IMAGE", "LINK"] } },
+      { name: "type", in: "query", schema: { type: "string", enum: [...CONTENT_TYPES] } },
+      { name: "scope", in: "query", schema: { type: "string", enum: [...CONTENT_SCOPES] } },
       { name: "status", in: "query", schema: { type: "string", enum: ["DRAFT", "PENDING_REVIEW", "APPROVED", "PUBLISHED", "ARCHIVED"] } },
       { name: "source", in: "query", schema: { type: "string", enum: ["TEACHER", "SYSTEM", "AI"] } },
+      { name: "subjectId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "gradeId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "targetGradeLevel", in: "query", schema: { type: "integer" } },
+      { name: "unitId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "topicId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "objectiveId", in: "query", schema: { type: "string", format: "uuid" } },
-      { name: "subjectId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "curriculumVersionId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "page", in: "query", schema: { type: "integer", default: 1 } },
       { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
@@ -45,7 +50,7 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
     path: "/api/learning-content/content",
     method: "POST",
     summary: "Create Learning Content Draft",
-    description: "Create a new learning content item with initial auto-generated Version 1 and curriculum mappings.",
+    description: "Create a new learning content item with initial auto-generated Version 1 and scope-based curriculum mappings.",
     tags: ["Learning Content - Materials"],
     security: true,
     requestBody: {
@@ -54,15 +59,21 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
         properties: {
           title: { type: "string" },
           description: { type: "string" },
-          type: { type: "string", enum: ["TEXT", "LESSON", "NOTE", "VIDEO", "PDF", "IMAGE", "LINK"] },
+          type: { type: "string", enum: [...CONTENT_TYPES] },
+          scope: { type: "string", enum: [...CONTENT_SCOPES], default: "TOPIC" },
           source: { type: "string", enum: ["TEACHER", "SYSTEM", "AI"] },
+          subjectId: { type: "string", format: "uuid" },
+          gradeId: { type: "string", format: "uuid" },
+          targetGradeLevels: { type: "array", items: { type: "integer" } },
+          unitId: { type: "string", format: "uuid" },
+          curriculumVersionId: { type: "string", format: "uuid" },
           primaryTopicId: { type: "string", format: "uuid" },
           secondaryTopicIds: { type: "array", items: { type: "string", format: "uuid" } },
           objectiveIds: { type: "array", items: { type: "string", format: "uuid" } },
           initialVersionBody: { type: "object" },
           changeNote: { type: "string" },
         },
-        required: ["title", "type", "primaryTopicId"],
+        required: ["title", "type"],
       },
     },
     responses: {
@@ -75,7 +86,7 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
     path: "/api/learning-content/content/{id}",
     method: "PATCH",
     summary: "Update Content Metadata",
-    description: "Update basic content properties without changing versions.",
+    description: "Update basic content properties and hierarchy alignment without changing versions.",
     tags: ["Learning Content - Materials"],
     security: true,
     parameters: [
@@ -87,8 +98,14 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
         properties: {
           title: { type: "string" },
           description: { type: "string" },
-          type: { type: "string", enum: ["TEXT", "LESSON", "NOTE", "VIDEO", "PDF", "IMAGE", "LINK"] },
+          type: { type: "string", enum: [...CONTENT_TYPES] },
+          scope: { type: "string", enum: [...CONTENT_SCOPES] },
           source: { type: "string", enum: ["TEACHER", "SYSTEM", "AI"] },
+          subjectId: { type: "string", format: "uuid" },
+          gradeId: { type: "string", format: "uuid" },
+          targetGradeLevels: { type: "array", items: { type: "integer" } },
+          unitId: { type: "string", format: "uuid" },
+          curriculumVersionId: { type: "string", format: "uuid" },
         },
       },
     },
@@ -102,7 +119,7 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
     path: "/api/learning-content/content/{id}/mappings",
     method: "PUT",
     summary: "Update Curriculum Mappings",
-    description: "Update associated curriculum topics and learning objectives.",
+    description: "Update associated scope, curriculum hierarchy, topics, and learning objectives.",
     tags: ["Learning Content - Materials"],
     security: true,
     parameters: [
@@ -112,11 +129,15 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
       schema: {
         type: "object",
         properties: {
+          scope: { type: "string", enum: [...CONTENT_SCOPES] },
+          subjectId: { type: "string", format: "uuid" },
+          gradeId: { type: "string", format: "uuid" },
+          unitId: { type: "string", format: "uuid" },
+          curriculumVersionId: { type: "string", format: "uuid" },
           primaryTopicId: { type: "string", format: "uuid" },
           secondaryTopicIds: { type: "array", items: { type: "string", format: "uuid" } },
           objectiveIds: { type: "array", items: { type: "string", format: "uuid" } },
         },
-        required: ["primaryTopicId"],
       },
     },
     responses: {

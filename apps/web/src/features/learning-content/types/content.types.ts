@@ -5,7 +5,16 @@ export type ContentType =
   | "VIDEO"
   | "PDF"
   | "IMAGE"
-  | "LINK";
+  | "LINK"
+  | "TEXTBOOK"
+  | "REFERENCE_BOOK"
+  | "WORKSHEET"
+  | "EXERCISE"
+  | "PAST_EXAM_PAPER"
+  | "TEACHER_GUIDE"
+  | "STUDY_GUIDE";
+
+export type ContentScope = "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
 
 export type ContentStatus =
   | "DRAFT"
@@ -76,11 +85,20 @@ export interface LearningContentListItem {
   readonly title: string;
   readonly description?: string | null;
   readonly type: ContentType;
+  readonly scope: ContentScope;
   readonly source: ContentSourceType;
   readonly status: ContentStatus;
   readonly currentVersion: number;
   readonly authorId: string;
   readonly authorName?: string;
+  readonly subjectId?: string | null;
+  readonly subjectName?: string | null;
+  readonly gradeId?: string | null;
+  readonly gradeLevel?: number | null;
+  readonly unitId?: string | null;
+  readonly unitTitle?: string | null;
+  readonly curriculumVersionId?: string | null;
+  readonly targetGradeLevels: readonly number[];
   readonly primaryTopic?: ContentTopicMapping | null;
   readonly mappedObjectiveCount: number;
   readonly attachmentCount: number;
@@ -94,11 +112,20 @@ export interface LearningContentDetailItem {
   readonly title: string;
   readonly description?: string | null;
   readonly type: ContentType;
+  readonly scope: ContentScope;
   readonly source: ContentSourceType;
   readonly status: ContentStatus;
   readonly currentVersion: number;
   readonly authorId: string;
   readonly authorName?: string;
+  readonly subjectId?: string | null;
+  readonly subjectName?: string | null;
+  readonly gradeId?: string | null;
+  readonly gradeLevel?: number | null;
+  readonly unitId?: string | null;
+  readonly unitTitle?: string | null;
+  readonly curriculumVersionId?: string | null;
+  readonly targetGradeLevels: readonly number[];
   readonly publishedAt?: string | null;
   readonly archivedAt?: string | null;
   readonly createdAt: string;
@@ -114,11 +141,15 @@ export interface ContentFilters {
   readonly limit?: number;
   readonly search?: string;
   readonly type?: ContentType;
+  readonly scope?: ContentScope;
   readonly status?: ContentStatus;
   readonly source?: ContentSourceType;
+  readonly subjectId?: string;
+  readonly gradeId?: string;
+  readonly targetGradeLevel?: number;
+  readonly unitId?: string;
   readonly topicId?: string;
   readonly objectiveId?: string;
-  readonly subjectId?: string;
   readonly curriculumVersionId?: string;
 }
 
@@ -126,8 +157,14 @@ export interface CreateLearningContentDto {
   readonly title: string;
   readonly description?: string | null;
   readonly type: ContentType;
+  readonly scope?: ContentScope;
   readonly source?: ContentSourceType;
-  readonly primaryTopicId: string;
+  readonly subjectId?: string;
+  readonly gradeId?: string;
+  readonly unitId?: string;
+  readonly curriculumVersionId?: string;
+  readonly targetGradeLevels?: readonly number[];
+  readonly primaryTopicId?: string;
   readonly secondaryTopicIds?: readonly string[];
   readonly objectiveIds?: readonly string[];
   readonly initialVersionBody?: ContentVersionBody;
@@ -138,11 +175,23 @@ export interface UpdateLearningContentDto {
   readonly title?: string;
   readonly description?: string | null;
   readonly type?: ContentType;
+  readonly scope?: ContentScope;
   readonly source?: ContentSourceType;
+  readonly subjectId?: string | null;
+  readonly gradeId?: string | null;
+  readonly unitId?: string | null;
+  readonly curriculumVersionId?: string | null;
+  readonly targetGradeLevels?: readonly number[];
 }
 
 export interface UpdateContentMappingsDto {
-  readonly primaryTopicId: string;
+  readonly scope?: ContentScope;
+  readonly subjectId?: string | null;
+  readonly gradeId?: string | null;
+  readonly unitId?: string | null;
+  readonly curriculumVersionId?: string | null;
+  readonly targetGradeLevels?: readonly number[];
+  readonly primaryTopicId?: string | null;
   readonly secondaryTopicIds?: readonly string[];
   readonly objectiveIds?: readonly string[];
 }

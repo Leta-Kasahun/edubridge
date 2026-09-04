@@ -1,6 +1,7 @@
 import {
   ContentRepository,
   contentRepository,
+  ResolvedHierarchy,
 } from "../repository/content.repository.js";
 import {
   ContentAttachmentService,
@@ -28,6 +29,7 @@ import {
   ContentTypeEnum,
   ContentSourceTypeEnum,
   ContentStatusEnum,
+  ContentScopeEnum,
 } from "../../../../shared/constants/index.js";
 
 export class ContentService {
@@ -35,6 +37,249 @@ export class ContentService {
     private readonly repository: ContentRepository = contentRepository,
     private readonly attachmentService: ContentAttachmentService = contentAttachmentService
   ) {}
+
+  private async resolveAndValidateHierarchy(
+    tenantId: string,
+    input: {
+      readonly scope?: ContentScopeEnum;
+      readonly subjectId?: string | null;
+      readonly gradeId?: string | null;
+      readonly unitId?: string | null;
+      readonly curriculumVersionId?: string | null;
+      readonly targetGradeLevels?: readonly number[];
+      readonly primaryTopicId?: string | null;
+      readonly secondaryTopicIds?: readonly string[];
+      readonly objectiveIds?: readonly string[];
+    },
+    existing?: {
+      readonly scope: ContentScopeEnum;
+      readonly subjectId: string | null;
+      readonly gradeId: string | null;
+      readonly unitId: string | null;
+      readonly curriculumVersionId: string | null;
+      readonly targetGradeLevels?: readonly number[];
+      readonly primaryTopicId?: string | null;
+    }
+  ): Promise<ResolvedHierarchy> {
+    const scope = input.scope ?? existing?.scope ?? "TOPIC";
+    const targetGradeLevels =
+      input.targetGradeLevels ?? existing?.targetGradeLevels ?? [];
+
+    if (scope === "TOPIC") {
+      const topicId = input.primaryTopicId ?? existing?.primaryTopicId;
+      if (!topicId) {
+        throw new BadRequestError("Primary topic ID is required when scope is TOPIC");
+      }
+
+      const topicRecord = await this.repository.resolveTopicAncestry(topicId);
+      if (!topicRecord) {
+        throw new BadRequestError(`Topic ${topicId} not found`);
+      }
+
+      const resolvedUnitId = topicRecord.unitId;
+      const resolvedSubjectId =
+        topicRecord.unit?.curriculumSubject?.subjectId ?? null;
+      const resolvedGradeId =
+        topicRecord.unit?.curriculumSubject?.gradeId ?? null;
+      const resolvedCurriculumVersionId =
+        topicRecord.unit?.curriculumSubject?.curriculumVersionId ?? null;
+
+      if (input.unitId && input.unitId !== resolvedUnitId) {
+        throw new BadRequestError(
+          "Provided unitId conflicts with the primary topic's unit"
+        );
+      }
+      if (
+        input.subjectId &&
+        resolvedSubjectId &&
+        input.subjectId !== resolvedSubjectId
+      ) {
+        throw new BadRequestError(
+          "Provided subjectId conflicts with the primary topic's subject"
+        );
+      }
+      if (
+        input.gradeId &&
+        resolvedGradeId &&
+        input.gradeId !== resolvedGradeId
+      ) {
+        throw new BadRequestError(
+          "Provided gradeId conflicts with the primary topic's grade"
+        );
+      }
+
+      const validation = await this.repository.validateTopicAndObjectivesExist(
+        tenantId,
+        topicId,
+        input.secondaryTopicIds ?? [],
+        input.objectiveIds ?? []
+      );
+
+      if (!validation.isValid) {
+        const errors: string[] = [];
+        if (validation.missingTopicIds.length > 0) {
+          errors.push(
+            `Invalid or unmapped topic IDs: ${validation.missingTopicIds.join(", ")}`
+          );
+        }
+        if (validation.missingObjectiveIds.length > 0) {
+          errors.push(
+            `Invalid or unmapped objective IDs: ${validation.missingObjectiveIds.join(", ")}`
+          );
+        }
+        throw new BadRequestError(errors.join("; "));
+      }
+
+      return {
+        scope: "TOPIC",
+        subjectId: resolvedSubjectId,
+        gradeId: resolvedGradeId,
+        unitId: resolvedUnitId,
+        curriculumVersionId: resolvedCurriculumVersionId,
+        targetGradeLevels,
+        primaryTopicId: topicId,
+        secondaryTopicIds: input.secondaryTopicIds ?? [],
+        objectiveIds: input.objectiveIds ?? [],
+      };
+    }
+
+    if (scope === "UNIT") {
+      const unitId = input.unitId ?? existing?.unitId;
+      if (!unitId) {
+        throw new BadRequestError("Unit ID is required when scope is UNIT");
+      }
+
+      const unitRecord = await this.repository.resolveUnitAncestry(unitId);
+      if (!unitRecord) {
+        throw new BadRequestError(`Unit ${unitId} not found`);
+      }
+
+      const resolvedSubjectId =
+        unitRecord.curriculumSubject?.subjectId ?? null;
+      const resolvedGradeId =
+        unitRecord.curriculumSubject?.gradeId ?? null;
+      const resolvedCurriculumVersionId =
+        unitRecord.curriculumSubject?.curriculumVersionId ?? null;
+
+      if (
+        input.subjectId &&
+        resolvedSubjectId &&
+        input.subjectId !== resolvedSubjectId
+      ) {
+        throw new BadRequestError(
+          "Provided subjectId conflicts with the unit's subject"
+        );
+      }
+      if (
+        input.gradeId &&
+        resolvedGradeId &&
+        input.gradeId !== resolvedGradeId
+      ) {
+        throw new BadRequestError(
+          "Provided gradeId conflicts with the unit's grade"
+        );
+      }
+
+      return {
+        scope: "UNIT",
+        subjectId: resolvedSubjectId,
+        gradeId: resolvedGradeId,
+        unitId,
+        curriculumVersionId: resolvedCurriculumVersionId,
+        targetGradeLevels,
+        primaryTopicId: null,
+        secondaryTopicIds: [],
+        objectiveIds: [],
+      };
+    }
+
+    if (scope === "GRADE_SUBJECT") {
+      const subjectId = input.subjectId ?? existing?.subjectId;
+      let gradeId = input.gradeId ?? existing?.gradeId ?? null;
+
+      if (!subjectId) {
+        throw new BadRequestError(
+          "Subject ID is required when scope is GRADE_SUBJECT"
+        );
+      }
+      if (!gradeId && targetGradeLevels.length === 0) {
+        throw new BadRequestError(
+          "Grade ID or target grade levels are required when scope is GRADE_SUBJECT"
+        );
+      }
+
+      if (!gradeId && targetGradeLevels.length > 0) {
+        const matchingGrade = await prisma.grade.findFirst({
+          where: { level: targetGradeLevels[0] },
+          select: { id: true },
+        });
+        if (matchingGrade) {
+          gradeId = matchingGrade.id;
+        }
+      }
+
+      const subjectExists = await this.repository.verifySubjectExists(subjectId);
+      if (!subjectExists) {
+        throw new BadRequestError(`Subject ${subjectId} not found`);
+      }
+
+      if (gradeId) {
+        const gradeExists = await this.repository.verifyGradeExists(gradeId);
+        if (!gradeExists) {
+          throw new BadRequestError(`Grade ${gradeId} not found`);
+        }
+      }
+
+      const resolvedCurriculumVersionId = gradeId
+        ? (input.curriculumVersionId ??
+          existing?.curriculumVersionId ??
+          (await this.repository.findCurriculumVersionForGradeSubject(
+            gradeId,
+            subjectId
+          )))
+        : null;
+
+      return {
+        scope: "GRADE_SUBJECT",
+        subjectId,
+        gradeId,
+        unitId: null,
+        curriculumVersionId: resolvedCurriculumVersionId,
+        targetGradeLevels,
+        primaryTopicId: null,
+        secondaryTopicIds: [],
+        objectiveIds: [],
+      };
+    }
+
+    if (scope === "SUBJECT") {
+      const subjectId = input.subjectId ?? existing?.subjectId;
+      if (!subjectId) {
+        throw new BadRequestError(
+          "Subject ID is required when scope is SUBJECT"
+        );
+      }
+
+      const subjectExists = await this.repository.verifySubjectExists(subjectId);
+      if (!subjectExists) {
+        throw new BadRequestError(`Subject ${subjectId} not found`);
+      }
+
+      return {
+        scope: "SUBJECT",
+        subjectId,
+        gradeId: null,
+        unitId: null,
+        curriculumVersionId: null,
+        targetGradeLevels,
+        primaryTopicId: null,
+        secondaryTopicIds: [],
+        objectiveIds: [],
+      };
+    }
+
+    throw new BadRequestError(`Invalid content scope: ${String(scope)}`);
+  }
 
   async listContent(
     tenantId: string,
@@ -74,6 +319,7 @@ export class ContentService {
         title: item.title,
         description: item.description,
         type: item.type as ContentTypeEnum,
+        scope: item.scope as ContentScopeEnum,
         source: item.source as ContentSourceTypeEnum,
         status: item.status as ContentStatusEnum,
         currentVersion: item.currentVersion,
@@ -81,6 +327,14 @@ export class ContentService {
         authorName: item.author
           ? `${item.author.firstName} ${item.author.lastName}`.trim()
           : undefined,
+        subjectId: item.subjectId,
+        subjectName: item.subject?.name ?? null,
+        gradeId: item.gradeId,
+        gradeLevel: item.grade?.level ?? null,
+        unitId: item.unitId,
+        unitTitle: item.unit?.title ?? null,
+        curriculumVersionId: item.curriculumVersionId,
+        targetGradeLevels: item.targetGradeLevels ?? [],
         primaryTopic,
         mappedObjectiveCount: item._count.objectives,
         attachmentCount: item._count.attachments,
@@ -182,6 +436,7 @@ export class ContentService {
       title: item.title,
       description: item.description,
       type: item.type as ContentTypeEnum,
+      scope: item.scope as ContentScopeEnum,
       source: item.source as ContentSourceTypeEnum,
       status: item.status as ContentStatusEnum,
       currentVersion: item.currentVersion,
@@ -189,6 +444,14 @@ export class ContentService {
       authorName: item.author
         ? `${item.author.firstName} ${item.author.lastName}`.trim()
         : undefined,
+      subjectId: item.subjectId,
+      subjectName: item.subject?.name ?? null,
+      gradeId: item.gradeId,
+      gradeLevel: item.grade?.level ?? null,
+      unitId: item.unitId,
+      unitTitle: item.unit?.title ?? null,
+      curriculumVersionId: item.curriculumVersionId,
+      targetGradeLevels: item.targetGradeLevels ?? [],
       publishedAt: item.publishedAt ? item.publishedAt.toISOString() : null,
       archivedAt: item.archivedAt ? item.archivedAt.toISOString() : null,
       createdAt: item.createdAt.toISOString(),
@@ -205,32 +468,13 @@ export class ContentService {
     authorId: string,
     data: CreateLearningContentDto
   ): Promise<ContentDetailResponse> {
-    const validation = await this.repository.validateTopicAndObjectivesExist(
-      tenantId,
-      data.primaryTopicId,
-      data.secondaryTopicIds ?? [],
-      data.objectiveIds ?? []
-    );
+    const hierarchy = await this.resolveAndValidateHierarchy(tenantId, data);
 
-    if (!validation.isValid) {
-      const errors: string[] = [];
-      if (validation.missingTopicIds.length > 0) {
-        errors.push(
-          `Invalid or unmapped topic IDs: ${validation.missingTopicIds.join(", ")}`
-        );
-      }
-      if (validation.missingObjectiveIds.length > 0) {
-        errors.push(
-          `Invalid or unmapped objective IDs: ${validation.missingObjectiveIds.join(", ")}`
-        );
-      }
-      throw new BadRequestError(errors.join("; "));
-    }
-
-    const created = await this.repository.createContentWithVersionAndMappings(
+    const created = await this.repository.createContentWithResolvedHierarchy(
       tenantId,
       authorId,
-      data
+      data,
+      hierarchy
     );
 
     if (!created) {
@@ -250,7 +494,46 @@ export class ContentService {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
 
-    await this.repository.updateMetadata(tenantId, id, data);
+    let hierarchy: ResolvedHierarchy | undefined;
+    if (
+      data.scope ||
+      data.subjectId !== undefined ||
+      data.gradeId !== undefined ||
+      data.unitId !== undefined ||
+      data.curriculumVersionId !== undefined ||
+      data.targetGradeLevels !== undefined
+    ) {
+      hierarchy = await this.resolveAndValidateHierarchy(
+        tenantId,
+        {
+          scope: data.scope,
+          subjectId: data.subjectId,
+          gradeId: data.gradeId,
+          unitId: data.unitId,
+          curriculumVersionId: data.curriculumVersionId,
+          targetGradeLevels: data.targetGradeLevels,
+        },
+        {
+          scope: existing.scope as ContentScopeEnum,
+          subjectId: existing.subjectId,
+          gradeId: existing.gradeId,
+          unitId: existing.unitId,
+          curriculumVersionId: existing.curriculumVersionId,
+          targetGradeLevels: existing.targetGradeLevels,
+          primaryTopicId:
+            existing.topics.find((t) => t.isPrimary)?.topicId ||
+            existing.topics[0]?.topicId ||
+            null,
+        }
+      );
+    }
+
+    await this.repository.updateMetadataAndHierarchy(
+      tenantId,
+      id,
+      data,
+      hierarchy
+    );
     return this.getContentDetail(tenantId, id);
   }
 
@@ -264,29 +547,34 @@ export class ContentService {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
 
-    const validation = await this.repository.validateTopicAndObjectivesExist(
+    const hierarchy = await this.resolveAndValidateHierarchy(
       tenantId,
-      data.primaryTopicId,
-      data.secondaryTopicIds ?? [],
-      data.objectiveIds ?? []
+      {
+        scope: data.scope,
+        subjectId: data.subjectId,
+        gradeId: data.gradeId,
+        unitId: data.unitId,
+        curriculumVersionId: data.curriculumVersionId,
+        targetGradeLevels: data.targetGradeLevels,
+        primaryTopicId: data.primaryTopicId,
+        secondaryTopicIds: data.secondaryTopicIds,
+        objectiveIds: data.objectiveIds,
+      },
+      {
+        scope: existing.scope as ContentScopeEnum,
+        subjectId: existing.subjectId,
+        gradeId: existing.gradeId,
+        unitId: existing.unitId,
+        curriculumVersionId: existing.curriculumVersionId,
+        targetGradeLevels: existing.targetGradeLevels,
+        primaryTopicId:
+          existing.topics.find((t) => t.isPrimary)?.topicId ||
+          existing.topics[0]?.topicId ||
+          null,
+      }
     );
 
-    if (!validation.isValid) {
-      const errors: string[] = [];
-      if (validation.missingTopicIds.length > 0) {
-        errors.push(
-          `Invalid or unmapped topic IDs: ${validation.missingTopicIds.join(", ")}`
-        );
-      }
-      if (validation.missingObjectiveIds.length > 0) {
-        errors.push(
-          `Invalid or unmapped objective IDs: ${validation.missingObjectiveIds.join(", ")}`
-        );
-      }
-      throw new BadRequestError(errors.join("; "));
-    }
-
-    await this.repository.updateMappings(tenantId, id, data);
+    await this.repository.updateMappingsAndHierarchy(tenantId, id, hierarchy);
     return this.getContentDetail(tenantId, id);
   }
 

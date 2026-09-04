@@ -6,9 +6,25 @@ export const CONTENT_TYPES = [
   "PDF",
   "IMAGE",
   "LINK",
+  "TEXTBOOK",
+  "REFERENCE_BOOK",
+  "WORKSHEET",
+  "EXERCISE",
+  "PAST_EXAM_PAPER",
+  "TEACHER_GUIDE",
+  "STUDY_GUIDE",
 ] as const;
 
 export type ContentTypeEnum = (typeof CONTENT_TYPES)[number];
+
+export const CONTENT_SCOPES = [
+  "SUBJECT",
+  "GRADE_SUBJECT",
+  "UNIT",
+  "TOPIC",
+] as const;
+
+export type ContentScopeEnum = (typeof CONTENT_SCOPES)[number];
 
 export const CONTENT_STATUSES = [
   "DRAFT",

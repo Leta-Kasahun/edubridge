@@ -25,20 +25,29 @@ export const contentService = {
     if (filters.type) {
       params.append("type", filters.type);
     }
+    if (filters.scope) {
+      params.append("scope", filters.scope);
+    }
     if (filters.status) {
       params.append("status", filters.status);
     }
     if (filters.source) {
       params.append("source", filters.source);
     }
+    if (filters.subjectId) {
+      params.append("subjectId", filters.subjectId);
+    }
+    if (filters.gradeId) {
+      params.append("gradeId", filters.gradeId);
+    }
+    if (filters.unitId) {
+      params.append("unitId", filters.unitId);
+    }
     if (filters.topicId) {
       params.append("topicId", filters.topicId);
     }
     if (filters.objectiveId) {
       params.append("objectiveId", filters.objectiveId);
-    }
-    if (filters.subjectId) {
-      params.append("subjectId", filters.subjectId);
     }
     if (filters.curriculumVersionId) {
       params.append("curriculumVersionId", filters.curriculumVersionId);

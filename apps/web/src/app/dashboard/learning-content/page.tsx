@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   BookMarked,
-  FileSpreadsheet,
   ChevronRight,
 } from "lucide-react";
 import { DashboardLayout } from "@/shared/components/layouts";
@@ -22,18 +21,10 @@ const LEARNING_CONTENT_SECTIONS: readonly LearningContentSectionItem[] = [
   {
     title: "Materials",
     description:
-      "Curate textbooks, teacher guides, interactive digital lessons, and supplemental teaching resources.",
+      "Curate textbooks, reference books, teacher guides, interactive digital lessons, and supplemental teaching resources.",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
     badge: "Digital Library",
-  },
-  {
-    title: "Import",
-    description:
-      "Batch ingest content packages, learning assets, and media archives aligned to curriculum learning objectives.",
-    href: ROUTES.LEARNING_CONTENT.IMPORT,
-    icon: FileSpreadsheet,
-    badge: "Batch Pipeline",
   },
 ];
 

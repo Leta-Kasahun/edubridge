@@ -3,14 +3,94 @@ import { Prisma } from "../../../../generated/prisma/client.js";
 import {
   CreateLearningContentDto,
   UpdateLearningContentDto,
-  UpdateContentMappingsDto,
   CreateContentVersionDto,
   ContentFilterQuery,
   ContentVersionBody,
 } from "../types/content.types.js";
-import { ContentStatusEnum } from "../../../../shared/constants/index.js";
+import { ContentStatusEnum, ContentScopeEnum } from "../../../../shared/constants/index.js";
+import { NotFoundError } from "../../../../shared/exceptions/index.js";
+
+export interface ResolvedHierarchy {
+  readonly scope: ContentScopeEnum;
+  readonly subjectId: string | null;
+  readonly gradeId: string | null;
+  readonly unitId: string | null;
+  readonly curriculumVersionId: string | null;
+  readonly targetGradeLevels: readonly number[];
+  readonly primaryTopicId: string | null;
+  readonly secondaryTopicIds: readonly string[];
+  readonly objectiveIds: readonly string[];
+}
 
 export class ContentRepository {
+  async resolveTopicAncestry(topicId: string) {
+    return prisma.curriculumTopic.findUnique({
+      where: { id: topicId },
+      select: {
+        id: true,
+        unitId: true,
+        unit: {
+          select: {
+            id: true,
+            curriculumSubject: {
+              select: {
+                id: true,
+                subjectId: true,
+                gradeId: true,
+                curriculumVersionId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async resolveUnitAncestry(unitId: string) {
+    return prisma.curriculumUnit.findUnique({
+      where: { id: unitId },
+      select: {
+        id: true,
+        curriculumSubject: {
+          select: {
+            id: true,
+            subjectId: true,
+            gradeId: true,
+            curriculumVersionId: true,
+          },
+        },
+      },
+    });
+  }
+
+  async verifySubjectExists(subjectId: string): Promise<boolean> {
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      select: { id: true },
+    });
+    return subject !== null;
+  }
+
+  async verifyGradeExists(gradeId: string): Promise<boolean> {
+    const grade = await prisma.grade.findUnique({
+      where: { id: gradeId },
+      select: { id: true },
+    });
+    return grade !== null;
+  }
+
+  async findCurriculumVersionForGradeSubject(
+    gradeId: string,
+    subjectId: string
+  ): Promise<string | null> {
+    const cs = await prisma.curriculumSubject.findFirst({
+      where: { gradeId, subjectId },
+      select: { curriculumVersionId: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return cs?.curriculumVersionId ?? null;
+  }
+
   async findManyWithFilters(
     tenantId: string,
     filters: ContentFilterQuery
@@ -20,76 +100,98 @@ export class ContentRepository {
       const limit = filters.limit ?? 20;
       const skip = (page - 1) * limit;
 
-      const where: Prisma.LearningContentWhereInput = {
-        tenantId,
-      };
+      const conditions: Prisma.LearningContentWhereInput[] = [];
 
       if (filters.status) {
-        where.status = filters.status;
+        conditions.push({ status: filters.status });
       }
 
       if (filters.type) {
-        where.type = filters.type;
+        conditions.push({ type: filters.type });
+      }
+
+      if (filters.scope) {
+        conditions.push({ scope: filters.scope });
       }
 
       if (filters.source) {
-        where.source = filters.source;
+        conditions.push({ source: filters.source });
       }
 
       if (filters.authorId) {
-        where.authorId = filters.authorId;
-      }
-
-      if (filters.search) {
-        where.OR = [
-          { title: { contains: filters.search, mode: "insensitive" } },
-          { description: { contains: filters.search, mode: "insensitive" } },
-        ];
-      }
-
-      if (filters.topicId) {
-        where.topics = {
-          some: {
-            topicId: filters.topicId,
-          },
-        };
-      }
-
-      if (filters.objectiveId) {
-        where.objectives = {
-          some: {
-            objectiveId: filters.objectiveId,
-          },
-        };
+        conditions.push({ authorId: filters.authorId });
       }
 
       if (filters.subjectId) {
-        where.topics = {
-          some: {
-            topic: {
-              unit: {
-                curriculumSubject: {
-                  subjectId: filters.subjectId,
-                },
-              },
-            },
-          },
-        };
+        conditions.push({ subjectId: filters.subjectId });
+      }
+
+      if (filters.unitId) {
+        conditions.push({ unitId: filters.unitId });
       }
 
       if (filters.curriculumVersionId) {
-        where.topics = {
-          some: {
-            topic: {
-              unit: {
-                curriculumSubject: {
-                  curriculumVersionId: filters.curriculumVersionId,
-                },
-              },
+        conditions.push({ curriculumVersionId: filters.curriculumVersionId });
+      }
+
+      if (filters.search) {
+        conditions.push({
+          OR: [
+            { title: { contains: filters.search, mode: "insensitive" } },
+            { description: { contains: filters.search, mode: "insensitive" } },
+          ],
+        });
+      }
+
+      if (filters.topicId) {
+        conditions.push({
+          topics: {
+            some: {
+              topicId: filters.topicId,
             },
           },
-        };
+        });
       }
+
+      if (filters.objectiveId) {
+        conditions.push({
+          objectives: {
+            some: {
+              objectiveId: filters.objectiveId,
+            },
+          },
+        });
+      }
+
+      if (filters.gradeId) {
+        const gradeRecord = await prisma.grade.findUnique({
+          where: { id: filters.gradeId },
+          select: { level: true },
+        });
+
+        if (gradeRecord) {
+          conditions.push({
+            OR: [
+              { gradeId: filters.gradeId },
+              { targetGradeLevels: { has: gradeRecord.level } },
+            ],
+          });
+        } else {
+          conditions.push({ gradeId: filters.gradeId });
+        }
+      } else if (filters.targetGradeLevel) {
+        conditions.push({
+          OR: [
+            { targetGradeLevels: { has: filters.targetGradeLevel } },
+            { grade: { level: filters.targetGradeLevel } },
+          ],
+        });
+      }
+
+      const where: Prisma.LearningContentWhereInput = {
+        tenantId,
+        ...(conditions.length > 0 ? { AND: conditions } : {}),
+      };
 
       const [items, total] = await Promise.all([
         prisma.learningContent.findMany({
@@ -100,6 +202,18 @@ export class ContentRepository {
           include: {
             author: {
               select: { id: true, firstName: true, lastName: true },
+            },
+            subject: {
+              select: { id: true, name: true, code: true },
+            },
+            grade: {
+              select: { id: true, level: true },
+            },
+            unit: {
+              select: { id: true, title: true, code: true },
+            },
+            curriculumVersion: {
+              select: { id: true, name: true, code: true },
             },
             topics: {
               include: {
@@ -137,6 +251,18 @@ export class ContentRepository {
         include: {
           author: {
             select: { id: true, firstName: true, lastName: true },
+          },
+          subject: {
+            select: { id: true, name: true, code: true },
+          },
+          grade: {
+            select: { id: true, level: true },
+          },
+          unit: {
+            select: { id: true, title: true, code: true },
+          },
+          curriculumVersion: {
+            select: { id: true, name: true, code: true },
           },
           topics: {
             include: {
@@ -184,22 +310,30 @@ export class ContentRepository {
     });
   }
 
-  async createContentWithVersionAndMappings(
+  async createContentWithResolvedHierarchy(
     tenantId: string,
     authorId: string,
-    data: CreateLearningContentDto
+    data: CreateLearningContentDto,
+    hierarchy: ResolvedHierarchy
   ) {
     return runWithTenant({ tenantId }, async () => {
-      const topicRecords: Prisma.ContentTopicCreateManyContentInput[] = [
-        { topicId: data.primaryTopicId, isPrimary: true },
-        ...(data.secondaryTopicIds ?? [])
-          .filter((tid) => tid !== data.primaryTopicId)
-          .map((tid) => ({ topicId: tid, isPrimary: false })),
-      ];
+      const topicRecords: Prisma.ContentTopicCreateManyContentInput[] = [];
 
-      const objectiveRecords: Prisma.ContentObjectiveCreateManyContentInput[] = (
-        data.objectiveIds ?? []
-      ).map((oid) => ({ objectiveId: oid }));
+      if (hierarchy.primaryTopicId) {
+        topicRecords.push({
+          topicId: hierarchy.primaryTopicId,
+          isPrimary: true,
+        });
+
+        for (const tid of hierarchy.secondaryTopicIds) {
+          if (tid !== hierarchy.primaryTopicId) {
+            topicRecords.push({ topicId: tid, isPrimary: false });
+          }
+        }
+      }
+
+      const objectiveRecords: Prisma.ContentObjectiveCreateManyContentInput[] =
+        hierarchy.objectiveIds.map((oid) => ({ objectiveId: oid }));
 
       const initialBody: Prisma.InputJsonValue =
         (data.initialVersionBody as Prisma.InputJsonValue) ?? {
@@ -214,9 +348,15 @@ export class ContentRepository {
           title: data.title,
           description: data.description,
           type: data.type,
+          scope: hierarchy.scope,
           source: data.source ?? "TEACHER",
           status: "DRAFT",
           currentVersion: 1,
+          subjectId: hierarchy.subjectId,
+          gradeId: hierarchy.gradeId,
+          unitId: hierarchy.unitId,
+          curriculumVersionId: hierarchy.curriculumVersionId,
+          targetGradeLevels: [...hierarchy.targetGradeLevels],
           versions: {
             create: {
               version: 1,
@@ -225,73 +365,177 @@ export class ContentRepository {
               createdById: authorId,
             },
           },
-          topics: {
+          topics: topicRecords.length > 0 ? {
             createMany: {
               data: topicRecords,
               skipDuplicates: true,
             },
-          },
-          objectives: {
+          } : undefined,
+          objectives: objectiveRecords.length > 0 ? {
             createMany: {
               data: objectiveRecords,
               skipDuplicates: true,
             },
-          },
+          } : undefined,
         },
       });
     });
   }
 
-  async updateMetadata(
+  async updateMetadataAndHierarchy(
     tenantId: string,
     id: string,
-    data: UpdateLearningContentDto
+    data: UpdateLearningContentDto,
+    hierarchy?: ResolvedHierarchy
   ) {
     return runWithTenant({ tenantId }, async () => {
+      const updateData: Prisma.LearningContentUpdateInput = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        source: data.source,
+      };
+
+      if (data.targetGradeLevels !== undefined) {
+        updateData.targetGradeLevels = [...data.targetGradeLevels];
+      }
+
+      if (hierarchy) {
+        updateData.scope = hierarchy.scope;
+        updateData.targetGradeLevels = [...hierarchy.targetGradeLevels];
+        updateData.subject = hierarchy.subjectId
+          ? { connect: { id: hierarchy.subjectId } }
+          : { disconnect: true };
+        updateData.grade = hierarchy.gradeId
+          ? { connect: { id: hierarchy.gradeId } }
+          : { disconnect: true };
+        updateData.unit = hierarchy.unitId
+          ? { connect: { id: hierarchy.unitId } }
+          : { disconnect: true };
+        updateData.curriculumVersion = hierarchy.curriculumVersionId
+          ? { connect: { id: hierarchy.curriculumVersionId } }
+          : { disconnect: true };
+      }
+
       return prisma.learningContent.update({
         where: { id, tenantId },
-        data: {
-          title: data.title,
-          description: data.description,
-          type: data.type,
-          source: data.source,
-        },
+        data: updateData,
       });
     });
   }
 
-  async updateMappings(
+  async updateMappingsAndHierarchy(
     tenantId: string,
     id: string,
-    data: UpdateContentMappingsDto
+    hierarchy: ResolvedHierarchy
   ) {
     return runWithTenant({ tenantId }, async () => {
-      await prisma.$transaction([
-        prisma.contentTopic.deleteMany({ where: { contentId: id } }),
-        prisma.contentObjective.deleteMany({ where: { contentId: id } }),
-        prisma.contentTopic.createMany({
-          data: [
-            { contentId: id, topicId: data.primaryTopicId, isPrimary: true },
-            ...(data.secondaryTopicIds ?? [])
-              .filter((tid) => tid !== data.primaryTopicId)
+      return prisma.$transaction(async (tx) => {
+        await tx.contentTopic.deleteMany({ where: { contentId: id } });
+        await tx.contentObjective.deleteMany({ where: { contentId: id } });
+
+        if (hierarchy.primaryTopicId) {
+          const topicRecords: Prisma.ContentTopicCreateManyInput[] = [
+            { contentId: id, topicId: hierarchy.primaryTopicId, isPrimary: true },
+            ...hierarchy.secondaryTopicIds
+              .filter((tid) => tid !== hierarchy.primaryTopicId)
               .map((tid) => ({
                 contentId: id,
                 topicId: tid,
                 isPrimary: false,
               })),
-          ],
-          skipDuplicates: true,
-        }),
-        prisma.contentObjective.createMany({
-          data: (data.objectiveIds ?? []).map((oid) => ({
-            contentId: id,
-            objectiveId: oid,
-          })),
-          skipDuplicates: true,
-        }),
-      ]);
+          ];
 
-      return this.findById(tenantId, id);
+          await tx.contentTopic.createMany({
+            data: topicRecords,
+            skipDuplicates: true,
+          });
+        }
+
+        if (hierarchy.objectiveIds.length > 0) {
+          await tx.contentObjective.createMany({
+            data: hierarchy.objectiveIds.map((oid) => ({
+              contentId: id,
+              objectiveId: oid,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        await tx.learningContent.update({
+          where: { id, tenantId },
+          data: {
+            scope: hierarchy.scope,
+            subjectId: hierarchy.subjectId,
+            gradeId: hierarchy.gradeId,
+            unitId: hierarchy.unitId,
+            curriculumVersionId: hierarchy.curriculumVersionId,
+            targetGradeLevels: [...hierarchy.targetGradeLevels],
+          },
+        });
+
+        return tx.learningContent.findFirst({
+          where: { id, tenantId },
+          include: {
+            author: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+            subject: {
+              select: { id: true, name: true, code: true },
+            },
+            grade: {
+              select: { id: true, level: true },
+            },
+            unit: {
+              select: { id: true, title: true, code: true },
+            },
+            curriculumVersion: {
+              select: { id: true, name: true, code: true },
+            },
+            topics: {
+              include: {
+                topic: {
+                  include: {
+                    unit: {
+                      include: {
+                        curriculumSubject: {
+                          include: {
+                            subject: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            objectives: {
+              include: {
+                objective: true,
+              },
+            },
+            versions: {
+              orderBy: { version: "desc" },
+              include: {
+                createdBy: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+                reviewedBy: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+              },
+            },
+            attachments: {
+              orderBy: { createdAt: "desc" },
+              include: {
+                uploadedBy: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+              },
+            },
+          },
+        });
+      });
     });
   }
 
@@ -302,21 +546,22 @@ export class ContentRepository {
     data: CreateContentVersionDto
   ) {
     return runWithTenant({ tenantId }, async () => {
-      const current = await prisma.learningContent.findFirst({
-        where: { id: contentId, tenantId },
-        select: { currentVersion: true },
-      });
-
-      if (!current) {
-        throw new Error("Content item not found");
-      }
-
-      const nextVersion = current.currentVersion + 1;
       const versionBody: Prisma.InputJsonValue =
         data.body as unknown as Prisma.InputJsonValue;
 
-      const [newVersionRecord] = await prisma.$transaction([
-        prisma.contentVersion.create({
+      return prisma.$transaction(async (tx) => {
+        const current = await tx.learningContent.findFirst({
+          where: { id: contentId, tenantId },
+          select: { currentVersion: true },
+        });
+
+        if (!current) {
+          throw new NotFoundError("Content item not found");
+        }
+
+        const nextVersion = current.currentVersion + 1;
+
+        const newVersionRecord = await tx.contentVersion.create({
           data: {
             contentId,
             version: nextVersion,
@@ -329,16 +574,17 @@ export class ContentRepository {
               select: { id: true, firstName: true, lastName: true },
             },
           },
-        }),
-        prisma.learningContent.update({
+        });
+
+        await tx.learningContent.update({
           where: { id: contentId, tenantId },
           data: {
             currentVersion: nextVersion,
           },
-        }),
-      ]);
+        });
 
-      return newVersionRecord;
+        return newVersionRecord;
+      });
     });
   }
 
@@ -454,6 +700,11 @@ export class ContentRepository {
           id: attachmentId,
           content: { tenantId },
         },
+        include: {
+          uploadedBy: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
       });
     });
   }
@@ -504,7 +755,7 @@ export class ContentRepository {
       readonly mimeType: string;
       readonly storageKey: string;
       readonly sizeBytes: bigint;
-      readonly metadata?: Record<string, unknown>;
+      readonly metadata?: Record<string, unknown> | null;
     }
   ) {
     return runWithTenant({ tenantId }, async () => {
@@ -534,8 +785,10 @@ export class ContentRepository {
     return runWithTenant({ tenantId }, async () => {
       const publishedVersions = await prisma.contentVersion.findMany({
         where: {
-          content: { tenantId },
-          publishedAt: { not: null },
+          content: {
+            tenantId,
+            status: "PUBLISHED",
+          },
         },
         select: { body: true },
       });
@@ -570,7 +823,7 @@ export class ContentRepository {
 
   async validateTopicAndObjectivesExist(
     tenantId: string,
-    primaryTopicId: string,
+    primaryTopicId: string | undefined,
     secondaryTopicIds: readonly string[],
     objectiveIds: readonly string[]
   ): Promise<{
@@ -580,18 +833,24 @@ export class ContentRepository {
   }> {
     return runWithTenant({ tenantId }, async () => {
       const allTopicIds = Array.from(
-        new Set([primaryTopicId, ...secondaryTopicIds])
+        new Set([
+          ...(primaryTopicId ? [primaryTopicId] : []),
+          ...secondaryTopicIds,
+        ])
       );
 
-      const existingTopics = await prisma.curriculumTopic.findMany({
-        where: { id: { in: allTopicIds } },
-        select: { id: true },
-      });
+      let missingTopicIds: readonly string[] = [];
+      if (allTopicIds.length > 0) {
+        const existingTopics = await prisma.curriculumTopic.findMany({
+          where: { id: { in: allTopicIds } },
+          select: { id: true },
+        });
 
-      const existingTopicIdSet = new Set(existingTopics.map((t) => t.id));
-      const missingTopicIds = allTopicIds.filter(
-        (id) => !existingTopicIdSet.has(id)
-      );
+        const existingTopicIdSet = new Set(existingTopics.map((t) => t.id));
+        missingTopicIds = allTopicIds.filter(
+          (id) => !existingTopicIdSet.has(id)
+        );
+      }
 
       let missingObjectiveIds: readonly string[] = [];
       if (objectiveIds.length > 0) {
