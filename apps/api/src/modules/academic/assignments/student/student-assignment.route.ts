@@ -11,10 +11,10 @@ router.get("/roster", studentAssignmentController.getRoster);
 router.get("/sections-capacity", studentAssignmentController.getGradeSectionsCapacity);
 router.get("/:studentId/history", studentAssignmentController.getStudentEnrollmentHistory);
 
-router.post("/:studentId/transfer", requireRoles("SCHOOL_ADMIN", "ADMIN", "TEACHER"), studentAssignmentController.transferSingle);
-router.post("/bulk-transfer", requireRoles("SCHOOL_ADMIN", "ADMIN", "TEACHER"), studentAssignmentController.transferBulk);
-router.get("/promotion-preview", requireRoles("SCHOOL_ADMIN", "ADMIN", "TEACHER"), studentAssignmentController.getPromotionPreview);
-router.post("/commit-promotion", requireRoles("SCHOOL_ADMIN", "ADMIN", "TEACHER"), studentAssignmentController.commitPromotion);
-router.post("/:studentId/withdraw", requireRoles("SCHOOL_ADMIN", "ADMIN", "TEACHER"), studentAssignmentController.withdrawStudent);
+router.post("/:studentId/transfer", requireRoles("SCHOOL_ADMIN", "TEACHER"), studentAssignmentController.transferSingle);
+router.post("/bulk-transfer", requireRoles("SCHOOL_ADMIN", "TEACHER"), studentAssignmentController.transferBulk);
+router.get("/promotion-preview", requireRoles("SCHOOL_ADMIN", "TEACHER"), studentAssignmentController.getPromotionPreview);
+router.post("/commit-promotion", requireRoles("SCHOOL_ADMIN", "TEACHER"), studentAssignmentController.commitPromotion);
+router.post("/:studentId/withdraw", requireRoles("SCHOOL_ADMIN", "TEACHER"), studentAssignmentController.withdrawStudent);
 
 export const studentAssignmentRouter: Router = router;

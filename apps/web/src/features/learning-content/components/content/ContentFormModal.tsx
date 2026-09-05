@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, BookOpen, Layers, UploadCloud, File, Trash2 } from "lucide-react";
 import {
@@ -197,17 +197,19 @@ export function ContentFormModal({
   }, [versions]);
 
   useEffect(() => {
-    if (itemToEdit && !selectedCurriculumSubjectId && curriculumSubjects.length > 0) {
+    if (selectedGradeId && selectedSubjectId && curriculumSubjects.length > 0) {
       const match = curriculumSubjects.find(
-        (cs) => cs.subjectId === itemToEdit.subjectId && cs.gradeId === itemToEdit.gradeId
+        (cs) => cs.gradeId === selectedGradeId && cs.subjectId === selectedSubjectId
       );
       if (match) {
         setSelectedCurriculumSubjectId(match.id);
+      } else {
+        setSelectedCurriculumSubjectId("");
       }
+    } else if (!selectedGradeId || !selectedSubjectId) {
+      setSelectedCurriculumSubjectId("");
     }
-  }, [itemToEdit, selectedCurriculumSubjectId, curriculumSubjects]);
-
-  if (!mounted || !isOpen) return null;
+  }, [selectedGradeId, selectedSubjectId, curriculumSubjects]);
 
   const filteredSubjectsList =
     allowedSubjectIds && allowedSubjectIds.length > 0
@@ -237,33 +239,56 @@ export function ContentFormModal({
     return true;
   });
 
-  const subjectOptions: readonly SelectDropdownOption[] = filteredSubjectsList.map(
-    (s) => ({
+  const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return filteredGradesList
+      .slice()
+      .sort((a, b) => a.level - b.level)
+      .map((g) => ({
+        value: g.id,
+        label: `Grade ${g.level}`,
+      }));
+  }, [filteredGradesList]);
+
+  const availableSubjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    let subjects = filteredSubjectsList;
+
+    if (selectedGradeId && curriculumSubjects.length > 0) {
+      const subjectIdsForGrade = new Set(
+        curriculumSubjects
+          .filter((cs) => cs.gradeId === selectedGradeId)
+          .map((cs) => cs.subjectId)
+      );
+      if (subjectIdsForGrade.size > 0) {
+        subjects = filteredSubjectsList.filter((s) => subjectIdsForGrade.has(s.id));
+      }
+    }
+
+    return subjects.map((s) => ({
       value: s.id,
-      label: `${s.name} (${s.code})`,
-    })
-  );
-
-  const gradeOptions: readonly SelectDropdownOption[] = filteredGradesList.map((g) => ({
-    value: g.id,
-    label: `Grade ${g.level}`,
-  }));
-
-  const curriculumSubjectOptions: readonly SelectDropdownOption[] =
-    filteredCurriculumSubjects.map((cs) => ({
-      value: cs.id,
-      label: `${cs.subjectName} - Grade ${cs.gradeLevel}`,
+      label: s.code ? `${s.code} - ${s.name}` : s.name,
     }));
+  }, [filteredSubjectsList, selectedGradeId, curriculumSubjects]);
 
-  const unitOptions: readonly SelectDropdownOption[] = units.map((u) => ({
-    value: u.id,
-    label: `${u.code}: ${u.title}`,
-  }));
+  const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return filteredSubjectsList.map((s) => ({
+      value: s.id,
+      label: s.code ? `${s.code} - ${s.name}` : s.name,
+    }));
+  }, [filteredSubjectsList]);
 
-  const topicOptions: readonly SelectDropdownOption[] = topics.map((t) => ({
-    value: t.id,
-    label: `${t.code}: ${t.title}`,
-  }));
+  const unitOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return units.map((u) => ({
+      value: u.id,
+      label: u.code ? `${u.code}: ${u.title}` : u.title,
+    }));
+  }, [units]);
+
+  const topicOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return topics.map((t) => ({
+      value: t.id,
+      label: t.code ? `${t.code}: ${t.title}` : t.title,
+    }));
+  }, [topics]);
 
   const availableGradeLevels =
     filteredGradesList.length > 0
@@ -322,10 +347,12 @@ export function ContentFormModal({
     let finalTopicId = selectedTopicId;
 
     if (scope === "UNIT" || scope === "TOPIC") {
-      const matchedCs = curriculumSubjects.find((c) => c.id === selectedCurriculumSubjectId);
-      if (matchedCs) {
-        finalSubjectId = matchedCs.subjectId;
-        finalGradeId = matchedCs.gradeId;
+      if (selectedCurriculumSubjectId) {
+        const matchedCs = curriculumSubjects.find((c) => c.id === selectedCurriculumSubjectId);
+        if (matchedCs) {
+          finalSubjectId = matchedCs.subjectId;
+          finalGradeId = matchedCs.gradeId;
+        }
       }
     }
 
@@ -339,7 +366,7 @@ export function ContentFormModal({
       return;
     }
 
-    if (!isReferenceBook && scope === "GRADE_SUBJECT") {
+    if (!isReferenceBook && (scope === "GRADE_SUBJECT" || scope === "UNIT" || scope === "TOPIC")) {
       if (!finalGradeId) {
         setFormError("Please select a grade.");
         return;
@@ -454,6 +481,8 @@ export function ContentFormModal({
     createMutation.isPending ||
     updateMetadataMutation.isPending ||
     uploadAttachmentMutation.isPending;
+
+  if (!mounted || !isOpen) return null;
 
   return createPortal(
     <div
@@ -626,52 +655,43 @@ export function ContentFormModal({
               </div>
             )}
 
-            {scope === "GRADE_SUBJECT" && !isReferenceBook && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Grade <span className="text-destructive">*</span>
-                  </label>
-                  <SelectDropdown
-                    options={gradeOptions}
-                    value={selectedGradeId}
-                    onChange={setSelectedGradeId}
-                    placeholder="Select grade"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Subject <span className="text-destructive">*</span>
-                  </label>
-                  <SelectDropdown
-                    options={subjectOptions}
-                    value={selectedSubjectId}
-                    onChange={setSelectedSubjectId}
-                    placeholder="Select subject"
-                  />
-                </div>
-              </div>
-            )}
-
-            {(scope === "UNIT" || scope === "TOPIC") && (
+            {!isReferenceBook && scope !== "SUBJECT" && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                      Grade <span className="text-destructive">*</span>
+                    </label>
+                    <SelectDropdown
+                      options={gradeOptions}
+                      value={selectedGradeId}
+                      onChange={(val) => {
+                        setSelectedGradeId(val);
+                        setSelectedUnitId("");
+                        setSelectedTopicId("");
+                      }}
+                      placeholder="Select grade"
+                    />
+                  </div>
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Subject <span className="text-destructive">*</span>
                     </label>
                     <SelectDropdown
-                      options={curriculumSubjectOptions}
-                      value={selectedCurriculumSubjectId}
+                      options={availableSubjectOptions}
+                      value={selectedSubjectId}
                       onChange={(val) => {
-                        setSelectedCurriculumSubjectId(val);
+                        setSelectedSubjectId(val);
                         setSelectedUnitId("");
                         setSelectedTopicId("");
                       }}
-                      placeholder="Select subject"
+                      placeholder={selectedGradeId ? "Select subject" : "Select grade first"}
+                      disabled={!selectedGradeId && availableSubjectOptions.length === 0}
                     />
                   </div>
+                </div>
 
+                {scope === "UNIT" && (
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Unit <span className="text-destructive">*</span>
@@ -683,24 +703,59 @@ export function ContentFormModal({
                         setSelectedUnitId(val);
                         setSelectedTopicId("");
                       }}
-                      placeholder="Select unit"
-                      disabled={!selectedCurriculumSubjectId}
+                      placeholder={
+                        !selectedSubjectId
+                          ? "Select subject first"
+                          : unitOptions.length === 0
+                          ? "No units available"
+                          : "Select unit"
+                      }
+                      disabled={!selectedCurriculumSubjectId || unitOptions.length === 0}
                     />
                   </div>
-                </div>
+                )}
 
                 {scope === "TOPIC" && (
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Topic <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={topicOptions}
-                      value={selectedTopicId}
-                      onChange={setSelectedTopicId}
-                      placeholder="Select topic"
-                      disabled={!selectedUnitId}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                        Unit <span className="text-destructive">*</span>
+                      </label>
+                      <SelectDropdown
+                        options={unitOptions}
+                        value={selectedUnitId}
+                        onChange={(val) => {
+                          setSelectedUnitId(val);
+                          setSelectedTopicId("");
+                        }}
+                        placeholder={
+                          !selectedSubjectId
+                            ? "Select subject first"
+                            : unitOptions.length === 0
+                            ? "No units available"
+                            : "Select unit"
+                        }
+                        disabled={!selectedCurriculumSubjectId || unitOptions.length === 0}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                        Topic <span className="text-destructive">*</span>
+                      </label>
+                      <SelectDropdown
+                        options={topicOptions}
+                        value={selectedTopicId}
+                        onChange={setSelectedTopicId}
+                        placeholder={
+                          !selectedUnitId
+                            ? "Select unit first"
+                            : topicOptions.length === 0
+                            ? "No topics available"
+                            : "Select topic"
+                        }
+                        disabled={!selectedUnitId || topicOptions.length === 0}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
