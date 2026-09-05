@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
-import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
+import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
@@ -16,41 +14,14 @@ export function TeacherOverviewTab() {
     isLoading: isAssignmentsLoading,
   } = useMyTeacherAssignments();
 
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudents({ limit: 100 });
-  const rawStudents = studentsData?.data ?? [];
-
-  const assignedSectionIds = useMemo(
-    () => new Set(assignedSections.map((s) => s.id)),
-    [assignedSections]
-  );
-
-  const scopedStudents = useMemo(() => {
-    if (assignedSectionIds.size === 0) return rawStudents;
-    return rawStudents.filter((st) => st.sectionId && assignedSectionIds.has(st.sectionId));
-  }, [rawStudents, assignedSectionIds]);
-
-  const totalStudents = scopedStudents.length;
-  const maleStudents = scopedStudents.filter((s) => s.gender === "MALE").length;
-  const femaleStudents = scopedStudents.filter((s) => s.gender === "FEMALE").length;
-
-  const activeStudents = scopedStudents.filter(
-    (s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE"
-  ).length;
-  const pendingStudents = scopedStudents.filter(
-    (s) => s.status === "PENDING_FIRST_LOGIN" || s.studentStatus === "INACTIVE"
-  ).length;
-  const otherStudents = Math.max(0, totalStudents - activeStudents - pendingStudents);
-
-  const studentStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active", value: activeStudents, color: "#10B981" },
-    { name: "Pending", value: pendingStudents, color: "#f59e0b" },
-    { name: "Other", value: otherStudents, color: "#94a3b8" },
-  ];
-
-  const studentGenderSlices: readonly ChartSliceItem[] = [
-    { name: "Male", value: maleStudents, color: "#0EA5E9" },
-    { name: "Female", value: femaleStudents, color: "#F97316" },
-  ];
+  const {
+    totalStudents,
+    maleStudents,
+    femaleStudents,
+    studentStatusSlices,
+    studentGenderSlices,
+    isLoading: isStudentsLoading,
+  } = useTeacherAssignedStudents();
 
   const gradeColors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = assignedGrades.map((g, idx) => ({

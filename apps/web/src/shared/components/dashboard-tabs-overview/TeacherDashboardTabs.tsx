@@ -6,14 +6,12 @@ import {
   LayoutDashboard,
   Users,
   BookOpen,
-  GraduationCap,
 } from "lucide-react";
 import { DashboardTabsNav } from "./DashboardTabsNav";
 import {
   TeacherOverviewTab,
   TeacherClassesTab,
   TeacherGradesTab,
-  TeacherQualificationsTab,
 } from "./tabs/teacher";
 import type { TeacherTabId, DashboardTabItem } from "./types";
 
@@ -33,11 +31,6 @@ const TEACHER_TABS: readonly DashboardTabItem<TeacherTabId>[] = [
     label: "Grades Overview",
     icon: BookOpen,
   },
-  {
-    id: "qualifications",
-    label: "Qualifications Overview",
-    icon: GraduationCap,
-  },
 ];
 
 export function TeacherDashboardTabs() {
@@ -46,7 +39,7 @@ export function TeacherDashboardTabs() {
 
   const tabParam = searchParams.get("tab") as TeacherTabId | null;
   const activeTab: TeacherTabId = useMemo(() => {
-    if (tabParam === "classes" || tabParam === "grades" || tabParam === "qualifications") {
+    if (tabParam === "classes" || tabParam === "grades") {
       return tabParam;
     }
     return "overview";
@@ -75,7 +68,6 @@ export function TeacherDashboardTabs() {
         {activeTab === "overview" && <TeacherOverviewTab />}
         {activeTab === "classes" && <TeacherClassesTab />}
         {activeTab === "grades" && <TeacherGradesTab />}
-        {activeTab === "qualifications" && <TeacherQualificationsTab />}
       </div>
     </div>
   );

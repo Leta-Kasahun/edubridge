@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
-import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
+import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
@@ -15,22 +13,12 @@ export function TeacherClassesTab() {
     isLoading: isAssignmentsLoading,
   } = useMyTeacherAssignments();
 
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudents({ limit: 100 });
-  const rawStudents = studentsData?.data ?? [];
-
-  const assignedSectionIds = useMemo(
-    () => new Set(assignedSections.map((s) => s.id)),
-    [assignedSections]
-  );
-
-  const scopedStudents = useMemo(() => {
-    if (assignedSectionIds.size === 0) return rawStudents;
-    return rawStudents.filter((st) => st.sectionId && assignedSectionIds.has(st.sectionId));
-  }, [rawStudents, assignedSectionIds]);
-
-  const totalStudents = scopedStudents.length;
-  const maleStudents = scopedStudents.filter((s) => s.gender === "MALE").length;
-  const femaleStudents = scopedStudents.filter((s) => s.gender === "FEMALE").length;
+  const {
+    totalStudents,
+    studentGenderSlices,
+    studentStatusSlices,
+    isLoading: isStudentsLoading,
+  } = useTeacherAssignedStudents();
 
   const colors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = assignedGrades.slice(0, 6).map((g, idx) => ({
@@ -44,28 +32,6 @@ export function TeacherClassesTab() {
     value: 1,
     color: colors[(idx + 2) % colors.length],
   }));
-
-  const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male Pupils", value: maleStudents, color: "#0EA5E9" },
-    { name: "Female Pupils", value: femaleStudents, color: "#F97316" },
-  ];
-
-  const studentStatusSlices: readonly ChartSliceItem[] = [
-    {
-      name: "Enrolled Active",
-      value: scopedStudents.filter(
-        (s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE"
-      ).length,
-      color: "#10B981",
-    },
-    {
-      name: "Pending Setup",
-      value: scopedStudents.filter(
-        (s) => s.status === "PENDING_FIRST_LOGIN" || s.studentStatus === "INACTIVE"
-      ).length,
-      color: "#f59e0b",
-    },
-  ];
 
   const isLoadingMetrics = isAssignmentsLoading || isStudentsLoading;
 
@@ -111,7 +77,7 @@ export function TeacherClassesTab() {
         />
         <DashboardDonutCard
           title="Student Gender Split"
-          slices={genderSlices}
+          slices={studentGenderSlices}
           centerLabel="Pupils"
           centerValue={totalStudents}
           isLoading={isStudentsLoading}

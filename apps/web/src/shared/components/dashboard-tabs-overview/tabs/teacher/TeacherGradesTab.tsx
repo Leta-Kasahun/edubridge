@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
-import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
+import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
@@ -16,22 +14,13 @@ export function TeacherGradesTab() {
     isLoading: isAssignmentsLoading,
   } = useMyTeacherAssignments();
 
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudents({ limit: 100 });
-  const rawStudents = studentsData?.data ?? [];
-
-  const assignedSectionIds = useMemo(
-    () => new Set(assignedSections.map((s) => s.id)),
-    [assignedSections]
-  );
-
-  const scopedStudents = useMemo(() => {
-    if (assignedSectionIds.size === 0) return rawStudents;
-    return rawStudents.filter((st) => st.sectionId && assignedSectionIds.has(st.sectionId));
-  }, [rawStudents, assignedSectionIds]);
-
-  const totalStudents = scopedStudents.length;
-  const maleStudents = scopedStudents.filter((s) => s.gender === "MALE").length;
-  const femaleStudents = scopedStudents.filter((s) => s.gender === "FEMALE").length;
+  const {
+    totalStudents,
+    maleStudents,
+    femaleStudents,
+    studentGenderSlices,
+    isLoading: isStudentsLoading,
+  } = useTeacherAssignedStudents();
 
   const palette = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
 
@@ -46,11 +35,6 @@ export function TeacherGradesTab() {
     value: assignedSections.filter((s) => s.gradeId === g.id).length || 1,
     color: palette[(idx + 1) % palette.length],
   }));
-
-  const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male Pupils", value: maleStudents, color: "#0EA5E9" },
-    { name: "Female Pupils", value: femaleStudents, color: "#F97316" },
-  ];
 
   const courseSlices: readonly ChartSliceItem[] = assignedSubjects.map((s, idx) => ({
     name: s.name,
@@ -102,7 +86,7 @@ export function TeacherGradesTab() {
         />
         <DashboardDonutCard
           title="Student Gender Ratio"
-          slices={genderSlices}
+          slices={studentGenderSlices}
           centerLabel="Ratio"
           centerValue={`${maleStudents}:${femaleStudents}`}
           isLoading={isStudentsLoading}

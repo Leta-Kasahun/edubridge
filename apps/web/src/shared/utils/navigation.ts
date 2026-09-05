@@ -3,14 +3,13 @@ import {
   Building2,
   Settings,
   User,
-  GraduationCap,
+  Presentation,
   UserPlus,
   Award,
   Calendar,
   BookOpen,
   BookMarked,
   Users,
-  School,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -136,7 +135,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
   {
     label: "My Classes",
     href: ROUTES.TEACHER.CLASSES,
-    icon: School,
+    icon: Presentation,
   },
   {
     label: "My Students",
