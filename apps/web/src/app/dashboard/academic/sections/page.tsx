@@ -6,7 +6,7 @@ import { SectionsView } from "@/features/academic";
 
 export default function AcademicSectionsPage() {
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
       <DashboardLayout>
         <SectionsView />
       </DashboardLayout>

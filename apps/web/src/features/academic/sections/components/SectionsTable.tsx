@@ -12,6 +12,7 @@ interface SectionsTableProps {
   readonly items: readonly SectionRecord[];
   readonly onViewDetails: (section: SectionRecord) => void;
   readonly onEdit: (section: SectionRecord) => void;
+  readonly isReadOnly?: boolean;
 }
 
 function SectionRowActions({
@@ -21,6 +22,7 @@ function SectionRowActions({
   onToggleStatus,
   onDelete,
   isProcessing,
+  isReadOnly = false,
 }: {
   readonly section: SectionRecord;
   readonly onViewDetails: (section: SectionRecord) => void;
@@ -28,6 +30,7 @@ function SectionRowActions({
   readonly onToggleStatus: (section: SectionRecord) => void;
   readonly onDelete: (section: SectionRecord) => void;
   readonly isProcessing: boolean;
+  readonly isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -74,51 +77,55 @@ function SectionRowActions({
             <span>View Details</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onEdit(section);
-            }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
-          >
-            <Edit2 size={13} className="text-muted-foreground" />
-            <span>Edit Section</span>
-          </button>
+          {!isReadOnly && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onEdit(section);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+              >
+                <Edit2 size={13} className="text-muted-foreground" />
+                <span>Edit Section</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onToggleStatus(section);
-            }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
-          >
-            {isActive ? (
-              <>
-                <UserX size={13} className="text-destructive" />
-                <span className="text-destructive">Deactivate</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={13} className="text-muted-foreground" />
-                <span className="text-foreground">Activate</span>
-              </>
-            )}
-          </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onToggleStatus(section);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+              >
+                {isActive ? (
+                  <>
+                    <UserX size={13} className="text-destructive" />
+                    <span className="text-destructive">Deactivate</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={13} className="text-muted-foreground" />
+                    <span className="text-foreground">Activate</span>
+                  </>
+                )}
+              </button>
 
-          {section.studentCount === 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onDelete(section);
-              }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left"
-            >
-              <Trash2 size={13} />
-              <span>Delete</span>
-            </button>
+              {section.studentCount === 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onDelete(section);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left"
+                >
+                  <Trash2 size={13} />
+                  <span>Delete</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -130,6 +137,7 @@ export function SectionsTable({
   items,
   onViewDetails,
   onEdit,
+  isReadOnly = false,
 }: SectionsTableProps) {
   const updateStatusMutation = useUpdateSectionStatus();
   const deleteMutation = useDeleteSection();
@@ -197,6 +205,7 @@ export function SectionsTable({
                   onToggleStatus={handleToggleStatus}
                   onDelete={handleDelete}
                   isProcessing={processingId === sec.id}
+                  isReadOnly={isReadOnly}
                 />
               </div>
             </div>
@@ -294,6 +303,7 @@ export function SectionsTable({
                         onToggleStatus={handleToggleStatus}
                         onDelete={handleDelete}
                         isProcessing={processingId === sec.id}
+                        isReadOnly={isReadOnly}
                       />
                     </div>
                   </td>

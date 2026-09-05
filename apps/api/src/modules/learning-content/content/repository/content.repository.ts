@@ -99,6 +99,38 @@ export class ContentRepository {
     return cs?.curriculumVersionId ?? null;
   }
 
+  async resolveStudentEnrolledGradeId(
+    tenantId: string,
+    userId: string
+  ): Promise<string | null> {
+    const enrollment = await prisma.studentEnrollment.findFirst({
+      where: {
+        tenantId,
+        student: { userId },
+        status: "ACTIVE",
+      },
+      include: {
+        section: { select: { gradeId: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return enrollment?.section?.gradeId ?? null;
+  }
+
+  async findTeacherActiveAssignments(tenantId: string, userId: string) {
+    return prisma.teacherAssignment.findMany({
+      where: {
+        tenantId,
+        teacher: { userId },
+        status: "ACTIVE",
+      },
+      include: {
+        section: { select: { gradeId: true } },
+        subject: { select: { id: true, name: true } },
+      },
+    });
+  }
+
   async findManyWithFilters(
     tenantId: string,
     filters: ContentFilterQuery

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,12 +31,16 @@ function NavTreeItem({
   readonly onNavigate: () => void;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const fullPath = tabParam ? `${pathname}?tab=${tabParam}` : pathname;
   const hasChildren = Boolean(node.children && node.children.length > 0);
 
   const isChildActive = Boolean(
     hasChildren &&
     (node.children?.some(
       (child) =>
+        child.href === fullPath ||
         pathname === child.href ||
         (child.href !== ROUTES.DASHBOARD && pathname.startsWith(child.href + "/"))
     ) ||
@@ -58,9 +62,10 @@ function NavTreeItem({
     }
   }, [isChildActive]);
 
-  const isActive =
-    node.href === ROUTES.DASHBOARD
-      ? pathname === ROUTES.DASHBOARD
+  const isActive = node.href.includes("?")
+    ? fullPath === node.href
+    : node.href === ROUTES.DASHBOARD
+      ? pathname === ROUTES.DASHBOARD && !tabParam
       : pathname === node.href || (pathname.startsWith(node.href) && !hasChildren);
 
   const Icon = node.icon;
@@ -141,9 +146,9 @@ function NavTreeItem({
 
       {hasChildren && isOpen && (!collapsed || mobileOpen) && (
         <div className="space-y-0.5 relative before:absolute before:left-4 before:top-1 before:bottom-1 before:w-px before:bg-[#1E293B]">
-          {node.children?.map((child) => (
+          {node.children?.map((child, childIdx) => (
             <NavTreeItem
-              key={child.href}
+              key={`${child.href}-${child.label}-${childIdx}`}
               node={child}
               depth={depth + 1}
               collapsed={collapsed}
@@ -297,9 +302,9 @@ export function Sidebar() {
         )}
 
         <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
-          {navTree.map((node) => (
+          {navTree.map((node, nodeIdx) => (
             <NavTreeItem
-              key={node.href}
+              key={`${node.href}-${node.label}-${nodeIdx}`}
               node={node}
               collapsed={sidebarCollapsed}
               mobileOpen={sidebarMobileOpen}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, BookOpen, Layers, UploadCloud, File, Trash2 } from "lucide-react";
+import { X, BookOpen, Layers, UploadCloud, File, Trash2, Send, Globe } from "lucide-react";
 import {
   LearningContentListItem,
   LearningContentDetailItem,
@@ -15,19 +15,15 @@ import {
   useCreateContent,
   useUpdateContentMetadata,
   useUploadContentAttachment,
+  useSubmitContent,
+  usePublishContent,
 } from "../../hooks/useLearningContent";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import {
-  useCurricula,
-  useCurriculumDetails,
-} from "@/features/curriculum/curricula/hooks/useCurricula";
-import {
-  useCurriculumSubjects,
-  useCurriculumUnits,
-  useCurriculumTopics,
-  useLearningObjectives,
-} from "@/features/curriculum/structure/hooks/useStructure";
+  CurriculumSelector,
+  CurriculumSelectionValue,
+} from "@/features/curriculum/components/CurriculumSelector";
 import {
   SelectDropdown,
   SelectDropdownOption,
@@ -40,6 +36,9 @@ interface ContentFormModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly itemToEdit?: LearningContentListItem | LearningContentDetailItem | null;
+  readonly allowedSubjectIds?: readonly string[];
+  readonly allowedGradeIds?: readonly string[];
+  readonly onContentCreated?: () => void;
 }
 
 const CONTENT_SCOPE_OPTIONS: readonly SelectDropdownOption[] = [
@@ -70,6 +69,9 @@ export function ContentFormModal({
   isOpen,
   onClose,
   itemToEdit,
+  allowedSubjectIds,
+  allowedGradeIds,
+  onContentCreated,
 }: ContentFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState("");
@@ -87,44 +89,38 @@ export function ContentFormModal({
   const [selectedGradeId, setSelectedGradeId] = useState("");
   const [selectedGradeLevels, setSelectedGradeLevels] = useState<number[]>([]);
 
-  const [selectedCurriculumId, setSelectedCurriculumId] = useState("");
-  const [selectedVersionId, setSelectedVersionId] = useState("");
-  const [selectedCurriculumSubjectId, setSelectedCurriculumSubjectId] = useState("");
   const [selectedUnitId, setSelectedUnitId] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("");
-  const [selectedObjectiveIds, setSelectedObjectiveIds] = useState<string[]>([]);
+  const [selectedObjectiveIds, setSelectedObjectiveIds] = useState<readonly string[]>([]);
+  const [curriculumSelection, setCurriculumSelection] = useState<CurriculumSelectionValue>({});
 
   const [formError, setFormError] = useState<string | null>(null);
 
   const createMutation = useCreateContent();
   const updateMetadataMutation = useUpdateContentMetadata(itemToEdit?.id || "");
   const uploadAttachmentMutation = useUploadContentAttachment();
+  const submitMutation = useSubmitContent();
+  const publishMutation = usePublishContent();
 
   const isEditing = Boolean(itemToEdit);
+  const isPending =
+    createMutation.isPending ||
+    updateMetadataMutation.isPending ||
+    uploadAttachmentMutation.isPending ||
+    submitMutation.isPending ||
+    publishMutation.isPending;
 
-  const { data: subjectsList = [] } = useSubjects();
-  const { data: gradesList = [] } = useGrades();
+  const isTextbookOrRef = type === "TEXTBOOK" || type === "REFERENCE_BOOK";
 
-  const { data: curriculaData } = useCurricula({ limit: 100 });
-  const curricula = curriculaData?.data ?? [];
+  const { data: rawSubjectsList = [] } = useSubjects();
+  const { data: rawGradesList = [] } = useGrades();
 
-  const { data: curriculumDetail } = useCurriculumDetails(
-    selectedCurriculumId || null
+  const subjectsList = rawSubjectsList.filter((s) =>
+    !allowedSubjectIds || allowedSubjectIds.length === 0 || allowedSubjectIds.includes(s.id)
   );
-  const versions = curriculumDetail?.versions ?? [];
 
-  const { data: curriculumSubjects = [] } = useCurriculumSubjects(selectedVersionId);
-  const { data: units = [] } = useCurriculumUnits(
-    selectedCurriculumSubjectId,
-    Boolean(selectedCurriculumSubjectId)
-  );
-  const { data: topics = [] } = useCurriculumTopics(
-    selectedUnitId,
-    Boolean(selectedUnitId)
-  );
-  const { data: objectives = [] } = useLearningObjectives(
-    selectedTopicId,
-    Boolean(selectedTopicId)
+  const gradesList = rawGradesList.filter((g) =>
+    !allowedGradeIds || allowedGradeIds.length === 0 || allowedGradeIds.includes(g.id)
   );
 
   useEffect(() => {
@@ -152,11 +148,20 @@ export function ContentFormModal({
           setSelectedGradeLevels([]);
         }
 
-        if ("primaryTopic" in itemToEdit && itemToEdit.primaryTopic) {
-          setSelectedTopicId(itemToEdit.primaryTopic.topicId);
-        } else if ("topics" in itemToEdit && itemToEdit.topics.length > 0) {
-          setSelectedTopicId(itemToEdit.topics[0]?.topicId || "");
-        }
+        const primaryTopicId =
+          "primaryTopic" in itemToEdit && itemToEdit.primaryTopic
+            ? itemToEdit.primaryTopic.topicId
+            : "topics" in itemToEdit && itemToEdit.topics.length > 0
+            ? itemToEdit.topics[0]?.topicId || ""
+            : "";
+
+        setSelectedTopicId(primaryTopicId);
+        setCurriculumSelection({
+          subjectId: itemToEdit.subjectId || undefined,
+          gradeId: itemToEdit.gradeId || undefined,
+          unitId: itemToEdit.unitId || undefined,
+          topicId: primaryTopicId || undefined,
+        });
       } else {
         setTitle("");
         setDescription("");
@@ -165,10 +170,10 @@ export function ContentFormModal({
         setSelectedSubjectId("");
         setSelectedGradeId("");
         setSelectedGradeLevels([]);
-        setSelectedCurriculumSubjectId("");
         setSelectedUnitId("");
         setSelectedTopicId("");
         setSelectedObjectiveIds([]);
+        setCurriculumSelection({});
         setInitialText("");
         setChangeNote("");
         setSelectedFiles([]);
@@ -176,54 +181,16 @@ export function ContentFormModal({
     }
   }, [isOpen, itemToEdit]);
 
-  useEffect(() => {
-    if (!selectedCurriculumId && curricula.length > 0) {
-      setSelectedCurriculumId(curricula[0]?.id || "");
-    }
-  }, [curricula, selectedCurriculumId]);
-
-  useEffect(() => {
-    if (versions.length > 0) {
-      const activeOrDraft =
-        versions.find((v) => v.status === "ACTIVE") ||
-        versions.find((v) => v.status === "DRAFT") ||
-        versions[0];
-      if (activeOrDraft) {
-        setSelectedVersionId(activeOrDraft.id);
-      }
-    } else {
-      setSelectedVersionId("");
-    }
-  }, [versions]);
-
   if (!mounted || !isOpen) return null;
 
-  const subjectOptions: readonly SelectDropdownOption[] = subjectsList.map(
-    (s) => ({
-      value: s.id,
-      label: `${s.name} (${s.code})`,
-    })
-  );
+  const subjectOptions: readonly SelectDropdownOption[] = subjectsList.map((s) => ({
+    value: s.id,
+    label: `${s.name} (${s.code})`,
+  }));
 
   const gradeOptions: readonly SelectDropdownOption[] = gradesList.map((g) => ({
     value: g.id,
     label: `Grade ${g.level}`,
-  }));
-
-  const curriculumSubjectOptions: readonly SelectDropdownOption[] =
-    curriculumSubjects.map((cs) => ({
-      value: cs.id,
-      label: `${cs.subjectName} - Grade ${cs.gradeLevel}`,
-    }));
-
-  const unitOptions: readonly SelectDropdownOption[] = units.map((u) => ({
-    value: u.id,
-    label: `${u.code}: ${u.title}`,
-  }));
-
-  const topicOptions: readonly SelectDropdownOption[] = topics.map((t) => ({
-    value: t.id,
-    label: `${t.code}: ${t.title}`,
   }));
 
   const availableGradeLevels =
@@ -251,8 +218,26 @@ export function ContentFormModal({
 
   const isReferenceBook = type === "REFERENCE_BOOK";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCurriculumChange = (val: CurriculumSelectionValue) => {
+    setCurriculumSelection(val);
+    if (val.subjectId) setSelectedSubjectId(val.subjectId);
+    if (val.gradeId) setSelectedGradeId(val.gradeId);
+    if (val.unitId) setSelectedUnitId(val.unitId);
+    if (val.topicId) setSelectedTopicId(val.topicId);
+    if (val.objectiveIds) setSelectedObjectiveIds(val.objectiveIds);
+  };
+
+  const handleFileSelect = (newFiles: FileList | null) => {
+    if (!newFiles || newFiles.length === 0) return;
+    const added = Array.from(newFiles);
+    setSelectedFiles((prev) => [...prev, ...added]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const executeSubmit = async (action: "DRAFT" | "PUBLISH" | "SUBMIT") => {
     setFormError(null);
 
     if (!title.trim()) {
@@ -264,7 +249,7 @@ export function ContentFormModal({
     let resolvedGradeId = selectedGradeId;
 
     if (!resolvedGradeId && sortedGradeLevels.length > 0) {
-      const match = gradesList.find((g) => g.level === sortedGradeLevels[0]);
+      const match = rawGradesList.find((g) => g.level === sortedGradeLevels[0]);
       if (match) {
         resolvedGradeId = match.id;
       }
@@ -276,9 +261,7 @@ export function ContentFormModal({
     }
 
     if (isReferenceBook && sortedGradeLevels.length === 0 && !resolvedGradeId) {
-      setFormError(
-        "Please select at least one grade level for the reference book."
-      );
+      setFormError("Please select at least one grade level for the reference book.");
       return;
     }
 
@@ -331,9 +314,7 @@ export function ContentFormModal({
           primaryTopicId: scope === "TOPIC" ? selectedTopicId : undefined,
           secondaryTopicIds: [],
           objectiveIds: scope === "TOPIC" ? selectedObjectiveIds : [],
-          initialVersionBody: initialText.trim()
-            ? { text: initialText.trim() }
-            : undefined,
+          initialVersionBody: initialText.trim() ? { text: initialText.trim() } : undefined,
           changeNote: changeNote.trim() || undefined,
         };
 
@@ -347,64 +328,39 @@ export function ContentFormModal({
             });
           }
         }
+
+        if (action === "PUBLISH") {
+          await publishMutation.mutateAsync(created.id);
+        } else if (action === "SUBMIT") {
+          await submitMutation.mutateAsync(created.id);
+        }
       }
 
+      if (onContentCreated) {
+        onContentCreated();
+      }
       onClose();
     } catch (err: unknown) {
       setFormError(getErrorMessage(err, "Failed to save learning material"));
     }
   };
 
-  const handleFileSelect = (newFiles: FileList | null) => {
-    if (!newFiles || newFiles.length === 0) return;
-    const added = Array.from(newFiles);
-    setSelectedFiles((prev) => [...prev, ...added]);
-
-    if (!title.trim() && added[0]) {
-      const cleanName = added[0].name
-        .replace(/\.[^/.]+$/, "")
-        .replace(/[_-]+/g, " ")
-        .trim();
-      setTitle(cleanName);
-    }
-
-    if (added[0]) {
-      const ext = added[0].name.split(".").pop()?.toLowerCase();
-      if (ext === "pdf" && (type === "LESSON" || type === "TEXT")) {
-        setType(scope === "SUBJECT" ? "REFERENCE_BOOK" : "TEXTBOOK");
-      } else if ((ext === "mp4" || ext === "webm") && type !== "VIDEO") {
-        setType("VIDEO");
-      }
-    }
-  };
-
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const isPending =
-    createMutation.isPending || updateMetadataMutation.isPending;
-
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-xl bg-card border border-border rounded-2xl shadow-xl overflow-hidden my-auto animate-in fade-in-0 zoom-in-95"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-muted/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-2xl my-auto bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <BookOpen size={16} />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-foreground">
-                {isEditing ? "Edit Learning Material" : "New Learning Material"}
+              <h2 className="text-sm font-semibold text-foreground">
+                {isEditing ? "Edit Learning Material" : "Create Learning Material"}
               </h2>
-              <p className="text-[11px] sm:text-xs text-muted-foreground">
-                Manage curriculum alignment and material metadata
+              <p className="text-[11px] text-muted-foreground">
+                {isEditing
+                  ? "Update metadata and associations"
+                  : "Author new teaching and learning content"}
               </p>
             </div>
           </div>
@@ -417,105 +373,101 @@ export function ContentFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isEditing) {
+              executeSubmit("DRAFT");
+            } else if (isTextbookOrRef) {
+              executeSubmit("SUBMIT");
+            } else {
+              executeSubmit("PUBLISH");
+            }
+          }}
+          className="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto"
+        >
           {formError && <ErrorAlert message={formError} />}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Scope <span className="text-destructive">*</span>
-              </label>
-              <SelectDropdown
-                options={CONTENT_SCOPE_OPTIONS}
-                value={scope}
-                onChange={(val) => setScope(val as ContentScope)}
-                placeholder="Select scope"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Type <span className="text-destructive">*</span>
+                Content Type <span className="text-destructive">*</span>
               </label>
               <SelectDropdown
                 options={CONTENT_TYPE_OPTIONS}
                 value={type}
+                onChange={(val) => setType(val as ContentType)}
+                placeholder="Select content type"
+                disabled={isEditing}
+              />
+              {isTextbookOrRef && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-medium">
+                  Textbooks and reference books require School Admin review before publishing.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Curriculum Scope <span className="text-destructive">*</span>
+              </label>
+              <SelectDropdown
+                options={CONTENT_SCOPE_OPTIONS}
+                value={scope}
                 onChange={(val) => {
-                  const newType = val as ContentType;
-                  setType(newType);
-                  if (
-                    newType === "REFERENCE_BOOK" &&
-                    (scope === "TOPIC" || scope === "UNIT")
-                  ) {
-                    setScope("GRADE_SUBJECT");
-                  }
+                  setScope(val as ContentScope);
+                  setSelectedUnitId("");
+                  setSelectedTopicId("");
+                  setSelectedObjectiveIds([]);
                 }}
-                placeholder="Select type"
+                placeholder="Select scope"
+                disabled={isEditing}
               />
             </div>
           </div>
 
-          <div className="bg-muted/30 border border-border/70 rounded-xl p-3.5 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Layers size={13} className="text-primary" />
-              <span>Academic Alignment</span>
+          <div className="p-3.5 rounded-xl border border-border/70 bg-muted/10 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <Layers size={14} className="text-primary" />
+              <span>Curriculum Alignment</span>
             </div>
 
-            {(scope === "SUBJECT" || scope === "GRADE_SUBJECT") &&
-              isReferenceBook && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Subject <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={subjectOptions}
-                      value={selectedSubjectId}
-                      onChange={setSelectedSubjectId}
-                      placeholder="Select subject"
-                    />
-                  </div>
+            {isReferenceBook && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                    Subject <span className="text-destructive">*</span>
+                  </label>
+                  <SelectDropdown
+                    options={subjectOptions}
+                    value={selectedSubjectId}
+                    onChange={setSelectedSubjectId}
+                    placeholder="Select subject"
+                  />
+                </div>
 
-                  <div className="space-y-2 pt-1 border-t border-border/50">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-[11px] font-semibold text-foreground">
-                        Target Grades <span className="text-destructive">*</span>
-                      </label>
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        {selectedGradeLevels.length > 0
-                          ? `Assigned: Grades ${selectedGradeLevels.join(", ")}`
-                          : "Select multiple grades"}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1 text-[10px]">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectGradeBand([7, 8])}
-                        className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
-                      >
-                        Grades 7 & 8
-                      </button>
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-muted-foreground">
+                    <span>Applicable Grade Levels</span>
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleSelectGradeBand([9, 10])}
                         className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
                       >
-                        Grades 9 & 10
+                        Grades 9 - 10
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSelectGradeBand([11, 12])}
                         className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
                       >
-                        Grades 11 & 12
+                        Grades 11 - 12
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          setSelectedGradeLevels([...availableGradeLevels])
-                        }
-                        className="px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors cursor-pointer ml-auto"
+                        onClick={() => setSelectedGradeLevels([...availableGradeLevels])}
+                        className="px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors cursor-pointer"
                       >
                         All
                       </button>
@@ -529,29 +481,30 @@ export function ContentFormModal({
                         </button>
                       )}
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 pt-1">
-                      {availableGradeLevels.map((lvl) => {
-                        const isSelected = selectedGradeLevels.includes(lvl);
-                        return (
-                          <button
-                            key={lvl}
-                            type="button"
-                            onClick={() => toggleGradeLevel(lvl)}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer border ${
-                              isSelected
-                                ? "bg-primary text-primary-foreground border-primary shadow-2xs scale-[1.02]"
-                                : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground hover:bg-muted/40"
-                            }`}
-                          >
-                            Grade {lvl}
-                          </button>
-                        );
-                      })}
-                    </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 pt-1">
+                    {availableGradeLevels.map((lvl) => {
+                      const isSelected = selectedGradeLevels.includes(lvl);
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => toggleGradeLevel(lvl)}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-semibold text-center transition-all cursor-pointer border ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary shadow-2xs scale-[1.02]"
+                              : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground hover:bg-muted/40"
+                          }`}
+                        >
+                          Grade {lvl}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
             {scope === "SUBJECT" && !isReferenceBook && (
               <div>
@@ -595,55 +548,15 @@ export function ContentFormModal({
             )}
 
             {(scope === "UNIT" || scope === "TOPIC") && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Subject <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={curriculumSubjectOptions}
-                      value={selectedCurriculumSubjectId}
-                      onChange={(val) => {
-                        setSelectedCurriculumSubjectId(val);
-                        setSelectedUnitId("");
-                        setSelectedTopicId("");
-                      }}
-                      placeholder="Select subject"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Unit <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={unitOptions}
-                      value={selectedUnitId}
-                      onChange={(val) => {
-                        setSelectedUnitId(val);
-                        setSelectedTopicId("");
-                      }}
-                      placeholder="Select unit"
-                      disabled={!selectedCurriculumSubjectId}
-                    />
-                  </div>
-                </div>
-
-                {scope === "TOPIC" && (
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Topic <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={topicOptions}
-                      value={selectedTopicId}
-                      onChange={setSelectedTopicId}
-                      placeholder="Select topic"
-                      disabled={!selectedUnitId}
-                    />
-                  </div>
-                )}
+              <div className="space-y-3 pt-1">
+                <CurriculumSelector
+                  value={curriculumSelection}
+                  onChange={handleCurriculumChange}
+                  minLevel={scope === "UNIT" ? "UNIT" : "TOPIC"}
+                  multiObjective={true}
+                  allowedSubjectIds={allowedSubjectIds}
+                  allowedGradeIds={allowedGradeIds}
+                />
               </div>
             )}
           </div>
@@ -766,21 +679,74 @@ export function ContentFormModal({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+              className="h-9 px-4 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
-            <SubmitButton
-              isLoading={isPending}
-              loadingText="Saving..."
-              size="sm"
-            >
-              {isEditing ? "Save Changes" : "Create Material"}
-            </SubmitButton>
+            {isEditing ? (
+              <SubmitButton
+                isLoading={isPending}
+                loadingText="Saving..."
+                size="sm"
+              >
+                Save Changes
+              </SubmitButton>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => executeSubmit("DRAFT")}
+                  className="flex-1 sm:flex-none h-9 px-3.5 rounded-lg text-xs font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Save as Draft
+                </button>
+
+                {isTextbookOrRef ? (
+                  <SubmitButton
+                    isLoading={isPending}
+                    loadingText="Submitting..."
+                    size="sm"
+                    onClick={() => executeSubmit("SUBMIT")}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <Send size={13} />
+                      Submit for Review
+                    </span>
+                  </SubmitButton>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => executeSubmit("SUBMIT")}
+                      className="h-9 px-3 rounded-lg text-xs font-medium border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                      title="Optionally request review before publishing"
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Send size={12} />
+                        Request Review
+                      </span>
+                    </button>
+                    <SubmitButton
+                      isLoading={isPending}
+                      loadingText="Publishing..."
+                      size="sm"
+                      onClick={() => executeSubmit("PUBLISH")}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Globe size={13} />
+                        Publish Material
+                      </span>
+                    </SubmitButton>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </form>
       </div>

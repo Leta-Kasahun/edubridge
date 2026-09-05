@@ -164,6 +164,13 @@ export class ObjectiveService {
       true
     );
 
+    const deps = await this.repository.countObjectiveDependencies(objectiveId);
+    if (deps.contentCount > 0 || deps.questionCount > 0 || deps.evidenceCount > 0) {
+      throw new BadRequestError(
+        `Cannot delete objective '${context.statement}' because it has active dependencies (${deps.contentCount} materials, ${deps.questionCount} questions, ${deps.evidenceCount} evidence records). Archive or unassign them first.`
+      );
+    }
+
     await this.repository.deleteObjective(objectiveId);
   }
 

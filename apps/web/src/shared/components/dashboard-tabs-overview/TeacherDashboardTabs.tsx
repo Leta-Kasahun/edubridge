@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  GraduationCap,
+} from "lucide-react";
 import { DashboardTabsNav } from "./DashboardTabsNav";
 import {
   TeacherOverviewTab,
   TeacherClassesTab,
+  TeacherGradesTab,
   TeacherQualificationsTab,
 } from "./tabs/teacher";
 import type { TeacherTabId, DashboardTabItem } from "./types";
@@ -12,32 +20,61 @@ import type { TeacherTabId, DashboardTabItem } from "./types";
 const TEACHER_TABS: readonly DashboardTabItem<TeacherTabId>[] = [
   {
     id: "overview",
-    label: "Teaching Overview",
+    label: "General Overview",
+    icon: LayoutDashboard,
   },
   {
     id: "classes",
-    label: "Classes",
+    label: "Classes Overview",
+    icon: Users,
+  },
+  {
+    id: "grades",
+    label: "Grades Overview",
+    icon: BookOpen,
   },
   {
     id: "qualifications",
-    label: "Qualifications",
+    label: "Qualifications Overview",
+    icon: GraduationCap,
   },
 ];
 
 export function TeacherDashboardTabs() {
-  const [activeTab, setActiveTab] = useState<TeacherTabId>("overview");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabParam = searchParams.get("tab") as TeacherTabId | null;
+  const activeTab: TeacherTabId = useMemo(() => {
+    if (tabParam === "classes" || tabParam === "grades" || tabParam === "qualifications") {
+      return tabParam;
+    }
+    return "overview";
+  }, [tabParam]);
+
+  const handleTabChange = useCallback(
+    (newTab: TeacherTabId) => {
+      if (newTab === "overview") {
+        router.push("/dashboard");
+      } else {
+        router.push(`/dashboard?tab=${newTab}`);
+      }
+    },
+    [router]
+  );
 
   return (
     <div className="space-y-6 w-full max-w-full">
       <DashboardTabsNav
         tabs={TEACHER_TABS}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
 
       <div className="w-full">
         {activeTab === "overview" && <TeacherOverviewTab />}
         {activeTab === "classes" && <TeacherClassesTab />}
+        {activeTab === "grades" && <TeacherGradesTab />}
         {activeTab === "qualifications" && <TeacherQualificationsTab />}
       </div>
     </div>

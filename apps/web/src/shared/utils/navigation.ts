@@ -132,31 +132,34 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "Curriculum",
-    href: ROUTES.CURRICULUM.BASE,
-    icon: BookOpen,
+    label: "Academic",
+    href: ROUTES.ACADEMIC.BASE,
+    icon: Calendar,
     children: [
-      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
-      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
+      { label: "My Assigned Classes", href: ROUTES.ACADEMIC.SECTIONS },
+      { label: "My Assigned Grades", href: ROUTES.ACADEMIC.GRADES },
+      { label: "My Assigned Subjects", href: ROUTES.ACADEMIC.SUBJECTS },
     ],
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "My Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
-    children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-    ],
   },
   {
-    label: "My Profile",
-    href: ROUTES.PROFILE,
-    icon: User,
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.STRUCTURE,
+    icon: BookOpen,
   },
   {
     label: "My Qualifications",
     href: ROUTES.QUALIFICATIONS,
     icon: GraduationCap,
+  },
+  {
+    label: "My Profile",
+    href: ROUTES.PROFILE,
+    icon: User,
   },
 ];
 

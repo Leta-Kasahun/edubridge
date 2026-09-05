@@ -24,6 +24,7 @@ import {
 import {
   NotFoundError,
   BadRequestError,
+  ForbiddenError,
 } from "../../../../shared/exceptions/index.js";
 import {
   ContentTypeEnum,
@@ -31,6 +32,12 @@ import {
   ContentStatusEnum,
   ContentScopeEnum,
 } from "../../../../shared/constants/index.js";
+
+export interface UserAuthContext {
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly roles: readonly string[];
+}
 
 export class ContentService {
   constructor(
@@ -278,15 +285,38 @@ export class ContentService {
 
   async listContent(
     tenantId: string,
-    filters: ContentFilterQuery
+    filters: ContentFilterQuery,
+    userContext?: UserAuthContext
   ): Promise<PaginatedContentResult> {
+    let effectiveFilters: ContentFilterQuery = { ...filters };
+
+    if (userContext) {
+      const isStudent =
+        userContext.roles.includes("STUDENT") &&
+        !userContext.roles.includes("TEACHER") &&
+        !userContext.roles.includes("SCHOOL_ADMIN") &&
+        !userContext.roles.includes("SYSTEM_ADMIN");
+
+      if (isStudent) {
+        const studentGradeId = await this.repository.resolveStudentEnrolledGradeId(
+          tenantId,
+          userContext.userId
+        );
+        effectiveFilters = {
+          ...effectiveFilters,
+          status: "PUBLISHED",
+          ...(studentGradeId ? { gradeId: studentGradeId } : {}),
+        };
+      }
+    }
+
     const { items, total } = await this.repository.findManyWithFilters(
       tenantId,
-      filters
+      effectiveFilters
     );
 
-    const page = filters.page ?? 1;
-    const limit = filters.limit ?? 20;
+    const page = effectiveFilters.page ?? 1;
+    const limit = effectiveFilters.limit ?? 20;
     const totalPages = Math.ceil(total / limit) || 1;
 
     const data: readonly ContentListItemResponse[] = items.map((item) => {
@@ -352,11 +382,24 @@ export class ContentService {
 
   async getContentDetail(
     tenantId: string,
-    id: string
+    id: string,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const item = await this.repository.findById(tenantId, id);
     if (!item) {
       throw new NotFoundError(`Learning content ${id} not found`);
+    }
+
+    if (userContext) {
+      const isStudent =
+        userContext.roles.includes("STUDENT") &&
+        !userContext.roles.includes("TEACHER") &&
+        !userContext.roles.includes("SCHOOL_ADMIN") &&
+        !userContext.roles.includes("SYSTEM_ADMIN");
+
+      if (isStudent && item.status !== "PUBLISHED") {
+        throw new NotFoundError(`Learning content ${id} not found`);
+      }
     }
 
     const topics: readonly ContentTopicMappingResponse[] = item.topics.map(
@@ -458,12 +501,95 @@ export class ContentService {
     };
   }
 
+  private async verifyTeacherAssignment(
+    tenantId: string,
+    userId: string,
+    subjectId?: string | null,
+    gradeId?: string | null
+  ): Promise<void> {
+    const assignments = await this.repository.findTeacherActiveAssignments(
+      tenantId,
+      userId
+    );
+    if (!assignments || assignments.length === 0) {
+      throw new ForbiddenError(
+        "You have no active teaching assignments in this institution"
+      );
+    }
+
+    const assignedSubjectIds = new Set(
+      assignments
+        .map((a) => a.subjectId)
+        .filter((id): id is string => Boolean(id))
+    );
+    const assignedGradeIds = new Set(
+      assignments
+        .map((a) => a.section?.gradeId)
+        .filter((id): id is string => Boolean(id))
+    );
+
+    if (
+      subjectId &&
+      assignedSubjectIds.size > 0 &&
+      !assignedSubjectIds.has(subjectId)
+    ) {
+      throw new ForbiddenError("You are not assigned to teach this subject");
+    }
+
+    if (
+      gradeId &&
+      assignedGradeIds.size > 0 &&
+      !assignedGradeIds.has(gradeId)
+    ) {
+      throw new ForbiddenError("You are not assigned to teach this grade level");
+    }
+  }
+
+  private verifyAuthorOrAdmin(
+    existing: { readonly authorId: string; readonly status: string },
+    userContext: UserAuthContext | undefined,
+    action: string
+  ): void {
+    if (!userContext) return;
+    const isAdmin =
+      userContext.roles.includes("SCHOOL_ADMIN") ||
+      userContext.roles.includes("SYSTEM_ADMIN") ||
+      userContext.roles.includes("ADMIN");
+    if (isAdmin) return;
+
+    if (existing.authorId !== userContext.userId) {
+      throw new ForbiddenError(
+        `You can only ${action} content that you authored`
+      );
+    }
+  }
+
   async createContent(
     tenantId: string,
     authorId: string,
-    data: CreateLearningContentDto
+    data: CreateLearningContentDto,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const hierarchy = await this.resolveAndValidateHierarchy(tenantId, data);
+
+    if (userContext) {
+      const isTeacherOnly =
+        userContext.roles.includes("TEACHER") &&
+        !userContext.roles.includes("SCHOOL_ADMIN") &&
+        !userContext.roles.includes("SYSTEM_ADMIN") &&
+        !userContext.roles.includes("ADMIN");
+
+      if (isTeacherOnly) {
+        const subjectId = hierarchy.subjectId ?? data.subjectId;
+        const gradeId = hierarchy.gradeId ?? data.gradeId;
+        await this.verifyTeacherAssignment(
+          tenantId,
+          authorId,
+          subjectId,
+          gradeId
+        );
+      }
+    }
 
     const created = await this.repository.createContentWithResolvedHierarchy(
       tenantId,
@@ -482,12 +608,15 @@ export class ContentService {
   async updateContentMetadata(
     tenantId: string,
     id: string,
-    data: UpdateLearningContentDto
+    data: UpdateLearningContentDto,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const existing = await this.repository.findById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
+
+    this.verifyAuthorOrAdmin(existing, userContext, "update");
 
     let hierarchy: ResolvedHierarchy | undefined;
     if (
@@ -535,12 +664,15 @@ export class ContentService {
   async updateContentMappings(
     tenantId: string,
     id: string,
-    data: UpdateContentMappingsDto
+    data: UpdateContentMappingsDto,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const existing = await this.repository.findById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
+
+    this.verifyAuthorOrAdmin(existing, userContext, "update mappings for");
 
     const hierarchy = await this.resolveAndValidateHierarchy(
       tenantId,
@@ -577,12 +709,15 @@ export class ContentService {
     tenantId: string,
     contentId: string,
     createdById: string,
-    data: CreateContentVersionDto
+    data: CreateContentVersionDto,
+    userContext?: UserAuthContext
   ): Promise<ContentVersionResponse> {
     const existing = await this.repository.findById(tenantId, contentId);
     if (!existing) {
       throw new NotFoundError(`Learning content ${contentId} not found`);
     }
+
+    this.verifyAuthorOrAdmin(existing, userContext, "create a new version for");
 
     const newVersion = await this.repository.createNextVersion(
       tenantId,
@@ -739,11 +874,25 @@ export class ContentService {
 
   async submitContentForReview(
     tenantId: string,
-    id: string
+    id: string,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const existing = await this.repository.findById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`Learning content ${id} not found`);
+    }
+
+    if (userContext) {
+      const isAdmin =
+        userContext.roles.includes("SCHOOL_ADMIN") ||
+        userContext.roles.includes("SYSTEM_ADMIN") ||
+        userContext.roles.includes("ADMIN");
+
+      if (!isAdmin && existing.authorId !== userContext.userId) {
+        throw new ForbiddenError(
+          "You can only submit your own authored content for review"
+        );
+      }
     }
 
     if (existing.status !== "DRAFT") {
@@ -756,7 +905,7 @@ export class ContentService {
     return this.getContentDetail(tenantId, id);
   }
 
-  async publishContent(
+  async approveContent(
     tenantId: string,
     id: string,
     reviewerId: string
@@ -766,30 +915,129 @@ export class ContentService {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
 
-    await this.repository.updateStatus(tenantId, id, "PUBLISHED", reviewerId);
+    if (existing.status !== "PENDING_REVIEW") {
+      throw new BadRequestError(
+        `Only content in PENDING_REVIEW status can be approved. Current status: ${existing.status}`
+      );
+    }
+
+    await this.repository.updateStatus(tenantId, id, "APPROVED", reviewerId);
     return this.getContentDetail(tenantId, id);
   }
 
-  async archiveContent(
+  async publishContent(
     tenantId: string,
-    id: string
+    id: string,
+    userId: string,
+    userContext?: UserAuthContext
   ): Promise<ContentDetailResponse> {
     const existing = await this.repository.findById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`Learning content ${id} not found`);
     }
 
+    if (existing.status === "PUBLISHED") {
+      return this.getContentDetail(tenantId, id, userContext);
+    }
+
+    const isAdmin =
+      userContext?.roles.includes("SCHOOL_ADMIN") ||
+      userContext?.roles.includes("SYSTEM_ADMIN") ||
+      userContext?.roles.includes("ADMIN");
+
+    const isTextbookOrReference =
+      existing.type === "TEXTBOOK" || existing.type === "REFERENCE_BOOK";
+
+    if (!isAdmin) {
+      if (existing.authorId !== userId) {
+        throw new ForbiddenError(
+          "You can only publish content that you authored"
+        );
+      }
+
+      await this.verifyTeacherAssignment(
+        tenantId,
+        userId,
+        existing.subjectId,
+        existing.gradeId
+      );
+
+      if (isTextbookOrReference && existing.status !== "APPROVED") {
+        throw new ForbiddenError(
+          "Textbooks and Reference Books require approval by a School Admin before publishing"
+        );
+      }
+    } else {
+      if (
+        isTextbookOrReference &&
+        existing.status !== "APPROVED" &&
+        existing.status !== "PENDING_REVIEW"
+      ) {
+        throw new BadRequestError(
+          "Textbooks and Reference Books must be in PENDING_REVIEW or APPROVED before publishing"
+        );
+      }
+    }
+
+    await this.repository.updateStatus(tenantId, id, "PUBLISHED", userId);
+    return this.getContentDetail(tenantId, id, userContext);
+  }
+
+  async archiveContent(
+    tenantId: string,
+    id: string,
+    userContext?: UserAuthContext
+  ): Promise<ContentDetailResponse> {
+    const existing = await this.repository.findById(tenantId, id);
+    if (!existing) {
+      throw new NotFoundError(`Learning content ${id} not found`);
+    }
+
+    if (userContext) {
+      const isAdmin =
+        userContext.roles.includes("SCHOOL_ADMIN") ||
+        userContext.roles.includes("SYSTEM_ADMIN") ||
+        userContext.roles.includes("ADMIN");
+
+      if (!isAdmin && existing.authorId !== userContext.userId) {
+        throw new ForbiddenError(
+          "You can only archive content that you authored"
+        );
+      }
+    }
+
     await this.repository.updateStatus(tenantId, id, "ARCHIVED");
-    return this.getContentDetail(tenantId, id);
+    return this.getContentDetail(tenantId, id, userContext);
   }
 
   async deleteContent(
     tenantId: string,
-    id: string
+    id: string,
+    userContext?: UserAuthContext
   ): Promise<{ readonly deleted: boolean; readonly message: string }> {
     const existing = await this.repository.findById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`Learning content ${id} not found`);
+    }
+
+    if (userContext) {
+      const isAdmin =
+        userContext.roles.includes("SCHOOL_ADMIN") ||
+        userContext.roles.includes("SYSTEM_ADMIN") ||
+        userContext.roles.includes("ADMIN");
+
+      if (!isAdmin) {
+        if (existing.authorId !== userContext.userId) {
+          throw new ForbiddenError(
+            "You can only delete content that you authored"
+          );
+        }
+        if (existing.status !== "DRAFT" && existing.status !== "ARCHIVED") {
+          throw new BadRequestError(
+            "Teachers can only delete draft or archived content"
+          );
+        }
+      }
     }
 
     if (existing.status === "DRAFT" || existing.status === "ARCHIVED") {

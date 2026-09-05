@@ -159,6 +159,13 @@ export class UnitService {
       true
     );
 
+    const deps = await this.repository.countUnitDependencies(unitId);
+    if (deps.contentCount > 0 || deps.questionCount > 0 || deps.evidenceCount > 0) {
+      throw new BadRequestError(
+        `Cannot delete unit '${context.title}' because it has active dependencies (${deps.contentCount} materials, ${deps.questionCount} questions, ${deps.evidenceCount} evidence records). Archive or unassign them first.`
+      );
+    }
+
     await this.repository.deleteUnit(unitId);
   }
 

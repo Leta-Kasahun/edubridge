@@ -1,33 +1,45 @@
 "use client";
 
-import { useMyTeacherProfile } from "@/features/teacher-profile/hooks/useTeacherProfile";
+import { useMemo } from "react";
+import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
-import { useSections } from "@/features/academic/sections/hooks/useSections";
-import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
 
 export function TeacherOverviewTab() {
-  const { data: profile, isLoading: isProfileLoading } = useMyTeacherProfile();
+  const {
+    assignments,
+    assignedSubjects,
+    assignedGrades,
+    assignedSections,
+    isLoading: isAssignmentsLoading,
+  } = useMyTeacherAssignments();
+
   const { data: studentsData, isLoading: isStudentsLoading } = useStudents({ limit: 100 });
-  const { data: sectionsData, isLoading: isSectionsLoading } = useSections();
-  const { data: subjectsData, isLoading: isSubjectsLoading } = useSubjects();
+  const rawStudents = studentsData?.data ?? [];
 
-  const studentsList = studentsData?.data ?? [];
-  const sectionsList = sectionsData ?? [];
-  const subjectsList = subjectsData ?? [];
+  const assignedSectionIds = useMemo(
+    () => new Set(assignedSections.map((s) => s.id)),
+    [assignedSections]
+  );
 
-  const totalStudents = studentsData?.pagination?.total ?? studentsList.length;
-  const activeSections = sectionsList.filter((s) => s.status === "ACTIVE").length;
-  const activeSubjects = subjectsList.filter((s) => s.isActive).length;
+  const scopedStudents = useMemo(() => {
+    if (assignedSectionIds.size === 0) return rawStudents;
+    return rawStudents.filter((st) => st.sectionId && assignedSectionIds.has(st.sectionId));
+  }, [rawStudents, assignedSectionIds]);
 
-  const maleStudents = studentsList.filter((s) => s.gender === "MALE").length;
-  const femaleStudents = studentsList.filter((s) => s.gender === "FEMALE").length;
+  const totalStudents = scopedStudents.length;
+  const maleStudents = scopedStudents.filter((s) => s.gender === "MALE").length;
+  const femaleStudents = scopedStudents.filter((s) => s.gender === "FEMALE").length;
 
-  const activeStudents = studentsList.filter((s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE").length;
-  const pendingStudents = studentsList.filter((s) => s.status === "PENDING_FIRST_LOGIN" || s.studentStatus === "INACTIVE").length;
-  const otherStudents = Math.max(0, studentsList.length - activeStudents - pendingStudents);
+  const activeStudents = scopedStudents.filter(
+    (s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE"
+  ).length;
+  const pendingStudents = scopedStudents.filter(
+    (s) => s.status === "PENDING_FIRST_LOGIN" || s.studentStatus === "INACTIVE"
+  ).length;
+  const otherStudents = Math.max(0, totalStudents - activeStudents - pendingStudents);
 
   const studentStatusSlices: readonly ChartSliceItem[] = [
     { name: "Active", value: activeStudents, color: "#10B981" },
@@ -40,44 +52,44 @@ export function TeacherOverviewTab() {
     { name: "Female", value: femaleStudents, color: "#F97316" },
   ];
 
-  const sectionStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Classes", value: activeSections, color: "#10B981" },
-    { name: "Other Classes", value: Math.max(0, sectionsList.length - activeSections), color: "#94a3b8" },
-  ];
+  const gradeColors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
+  const gradeSlices: readonly ChartSliceItem[] = assignedGrades.map((g, idx) => ({
+    name: `Grade ${g.level}`,
+    value: assignments.filter((a) => a.gradeId === g.id).length || 1,
+    color: gradeColors[idx % gradeColors.length],
+  }));
 
-  const subjectSlices: readonly ChartSliceItem[] = [
-    { name: "Active Courses", value: activeSubjects, color: "#10B981" },
-    { name: "Other Courses", value: Math.max(0, subjectsList.length - activeSubjects), color: "#f59e0b" },
-  ];
+  const subjectColors = ["#6366f1", "#0284c7", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
+  const subjectSlices: readonly ChartSliceItem[] = assignedSubjects.map((s, idx) => ({
+    name: s.name,
+    value: assignments.filter((a) => a.subjectId === s.id).length || 1,
+    color: subjectColors[idx % subjectColors.length],
+  }));
 
-  const isLoadingMetrics = isProfileLoading || isStudentsLoading || isSectionsLoading || isSubjectsLoading;
+  const isLoadingMetrics = isAssignmentsLoading || isStudentsLoading;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardMetricCard
           title="Assigned Classes"
-          value={sectionsList.length}
-          detail={`${activeSections} active classrooms`}
+          value={assignedSections.length}
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Classroom Students"
           value={totalStudents.toLocaleString()}
-          detail="Enrolled pupil roster"
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Active Courses"
-          value={activeSubjects}
-          detail="Assigned curriculum subjects"
+          value={assignedSubjects.length}
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
-          title="Profile Status"
-          value={profile?.status ?? "Active"}
-          detail={profile?.emailVerified ? "Email verified" : "Pending verification"}
-          isLoading={isProfileLoading}
+          title="Grade Levels"
+          value={assignedGrades.length}
+          isLoading={isAssignmentsLoading}
         />
       </div>
 
@@ -85,8 +97,8 @@ export function TeacherOverviewTab() {
         <DashboardDonutCard
           title="Student Status Split"
           slices={studentStatusSlices}
-          centerLabel="Students"
-          centerValue={studentsList.length}
+          centerLabel="Pupils"
+          centerValue={totalStudents}
           isLoading={isStudentsLoading}
         />
         <DashboardDonutCard
@@ -97,18 +109,18 @@ export function TeacherOverviewTab() {
           isLoading={isStudentsLoading}
         />
         <DashboardDonutCard
-          title="Assigned Classrooms"
-          slices={sectionStatusSlices}
-          centerLabel="Sections"
-          centerValue={sectionsList.length}
-          isLoading={isSectionsLoading}
+          title="Grade Breakdown"
+          slices={gradeSlices.length > 0 ? gradeSlices : [{ name: "No Grades", value: 1, color: "#94a3b8" }]}
+          centerLabel="Grades"
+          centerValue={assignedGrades.length}
+          isLoading={isAssignmentsLoading}
         />
         <DashboardDonutCard
-          title="Course Allocation"
-          slices={subjectSlices}
+          title="Assigned Courses"
+          slices={subjectSlices.length > 0 ? subjectSlices : [{ name: "No Courses", value: 1, color: "#94a3b8" }]}
           centerLabel="Courses"
-          centerValue={subjectsList.length}
-          isLoading={isSubjectsLoading}
+          centerValue={assignedSubjects.length}
+          isLoading={isAssignmentsLoading}
         />
       </div>
     </div>

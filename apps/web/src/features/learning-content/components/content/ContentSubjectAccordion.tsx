@@ -27,6 +27,7 @@ export interface ContentSubjectAccordionProps {
   readonly onOpenUpload?: (item: LearningContentListItem) => void;
   readonly onSaveNewVersion: (item: LearningContentListItem) => void;
   readonly onSubmitForReview: (item: LearningContentListItem) => void;
+  readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
@@ -44,6 +45,7 @@ export function ContentSubjectAccordion({
   onOpenUpload,
   onSaveNewVersion,
   onSubmitForReview,
+  onApprove,
   onPublish,
   onArchive,
   onDelete,
@@ -197,6 +199,7 @@ export function ContentSubjectAccordion({
                           onOpenUpload={onOpenUpload}
                           onSaveNewVersion={onSaveNewVersion}
                           onSubmitForReview={onSubmitForReview}
+                          onApprove={onApprove}
                           onPublish={onPublish}
                           onArchive={onArchive}
                           onDelete={onDelete}
@@ -305,6 +308,7 @@ export function ContentSubjectAccordion({
                               onOpenUpload={onOpenUpload}
                               onSaveNewVersion={onSaveNewVersion}
                               onSubmitForReview={onSubmitForReview}
+                              onApprove={onApprove}
                               onPublish={onPublish}
                               onArchive={onArchive}
                               onDelete={onDelete}

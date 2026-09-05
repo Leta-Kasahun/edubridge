@@ -26,6 +26,7 @@ import {
 import {
   useContentList,
   useSubmitContent,
+  useApproveContent,
   usePublishContent,
   useArchiveContent,
   useDeleteContent,
@@ -50,6 +51,8 @@ import {
   ErrorAlert,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -109,6 +112,10 @@ export function ContentListView() {
     readonly count?: number;
   } | null>(null);
 
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = user?.roles?.includes("TEACHER");
+  const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
+
   const { data, isLoading, error, isFetching } = useContentList(filters);
   const { data: subjects = [] } = useSubjects();
   const { data: grades = [] } = useGrades();
@@ -117,15 +124,32 @@ export function ContentListView() {
   const academicYears = academicYearsData?.data ?? [];
 
   const submitMutation = useSubmitContent();
+  const approveMutation = useApproveContent();
   const publishMutation = usePublishContent();
   const archiveMutation = useArchiveContent();
   const deleteMutation = useDeleteContent();
 
-  const items = data?.data ?? [];
+  const rawItems = data?.data ?? [];
   const pagination = data?.pagination;
 
+  const items = useMemo(() => {
+    if (!isTeacher) return rawItems;
+    if (allowedSubjectIds.length === 0 && allowedGradeIds.length === 0) return rawItems;
+    return rawItems.filter((item) => {
+      const isAuthor = user?.id && item.createdById === user.id;
+      const matchSubject = !item.subjectId || allowedSubjectIds.includes(item.subjectId);
+      const matchGrade = !item.gradeId || allowedGradeIds.includes(item.gradeId);
+      return isAuthor || (matchSubject && matchGrade);
+    });
+  }, [rawItems, isTeacher, allowedSubjectIds, allowedGradeIds, user?.id]);
+
   const gradeTabs: readonly GradeTabItem[] = useMemo(() => {
-    return grades
+    const visibleGradesList =
+      isTeacher && allowedGradeIds.length > 0
+        ? grades.filter((g) => allowedGradeIds.includes(g.id))
+        : grades;
+
+    return visibleGradesList
       .slice()
       .sort((a, b) => a.level - b.level)
       .map((g) => {
@@ -141,7 +165,7 @@ export function ContentListView() {
           count,
         };
       });
-  }, [grades, items]);
+  }, [grades, items, isTeacher, allowedGradeIds]);
 
   const activeGrade = useMemo(() => {
     if (selectedGradeId === "ALL") return null;
@@ -163,7 +187,12 @@ export function ContentListView() {
     const map = new Map<string, LearningContentListItem[]>();
     const knownSubjects = new Map<string, { name: string; code: string }>();
 
-    for (const sub of subjects) {
+    const visibleSubjectsList =
+      isTeacher && allowedSubjectIds.length > 0
+        ? subjects.filter((s) => allowedSubjectIds.includes(s.id))
+        : subjects;
+
+    for (const sub of visibleSubjectsList) {
       knownSubjects.set(sub.id, { name: sub.name, code: sub.code });
       map.set(sub.id, []);
     }
@@ -174,21 +203,23 @@ export function ContentListView() {
       if (item.subjectId && map.has(item.subjectId)) {
         map.get(item.subjectId)!.push(item);
       } else if (item.subjectId && !map.has(item.subjectId)) {
-        map.set(item.subjectId, [item]);
-        knownSubjects.set(item.subjectId, {
-          name: item.subjectName || "Subject",
-          code: "",
-        });
+        if (!isTeacher || allowedSubjectIds.includes(item.subjectId)) {
+          map.set(item.subjectId, [item]);
+          knownSubjects.set(item.subjectId, {
+            name: item.subjectName || "Subject",
+            code: "",
+          });
+        }
       } else if (item.subjectName) {
         const found = Array.from(knownSubjects.entries()).find(
           ([, val]) => val.name.toLowerCase() === item.subjectName!.toLowerCase()
         );
         if (found) {
           map.get(found[0])!.push(item);
-        } else {
+        } else if (!isTeacher) {
           unassigned.push(item);
         }
-      } else {
+      } else if (!isTeacher) {
         unassigned.push(item);
       }
     }
@@ -209,7 +240,7 @@ export function ContentListView() {
 
     result.sort((a, b) => a.name.localeCompare(b.name));
 
-    if (unassigned.length > 0) {
+    if (unassigned.length > 0 && !isTeacher) {
       result.push({
         id: "general-resources",
         name: "General & Cross-Subject Resources",
@@ -219,7 +250,7 @@ export function ContentListView() {
     }
 
     return result;
-  }, [filteredByGradeItems, subjects, selectedGradeId]);
+  }, [filteredByGradeItems, subjects, selectedGradeId, isTeacher, allowedSubjectIds]);
 
   useEffect(() => {
     if (subjectGroups.length > 0 && openSubjectIds.size === 0) {
@@ -574,6 +605,7 @@ export function ContentListView() {
               onOpenUpload={(item) => setUploadTargetItem(item)}
               onSaveNewVersion={handleOpenNewVersion}
               onSubmitForReview={(item) => submitMutation.mutate(item.id)}
+              onApprove={(item) => approveMutation.mutate(item.id)}
               onPublish={(item) => publishMutation.mutate(item.id)}
               onArchive={(item) => archiveMutation.mutate(item.id)}
               onDelete={handleDelete}
@@ -634,6 +666,8 @@ export function ContentListView() {
           setItemToEdit(null);
         }}
         itemToEdit={itemToEdit}
+        allowedSubjectIds={isTeacher ? allowedSubjectIds : undefined}
+        allowedGradeIds={isTeacher ? allowedGradeIds : undefined}
       />
 
       <ContentDetailModal

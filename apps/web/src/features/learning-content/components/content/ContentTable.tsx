@@ -14,7 +14,9 @@ import {
   Plus,
   Paperclip,
   UploadCloud,
+  CheckCircle2,
 } from "lucide-react";
+import { useAuthStore } from "@/stores/auth.store";
 import { LearningContentListItem } from "../../types/content.types";
 import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
@@ -33,6 +35,7 @@ interface ContentTableProps {
   readonly onEdit: (item: LearningContentListItem) => void;
   readonly onSaveNewVersion: (item: LearningContentListItem) => void;
   readonly onSubmitForReview: (item: LearningContentListItem) => void;
+  readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
@@ -47,6 +50,7 @@ export interface ContentRowActionsProps {
   readonly onOpenUpload?: (item: LearningContentListItem) => void;
   readonly onSaveNewVersion: (item: LearningContentListItem) => void;
   readonly onSubmitForReview: (item: LearningContentListItem) => void;
+  readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
@@ -59,6 +63,7 @@ export function ContentRowActions({
   onOpenUpload,
   onSaveNewVersion,
   onSubmitForReview,
+  onApprove,
   onPublish,
   onArchive,
   onDelete,
@@ -68,61 +73,80 @@ export function ContentRowActions({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const user = useAuthStore((state) => state.user);
+  const roles = user?.roles ?? [];
+  const isAdmin =
+    roles.includes("SCHOOL_ADMIN") ||
+    roles.includes("SYSTEM_ADMIN") ||
+    roles.includes("ADMIN");
+  const isAuthor = user?.id ? item.authorId === user.id : false;
+
+  const isTextbookOrRef = item.type === "TEXTBOOK" || item.type === "REFERENCE_BOOK";
+
+  const canEdit = isAdmin || isAuthor;
+  const canUpload =
+    Boolean(onOpenUpload) && (isAdmin || isAuthor);
+  const canNewVersion =
+    isAdmin || (isAuthor && (item.status === "PUBLISHED" || item.status === "APPROVED"));
+  const canSubmit = item.status === "DRAFT" && (isAuthor || isAdmin);
+  const canApprove =
+    Boolean(onApprove) && isAdmin && item.status === "PENDING_REVIEW";
+  const canPublish =
+    (isAdmin && (item.status === "APPROVED" || item.status === "PENDING_REVIEW" || (!isTextbookOrRef && item.status === "DRAFT"))) ||
+    (isAuthor && !isTextbookOrRef && item.status === "DRAFT") ||
+    (isAuthor && isTextbookOrRef && item.status === "APPROVED");
+  const canArchive = (isAdmin || isAuthor) && item.status === "PUBLISHED";
+  const canDelete = isAdmin || (isAuthor && (item.status === "DRAFT" || item.status === "ARCHIVED"));
+
   const updatePosition = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 220;
-      const menuWidth = 170;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 176;
+    const menuHeight = 260;
 
-      const top = openUpwards
-        ? rect.top - menuHeight - 4
-        : rect.bottom + 4;
-      const left = Math.max(8, rect.right - menuWidth);
-
-      setCoords({ top, left });
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
     }
-  };
 
-  const handleToggle = () => {
-    if (!isOpen) {
-      updatePosition();
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
     }
+
+    setCoords({ top, left });
   };
 
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
+        !menuRef.current.contains(target) &&
         buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
+        !buttonRef.current.contains(target)
       ) {
         setIsOpen(false);
       }
     };
 
-    const handleScrollOrResize = () => {
-      if (isOpen) {
-        setIsOpen(false);
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-      window.addEventListener("scroll", handleScrollOrResize, true);
-      window.addEventListener("resize", handleScrollOrResize);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
   }, [isOpen]);
 
   return (
@@ -130,7 +154,7 @@ export function ContentRowActions({
       <button
         ref={buttonRef}
         type="button"
-        onClick={handleToggle}
+        onClick={() => setIsOpen((prev) => !prev)}
         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
         aria-label="Actions"
       >
@@ -162,19 +186,21 @@ export function ContentRowActions({
               <span>View Details</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onEdit(item);
-              }}
-              className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
-            >
-              <Edit2 size={13} className="text-muted-foreground" />
-              <span>Edit Material</span>
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onEdit(item);
+                }}
+                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+              >
+                <Edit2 size={13} className="text-muted-foreground" />
+                <span>Edit Material</span>
+              </button>
+            )}
 
-            {onOpenUpload && (
+            {canUpload && onOpenUpload && (
               <button
                 type="button"
                 onClick={() => {
@@ -188,19 +214,21 @@ export function ContentRowActions({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onSaveNewVersion(item);
-              }}
-              className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
-            >
-              <GitBranch size={13} className="text-muted-foreground" />
-              <span>New Version</span>
-            </button>
+            {canNewVersion && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onSaveNewVersion(item);
+                }}
+                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+              >
+                <GitBranch size={13} className="text-muted-foreground" />
+                <span>New Version</span>
+              </button>
+            )}
 
-            {item.status === "DRAFT" && (
+            {canSubmit && (
               <button
                 type="button"
                 onClick={() => {
@@ -210,25 +238,39 @@ export function ContentRowActions({
                 className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
               >
                 <Send size={13} className="text-primary" />
-                <span>Submit</span>
+                <span>Submit for Review</span>
               </button>
             )}
 
-            {item.status !== "PUBLISHED" && (
+            {canApprove && onApprove && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onApprove(item);
+                }}
+                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer"
+              >
+                <CheckCircle2 size={13} />
+                <span>Approve</span>
+              </button>
+            )}
+
+            {canPublish && (
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
                   onPublish(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-primary/10 text-primary transition-colors cursor-pointer"
               >
-                <Check size={13} className="text-primary" />
-                <span>Activate</span>
+                <Check size={13} />
+                <span>Publish</span>
               </button>
             )}
 
-            {item.status === "PUBLISHED" && (
+            {canArchive && (
               <button
                 type="button"
                 onClick={() => {
@@ -242,19 +284,22 @@ export function ContentRowActions({
               </button>
             )}
 
-            <div className="my-1 border-t border-border" />
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onDelete(item);
-              }}
-              className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
-            >
-              <Trash2 size={13} />
-              <span>Delete</span>
-            </button>
+            {canDelete && (
+              <>
+                <div className="my-1 border-t border-border" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onDelete(item);
+                  }}
+                  className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                >
+                  <Trash2 size={13} />
+                  <span>Delete</span>
+                </button>
+              </>
+            )}
           </div>,
           document.body
         )}
@@ -271,6 +316,7 @@ export function ContentTable({
   onEdit,
   onSaveNewVersion,
   onSubmitForReview,
+  onApprove,
   onPublish,
   onArchive,
   onDelete,
@@ -363,6 +409,7 @@ export function ContentTable({
                   onOpenUpload={onOpenUpload}
                   onSaveNewVersion={onSaveNewVersion}
                   onSubmitForReview={onSubmitForReview}
+                  onApprove={onApprove}
                   onPublish={onPublish}
                   onArchive={onArchive}
                   onDelete={onDelete}
@@ -485,6 +532,7 @@ export function ContentTable({
                         onOpenUpload={onOpenUpload}
                         onSaveNewVersion={onSaveNewVersion}
                         onSubmitForReview={onSubmitForReview}
+                        onApprove={onApprove}
                         onPublish={onPublish}
                         onArchive={onArchive}
                         onDelete={onDelete}

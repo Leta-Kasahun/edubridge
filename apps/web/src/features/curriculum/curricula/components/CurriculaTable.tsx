@@ -24,6 +24,7 @@ interface CurriculaTableProps {
   readonly onAddVersion: (item: CurriculumItem) => void;
   readonly onStatusChange: (item: CurriculumItem, status: CurriculumStatus) => void;
   readonly isUpdatingStatus?: boolean;
+  readonly isReadOnly?: boolean;
 }
 
 function StatusBadge({ status }: { readonly status: CurriculumStatus }) {
@@ -56,6 +57,7 @@ function CurriculumRowActions({
   onAddVersion,
   onStatusChange,
   isUpdating,
+  isReadOnly = false,
 }: {
   readonly item: CurriculumItem;
   readonly onViewDetails: (item: CurriculumItem) => void;
@@ -63,6 +65,7 @@ function CurriculumRowActions({
   readonly onAddVersion: (item: CurriculumItem) => void;
   readonly onStatusChange: (item: CurriculumItem, status: CurriculumStatus) => void;
   readonly isUpdating: boolean;
+  readonly isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
@@ -166,7 +169,7 @@ function CurriculumRowActions({
               <span>View</span>
             </button>
 
-            {!isSystemScope && (
+            {!isReadOnly && !isSystemScope && (
               <>
                 <button
                   type="button"
@@ -251,6 +254,7 @@ export function CurriculaTable({
   onAddVersion,
   onStatusChange,
   isUpdatingStatus = false,
+  isReadOnly = false,
 }: CurriculaTableProps) {
   if (items.length === 0) {
     return (
@@ -297,6 +301,7 @@ export function CurriculaTable({
                 onAddVersion={onAddVersion}
                 onStatusChange={onStatusChange}
                 isUpdating={isUpdatingStatus}
+                isReadOnly={isReadOnly}
               />
             </div>
 
@@ -361,6 +366,7 @@ export function CurriculaTable({
                       onAddVersion={onAddVersion}
                       onStatusChange={onStatusChange}
                       isUpdating={isUpdatingStatus}
+                      isReadOnly={isReadOnly}
                     />
                   </td>
                 </tr>

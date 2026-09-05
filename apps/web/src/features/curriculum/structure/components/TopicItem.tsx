@@ -34,6 +34,7 @@ interface TopicItemProps {
   readonly onDelete: (topic: CurriculumTopicItem) => void;
   readonly onMoveUp: (topic: CurriculumTopicItem) => void;
   readonly onMoveDown: (topic: CurriculumTopicItem) => void;
+  readonly isReadOnly?: boolean;
 }
 
 export function TopicItem({
@@ -44,6 +45,7 @@ export function TopicItem({
   onDelete,
   onMoveUp,
   onMoveDown,
+  isReadOnly = false,
 }: TopicItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddObjectiveOpen, setIsAddObjectiveOpen] = useState(false);
@@ -117,54 +119,56 @@ export function TopicItem({
           </div>
         </button>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => onMoveUp(topic)}
-            disabled={isFirst}
-            title="Move topic up"
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-          >
-            <ArrowUp size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveDown(topic)}
-            disabled={isLast}
-            title="Move topic down"
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-          >
-            <ArrowDown size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsExpanded(true);
-              setIsAddObjectiveOpen(true);
-            }}
-            title="Add learning objective"
-            className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
-          >
-            <Plus size={12} />
-            <span>Objective</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onEdit(topic)}
-            title="Edit topic"
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          >
-            <Edit2 size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(topic)}
-            title="Delete topic"
-            className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => onMoveUp(topic)}
+              disabled={isFirst}
+              title="Move topic up"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            >
+              <ArrowUp size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMoveDown(topic)}
+              disabled={isLast}
+              title="Move topic down"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            >
+              <ArrowDown size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsExpanded(true);
+                setIsAddObjectiveOpen(true);
+              }}
+              title="Add learning objective"
+              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+            >
+              <Plus size={12} />
+              <span>Objective</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit(topic)}
+              title="Edit topic"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <Edit2 size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(topic)}
+              title="Delete topic"
+              className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        )}
       </div>
 
       {isExpanded && (
@@ -192,14 +196,16 @@ export function TopicItem({
                   Define specific competency criteria for this topic
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAddObjectiveOpen(true)}
-                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
-              >
-                <Plus size={12} />
-                <span>Objective</span>
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddObjectiveOpen(true)}
+                  className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                >
+                  <Plus size={12} />
+                  <span>Objective</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -213,6 +219,7 @@ export function TopicItem({
                   onDelete={(item) => setObjectiveToDelete(item)}
                   onMoveUp={(item) => handleMoveObjective(item, "up")}
                   onMoveDown={(item) => handleMoveObjective(item, "down")}
+                  isReadOnly={isReadOnly}
                 />
               ))}
             </div>

@@ -2,13 +2,11 @@
 
 import { useMyTeacherQualifications } from "@/features/teacher-profile/hooks/useTeacherQualifications";
 import { useMyTeacherExperiences } from "@/features/teacher-profile/hooks/useTeacherExperience";
-import { useMyTeacherProfile } from "@/features/teacher-profile/hooks/useTeacherProfile";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
 
 export function TeacherQualificationsTab() {
-  const { data: profile, isLoading: isProfileLoading } = useMyTeacherProfile();
   const { data: qualifications, isLoading: isQualLoading } = useMyTeacherQualifications();
   const { data: experiences, isLoading: isExpLoading } = useMyTeacherExperiences();
 
@@ -34,7 +32,7 @@ export function TeacherQualificationsTab() {
     { name: "Academic Degrees", value: qualList.length || 1, color: "#0284c7" },
   ];
 
-  const isLoadingMetrics = isProfileLoading || isQualLoading || isExpLoading;
+  const isLoadingMetrics = isQualLoading || isExpLoading;
 
   return (
     <div className="space-y-6">
@@ -42,25 +40,21 @@ export function TeacherQualificationsTab() {
         <DashboardMetricCard
           title="Degree Credentials"
           value={qualList.length}
-          detail="Verified qualifications"
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Experience Records"
           value={expList.length}
-          detail="Previous institutional roles"
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
-          title="Account Status"
-          value={profile?.status ?? "Active"}
-          detail="Faculty credentials verified"
+          title="Teaching Posts"
+          value={expList.length}
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
-          title="Verification Status"
-          value={profile?.emailVerified ? "Verified" : "Pending"}
-          detail={profile?.email ? profile.email : "Email on record"}
+          title="Academic Degrees"
+          value={qualList.length}
           isLoading={isLoadingMetrics}
         />
       </div>

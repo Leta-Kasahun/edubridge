@@ -13,9 +13,11 @@ import { UnauthorizedError } from "../../../../shared/exceptions/index.js";
 function extractUserContext(req: Request): {
   readonly tenantId: string;
   readonly userId: string;
+  readonly roles: readonly string[];
 } {
   const tenantId = req.user?.tenantId;
   const userId = req.user?.userId;
+  const roles = req.user?.roles || [];
 
   if (!tenantId) {
     throw new UnauthorizedError("Tenant context required");
@@ -24,7 +26,7 @@ function extractUserContext(req: Request): {
     throw new UnauthorizedError("User authentication required");
   }
 
-  return { tenantId, userId };
+  return { tenantId, userId, roles };
 }
 
 export class ContentController {
@@ -34,10 +36,14 @@ export class ContentController {
 
   listContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const query = ContentFilterQuerySchema.parse(req.query);
 
-      const result = await this.service.listContent(tenantId, query);
+      const result = await this.service.listContent(
+        userContext.tenantId,
+        query,
+        userContext
+      );
 
       res.status(200).json({
         success: true,
@@ -49,10 +55,14 @@ export class ContentController {
 
   getContentDetail = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
 
-      const item = await this.service.getContentDetail(tenantId, id);
+      const item = await this.service.getContentDetail(
+        userContext.tenantId,
+        id,
+        userContext
+      );
 
       res.status(200).json({
         success: true,
@@ -63,13 +73,14 @@ export class ContentController {
 
   createContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId, userId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const input = CreateLearningContentSchema.parse(req.body);
 
       const created = await this.service.createContent(
-        tenantId,
-        userId,
-        input
+        userContext.tenantId,
+        userContext.userId,
+        input,
+        userContext
       );
 
       res.status(201).json({
@@ -81,14 +92,15 @@ export class ContentController {
 
   updateMetadata = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
       const input = UpdateLearningContentSchema.parse(req.body);
 
       const updated = await this.service.updateContentMetadata(
-        tenantId,
+        userContext.tenantId,
         id,
-        input
+        input,
+        userContext
       );
 
       res.status(200).json({
@@ -100,14 +112,15 @@ export class ContentController {
 
   updateMappings = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
       const input = UpdateContentMappingsSchema.parse(req.body);
 
       const updated = await this.service.updateContentMappings(
-        tenantId,
+        userContext.tenantId,
         id,
-        input
+        input,
+        userContext
       );
 
       res.status(200).json({
@@ -119,15 +132,16 @@ export class ContentController {
 
   saveNewVersion = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId, userId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
       const input = CreateContentVersionSchema.parse(req.body);
 
       const newVersion = await this.service.saveNewVersion(
-        tenantId,
+        userContext.tenantId,
         id,
-        userId,
-        input
+        userContext.userId,
+        input,
+        userContext
       );
 
       res.status(201).json({
@@ -172,12 +186,13 @@ export class ContentController {
 
   submitForReview = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
 
       const updated = await this.service.submitContentForReview(
-        tenantId,
-        id
+        userContext.tenantId,
+        id,
+        userContext
       );
 
       res.status(200).json({
@@ -187,12 +202,12 @@ export class ContentController {
     }
   );
 
-  publishContent = asyncHandler(
+  approveContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
       const { tenantId, userId } = extractUserContext(req);
       const id = req.params.id as string;
 
-      const updated = await this.service.publishContent(
+      const updated = await this.service.approveContent(
         tenantId,
         id,
         userId
@@ -205,12 +220,35 @@ export class ContentController {
     }
   );
 
-  archiveContent = asyncHandler(
+  publishContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
 
-      const updated = await this.service.archiveContent(tenantId, id);
+      const updated = await this.service.publishContent(
+        userContext.tenantId,
+        id,
+        userContext.userId,
+        userContext
+      );
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    }
+  );
+
+  archiveContent = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const userContext = extractUserContext(req);
+      const id = req.params.id as string;
+
+      const updated = await this.service.archiveContent(
+        userContext.tenantId,
+        id,
+        userContext
+      );
 
       res.status(200).json({
         success: true,
@@ -221,10 +259,14 @@ export class ContentController {
 
   deleteContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { tenantId } = extractUserContext(req);
+      const userContext = extractUserContext(req);
       const id = req.params.id as string;
 
-      const result = await this.service.deleteContent(tenantId, id);
+      const result = await this.service.deleteContent(
+        userContext.tenantId,
+        id,
+        userContext
+      );
 
       res.status(200).json({
         success: true,

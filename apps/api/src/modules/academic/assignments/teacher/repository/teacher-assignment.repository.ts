@@ -32,9 +32,12 @@ export class TeacherAssignmentRepository {
 
     const where: Prisma.TeacherAssignmentWhereInput = {
       tenantId,
-      academicYearId,
       status: "ACTIVE",
     };
+
+    if (academicYearId) {
+      where.academicYearId = academicYearId;
+    }
 
     if (sectionId) {
       where.sectionId = sectionId;

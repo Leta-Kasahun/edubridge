@@ -163,6 +163,7 @@ export const API_ENDPOINTS = {
     VERSION_BY_NUMBER: (id: string, versionNumber: number | string) =>
       `/learning-content/content/${id}/versions/${versionNumber}`,
     SUBMIT: (id: string) => `/learning-content/content/${id}/submit`,
+    APPROVE: (id: string) => `/learning-content/content/${id}/approve`,
     PUBLISH: (id: string) => `/learning-content/content/${id}/publish`,
     ARCHIVE: (id: string) => `/learning-content/content/${id}/archive`,
     ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,

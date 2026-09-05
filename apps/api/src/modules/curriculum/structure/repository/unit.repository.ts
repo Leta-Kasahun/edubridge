@@ -177,6 +177,26 @@ export class UnitRepository {
     };
   }
 
+  async countUnitDependencies(id: string): Promise<{
+    readonly contentCount: number;
+    readonly questionCount: number;
+    readonly evidenceCount: number;
+  }> {
+    return runWithoutTenant(async () => {
+      const [directContentCount, topicContentCount, questionCount, evidenceCount] = await Promise.all([
+        prisma.learningContent.count({ where: { unitId: id } }),
+        prisma.contentTopic.count({ where: { topic: { unitId: id } } }),
+        prisma.questionTopic.count({ where: { topic: { unitId: id } } }),
+        prisma.learningEvidence.count({ where: { topic: { unitId: id } } }),
+      ]);
+      return {
+        contentCount: directContentCount + topicContentCount,
+        questionCount,
+        evidenceCount,
+      };
+    });
+  }
+
   async deleteUnit(id: string): Promise<void> {
     await runWithoutTenant(() =>
       prisma.curriculumUnit.delete({

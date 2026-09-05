@@ -14,6 +14,7 @@ import { useToggleGradeStatus } from "../hooks/useGrades";
 interface GradesTableProps {
   readonly items: readonly GradeItem[];
   readonly onViewDetails: (grade: GradeItem) => void;
+  readonly isReadOnly?: boolean;
 }
 
 function GradeRowActions({
@@ -21,11 +22,13 @@ function GradeRowActions({
   onViewDetails,
   onToggleStatus,
   isToggling,
+  isReadOnly = false,
 }: {
   readonly grade: GradeItem;
   readonly onViewDetails: (grade: GradeItem) => void;
   readonly onToggleStatus: (grade: GradeItem) => void;
   readonly isToggling: boolean;
+  readonly isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,33 +73,39 @@ function GradeRowActions({
             <span>View Details</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onToggleStatus(grade);
-            }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
-          >
-            {grade.isActive ? (
-              <>
-                <UserX size={13} className="text-destructive" />
-                <span className="text-destructive">Deactivate</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={13} className="text-muted-foreground" />
-                <span className="text-foreground">Activate</span>
-              </>
-            )}
-          </button>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onToggleStatus(grade);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+            >
+              {grade.isActive ? (
+                <>
+                  <UserX size={13} className="text-destructive" />
+                  <span className="text-destructive">Deactivate</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={13} className="text-muted-foreground" />
+                  <span className="text-foreground">Activate</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function GradesTable({ items, onViewDetails }: GradesTableProps) {
+export function GradesTable({
+  items,
+  onViewDetails,
+  isReadOnly = false,
+}: GradesTableProps) {
   const toggleMutation = useToggleGradeStatus();
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -159,6 +168,7 @@ export function GradesTable({ items, onViewDetails }: GradesTableProps) {
                     onViewDetails={onViewDetails}
                     onToggleStatus={handleToggleStatus}
                     isToggling={togglingId === grade.id}
+                    isReadOnly={isReadOnly}
                   />
                 </div>
               </div>
@@ -262,6 +272,7 @@ export function GradesTable({ items, onViewDetails }: GradesTableProps) {
                           onViewDetails={onViewDetails}
                           onToggleStatus={handleToggleStatus}
                           isToggling={togglingId === grade.id}
+                          isReadOnly={isReadOnly}
                         />
                       </div>
                     </td>

@@ -19,7 +19,7 @@ export function useTeacherAssignments(filters: TeacherAssignmentFilters) {
   return useQuery({
     queryKey: TEACHER_ASSIGNMENT_QUERY_KEYS.list(filters),
     queryFn: () => teacherAssignmentService.getAssignments(filters),
-    enabled: Boolean(filters.academicYearId),
+    enabled: Boolean(filters.academicYearId || filters.teacherId),
     placeholderData: (previousData) => previousData,
   });
 }
