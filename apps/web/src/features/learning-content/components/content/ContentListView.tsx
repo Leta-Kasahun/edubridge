@@ -113,7 +113,11 @@ export function ContentListView() {
   } | null>(null);
 
   const user = useAuthStore((s) => s.user);
-  const isTeacher = user?.roles?.includes("TEACHER");
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
   const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
 
   const { data, isLoading, error, isFetching } = useContentList(filters);

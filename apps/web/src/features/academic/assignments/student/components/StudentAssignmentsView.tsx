@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ArrowRightLeft, ArrowUpRight, Calendar, GraduationCap, Users } from "lucide-react";
+import { ArrowRightLeft, ArrowUpRight, Calendar, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { LoadingSpinner, ErrorAlert } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
-import { getErrorMessage } from "@/shared/utils";
-import { useStudentRoster } from "../hooks/useStudentAssignments";
+import { getErrorMessage, useInfiniteScrollSentinel } from "@/shared/utils";
+import { useInfiniteStudentRoster } from "../hooks/useStudentAssignments";
 import { useAcademicYears } from "@/features/academic/academic-years";
 import { useGrades } from "@/features/academic/grades";
 import { useSections } from "@/features/academic/sections";
@@ -15,10 +16,13 @@ import { BulkTransferModal } from "./BulkTransferModal";
 import { PromotionModal } from "./PromotionModal";
 import { StudentEnrollmentHistoryModal } from "./StudentEnrollmentHistoryModal";
 import { WithdrawStudentModal } from "./WithdrawStudentModal";
-import { StudentRosterItem, StudentRosterFilters } from "../types/student-assignment.types";
+import { StudentRosterItem } from "../types/student-assignment.types";
 
 export function StudentAssignmentsView() {
-  const [filters, setFilters] = useState<StudentRosterFilters>({});
+  const [academicYearId, setAcademicYearId] = useState<string | undefined>(undefined);
+  const [gradeId, setGradeId] = useState<string | undefined>(undefined);
+  const [sectionId, setSectionId] = useState<string | undefined>(undefined);
+  const [search, setSearch] = useState<string>("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [singleTransferStudent, setSingleTransferStudent] = useState<StudentRosterItem | null>(null);
   const [historyStudent, setHistoryStudent] = useState<StudentRosterItem | null>(null);
@@ -35,31 +39,55 @@ export function StudentAssignmentsView() {
   }, [years]);
 
   useEffect(() => {
-    if (activeYear?.id && !filters.academicYearId) {
-      setFilters((prev) => ({
-        ...prev,
-        academicYearId: activeYear.id,
-      }));
+    if (activeYear?.id && !academicYearId) {
+      setAcademicYearId(activeYear.id);
     }
-  }, [activeYear, filters.academicYearId]);
+  }, [activeYear, academicYearId]);
 
   const { data: sections = [] } = useSections({
-    academicYearId: filters.academicYearId,
-    gradeId: filters.gradeId,
+    academicYearId,
+    gradeId,
   });
 
   const {
-    data: rosterResponse,
+    data: rosterPages,
     isLoading: isLoadingRoster,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     error: rosterError,
-  } = useStudentRoster(filters);
+  } = useInfiniteStudentRoster({
+    academicYearId,
+    gradeId,
+    sectionId,
+    search: search.trim() || undefined,
+    limit: 30,
+  });
 
-  const roster = rosterResponse?.items || [];
-  const pagination = rosterResponse?.pagination;
+  const roster: StudentRosterItem[] = useMemo(() => {
+    if (!rosterPages) return [];
+    return rosterPages.pages.flatMap((p) => [...p.items]);
+  }, [rosterPages]);
+
+  const lastPagination = rosterPages?.pages.at(-1)?.pagination;
+
+  const gradeCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    roster.forEach((s) => {
+      map.set(s.gradeId, (map.get(s.gradeId) ?? 0) + 1);
+    });
+    return map;
+  }, [roster]);
 
   const selectedStudents = useMemo(() => {
     return roster.filter((s) => selectedStudentIds.includes(s.studentId));
   }, [roster, selectedStudentIds]);
+
+  const sentinelRef = useInfiniteScrollSentinel(
+    Boolean(hasNextPage),
+    isFetchingNextPage,
+    fetchNextPage
+  );
 
   const handleToggleSelect = (studentId: string) => {
     setSelectedStudentIds((prev) =>
@@ -77,12 +105,8 @@ export function StudentAssignmentsView() {
     setSelectedStudentIds([]);
   };
 
-  const handleSearchChange = (val: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: val || undefined,
-      page: 1,
-    }));
+  const resetPagination = () => {
+    setSelectedStudentIds([]);
   };
 
   const filterGroups: FilterGroup[] = [
@@ -90,7 +114,7 @@ export function StudentAssignmentsView() {
       id: "academicYear",
       label: "Year",
       icon: Calendar,
-      selectedValue: filters.academicYearId || "",
+      selectedValue: academicYearId || "",
       options: [
         ...years.map((y) => ({
           label: y.name,
@@ -98,42 +122,17 @@ export function StudentAssignmentsView() {
         })),
       ],
       onSelect: (val) => {
-        setFilters((prev) => ({
-          ...prev,
-          academicYearId: val,
-          sectionId: undefined,
-          page: 1,
-        }));
-        setSelectedStudentIds([]);
-      },
-    },
-    {
-      id: "grade",
-      label: "Grade",
-      icon: GraduationCap,
-      selectedValue: filters.gradeId || "ALL",
-      options: [
-        { label: "All", value: "ALL" },
-        ...grades.map((g) => ({
-          label: `Grade ${g.level}`,
-          value: g.id,
-        })),
-      ],
-      onSelect: (val) => {
-        setFilters((prev) => ({
-          ...prev,
-          gradeId: val === "ALL" ? undefined : val,
-          sectionId: undefined,
-          page: 1,
-        }));
-        setSelectedStudentIds([]);
+        setAcademicYearId(val);
+        setGradeId(undefined);
+        setSectionId(undefined);
+        resetPagination();
       },
     },
     {
       id: "section",
       label: "Section",
       icon: Users,
-      selectedValue: filters.sectionId || "ALL",
+      selectedValue: sectionId || "ALL",
       options: [
         { label: "All", value: "ALL" },
         ...sections.map((s) => ({
@@ -142,30 +141,11 @@ export function StudentAssignmentsView() {
         })),
       ],
       onSelect: (val) => {
-        setFilters((prev) => ({
-          ...prev,
-          sectionId: val === "ALL" ? undefined : val,
-          page: 1,
-        }));
-        setSelectedStudentIds([]);
+        setSectionId(val === "ALL" ? undefined : val);
+        resetPagination();
       },
     },
   ];
-
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      page,
-    }));
-  };
-
-  const handleLimitChange = (limit: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      limit,
-      page: 1,
-    }));
-  };
 
   if (isLoadingYears) {
     return (
@@ -179,8 +159,11 @@ export function StudentAssignmentsView() {
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
       <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
-          onSearchChange={handleSearchChange}
+          searchValue={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            resetPagination();
+          }}
           searchPlaceholder="Search by student name or code..."
           filters={filterGroups}
           actionButton={
@@ -207,6 +190,66 @@ export function StudentAssignmentsView() {
         />
       </div>
 
+      {grades.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => {
+              setGradeId(undefined);
+              setSectionId(undefined);
+              resetPagination();
+            }}
+            className={cn(
+              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+              !gradeId
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-foreground hover:bg-muted/80"
+            )}
+          >
+            <span>All Grades</span>
+            <span
+              className={cn(
+                "text-[11px] font-mono",
+                !gradeId ? "text-primary-foreground/90 font-bold" : "text-muted-foreground"
+              )}
+            >
+              {lastPagination?.total ?? roster.length}
+            </span>
+          </button>
+          {grades.map((g) => {
+            const isSelected = gradeId === g.id;
+            const count = gradeCountMap.get(g.id) ?? 0;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => {
+                  setGradeId(g.id);
+                  setSectionId(undefined);
+                  resetPagination();
+                }}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+                  isSelected
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border text-foreground hover:bg-muted/80"
+                )}
+              >
+                <span>Grade {g.level}</span>
+                <span
+                  className={cn(
+                    "text-[11px] font-mono",
+                    isSelected ? "text-primary-foreground/90 font-bold" : "text-muted-foreground"
+                  )}
+                >
+                  {isSelected ? (lastPagination?.total ?? count) : count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {rosterError ? (
         <ErrorAlert message={getErrorMessage(rosterError, "Failed to load student roster.")} />
       ) : isLoadingRoster ? (
@@ -217,9 +260,10 @@ export function StudentAssignmentsView() {
         <StudentAssignmentsTable
           items={roster}
           selectedStudentIds={selectedStudentIds}
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onLimitChange={handleLimitChange}
+          sentinelRef={sentinelRef}
+          isFetchingMore={isFetchingNextPage}
+          hasMore={Boolean(hasNextPage)}
+          total={lastPagination?.total ?? 0}
           onToggleSelect={handleToggleSelect}
           onSelectAll={handleSelectAll}
           onClearSelection={handleClearSelection}
@@ -229,12 +273,11 @@ export function StudentAssignmentsView() {
         />
       )}
 
-      {/* Modals */}
       <SingleTransferModal
         isOpen={Boolean(singleTransferStudent)}
         onClose={() => setSingleTransferStudent(null)}
         student={singleTransferStudent}
-        academicYearId={filters.academicYearId || ""}
+        academicYearId={academicYearId || ""}
       />
 
       <BulkTransferModal
@@ -244,14 +287,14 @@ export function StudentAssignmentsView() {
           setSelectedStudentIds([]);
         }}
         selectedStudents={selectedStudents}
-        academicYearId={filters.academicYearId || ""}
+        academicYearId={academicYearId || ""}
         onTransferSuccess={handleClearSelection}
       />
 
       <PromotionModal
         isOpen={isPromotionOpen}
         onClose={() => setIsPromotionOpen(false)}
-        currentAcademicYearId={filters.academicYearId || ""}
+        currentAcademicYearId={academicYearId || ""}
         academicYears={years}
         availableGrades={grades.map((g) => g.level)}
         onPromotionSuccess={handleClearSelection}
@@ -267,7 +310,7 @@ export function StudentAssignmentsView() {
         isOpen={Boolean(withdrawStudent)}
         onClose={() => setWithdrawStudent(null)}
         student={withdrawStudent}
-        academicYearId={filters.academicYearId || ""}
+        academicYearId={academicYearId || ""}
       />
     </div>
   );

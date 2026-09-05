@@ -5,6 +5,7 @@ import {
   Calendar,
   GraduationCap,
   Users,
+  School,
   BookOpen,
   ArrowRightLeft,
   UserCheck,
@@ -26,28 +27,20 @@ interface AcademicSectionItem {
 
 const TEACHER_ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
   {
-    title: "My Assigned Classes",
+    title: "My Classes",
     description:
       "View your assigned class cohorts, student rosters, capacities, and section details.",
-    href: ROUTES.ACADEMIC.SECTIONS,
+    href: ROUTES.TEACHER.CLASSES,
+    icon: School,
+    badge: "Classes",
+  },
+  {
+    title: "My Students",
+    description:
+      "View all enrolled students, contact information, and active rosters across your assigned classes.",
+    href: ROUTES.TEACHER.STUDENTS,
     icon: Users,
-    badge: "Assigned Classes",
-  },
-  {
-    title: "My Assigned Grades",
-    description:
-      "View your assigned grade structures, grade tiers, and academic level cohorts.",
-    href: ROUTES.ACADEMIC.GRADES,
-    icon: GraduationCap,
-    badge: "Assigned Grades",
-  },
-  {
-    title: "My Assigned Subjects",
-    description:
-      "View your assigned curriculum subjects, learning objectives, and allocated courses.",
-    href: ROUTES.ACADEMIC.SUBJECTS,
-    icon: BookOpen,
-    badge: "Assigned Subjects",
+    badge: "Students",
   },
 ];
 
@@ -104,7 +97,11 @@ const ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
 
 export default function AcademicDashboardPage() {
   const user = useAuthStore((s) => s.user);
-  const isTeacher = user?.roles?.includes("TEACHER");
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
   const sections = isTeacher ? TEACHER_ACADEMIC_SECTIONS : ACADEMIC_SECTIONS;
 
   return (

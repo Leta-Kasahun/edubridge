@@ -42,4 +42,6 @@ export interface GradeFilterParams {
   readonly isActive?: boolean;
   readonly category?: "ELEMENTARY" | "HIGH_SCHOOL";
   readonly academicYearId?: string;
+  readonly teacherId?: string;
 }
+

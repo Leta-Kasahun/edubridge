@@ -13,13 +13,15 @@ import { SubjectDetailModal } from "./SubjectDetailModal";
 import { AssignGradesModal } from "./AssignGradesModal";
 import { SubjectItem, SubjectFilters } from "../types/subject.types";
 import { useAuthStore } from "@/stores/auth.store";
-import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 import { useMemo } from "react";
 
 export function SubjectsView() {
   const user = useAuthStore((s) => s.user);
-  const isTeacher = user?.roles?.includes("TEACHER");
-  const { allowedSubjectIds, assignedGrades } = useMyTeacherAssignments();
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
 
   const [filters, setFilters] = useState<SubjectFilters>({});
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -36,21 +38,13 @@ export function SubjectsView() {
     error,
   } = useSubjects(filters);
 
-  const subjects = useMemo(() => {
-    if (!isTeacher) return rawSubjects;
-    if (allowedSubjectIds.length === 0) return rawSubjects;
-    return rawSubjects.filter(
-      (s) =>
-        allowedSubjectIds.includes(s.id) ||
-        (s.code && allowedSubjectIds.includes(s.code))
-    );
-  }, [rawSubjects, isTeacher, allowedSubjectIds]);
+  const subjects = rawSubjects;
 
   const visibleGrades = useMemo(() => {
     if (!isTeacher) return grades;
-    const gradeLevels = new Set(assignedGrades.map((g) => g.level));
+    const gradeLevels = new Set(rawSubjects.flatMap((s) => s.assignedGradeLevels));
     return grades.filter((g) => gradeLevels.has(g.level));
-  }, [grades, isTeacher, assignedGrades]);
+  }, [grades, isTeacher, rawSubjects]);
 
   const handleOpenAdd = () => {
     setSubjectToEdit(null);

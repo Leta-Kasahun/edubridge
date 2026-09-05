@@ -138,32 +138,13 @@ export function SectionDetailModal({
               </div>
 
               {section.capacity && (
-                <div className="p-3.5 rounded-xl bg-muted/30 border border-border space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Capacity Utilization
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${getCapacityBadgeClass(
-                        section.studentCount,
-                        section.capacity
-                      )}`}
-                    >
-                      {capacityPct ?? 0}%
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        (capacityPct ?? 0) >= 100
-                          ? "bg-rose-500"
-                          : (capacityPct ?? 0) >= 80
-                          ? "bg-amber-500"
-                          : "bg-emerald-500"
-                      }`}
-                      style={{ width: `${Math.min(100, capacityPct ?? 0)}%` }}
-                    />
-                  </div>
+                <div className="p-3.5 rounded-xl bg-muted/30 border border-border space-y-1">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Capacity Utilization
+                  </span>
+                  <p className="text-xs font-semibold text-foreground">
+                    {formatCapacityUtilization(section.studentCount, section.capacity)}
+                  </p>
                 </div>
               )}
 

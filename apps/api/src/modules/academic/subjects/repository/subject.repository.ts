@@ -10,28 +10,48 @@ import {
 
 export class SubjectRepository {
   async findMany(params: SubjectFilterParams): Promise<readonly SubjectRecord[]> {
-    const { tenantId, gradeLevel, isActive, search } = params;
+    const { tenantId, gradeLevel, isActive, search, teacherId } = params;
 
-    const where: Prisma.SubjectWhereInput = {};
-    if (isActive !== undefined) where.isActive = isActive;
+    const conditions: Prisma.SubjectWhereInput[] = [];
+    if (isActive !== undefined) {
+      conditions.push({ isActive });
+    }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { code: { contains: search, mode: "insensitive" } },
-      ];
+      conditions.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { code: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
 
     if (gradeLevel !== undefined && tenantId) {
-      where.gradeSubjects = {
-        some: {
-          grade: {
-            tenantId,
-            level: gradeLevel,
+      conditions.push({
+        gradeSubjects: {
+          some: {
+            grade: {
+              tenantId,
+              level: gradeLevel,
+            },
           },
         },
-      };
+      });
     }
+
+    if (teacherId) {
+      conditions.push({
+        assignments: {
+          some: {
+            teacherId,
+            status: "ACTIVE",
+            ...(tenantId ? { tenantId } : {}),
+          },
+        },
+      });
+    }
+
+    const where: Prisma.SubjectWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const subjects = await prisma.subject.findMany({
       where,

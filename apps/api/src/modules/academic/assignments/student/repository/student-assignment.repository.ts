@@ -14,7 +14,7 @@ import { StudentEnrollmentStatusType } from "../../../../../shared/constants/stu
 
 export class StudentAssignmentRepository {
   async findRoster(params: RosterFilterParams): Promise<PaginatedRosterResult> {
-    const { tenantId, academicYearId, gradeId, sectionId, search, page = 1, limit = 20 } = params;
+    const { tenantId, academicYearId, gradeId, sectionId, search, page = 1, limit = 20, teacherId } = params;
 
     const where: Prisma.StudentEnrollmentWhereInput = {
       tenantId,
@@ -26,6 +26,18 @@ export class StudentAssignmentRepository {
     } else if (gradeId) {
       where.section = {
         gradeId,
+      };
+    }
+
+    if (teacherId) {
+      where.section = {
+        ...(where.section && typeof where.section === "object" ? where.section : {}),
+        assignments: {
+          some: {
+            teacherId,
+            status: "ACTIVE",
+          },
+        },
       };
     }
 
@@ -57,6 +69,9 @@ export class StudentAssignmentRepository {
               middleName: true,
               lastName: true,
               gender: true,
+              user: {
+                select: { username: true },
+              },
             },
           },
           academicYear: {
@@ -91,6 +106,7 @@ export class StudentAssignmentRepository {
       studentId: e.student.id,
       studentCode: e.student.studentCode,
       fullName: `${e.student.firstName} ${e.student.middleName || ""} ${e.student.lastName}`.trim(),
+      username: e.student.user?.username ?? null,
       gender: e.student.gender as "MALE" | "FEMALE",
       academicYearId: e.academicYear.id,
       academicYearName: e.academicYear.name,

@@ -36,7 +36,11 @@ import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher
 
 export function StructureView() {
   const user = useAuthStore((s) => s.user);
-  const isTeacher = user?.roles?.includes("TEACHER");
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
   const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
 
   const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>("");

@@ -15,20 +15,13 @@ import { GradesTable } from "./GradesTable";
 import { GradeFormModal } from "./GradeFormModal";
 import { GradeDetailModal } from "./GradeDetailModal";
 import { useAuthStore } from "@/stores/auth.store";
-import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 
 export function GradesView() {
   const user = useAuthStore((s) => s.user);
-  const isTeacher = user?.roles?.includes("TEACHER");
-  const { assignedGrades } = useMyTeacherAssignments();
-
-  const assignedGradeIds = useMemo(
-    () => new Set(assignedGrades.map((g) => g.id)),
-    [assignedGrades]
-  );
-  const assignedGradeLevels = useMemo(
-    () => new Set(assignedGrades.map((g) => g.level)),
-    [assignedGrades]
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
   );
 
   const [filters, setFilters] = useState<GradeFilters>({});
@@ -38,11 +31,7 @@ export function GradesView() {
 
   const { data: rawGrades = [], isLoading, error } = useGrades(filters);
 
-  const grades = useMemo(() => {
-    if (!isTeacher) return rawGrades;
-    if (assignedGrades.length === 0) return rawGrades;
-    return rawGrades.filter((g) => assignedGradeIds.has(g.id) || assignedGradeLevels.has(g.level));
-  }, [rawGrades, isTeacher, assignedGradeIds, assignedGradeLevels, assignedGrades.length]);
+  const grades = rawGrades;
 
   const existingLevels = useMemo(
     () => grades.map((g) => g.level),

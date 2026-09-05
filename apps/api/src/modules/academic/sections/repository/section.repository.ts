@@ -12,20 +12,35 @@ import { SectionStatusType } from "../../../../shared/constants/section.constant
 
 export class SectionRepository {
   async findMany(params: SectionFilterParams): Promise<readonly SectionRecord[]> {
-    const { tenantId, academicYearId, gradeId, status, search } = params;
+    const { tenantId, academicYearId, gradeId, status, search, teacherId } = params;
 
-    const where: Prisma.SectionWhereInput = {};
-    if (tenantId) where.tenantId = tenantId;
-    if (academicYearId) where.academicYearId = academicYearId;
-    if (gradeId) where.gradeId = gradeId;
-    if (status) where.status = status;
+    const conditions: Prisma.SectionWhereInput[] = [];
+    if (tenantId) conditions.push({ tenantId });
+    if (academicYearId) conditions.push({ academicYearId });
+    if (gradeId) conditions.push({ gradeId });
+    if (status) conditions.push({ status });
+
+    if (teacherId) {
+      conditions.push({
+        assignments: {
+          some: {
+            teacherId,
+            status: "ACTIVE",
+          },
+        },
+      });
+    }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { code: { contains: search, mode: "insensitive" } },
-      ];
+      conditions.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { code: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
+
+    const where: Prisma.SectionWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const sections = await prisma.section.findMany({
       where,

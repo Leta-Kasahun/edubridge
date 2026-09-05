@@ -6,6 +6,7 @@ export interface StudentRosterItem {
   readonly studentId: string;
   readonly studentCode: string;
   readonly fullName: string;
+  readonly username: string | null;
   readonly gender: "MALE" | "FEMALE";
   readonly academicYearId: string;
   readonly academicYearName: string;
@@ -111,4 +112,6 @@ export interface RosterFilterParams {
   readonly search?: string;
   readonly page?: number;
   readonly limit?: number;
+  readonly teacherId?: string;
 }
+

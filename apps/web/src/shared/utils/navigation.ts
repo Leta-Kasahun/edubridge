@@ -9,6 +9,8 @@ import {
   Calendar,
   BookOpen,
   BookMarked,
+  Users,
+  School,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -132,14 +134,14 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "Academic",
-    href: ROUTES.ACADEMIC.BASE,
-    icon: Calendar,
-    children: [
-      { label: "My Assigned Classes", href: ROUTES.ACADEMIC.SECTIONS },
-      { label: "My Assigned Grades", href: ROUTES.ACADEMIC.GRADES },
-      { label: "My Assigned Subjects", href: ROUTES.ACADEMIC.SUBJECTS },
-    ],
+    label: "My Classes",
+    href: ROUTES.TEACHER.CLASSES,
+    icon: School,
+  },
+  {
+    label: "My Students",
+    href: ROUTES.TEACHER.STUDENTS,
+    icon: Users,
   },
   {
     label: "My Materials",
@@ -154,7 +156,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
   {
     label: "My Qualifications",
     href: ROUTES.QUALIFICATIONS,
-    icon: GraduationCap,
+    icon: Award,
   },
   {
     label: "My Profile",
