@@ -30,6 +30,7 @@ export interface ContentSubjectAccordionProps {
   readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
+  readonly onActivate?: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
   readonly onAddMaterial: (subject: SubjectAccordionGroup) => void;
 }
@@ -48,6 +49,7 @@ export function ContentSubjectAccordion({
   onApprove,
   onPublish,
   onArchive,
+  onActivate,
   onDelete,
   onAddMaterial,
 }: ContentSubjectAccordionProps) {
@@ -311,6 +313,7 @@ export function ContentSubjectAccordion({
                               onApprove={onApprove}
                               onPublish={onPublish}
                               onArchive={onArchive}
+                              onActivate={onActivate}
                               onDelete={onDelete}
                             />
                           </td>

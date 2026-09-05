@@ -15,7 +15,10 @@ import {
   Check,
   Archive,
   Plus,
+  RotateCcw,
+  CheckCircle2,
 } from "lucide-react";
+import { useAuthStore } from "@/stores/auth.store";
 import {
   LearningContentListItem,
   LearningContentDetailItem,
@@ -25,8 +28,10 @@ import {
   useUploadAttachment,
   useDeleteAttachment,
   useSubmitContent,
+  useApproveContent,
   usePublishContent,
   useArchiveContent,
+  useActivateContent,
 } from "../../hooks/useLearningContent";
 import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
@@ -63,11 +68,20 @@ export function ContentDetailModal({
     isOpen && item ? item.id : null
   );
 
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = Boolean(
+    user?.roles?.includes("SCHOOL_ADMIN") ||
+      user?.roles?.includes("SYSTEM_ADMIN") ||
+      user?.roles?.includes("ADMIN")
+  );
+
   const uploadAttachmentMutation = useUploadAttachment(item?.id || "");
   const deleteAttachmentMutation = useDeleteAttachment(item?.id || "");
   const submitMutation = useSubmitContent();
+  const approveMutation = useApproveContent();
   const publishMutation = usePublishContent();
   const archiveMutation = useArchiveContent();
+  const activateMutation = useActivateContent();
 
   useEffect(() => {
     setMounted(true);
@@ -124,6 +138,24 @@ export function ContentDetailModal({
     setActionError(null);
     try {
       await archiveMutation.mutateAsync(item.id);
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    }
+  };
+
+  const handleApprove = async () => {
+    setActionError(null);
+    try {
+      await approveMutation.mutateAsync(item.id);
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    }
+  };
+
+  const handleActivate = async () => {
+    setActionError(null);
+    try {
+      await activateMutation.mutateAsync(item.id);
     } catch (err) {
       setActionError(getErrorMessage(err));
     }
@@ -563,26 +595,49 @@ export function ContentDetailModal({
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-3 border-t border-border bg-card shrink-0">
           <div className="flex items-center gap-2">
             {displayItem.status === "DRAFT" && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSubmitForReview}
+                  disabled={submitMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
+                >
+                  <Send size={13} className="text-muted-foreground" />
+                  <span>Submit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={publishMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
+                >
+                  <Check size={13} className="text-muted-foreground" />
+                  <span>Publish</span>
+                </button>
+              </>
+            )}
+
+            {displayItem.status === "PENDING_REVIEW" && isAdmin && (
               <button
                 type="button"
-                onClick={handleSubmitForReview}
-                disabled={submitMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                onClick={handleApprove}
+                disabled={approveMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
               >
-                <Send size={13} />
-                <span>Submit</span>
+                <CheckCircle2 size={13} className="text-muted-foreground" />
+                <span>Approve</span>
               </button>
             )}
 
-            {displayItem.status !== "PUBLISHED" && (
+            {displayItem.status === "APPROVED" && (
               <button
                 type="button"
                 onClick={handlePublish}
                 disabled={publishMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
               >
-                <Check size={13} />
-                <span>Activate</span>
+                <Check size={13} className="text-muted-foreground" />
+                <span>Publish</span>
               </button>
             )}
 
@@ -591,10 +646,22 @@ export function ContentDetailModal({
                 type="button"
                 onClick={handleArchive}
                 disabled={archiveMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer border border-border"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
               >
-                <Archive size={13} />
+                <Archive size={13} className="text-muted-foreground" />
                 <span>Archive</span>
+              </button>
+            )}
+
+            {displayItem.status === "ARCHIVED" && (
+              <button
+                type="button"
+                onClick={handleActivate}
+                disabled={activateMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
+              >
+                <RotateCcw size={13} className="text-muted-foreground" />
+                <span>Activate</span>
               </button>
             )}
           </div>

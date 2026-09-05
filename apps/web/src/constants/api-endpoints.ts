@@ -166,6 +166,7 @@ export const API_ENDPOINTS = {
     APPROVE: (id: string) => `/learning-content/content/${id}/approve`,
     PUBLISH: (id: string) => `/learning-content/content/${id}/publish`,
     ARCHIVE: (id: string) => `/learning-content/content/${id}/archive`,
+    ACTIVATE: (id: string) => `/learning-content/content/${id}/activate`,
     ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,

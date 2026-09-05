@@ -166,6 +166,13 @@ export const contentService = {
     return response.data.data;
   },
 
+  async activateContent(id: string): Promise<LearningContentDetailItem> {
+    const response = await apiClient.post<
+      ApiResponse<LearningContentDetailItem>
+    >(API_ENDPOINTS.LEARNING_CONTENT.ACTIVATE(id));
+    return response.data.data;
+  },
+
   async deleteContent(id: string): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.LEARNING_CONTENT.BY_ID(id)

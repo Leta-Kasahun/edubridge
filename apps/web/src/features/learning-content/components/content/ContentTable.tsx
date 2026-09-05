@@ -15,6 +15,7 @@ import {
   Paperclip,
   UploadCloud,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 import { LearningContentListItem } from "../../types/content.types";
@@ -38,6 +39,7 @@ interface ContentTableProps {
   readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
+  readonly onActivate?: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
   readonly onOpenUpload?: (item: LearningContentListItem) => void;
   readonly onOpenAddModal: () => void;
@@ -53,6 +55,7 @@ export interface ContentRowActionsProps {
   readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
+  readonly onActivate?: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
 }
 
@@ -66,6 +69,7 @@ export function ContentRowActions({
   onApprove,
   onPublish,
   onArchive,
+  onActivate,
   onDelete,
 }: ContentRowActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -98,11 +102,14 @@ export function ContentRowActions({
   const canArchive = (isAdmin || isAuthor) && item.status === "PUBLISHED";
   const canDelete = isAdmin || (isAuthor && (item.status === "DRAFT" || item.status === "ARCHIVED"));
 
+  const canActivate =
+    Boolean(onActivate) && (isAdmin || isAuthor) && item.status === "ARCHIVED";
+
   const updatePosition = () => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
-    const menuWidth = 176;
-    const menuHeight = 260;
+    const menuWidth = 160;
+    const menuHeight = 240;
 
     let top = rect.bottom + 4;
     if (top + menuHeight > window.innerHeight) {
@@ -172,7 +179,7 @@ export function ContentRowActions({
               left: `${coords.left}px`,
               zIndex: 9999,
             }}
-            className="w-44 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95"
+            className="w-40 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
           >
             <button
               type="button"
@@ -180,10 +187,10 @@ export function ContentRowActions({
                 setIsOpen(false);
                 onViewDetail(item);
               }}
-              className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
             >
               <Eye size={13} className="text-muted-foreground" />
-              <span>View Details</span>
+              <span>View</span>
             </button>
 
             {canEdit && (
@@ -193,10 +200,10 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onEdit(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
                 <Edit2 size={13} className="text-muted-foreground" />
-                <span>Edit Material</span>
+                <span>Edit</span>
               </button>
             )}
 
@@ -207,10 +214,10 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onOpenUpload(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
-                <UploadCloud size={13} className="text-primary" />
-                <span>Upload Files</span>
+                <UploadCloud size={13} className="text-muted-foreground" />
+                <span>Upload</span>
               </button>
             )}
 
@@ -221,10 +228,10 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onSaveNewVersion(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
                 <GitBranch size={13} className="text-muted-foreground" />
-                <span>New Version</span>
+                <span>Version</span>
               </button>
             )}
 
@@ -235,10 +242,10 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onSubmitForReview(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
-                <Send size={13} className="text-primary" />
-                <span>Submit for Review</span>
+                <Send size={13} className="text-muted-foreground" />
+                <span>Submit</span>
               </button>
             )}
 
@@ -249,9 +256,9 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onApprove(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
-                <CheckCircle2 size={13} />
+                <CheckCircle2 size={13} className="text-muted-foreground" />
                 <span>Approve</span>
               </button>
             )}
@@ -263,9 +270,9 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onPublish(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-primary/10 text-primary transition-colors cursor-pointer"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
-                <Check size={13} />
+                <Check size={13} className="text-muted-foreground" />
                 <span>Publish</span>
               </button>
             )}
@@ -277,10 +284,24 @@ export function ContentRowActions({
                   setIsOpen(false);
                   onArchive(item);
                 }}
-                className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
               >
                 <Archive size={13} className="text-muted-foreground" />
                 <span>Archive</span>
+              </button>
+            )}
+
+            {canActivate && onActivate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onActivate(item);
+                }}
+                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              >
+                <RotateCcw size={13} className="text-muted-foreground" />
+                <span>Activate</span>
               </button>
             )}
 
@@ -293,9 +314,9 @@ export function ContentRowActions({
                     setIsOpen(false);
                     onDelete(item);
                   }}
-                  className="w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                  className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer text-left"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={13} className="text-destructive" />
                   <span>Delete</span>
                 </button>
               </>
@@ -319,6 +340,7 @@ export function ContentTable({
   onApprove,
   onPublish,
   onArchive,
+  onActivate,
   onDelete,
   onOpenUpload,
   onOpenAddModal,
@@ -412,6 +434,7 @@ export function ContentTable({
                   onApprove={onApprove}
                   onPublish={onPublish}
                   onArchive={onArchive}
+                  onActivate={onActivate}
                   onDelete={onDelete}
                 />
               </div>
@@ -535,6 +558,7 @@ export function ContentTable({
                         onApprove={onApprove}
                         onPublish={onPublish}
                         onArchive={onArchive}
+                        onActivate={onActivate}
                         onDelete={onDelete}
                       />
                     </td>

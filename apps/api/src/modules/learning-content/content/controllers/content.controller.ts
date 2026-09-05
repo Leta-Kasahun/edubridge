@@ -257,6 +257,25 @@ export class ContentController {
     }
   );
 
+  activateContent = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const userContext = extractUserContext(req);
+      const id = req.params.id as string;
+
+      const updated = await this.service.activateContent(
+        userContext.tenantId,
+        id,
+        userContext.userId,
+        userContext
+      );
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    }
+  );
+
   deleteContent = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
       const userContext = extractUserContext(req);

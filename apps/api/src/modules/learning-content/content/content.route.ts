@@ -66,6 +66,11 @@ router.post(
   requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
   contentController.archiveContent
 );
+router.post(
+  "/:id/activate",
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
+  contentController.activateContent
+);
 router.delete(
   "/:id",
   requireRoles("SCHOOL_ADMIN", "TEACHER", "ADMIN"),

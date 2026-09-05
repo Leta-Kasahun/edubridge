@@ -11,6 +11,7 @@ import {
   Trash2,
   Send,
   CheckCircle,
+  RotateCcw,
   Calendar,
   BookOpen,
   ShieldCheck,
@@ -29,6 +30,7 @@ import {
   useApproveContent,
   usePublishContent,
   useArchiveContent,
+  useActivateContent,
   useDeleteContent,
 } from "../../hooks/useLearningContent";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
@@ -131,6 +133,7 @@ export function ContentListView() {
   const approveMutation = useApproveContent();
   const publishMutation = usePublishContent();
   const archiveMutation = useArchiveContent();
+  const activateMutation = useActivateContent();
   const deleteMutation = useDeleteContent();
 
   const rawItems = data?.data ?? [];
@@ -140,7 +143,7 @@ export function ContentListView() {
     if (!isTeacher) return rawItems;
     if (allowedSubjectIds.length === 0 && allowedGradeIds.length === 0) return rawItems;
     return rawItems.filter((item) => {
-      const isAuthor = user?.id && item.createdById === user.id;
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
       const matchSubject = !item.subjectId || allowedSubjectIds.includes(item.subjectId);
       const matchGrade = !item.gradeId || allowedGradeIds.includes(item.gradeId);
       return isAuthor || (matchSubject && matchGrade);
@@ -371,25 +374,75 @@ export function ContentListView() {
     });
   };
 
+  const selectedItems = useMemo(() => {
+    return items.filter((item) => selectedIds.has(item.id));
+  }, [items, selectedIds]);
+
+  const submittableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return item.status === "DRAFT" && (isAuthor || !isTeacher);
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const publishableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      const isTextbookOrRef = item.type === "TEXTBOOK" || item.type === "REFERENCE_BOOK";
+      if (!isTeacher) {
+        return (
+          item.status === "APPROVED" ||
+          item.status === "PENDING_REVIEW" ||
+          (!isTextbookOrRef && item.status === "DRAFT")
+        );
+      }
+      return (
+        (!isTextbookOrRef && item.status === "DRAFT" && isAuthor) ||
+        (isTextbookOrRef && item.status === "APPROVED" && isAuthor)
+      );
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const activatableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return item.status === "ARCHIVED" && (isAuthor || !isTeacher);
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const deletableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return !isTeacher || (isAuthor && (item.status === "DRAFT" || item.status === "ARCHIVED"));
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
   const handleBatchSubmit = async () => {
-    for (const id of selectedIds) {
-      await submitMutation.mutateAsync(id);
+    for (const item of submittableSelectedItems) {
+      await submitMutation.mutateAsync(item.id);
     }
     setSelectedIds(new Set());
   };
 
   const handleBatchPublish = async () => {
-    for (const id of selectedIds) {
-      await publishMutation.mutateAsync(id);
+    for (const item of publishableSelectedItems) {
+      await publishMutation.mutateAsync(item.id);
+    }
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchActivate = async () => {
+    for (const item of activatableSelectedItems) {
+      await activateMutation.mutateAsync(item.id);
     }
     setSelectedIds(new Set());
   };
 
   const handleBatchDelete = () => {
-    if (selectedIds.size === 0) return;
+    if (deletableSelectedItems.length === 0) return;
     setDeleteTarget({
       type: "batch",
-      count: selectedIds.size,
+      count: deletableSelectedItems.length,
     });
   };
 
@@ -398,8 +451,8 @@ export function ContentListView() {
     if (deleteTarget.type === "single" && deleteTarget.id) {
       await deleteMutation.mutateAsync(deleteTarget.id);
     } else if (deleteTarget.type === "batch") {
-      for (const id of selectedIds) {
-        await deleteMutation.mutateAsync(id);
+      for (const item of deletableSelectedItems) {
+        await deleteMutation.mutateAsync(item.id);
       }
       setSelectedIds(new Set());
     }
@@ -544,30 +597,46 @@ export function ContentListView() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleBatchSubmit}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
-            >
-              <Send size={11} className="text-amber-500" />
-              <span>Submit</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleBatchPublish}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
-            >
-              <CheckCircle size={11} className="text-emerald-500" />
-              <span>Activate</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleBatchDelete}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors cursor-pointer"
-            >
-              <Trash2 size={11} />
-              <span>Delete</span>
-            </button>
+            {submittableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchSubmit}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Send size={11} className="text-muted-foreground" />
+                <span>Submit ({submittableSelectedItems.length})</span>
+              </button>
+            )}
+            {publishableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchPublish}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Check size={11} className="text-muted-foreground" />
+                <span>Publish ({publishableSelectedItems.length})</span>
+              </button>
+            )}
+            {activatableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchActivate}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <RotateCcw size={11} className="text-muted-foreground" />
+                <span>Activate ({activatableSelectedItems.length})</span>
+              </button>
+            )}
+            {deletableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchDelete}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors cursor-pointer"
+              >
+                <Trash2 size={11} />
+                <span>Delete ({deletableSelectedItems.length})</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -612,6 +681,7 @@ export function ContentListView() {
               onApprove={(item) => approveMutation.mutate(item.id)}
               onPublish={(item) => publishMutation.mutate(item.id)}
               onArchive={(item) => archiveMutation.mutate(item.id)}
+              onActivate={(item) => activateMutation.mutate(item.id)}
               onDelete={handleDelete}
               onAddMaterial={handleOpenAddForSubject}
             />

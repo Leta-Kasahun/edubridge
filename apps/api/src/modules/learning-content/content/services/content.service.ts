@@ -1010,6 +1010,34 @@ export class ContentService {
     return this.getContentDetail(tenantId, id, userContext);
   }
 
+  async activateContent(
+    tenantId: string,
+    id: string,
+    userId: string,
+    userContext?: UserAuthContext
+  ): Promise<ContentDetailResponse> {
+    const existing = await this.repository.findById(tenantId, id);
+    if (!existing) {
+      throw new NotFoundError(`Learning content ${id} not found`);
+    }
+
+    if (userContext) {
+      const isAdmin =
+        userContext.roles.includes("SCHOOL_ADMIN") ||
+        userContext.roles.includes("SYSTEM_ADMIN") ||
+        userContext.roles.includes("ADMIN");
+
+      if (!isAdmin && existing.authorId !== userContext.userId) {
+        throw new ForbiddenError(
+          "You can only activate content that you authored"
+        );
+      }
+    }
+
+    await this.repository.updateStatus(tenantId, id, "PUBLISHED", userId);
+    return this.getContentDetail(tenantId, id, userContext);
+  }
+
   async deleteContent(
     tenantId: string,
     id: string,
