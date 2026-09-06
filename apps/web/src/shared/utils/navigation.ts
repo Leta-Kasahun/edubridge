@@ -196,9 +196,11 @@ export function getNavigationTree(roles?: readonly string[]): readonly NavNode[]
 }
 
 export function findNavNodeHierarchy(
-  pathname: string,
+  pathname?: string | null,
   nodes: readonly NavNode[] = NAVIGATION_TREE
 ): readonly NavNode[] {
+  if (!pathname) return [];
+
   const normalized = pathname.split("?")[0].split("#")[0];
 
   for (const node of nodes) {

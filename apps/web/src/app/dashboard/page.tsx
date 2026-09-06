@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { DashboardLayout } from "@/shared/components/layouts";
 import { useAuthStore } from "@/stores/auth.store";
 import {
@@ -9,7 +10,7 @@ import {
   StudentDashboard,
 } from "@/components/dashboard";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const user = useAuthStore((state) => state.user);
   const roles = user?.roles ?? [];
 
@@ -41,5 +42,13 @@ export default function DashboardPage() {
     <DashboardLayout>
       <SchoolAdminDashboard />
     </DashboardLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
   );
 }
