@@ -1,6 +1,18 @@
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
 import { Logo } from "@/shared/components";
+import { cn } from "@/lib/utils";
+
+const footerLinkClass = cn(
+  "relative group px-2.5 py-1 text-xs sm:text-sm font-medium",
+  "text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary transition-colors duration-200"
+);
+
+const footerUnderlineClass = cn(
+  "absolute bottom-0 left-2.5 right-2.5 h-px rounded-full",
+  "bg-primary scale-x-0 group-hover:scale-x-100",
+  "transition-transform duration-250 origin-left"
+);
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -8,8 +20,8 @@ export function Footer() {
   return (
     <footer id="contacts" className="bg-white dark:bg-slate-950 text-foreground border-t border-slate-200/80 dark:border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
             <Link href={ROUTES.HOME} className="flex items-center">
               <Logo
                 variant="full"
@@ -17,41 +29,37 @@ export function Footer() {
                 frame="none"
               />
             </Link>
-            <span className="text-xs text-muted-foreground hidden sm:inline">
+            <span className="text-xs text-slate-600 dark:text-slate-400">
               &copy; {currentYear} EduBridge. All rights reserved.
             </span>
           </div>
 
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm font-medium text-muted-foreground">
-            <Link href="/#features" className="hover:text-primary transition-colors">
+          <nav className="flex flex-wrap items-center justify-center gap-x-2 sm:gap-x-4 gap-y-2">
+            <Link href="/#features" className={footerLinkClass}>
               Features
+              <span className={footerUnderlineClass} />
             </Link>
-            <Link href="/#exam-prep" className="hover:text-primary transition-colors">
+            <Link href="/#exam-prep" className={footerLinkClass}>
               Exam Prep
+              <span className={footerUnderlineClass} />
             </Link>
-            <Link href="/#how-it-works" className="hover:text-primary transition-colors">
+            <Link href="/#how-it-works" className={footerLinkClass}>
               How It Works
+              <span className={footerUnderlineClass} />
             </Link>
-            <Link href="/#faq" className="hover:text-primary transition-colors">
-              FAQ
-            </Link>
-            <Link href={ROUTES.AUTH.LOGIN} className="hover:text-primary transition-colors">
-              Sign In
-            </Link>
-            <span className="hover:text-primary transition-colors cursor-pointer">
+            <span className={cn(footerLinkClass, "cursor-pointer")}>
               Privacy
+              <span className={footerUnderlineClass} />
             </span>
-            <span className="hover:text-primary transition-colors cursor-pointer">
+            <span className={cn(footerLinkClass, "cursor-pointer")}>
               Terms
+              <span className={footerUnderlineClass} />
             </span>
-            <a href="mailto:edubridge.et@gmail.com" className="hover:text-primary transition-colors">
+            <a href="mailto:edubridge.et@gmail.com" className={footerLinkClass}>
               Help
+              <span className={footerUnderlineClass} />
             </a>
           </nav>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-900 flex sm:hidden items-center justify-center text-xs text-muted-foreground">
-          <p>&copy; {currentYear} EduBridge. All rights reserved.</p>
         </div>
       </div>
     </footer>
