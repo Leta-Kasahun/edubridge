@@ -7,6 +7,10 @@ const extractToken = (req: Request): string | null => {
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.slice(7).trim();
   }
+  const queryToken = typeof req.query.token === "string" ? req.query.token.trim() : null;
+  if (queryToken) {
+    return queryToken;
+  }
   const cookieHeader = req.headers.cookie;
   if (cookieHeader) {
     const match = cookieHeader.match(/(?:^|;\s*)accessToken=([^;]+)/);

@@ -66,6 +66,13 @@ export class StorageService {
   ): string {
     return this.provider.getOptimizedUrl(publicId, options);
   }
+
+  async getFileStream(storageKey: string, range?: string) {
+    if (this.provider instanceof B2StorageProvider) {
+      return this.provider.getFileStream(storageKey, range);
+    }
+    throw new Error("File streaming is not supported on this storage provider");
+  }
 }
 
 export const storageService = new StorageService();

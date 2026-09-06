@@ -103,6 +103,46 @@ export class ContentAttachmentController {
       });
     }
   );
+
+  streamAttachment = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const tenantId =
+        req.user?.tenantId ||
+        (typeof req.query.tenantId === "string" ? req.query.tenantId : undefined);
+      const id = req.params.id as string;
+      const attachmentId = req.params.attachmentId as string;
+      const range = req.headers.range;
+
+      const streamData = await this.service.getAttachmentStream(
+        tenantId,
+        id,
+        attachmentId,
+        range
+      );
+
+      res.setHeader("Content-Type", streamData.mimeType);
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="${encodeURIComponent(streamData.fileName)}"`
+      );
+      res.setHeader("Accept-Ranges", "bytes");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+
+      if (streamData.etag) {
+        res.setHeader("ETag", `"${streamData.etag}"`);
+      }
+
+      if (streamData.contentRange && streamData.contentLength) {
+        res.status(206);
+        res.setHeader("Content-Range", streamData.contentRange);
+        res.setHeader("Content-Length", streamData.contentLength.toString());
+      } else if (streamData.contentLength) {
+        res.setHeader("Content-Length", streamData.contentLength.toString());
+      }
+
+      streamData.stream.pipe(res);
+    }
+  );
 }
 
 export const contentAttachmentController = new ContentAttachmentController();
