@@ -3,12 +3,13 @@ import {
   Building2,
   Settings,
   User,
-  GraduationCap,
+  Presentation,
   UserPlus,
   Award,
   Calendar,
   BookOpen,
   BookMarked,
+  Users,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -132,31 +133,34 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: LayoutDashboard,
   },
   {
-    label: "Curriculum",
-    href: ROUTES.CURRICULUM.BASE,
-    icon: BookOpen,
-    children: [
-      { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
-      { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
-    ],
+    label: "My Classes",
+    href: ROUTES.TEACHER.CLASSES,
+    icon: Presentation,
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "My Students",
+    href: ROUTES.TEACHER.STUDENTS,
+    icon: Users,
+  },
+  {
+    label: "My Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
-    children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-    ],
+  },
+  {
+    label: "Curriculum",
+    href: ROUTES.CURRICULUM.STRUCTURE,
+    icon: BookOpen,
+  },
+  {
+    label: "My Qualifications",
+    href: ROUTES.QUALIFICATIONS,
+    icon: Award,
   },
   {
     label: "My Profile",
     href: ROUTES.PROFILE,
     icon: User,
-  },
-  {
-    label: "My Qualifications",
-    href: ROUTES.QUALIFICATIONS,
-    icon: GraduationCap,
   },
 ];
 

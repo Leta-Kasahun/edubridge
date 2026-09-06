@@ -1,3 +1,3 @@
 export { TeacherOverviewTab } from "./TeacherOverviewTab";
 export { TeacherClassesTab } from "./TeacherClassesTab";
-export { TeacherQualificationsTab } from "./TeacherQualificationsTab";
+export { TeacherGradesTab } from "./TeacherGradesTab";

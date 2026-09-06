@@ -157,6 +157,13 @@ export class TopicService {
       true
     );
 
+    const deps = await this.repository.countTopicDependencies(topicId);
+    if (deps.contentCount > 0 || deps.questionCount > 0 || deps.evidenceCount > 0) {
+      throw new BadRequestError(
+        `Cannot delete topic '${context.title}' because it has active dependencies (${deps.contentCount} materials, ${deps.questionCount} questions, ${deps.evidenceCount} evidence records). Archive or unassign them first.`
+      );
+    }
+
     await this.repository.deleteTopic(topicId);
   }
 

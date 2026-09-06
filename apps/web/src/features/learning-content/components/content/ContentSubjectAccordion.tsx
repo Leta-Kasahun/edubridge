@@ -27,8 +27,10 @@ export interface ContentSubjectAccordionProps {
   readonly onOpenUpload?: (item: LearningContentListItem) => void;
   readonly onSaveNewVersion: (item: LearningContentListItem) => void;
   readonly onSubmitForReview: (item: LearningContentListItem) => void;
+  readonly onApprove?: (item: LearningContentListItem) => void;
   readonly onPublish: (item: LearningContentListItem) => void;
   readonly onArchive: (item: LearningContentListItem) => void;
+  readonly onActivate?: (item: LearningContentListItem) => void;
   readonly onDelete: (item: LearningContentListItem) => void;
   readonly onAddMaterial: (subject: SubjectAccordionGroup) => void;
 }
@@ -44,8 +46,10 @@ export function ContentSubjectAccordion({
   onOpenUpload,
   onSaveNewVersion,
   onSubmitForReview,
+  onApprove,
   onPublish,
   onArchive,
+  onActivate,
   onDelete,
   onAddMaterial,
 }: ContentSubjectAccordionProps) {
@@ -197,6 +201,7 @@ export function ContentSubjectAccordion({
                           onOpenUpload={onOpenUpload}
                           onSaveNewVersion={onSaveNewVersion}
                           onSubmitForReview={onSubmitForReview}
+                          onApprove={onApprove}
                           onPublish={onPublish}
                           onArchive={onArchive}
                           onDelete={onDelete}
@@ -305,8 +310,10 @@ export function ContentSubjectAccordion({
                               onOpenUpload={onOpenUpload}
                               onSaveNewVersion={onSaveNewVersion}
                               onSubmitForReview={onSubmitForReview}
+                              onApprove={onApprove}
                               onPublish={onPublish}
                               onArchive={onArchive}
+                              onActivate={onActivate}
                               onDelete={onDelete}
                             />
                           </td>

@@ -14,14 +14,24 @@ import { useGrades } from "../hooks/useGrades";
 import { GradesTable } from "./GradesTable";
 import { GradeFormModal } from "./GradeFormModal";
 import { GradeDetailModal } from "./GradeDetailModal";
+import { useAuthStore } from "@/stores/auth.store";
 
 export function GradesView() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
+
   const [filters, setFilters] = useState<GradeFilters>({});
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<GradeItem | null>(null);
 
-  const { data: grades = [], isLoading, error } = useGrades(filters);
+  const { data: rawGrades = [], isLoading, error } = useGrades(filters);
+
+  const grades = rawGrades;
 
   const existingLevels = useMemo(
     () => grades.map((g) => g.level),
@@ -106,25 +116,33 @@ export function GradesView() {
           searchPlaceholder="Search grade levels..."
           filters={filterGroups}
           actionButton={
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
-            >
-              <Plus size={14} />
-              <span>Grade</span>
-            </button>
+            isTeacher ? undefined : (
+              <button
+                type="button"
+                onClick={handleOpenAdd}
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              >
+                <Plus size={14} />
+                <span>Grade</span>
+              </button>
+            )
           }
         />
       </div>
 
-      <GradesTable items={grades} onViewDetails={handleOpenDetail} />
-
-      <GradeFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        existingLevels={existingLevels}
+      <GradesTable
+        items={grades}
+        onViewDetails={handleOpenDetail}
+        isReadOnly={isTeacher}
       />
+
+      {!isTeacher && (
+        <GradeFormModal
+          isOpen={isFormModalOpen}
+          onClose={() => setIsFormModalOpen(false)}
+          existingLevels={existingLevels}
+        />
+      )}
 
       <GradeDetailModal
         isOpen={isDetailModalOpen}

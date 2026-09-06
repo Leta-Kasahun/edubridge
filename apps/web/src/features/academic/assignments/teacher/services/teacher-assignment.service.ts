@@ -23,7 +23,7 @@ export class TeacherAssignmentService {
   async getAssignments(
     filters: TeacherAssignmentFilters
   ): Promise<PaginatedTeacherAssignmentsResponse> {
-    if (!filters.academicYearId) {
+    if (!filters.academicYearId && !filters.teacherId) {
       return {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
@@ -31,7 +31,7 @@ export class TeacherAssignmentService {
     }
 
     const params = new URLSearchParams();
-    params.set("academicYearId", filters.academicYearId);
+    if (filters.academicYearId) params.set("academicYearId", filters.academicYearId);
     if (filters.gradeId) params.set("gradeId", filters.gradeId);
     if (filters.sectionId) params.set("sectionId", filters.sectionId);
     if (filters.subjectId) params.set("subjectId", filters.subjectId);

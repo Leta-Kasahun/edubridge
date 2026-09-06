@@ -13,6 +13,8 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
   TEACHER: {
     DASHBOARD: "/dashboard",
+    CLASSES: "/dashboard/classes",
+    STUDENTS: "/dashboard/students",
     PROFILE: "/dashboard/profile",
     QUALIFICATIONS: "/dashboard/qualifications",
   },

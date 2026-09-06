@@ -34,6 +34,7 @@ interface UnitItemProps {
   readonly onDelete: (unit: CurriculumUnitItem) => void;
   readonly onMoveUp: (unit: CurriculumUnitItem) => void;
   readonly onMoveDown: (unit: CurriculumUnitItem) => void;
+  readonly isReadOnly?: boolean;
 }
 
 export function UnitItem({
@@ -44,6 +45,7 @@ export function UnitItem({
   onDelete,
   onMoveUp,
   onMoveDown,
+  isReadOnly = false,
 }: UnitItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
@@ -122,54 +124,56 @@ export function UnitItem({
           </div>
         </button>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => onMoveUp(unit)}
-            disabled={isFirst}
-            title="Move unit up"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-          >
-            <ArrowUp size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveDown(unit)}
-            disabled={isLast}
-            title="Move unit down"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-          >
-            <ArrowDown size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsExpanded(true);
-              setIsAddTopicOpen(true);
-            }}
-            title="Add topic"
-            className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
-          >
-            <Plus size={13} />
-            <span>Topic</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onEdit(unit)}
-            title="Edit unit"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          >
-            <Edit2 size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(unit)}
-            title="Delete unit"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => onMoveUp(unit)}
+              disabled={isFirst}
+              title="Move unit up"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            >
+              <ArrowUp size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMoveDown(unit)}
+              disabled={isLast}
+              title="Move unit down"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+            >
+              <ArrowDown size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsExpanded(true);
+                setIsAddTopicOpen(true);
+              }}
+              title="Add topic"
+              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+            >
+              <Plus size={13} />
+              <span>Topic</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit(unit)}
+              title="Edit unit"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <Edit2 size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(unit)}
+              title="Delete unit"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       {isExpanded && (
@@ -197,14 +201,16 @@ export function UnitItem({
                   Break down this unit into specific learning topics
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAddTopicOpen(true)}
-                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
-              >
-                <Plus size={13} />
-                <span>Topic</span>
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddTopicOpen(true)}
+                  className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                >
+                  <Plus size={13} />
+                  <span>Topic</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
@@ -218,6 +224,7 @@ export function UnitItem({
                   onDelete={(item) => setTopicToDelete(item)}
                   onMoveUp={(item) => handleMoveTopic(item, "up")}
                   onMoveDown={(item) => handleMoveTopic(item, "down")}
+                  isReadOnly={isReadOnly}
                 />
               ))}
             </div>

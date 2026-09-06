@@ -6,7 +6,7 @@ import { GradesView } from "@/features/academic";
 
 export default function AcademicGradesPage() {
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
       <DashboardLayout>
         <GradesView />
       </DashboardLayout>

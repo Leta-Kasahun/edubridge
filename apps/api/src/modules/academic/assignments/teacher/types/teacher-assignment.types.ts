@@ -69,7 +69,7 @@ export interface PaginatedTeacherAssignmentsResult {
 
 export interface TeacherAssignmentFilterParams {
   readonly tenantId: string;
-  readonly academicYearId: string;
+  readonly academicYearId?: string;
   readonly gradeId?: string;
   readonly sectionId?: string;
   readonly subjectId?: string;

@@ -5,6 +5,7 @@ import {
   Calendar,
   GraduationCap,
   Users,
+  School,
   BookOpen,
   ArrowRightLeft,
   UserCheck,
@@ -14,6 +15,8 @@ import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
 import { ROUTES } from "@/constants/routes";
 
+import { useAuthStore } from "@/stores/auth.store";
+
 interface AcademicSectionItem {
   readonly title: string;
   readonly description: string;
@@ -21,6 +24,25 @@ interface AcademicSectionItem {
   readonly icon: React.ElementType;
   readonly badge: string;
 }
+
+const TEACHER_ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
+  {
+    title: "My Classes",
+    description:
+      "View your assigned class cohorts, student rosters, capacities, and section details.",
+    href: ROUTES.TEACHER.CLASSES,
+    icon: School,
+    badge: "Classes",
+  },
+  {
+    title: "My Students",
+    description:
+      "View all enrolled students, contact information, and active rosters across your assigned classes.",
+    href: ROUTES.TEACHER.STUDENTS,
+    icon: Users,
+    badge: "Students",
+  },
+];
 
 const ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
   {
@@ -74,11 +96,19 @@ const ACADEMIC_SECTIONS: readonly AcademicSectionItem[] = [
 ];
 
 export default function AcademicDashboardPage() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
+  const sections = isTeacher ? TEACHER_ACADEMIC_SECTIONS : ACADEMIC_SECTIONS;
+
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
       <DashboardLayout>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {ACADEMIC_SECTIONS.map((sec) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          {sections.map((sec) => {
             const Icon = sec.icon;
 
             return (
@@ -106,7 +136,7 @@ export default function AcademicDashboardPage() {
                 </div>
 
                 <div className="pt-4 border-t border-border mt-5 flex items-center justify-between text-xs font-semibold text-primary">
-                  <span>Manage</span>
+                  <span>{isTeacher ? "View" : "Manage"}</span>
                   <ChevronRight
                     size={15}
                     className="group-hover:translate-x-0.5 transition-transform"

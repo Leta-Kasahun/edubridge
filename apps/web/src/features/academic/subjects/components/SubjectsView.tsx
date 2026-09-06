@@ -12,8 +12,17 @@ import { SubjectFormModal } from "./SubjectFormModal";
 import { SubjectDetailModal } from "./SubjectDetailModal";
 import { AssignGradesModal } from "./AssignGradesModal";
 import { SubjectItem, SubjectFilters } from "../types/subject.types";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMemo } from "react";
 
 export function SubjectsView() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
+
   const [filters, setFilters] = useState<SubjectFilters>({});
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -24,10 +33,18 @@ export function SubjectsView() {
   const { data: grades = [] } = useGrades({ isActive: true });
 
   const {
-    data: subjects = [],
+    data: rawSubjects = [],
     isLoading,
     error,
   } = useSubjects(filters);
+
+  const subjects = rawSubjects;
+
+  const visibleGrades = useMemo(() => {
+    if (!isTeacher) return grades;
+    const gradeLevels = new Set(rawSubjects.flatMap((s) => s.assignedGradeLevels));
+    return grades.filter((g) => gradeLevels.has(g.level));
+  }, [grades, isTeacher, rawSubjects]);
 
   const handleOpenAdd = () => {
     setSubjectToEdit(null);
@@ -64,7 +81,7 @@ export function SubjectsView() {
       selectedValue: filters.gradeLevel ? String(filters.gradeLevel) : "ALL",
       options: [
         { label: "All", value: "ALL" },
-        ...grades.map((g) => ({
+        ...visibleGrades.map((g) => ({
           label: `Grade ${g.level}`,
           value: String(g.level),
         })),
@@ -103,14 +120,16 @@ export function SubjectsView() {
           searchPlaceholder="Search subjects..."
           filters={filterGroups}
           actionButton={
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
-            >
-              <Plus size={14} />
-              <span>Subject</span>
-            </button>
+            isTeacher ? undefined : (
+              <button
+                type="button"
+                onClick={handleOpenAdd}
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+              >
+                <Plus size={14} />
+                <span>Subject</span>
+              </button>
+            )
           }
         />
       </div>
@@ -120,25 +139,30 @@ export function SubjectsView() {
         onViewDetails={handleOpenDetail}
         onEdit={handleOpenEdit}
         onAssignGrades={handleOpenAssignGrades}
+        isReadOnly={isTeacher}
       />
 
-      <SubjectFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setSubjectToEdit(null);
-        }}
-        initialSubject={subjectToEdit}
-      />
+      {!isTeacher && (
+        <>
+          <SubjectFormModal
+            isOpen={isFormModalOpen}
+            onClose={() => {
+              setIsFormModalOpen(false);
+              setSubjectToEdit(null);
+            }}
+            initialSubject={subjectToEdit}
+          />
 
-      <AssignGradesModal
-        isOpen={isAssignGradesOpen}
-        onClose={() => {
-          setIsAssignGradesOpen(false);
-          setSelectedSubject(null);
-        }}
-        subject={selectedSubject}
-      />
+          <AssignGradesModal
+            isOpen={isAssignGradesOpen}
+            onClose={() => {
+              setIsAssignGradesOpen(false);
+              setSelectedSubject(null);
+            }}
+            subject={selectedSubject}
+          />
+        </>
+      )}
 
       <SubjectDetailModal
         isOpen={isDetailModalOpen}

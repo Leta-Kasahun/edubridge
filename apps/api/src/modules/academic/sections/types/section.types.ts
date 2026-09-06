@@ -80,4 +80,6 @@ export interface SectionFilterParams {
   readonly gradeId?: string;
   readonly status?: SectionStatusType;
   readonly search?: string;
+  readonly teacherId?: string;
 }
+

@@ -11,6 +11,7 @@ interface ObjectiveItemProps {
   readonly onDelete: (objective: LearningObjectiveItem) => void;
   readonly onMoveUp: (objective: LearningObjectiveItem) => void;
   readonly onMoveDown: (objective: LearningObjectiveItem) => void;
+  readonly isReadOnly?: boolean;
 }
 
 export function ObjectiveItem({
@@ -21,6 +22,7 @@ export function ObjectiveItem({
   onDelete,
   onMoveUp,
   onMoveDown,
+  isReadOnly = false,
 }: ObjectiveItemProps) {
   return (
     <div className="flex items-start sm:items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card border border-border/70 hover:border-border transition-colors group">
@@ -45,42 +47,44 @@ export function ObjectiveItem({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
-        <button
-          type="button"
-          onClick={() => onMoveUp(objective)}
-          disabled={isFirst}
-          title="Move up"
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-        >
-          <ArrowUp size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onMoveDown(objective)}
-          disabled={isLast}
-          title="Move down"
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-        >
-          <ArrowDown size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onEdit(objective)}
-          title="Edit objective"
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-        >
-          <Edit2 size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(objective)}
-          title="Delete objective"
-          className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-        >
-          <Trash2 size={13} />
-        </button>
-      </div>
+      {!isReadOnly && (
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => onMoveUp(objective)}
+            disabled={isFirst}
+            title="Move up"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+          >
+            <ArrowUp size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveDown(objective)}
+            disabled={isLast}
+            title="Move down"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+          >
+            <ArrowDown size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onEdit(objective)}
+            title="Edit objective"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          >
+            <Edit2 size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(objective)}
+            title="Delete objective"
+            className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

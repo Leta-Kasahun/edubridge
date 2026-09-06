@@ -1,84 +1,61 @@
 "use client";
 
-import { useSections } from "@/features/academic/sections/hooks/useSections";
-import { useGrades } from "@/features/academic/grades/hooks/useGrades";
-import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
+import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import type { ChartSliceItem } from "../../types";
 
 export function TeacherClassesTab() {
-  const { data: sectionsData, isLoading: isSectionsLoading } = useSections();
-  const { data: gradesData, isLoading: isGradesLoading } = useGrades();
-  const { data: studentsData, isLoading: isStudentsLoading } = useStudents({ limit: 100 });
+  const {
+    assignments,
+    assignedGrades,
+    assignedSections,
+    isLoading: isAssignmentsLoading,
+  } = useMyTeacherAssignments();
 
-  const sectionsList = sectionsData ?? [];
-  const gradesList = gradesData ?? [];
-  const studentsList = studentsData?.data ?? [];
-
-  const activeSections = sectionsList.filter((s) => s.status === "ACTIVE").length;
-  const totalStudents = studentsData?.pagination?.total ?? studentsList.length;
+  const {
+    totalStudents,
+    studentGenderSlices,
+    studentStatusSlices,
+    isLoading: isStudentsLoading,
+  } = useTeacherAssignedStudents();
 
   const colors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
-  const gradeSlices: readonly ChartSliceItem[] = gradesList.slice(0, 6).map((g, idx) => ({
+  const gradeSlices: readonly ChartSliceItem[] = assignedGrades.slice(0, 6).map((g, idx) => ({
     name: `Grade ${g.level}`,
-    value: g.sectionCount || 1,
+    value: assignments.filter((a) => a.gradeId === g.id).length || 1,
     color: colors[idx % colors.length],
   }));
 
-  const sectionStatusSlices: readonly ChartSliceItem[] = [
-    { name: "Active Classes", value: activeSections, color: "#10B981" },
-    { name: "Archived / Other", value: Math.max(0, sectionsList.length - activeSections), color: "#94a3b8" },
-  ];
+  const sectionSlices: readonly ChartSliceItem[] = assignedSections.slice(0, 6).map((s, idx) => ({
+    name: s.name,
+    value: 1,
+    color: colors[(idx + 2) % colors.length],
+  }));
 
-  const maleStudents = studentsList.filter((s) => s.gender === "MALE").length;
-  const femaleStudents = studentsList.filter((s) => s.gender === "FEMALE").length;
-
-  const genderSlices: readonly ChartSliceItem[] = [
-    { name: "Male Pupils", value: maleStudents, color: "#0EA5E9" },
-    { name: "Female Pupils", value: femaleStudents, color: "#F97316" },
-  ];
-
-  const studentStatusSlices: readonly ChartSliceItem[] = [
-    {
-      name: "Enrolled Active",
-      value: studentsList.filter((s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE").length,
-      color: "#10B981",
-    },
-    {
-      name: "Pending Setup",
-      value: studentsList.filter((s) => s.status === "PENDING_FIRST_LOGIN" || s.studentStatus === "INACTIVE").length,
-      color: "#f59e0b",
-    },
-  ];
-
-  const isLoadingMetrics = isSectionsLoading || isGradesLoading || isStudentsLoading;
+  const isLoadingMetrics = isAssignmentsLoading || isStudentsLoading;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardMetricCard
           title="Active Classes"
-          value={activeSections}
-          detail="Operational section rosters"
+          value={assignedSections.length}
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Total Students"
           value={totalStudents.toLocaleString()}
-          detail="Classroom roll size"
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Grade Tiers"
-          value={gradesList.length}
-          detail="Curriculum levels covered"
+          value={assignedGrades.length}
           isLoading={isLoadingMetrics}
         />
         <DashboardMetricCard
           title="Average Class Size"
-          value={sectionsList.length > 0 ? Math.round(totalStudents / sectionsList.length) : 0}
-          detail="Students per section"
+          value={assignedSections.length > 0 ? Math.round(totalStudents / assignedSections.length) : 0}
           isLoading={isLoadingMetrics}
         />
       </div>
@@ -86,30 +63,30 @@ export function TeacherClassesTab() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardDonutCard
           title="Grade Distribution"
-          slices={gradeSlices.length > 0 ? gradeSlices : [{ name: "Grades", value: gradesList.length, color: "#059669" }]}
+          slices={gradeSlices.length > 0 ? gradeSlices : [{ name: "Grades", value: 1, color: "#059669" }]}
           centerLabel="Levels"
-          centerValue={gradesList.length}
-          isLoading={isGradesLoading}
+          centerValue={assignedGrades.length}
+          isLoading={isAssignmentsLoading}
         />
         <DashboardDonutCard
-          title="Class Status Split"
-          slices={sectionStatusSlices}
+          title="Assigned Sections"
+          slices={sectionSlices.length > 0 ? sectionSlices : [{ name: "Sections", value: 1, color: "#10B981" }]}
           centerLabel="Sections"
-          centerValue={sectionsList.length}
-          isLoading={isSectionsLoading}
+          centerValue={assignedSections.length}
+          isLoading={isAssignmentsLoading}
         />
         <DashboardDonutCard
           title="Student Gender Split"
-          slices={genderSlices}
+          slices={studentGenderSlices}
           centerLabel="Pupils"
-          centerValue={studentsList.length}
+          centerValue={totalStudents}
           isLoading={isStudentsLoading}
         />
         <DashboardDonutCard
           title="Enrollment Status"
           slices={studentStatusSlices}
           centerLabel="Enrolled"
-          centerValue={studentsList.length}
+          centerValue={totalStudents}
           isLoading={isStudentsLoading}
         />
       </div>

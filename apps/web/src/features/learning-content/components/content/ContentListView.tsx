@@ -11,6 +11,7 @@ import {
   Trash2,
   Send,
   CheckCircle,
+  RotateCcw,
   Calendar,
   BookOpen,
   ShieldCheck,
@@ -26,8 +27,10 @@ import {
 import {
   useContentList,
   useSubmitContent,
+  useApproveContent,
   usePublishContent,
   useArchiveContent,
+  useActivateContent,
   useDeleteContent,
 } from "../../hooks/useLearningContent";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
@@ -50,6 +53,8 @@ import {
   ErrorAlert,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "ALL", label: "All" },
@@ -109,6 +114,14 @@ export function ContentListView() {
     readonly count?: number;
   } | null>(null);
 
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
+  const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
+
   const { data, isLoading, error, isFetching } = useContentList(filters);
   const { data: subjects = [] } = useSubjects();
   const { data: grades = [] } = useGrades();
@@ -117,15 +130,33 @@ export function ContentListView() {
   const academicYears = academicYearsData?.data ?? [];
 
   const submitMutation = useSubmitContent();
+  const approveMutation = useApproveContent();
   const publishMutation = usePublishContent();
   const archiveMutation = useArchiveContent();
+  const activateMutation = useActivateContent();
   const deleteMutation = useDeleteContent();
 
-  const items = data?.data ?? [];
+  const rawItems = data?.data ?? [];
   const pagination = data?.pagination;
 
+  const items = useMemo(() => {
+    if (!isTeacher) return rawItems;
+    if (allowedSubjectIds.length === 0 && allowedGradeIds.length === 0) return rawItems;
+    return rawItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      const matchSubject = !item.subjectId || allowedSubjectIds.includes(item.subjectId);
+      const matchGrade = !item.gradeId || allowedGradeIds.includes(item.gradeId);
+      return isAuthor || (matchSubject && matchGrade);
+    });
+  }, [rawItems, isTeacher, allowedSubjectIds, allowedGradeIds, user?.id]);
+
   const gradeTabs: readonly GradeTabItem[] = useMemo(() => {
-    return grades
+    const visibleGradesList =
+      isTeacher && allowedGradeIds.length > 0
+        ? grades.filter((g) => allowedGradeIds.includes(g.id))
+        : grades;
+
+    return visibleGradesList
       .slice()
       .sort((a, b) => a.level - b.level)
       .map((g) => {
@@ -141,7 +172,7 @@ export function ContentListView() {
           count,
         };
       });
-  }, [grades, items]);
+  }, [grades, items, isTeacher, allowedGradeIds]);
 
   const activeGrade = useMemo(() => {
     if (selectedGradeId === "ALL") return null;
@@ -163,7 +194,12 @@ export function ContentListView() {
     const map = new Map<string, LearningContentListItem[]>();
     const knownSubjects = new Map<string, { name: string; code: string }>();
 
-    for (const sub of subjects) {
+    const visibleSubjectsList =
+      isTeacher && allowedSubjectIds.length > 0
+        ? subjects.filter((s) => allowedSubjectIds.includes(s.id))
+        : subjects;
+
+    for (const sub of visibleSubjectsList) {
       knownSubjects.set(sub.id, { name: sub.name, code: sub.code });
       map.set(sub.id, []);
     }
@@ -174,21 +210,23 @@ export function ContentListView() {
       if (item.subjectId && map.has(item.subjectId)) {
         map.get(item.subjectId)!.push(item);
       } else if (item.subjectId && !map.has(item.subjectId)) {
-        map.set(item.subjectId, [item]);
-        knownSubjects.set(item.subjectId, {
-          name: item.subjectName || "Subject",
-          code: "",
-        });
+        if (!isTeacher || allowedSubjectIds.includes(item.subjectId)) {
+          map.set(item.subjectId, [item]);
+          knownSubjects.set(item.subjectId, {
+            name: item.subjectName || "Subject",
+            code: "",
+          });
+        }
       } else if (item.subjectName) {
         const found = Array.from(knownSubjects.entries()).find(
           ([, val]) => val.name.toLowerCase() === item.subjectName!.toLowerCase()
         );
         if (found) {
           map.get(found[0])!.push(item);
-        } else {
+        } else if (!isTeacher) {
           unassigned.push(item);
         }
-      } else {
+      } else if (!isTeacher) {
         unassigned.push(item);
       }
     }
@@ -209,7 +247,7 @@ export function ContentListView() {
 
     result.sort((a, b) => a.name.localeCompare(b.name));
 
-    if (unassigned.length > 0) {
+    if (unassigned.length > 0 && !isTeacher) {
       result.push({
         id: "general-resources",
         name: "General & Cross-Subject Resources",
@@ -219,7 +257,7 @@ export function ContentListView() {
     }
 
     return result;
-  }, [filteredByGradeItems, subjects, selectedGradeId]);
+  }, [filteredByGradeItems, subjects, selectedGradeId, isTeacher, allowedSubjectIds]);
 
   useEffect(() => {
     if (subjectGroups.length > 0 && openSubjectIds.size === 0) {
@@ -336,25 +374,75 @@ export function ContentListView() {
     });
   };
 
+  const selectedItems = useMemo(() => {
+    return items.filter((item) => selectedIds.has(item.id));
+  }, [items, selectedIds]);
+
+  const submittableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return item.status === "DRAFT" && (isAuthor || !isTeacher);
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const publishableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      const isTextbookOrRef = item.type === "TEXTBOOK" || item.type === "REFERENCE_BOOK";
+      if (!isTeacher) {
+        return (
+          item.status === "APPROVED" ||
+          item.status === "PENDING_REVIEW" ||
+          (!isTextbookOrRef && item.status === "DRAFT")
+        );
+      }
+      return (
+        (!isTextbookOrRef && item.status === "DRAFT" && isAuthor) ||
+        (isTextbookOrRef && item.status === "APPROVED" && isAuthor)
+      );
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const activatableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return item.status === "ARCHIVED" && (isAuthor || !isTeacher);
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
+  const deletableSelectedItems = useMemo(() => {
+    return selectedItems.filter((item) => {
+      const isAuthor = Boolean(user?.id && item.authorId === user.id);
+      return !isTeacher || (isAuthor && (item.status === "DRAFT" || item.status === "ARCHIVED"));
+    });
+  }, [selectedItems, user?.id, isTeacher]);
+
   const handleBatchSubmit = async () => {
-    for (const id of selectedIds) {
-      await submitMutation.mutateAsync(id);
+    for (const item of submittableSelectedItems) {
+      await submitMutation.mutateAsync(item.id);
     }
     setSelectedIds(new Set());
   };
 
   const handleBatchPublish = async () => {
-    for (const id of selectedIds) {
-      await publishMutation.mutateAsync(id);
+    for (const item of publishableSelectedItems) {
+      await publishMutation.mutateAsync(item.id);
+    }
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchActivate = async () => {
+    for (const item of activatableSelectedItems) {
+      await activateMutation.mutateAsync(item.id);
     }
     setSelectedIds(new Set());
   };
 
   const handleBatchDelete = () => {
-    if (selectedIds.size === 0) return;
+    if (deletableSelectedItems.length === 0) return;
     setDeleteTarget({
       type: "batch",
-      count: selectedIds.size,
+      count: deletableSelectedItems.length,
     });
   };
 
@@ -363,8 +451,8 @@ export function ContentListView() {
     if (deleteTarget.type === "single" && deleteTarget.id) {
       await deleteMutation.mutateAsync(deleteTarget.id);
     } else if (deleteTarget.type === "batch") {
-      for (const id of selectedIds) {
-        await deleteMutation.mutateAsync(id);
+      for (const item of deletableSelectedItems) {
+        await deleteMutation.mutateAsync(item.id);
       }
       setSelectedIds(new Set());
     }
@@ -509,30 +597,46 @@ export function ContentListView() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleBatchSubmit}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
-            >
-              <Send size={11} className="text-amber-500" />
-              <span>Submit</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleBatchPublish}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
-            >
-              <CheckCircle size={11} className="text-emerald-500" />
-              <span>Activate</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleBatchDelete}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors cursor-pointer"
-            >
-              <Trash2 size={11} />
-              <span>Delete</span>
-            </button>
+            {submittableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchSubmit}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Send size={11} className="text-muted-foreground" />
+                <span>Submit ({submittableSelectedItems.length})</span>
+              </button>
+            )}
+            {publishableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchPublish}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Check size={11} className="text-muted-foreground" />
+                <span>Publish ({publishableSelectedItems.length})</span>
+              </button>
+            )}
+            {activatableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchActivate}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <RotateCcw size={11} className="text-muted-foreground" />
+                <span>Activate ({activatableSelectedItems.length})</span>
+              </button>
+            )}
+            {deletableSelectedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBatchDelete}
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors cursor-pointer"
+              >
+                <Trash2 size={11} />
+                <span>Delete ({deletableSelectedItems.length})</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -574,8 +678,10 @@ export function ContentListView() {
               onOpenUpload={(item) => setUploadTargetItem(item)}
               onSaveNewVersion={handleOpenNewVersion}
               onSubmitForReview={(item) => submitMutation.mutate(item.id)}
+              onApprove={(item) => approveMutation.mutate(item.id)}
               onPublish={(item) => publishMutation.mutate(item.id)}
               onArchive={(item) => archiveMutation.mutate(item.id)}
+              onActivate={(item) => activateMutation.mutate(item.id)}
               onDelete={handleDelete}
               onAddMaterial={handleOpenAddForSubject}
             />
@@ -634,6 +740,8 @@ export function ContentListView() {
           setItemToEdit(null);
         }}
         itemToEdit={itemToEdit}
+        allowedSubjectIds={isTeacher ? allowedSubjectIds : undefined}
+        allowedGradeIds={isTeacher ? allowedGradeIds : undefined}
       />
 
       <ContentDetailModal

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, RefObject } from "react";
+
+import { createPortal } from "react-dom";
 import {
   MoreVertical,
   ArrowRightLeft,
@@ -9,19 +11,17 @@ import {
   CheckSquare,
   Square,
   Users,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { StudentRosterItem } from "../types/student-assignment.types";
-import { PaginationMeta } from "@/shared/types";
 import { getEnrollmentStatusBadgeClass, formatEnrollmentStatus } from "@/shared/utils";
 
 interface StudentAssignmentsTableProps {
   readonly items: readonly StudentRosterItem[];
   readonly selectedStudentIds: readonly string[];
-  readonly pagination?: PaginationMeta;
-  readonly onPageChange?: (page: number) => void;
-  readonly onLimitChange?: (limit: number) => void;
+  readonly sentinelRef: RefObject<HTMLDivElement | null>;
+  readonly isFetchingMore: boolean;
+  readonly hasMore: boolean;
+  readonly total: number;
   readonly onToggleSelect: (studentId: string) => void;
   readonly onSelectAll: (studentIds: readonly string[]) => void;
   readonly onClearSelection: () => void;
@@ -42,46 +42,56 @@ function StudentRowActions({
   readonly onWithdraw: (student: StudentRosterItem) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 192;
+    const menuHeight = 130;
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
+    }
+    let left = rect.right - menuWidth;
+    if (left < 10) left = 10;
+    setCoords({ top, left });
+  }, []);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    if (!isOpen) return;
+    updatePosition();
+    const onScroll = () => updatePosition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [isOpen, updatePosition]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current && !menuRef.current.contains(target) &&
+        buttonRef.current && !buttonRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [isOpen]);
 
-  const handleTransfer = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOpen(false);
-    onTransferSingle(item);
-  };
-
-  const handleHistory = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOpen(false);
-    onShowHistory(item);
-  };
-
-  const handleWithdraw = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOpen(false);
-    onWithdraw(item);
-  };
-
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
@@ -94,51 +104,52 @@ function StudentRowActions({
         <MoreVertical size={16} />
       </button>
 
-      {isOpen && (
+      {isOpen && coords && createPortal(
         <div
+          ref={menuRef}
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-9 w-48 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
+          style={{ position: "fixed", top: `${coords.top}px`, left: `${coords.left}px`, zIndex: 99999 }}
+          className="w-48 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
         >
           <button
             type="button"
-            onClick={handleTransfer}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onTransferSingle(item); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
           >
             <ArrowRightLeft size={14} className="text-muted-foreground" />
             <span>Transfer Section</span>
           </button>
-
           <button
             type="button"
-            onClick={handleHistory}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onShowHistory(item); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
           >
             <History size={14} className="text-muted-foreground" />
             <span>Enrollment History</span>
           </button>
-
           <div className="my-1 border-t border-border" />
-
           <button
             type="button"
-            onClick={handleWithdraw}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onWithdraw(item); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
           >
             <UserMinus size={14} />
             <span>Withdraw Student</span>
           </button>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
 export function StudentAssignmentsTable({
   items,
   selectedStudentIds,
-  pagination,
-  onPageChange,
-  onLimitChange,
+  sentinelRef,
+  isFetchingMore,
+  hasMore,
+  total,
   onToggleSelect,
   onSelectAll,
   onClearSelection,
@@ -361,55 +372,19 @@ export function StudentAssignmentsTable({
         })}
       </div>
 
-      {/* Pagination Controls */}
-      {pagination && pagination.total > 0 && (
-        <div className="bg-card rounded-2xl border border-border px-3.5 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
-          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
-            <span>
-              Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} students
-            </span>
-            {onLimitChange && (
-              <div className="flex items-center gap-1.5 pl-2 border-l border-border">
-                <span className="text-[11px]">Rows:</span>
-                <select
-                  value={pagination.limit}
-                  onChange={(e) => onLimitChange(Number(e.target.value))}
-                  className="h-7 px-1.5 rounded-lg bg-background border border-border text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60">
-            <button
-              type="button"
-              disabled={pagination.page <= 1}
-              onClick={() => onPageChange && onPageChange(pagination.page - 1)}
-              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
-              title="Previous Page"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="font-medium text-foreground px-1">
-              Page {pagination.page} of {pagination.totalPages || 1}
-            </span>
-            <button
-              type="button"
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => onPageChange && onPageChange(pagination.page + 1)}
-              className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed"
-              title="Next Page"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+      {total > 0 && (
+        <div className="bg-card rounded-2xl border border-border px-3.5 py-3 sm:px-5 sm:py-3.5 flex items-center justify-between gap-3 text-xs text-muted-foreground shadow-xs">
+          <span>
+            Showing {items.length} of {total} students
+          </span>
         </div>
       )}
+
+      <div ref={sentinelRef} className="flex justify-center py-4">
+        {isFetchingMore && (
+          <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        )}
+      </div>
     </div>
   );
 }

@@ -15,4 +15,5 @@ export * from "./document.util";
 export * from "./phone.util";
 export * from "./address.util";
 export * from "./curriculum.util";
+export * from "./table-lazy-load.util";
 export { cn } from "@/lib/utils";

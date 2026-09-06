@@ -14,19 +14,30 @@ import { StudentEnrollmentStatusType } from "../../../../../shared/constants/stu
 
 export class StudentAssignmentRepository {
   async findRoster(params: RosterFilterParams): Promise<PaginatedRosterResult> {
-    const { tenantId, academicYearId, gradeId, sectionId, search, page = 1, limit = 20 } = params;
+    const { tenantId, academicYearId, gradeId, sectionId, search, page = 1, limit = 20, teacherId } = params;
 
     const where: Prisma.StudentEnrollmentWhereInput = {
       tenantId,
       academicYearId,
     };
 
+    const sectionFilter: Prisma.SectionWhereInput = {};
+    if (gradeId) {
+      sectionFilter.gradeId = gradeId;
+    }
+    if (teacherId) {
+      sectionFilter.assignments = {
+        some: {
+          teacherId,
+          status: "ACTIVE",
+        },
+      };
+    }
+
     if (sectionId) {
       where.sectionId = sectionId;
-    } else if (gradeId) {
-      where.section = {
-        gradeId,
-      };
+    } else if (gradeId || teacherId) {
+      where.section = sectionFilter;
     }
 
     if (search) {
@@ -57,6 +68,9 @@ export class StudentAssignmentRepository {
               middleName: true,
               lastName: true,
               gender: true,
+              user: {
+                select: { username: true },
+              },
             },
           },
           academicYear: {
@@ -91,6 +105,7 @@ export class StudentAssignmentRepository {
       studentId: e.student.id,
       studentCode: e.student.studentCode,
       fullName: `${e.student.firstName} ${e.student.middleName || ""} ${e.student.lastName}`.trim(),
+      username: e.student.user?.username ?? null,
       gender: e.student.gender as "MALE" | "FEMALE",
       academicYearId: e.academicYear.id,
       academicYearName: e.academicYear.name,

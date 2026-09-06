@@ -155,6 +155,21 @@ export class ObjectiveRepository {
     };
   }
 
+  async countObjectiveDependencies(id: string): Promise<{
+    readonly contentCount: number;
+    readonly questionCount: number;
+    readonly evidenceCount: number;
+  }> {
+    return runWithoutTenant(async () => {
+      const [contentCount, questionCount, evidenceCount] = await Promise.all([
+        prisma.contentObjective.count({ where: { objectiveId: id } }),
+        prisma.questionObjective.count({ where: { objectiveId: id } }),
+        prisma.learningEvidence.count({ where: { objectiveId: id } }),
+      ]);
+      return { contentCount, questionCount, evidenceCount };
+    });
+  }
+
   async deleteObjective(id: string): Promise<void> {
     await runWithoutTenant(() =>
       prisma.learningObjective.delete({

@@ -34,7 +34,7 @@ export const endTeacherAssignmentSchema = z.object({
 });
 
 export const teacherAssignmentFilterSchema = z.object({
-  academicYearId: z.string().uuid("Invalid academic year ID"),
+  academicYearId: z.string().uuid("Invalid academic year ID").optional(),
   gradeId: z.string().uuid().optional(),
   sectionId: z.string().uuid().optional(),
   subjectId: z.string().uuid().optional(),

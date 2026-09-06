@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { studentAssignmentService } from "../services/student-assignment.service";
 import {
   StudentRosterFilters,
@@ -13,6 +13,8 @@ export const STUDENT_ASSIGNMENT_QUERY_KEYS = {
   all: ["academic-student-assignments"] as const,
   roster: (filters: StudentRosterFilters) =>
     [...STUDENT_ASSIGNMENT_QUERY_KEYS.all, "roster", filters] as const,
+  rosterInfinite: (filters: Omit<StudentRosterFilters, "page">) =>
+    [...STUDENT_ASSIGNMENT_QUERY_KEYS.all, "roster-infinite", filters] as const,
   sectionsCapacity: (academicYearId: string, gradeLevel: number) =>
     [...STUDENT_ASSIGNMENT_QUERY_KEYS.all, "sections-capacity", academicYearId, gradeLevel] as const,
   promotionPreview: (query: PromotionPreviewQuery) =>
@@ -27,6 +29,20 @@ export function useStudentRoster(filters: StudentRosterFilters) {
     queryFn: () => studentAssignmentService.getRoster(filters),
     enabled: Boolean(filters.academicYearId),
     placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useInfiniteStudentRoster(filters: Omit<StudentRosterFilters, "page">) {
+  return useInfiniteQuery({
+    queryKey: STUDENT_ASSIGNMENT_QUERY_KEYS.rosterInfinite(filters),
+    queryFn: ({ pageParam }) =>
+      studentAssignmentService.getRoster({ ...filters, page: pageParam as number, limit: filters.limit ?? 30 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    },
+    enabled: Boolean(filters.academicYearId),
   });
 }
 

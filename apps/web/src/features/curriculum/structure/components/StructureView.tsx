@@ -31,8 +31,18 @@ import {
   SelectDropdownOption,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 
 export function StructureView() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SCHOOL_ADMIN") &&
+      !user?.roles?.includes("SYSTEM_ADMIN")
+  );
+  const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
+
   const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>("");
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
@@ -91,10 +101,25 @@ export function StructureView() {
   };
 
   const {
-    data: subjects = [],
+    data: rawSubjects = [],
     isLoading: isLoadingSubjects,
     error: subjectsError,
   } = useCurriculumSubjects(selectedVersionId);
+
+  const subjects = useMemo(() => {
+    if (!isTeacher) return rawSubjects;
+    if (allowedSubjectIds.length === 0 && allowedGradeIds.length === 0) return rawSubjects;
+    return rawSubjects.filter((s) => {
+      const matchSubject =
+        allowedSubjectIds.length === 0 ||
+        allowedSubjectIds.includes(s.subjectId) ||
+        allowedSubjectIds.includes(s.id);
+      const matchGrade =
+        allowedGradeIds.length === 0 ||
+        allowedGradeIds.includes(s.gradeId);
+      return matchSubject && matchGrade;
+    });
+  }, [rawSubjects, isTeacher, allowedSubjectIds, allowedGradeIds]);
 
   useEffect(() => {
     if (subjects.length > 0) {
@@ -257,15 +282,17 @@ export function StructureView() {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAddSubjectOpen(true)}
-            disabled={!selectedVersionId}
-            className="inline-flex items-center justify-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
-          >
-            <Plus size={13} />
-            <span>Subject</span>
-          </button>
+          {!isTeacher && (
+            <button
+              type="button"
+              onClick={() => setIsAddSubjectOpen(true)}
+              disabled={!selectedVersionId}
+              className="inline-flex items-center justify-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+            >
+              <Plus size={13} />
+              <span>Subject</span>
+            </button>
+          )}
         </div>
 
         {isLoadingSubjects ? (
@@ -282,14 +309,16 @@ export function StructureView() {
             <p className="text-xs sm:text-sm font-bold text-foreground">
               No subjects configured in this version
             </p>
-            <button
-              type="button"
-              onClick={() => setIsAddSubjectOpen(true)}
-              className="inline-flex items-center gap-1 h-7.5 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Plus size={13} />
-              <span>Subject</span>
-            </button>
+            {!isTeacher && (
+              <button
+                type="button"
+                onClick={() => setIsAddSubjectOpen(true)}
+                className="inline-flex items-center gap-1 h-7.5 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Plus size={13} />
+                <span>Subject</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -341,28 +370,30 @@ export function StructureView() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSubjectToDelete(selectedSubject)}
-                title="Remove subject from version"
-                className="h-7.5 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <Trash2 size={13} />
-                <span className="hidden sm:inline">Remove Subject</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUnitToEdit(null);
-                  setIsAddUnitOpen(true);
-                }}
-                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
-              >
-                <Plus size={13} />
-                <span>Unit</span>
-              </button>
-            </div>
+            {!isTeacher && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSubjectToDelete(selectedSubject)}
+                  title="Remove subject from version"
+                  className="h-7.5 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 size={13} />
+                  <span className="hidden sm:inline">Remove Subject</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnitToEdit(null);
+                    setIsAddUnitOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus size={13} />
+                  <span>Unit</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {isLoadingUnits ? (
@@ -379,17 +410,19 @@ export function StructureView() {
               <p className="text-xs sm:text-sm font-bold text-foreground">
                 No units defined for this subject yet
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setUnitToEdit(null);
-                  setIsAddUnitOpen(true);
-                }}
-                className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
-              >
-                <Plus size={13} />
-                <span>Unit</span>
-              </button>
+              {!isTeacher && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnitToEdit(null);
+                    setIsAddUnitOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                >
+                  <Plus size={13} />
+                  <span>Unit</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -403,6 +436,7 @@ export function StructureView() {
                   onDelete={(item) => setUnitToDelete(item)}
                   onMoveUp={(item) => handleMoveUnit(item, "up")}
                   onMoveDown={(item) => handleMoveUnit(item, "down")}
+                  isReadOnly={isTeacher}
                 />
               ))}
             </div>

@@ -128,6 +128,20 @@ export function useSubmitContent() {
   });
 }
 
+export function useApproveContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation<LearningContentDetailItem, Error, string>({
+    mutationFn: (id) => contentService.approveContent(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: LEARNING_CONTENT_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: [...LEARNING_CONTENT_QUERY_KEY, "detail", id],
+      });
+    },
+  });
+}
+
 export function usePublishContent() {
   const queryClient = useQueryClient();
 
@@ -147,6 +161,20 @@ export function useArchiveContent() {
 
   return useMutation<LearningContentDetailItem, Error, string>({
     mutationFn: (id) => contentService.archiveContent(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: LEARNING_CONTENT_QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: [...LEARNING_CONTENT_QUERY_KEY, "detail", id],
+      });
+    },
+  });
+}
+
+export function useActivateContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation<LearningContentDetailItem, Error, string>({
+    mutationFn: (id) => contentService.activateContent(id),
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: LEARNING_CONTENT_QUERY_KEY });
       queryClient.invalidateQueries({

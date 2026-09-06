@@ -13,19 +13,36 @@ import {
 
 export class GradeRepository {
   async findMany(params: GradeFilterParams): Promise<readonly GradeRecord[]> {
-    const { tenantId, isActive, category, academicYearId } = params;
+    const { tenantId, isActive, category, academicYearId, teacherId } = params;
 
-    const where: Prisma.GradeWhereInput = {};
+    const conditions: Prisma.GradeWhereInput[] = [];
     if (tenantId) {
-      where.OR = [{ tenantId }, { tenantId: null }];
+      conditions.push({ OR: [{ tenantId }, { tenantId: null }] });
     }
-    if (isActive !== undefined) where.isActive = isActive;
-
+    if (isActive !== undefined) {
+      conditions.push({ isActive });
+    }
     if (category === "ELEMENTARY") {
-      where.level = { in: [7, 8] };
+      conditions.push({ level: { in: [7, 8] } });
     } else if (category === "HIGH_SCHOOL") {
-      where.level = { in: [9, 10, 11, 12] };
+      conditions.push({ level: { in: [9, 10, 11, 12] } });
     }
+    if (teacherId) {
+      conditions.push({
+        sections: {
+          some: {
+            assignments: {
+              some: {
+                teacherId,
+                status: "ACTIVE",
+              },
+            },
+          },
+        },
+      });
+    }
+
+    const where: Prisma.GradeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     let targetYearId = academicYearId;
     if (!targetYearId && tenantId) {
@@ -45,6 +62,7 @@ export class GradeRepository {
           where: {
             ...(tenantId ? { tenantId } : {}),
             ...(targetYearId ? { academicYearId: targetYearId } : {}),
+            ...(teacherId ? { assignments: { some: { teacherId, status: "ACTIVE" } } } : {}),
           },
           include: {
             _count: {

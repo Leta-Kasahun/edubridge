@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, BookOpen, Layers, UploadCloud, File, Trash2 } from "lucide-react";
 import {
@@ -26,7 +26,6 @@ import {
   useCurriculumSubjects,
   useCurriculumUnits,
   useCurriculumTopics,
-  useLearningObjectives,
 } from "@/features/curriculum/structure/hooks/useStructure";
 import {
   SelectDropdown,
@@ -40,6 +39,9 @@ interface ContentFormModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly itemToEdit?: LearningContentListItem | LearningContentDetailItem | null;
+  readonly allowedSubjectIds?: readonly string[];
+  readonly allowedGradeIds?: readonly string[];
+  readonly onContentCreated?: () => void;
 }
 
 const CONTENT_SCOPE_OPTIONS: readonly SelectDropdownOption[] = [
@@ -66,18 +68,25 @@ const CONTENT_TYPE_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "TEXT", label: "Text" },
 ];
 
+const GRADE_BANDS: readonly { label: string; levels: readonly number[] }[] = [
+  { label: "Grades 7 & 8", levels: [7, 8] },
+  { label: "Grades 9 & 10", levels: [9, 10] },
+  { label: "Grades 11 & 12", levels: [11, 12] },
+];
+
 export function ContentFormModal({
   isOpen,
   onClose,
   itemToEdit,
+  allowedSubjectIds,
+  allowedGradeIds,
+  onContentCreated,
 }: ContentFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scope, setScope] = useState<ContentScope>("TOPIC");
   const [type, setType] = useState<ContentType>("LESSON");
-  const [initialText, setInitialText] = useState("");
-  const [changeNote, setChangeNote] = useState("");
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -92,7 +101,6 @@ export function ContentFormModal({
   const [selectedCurriculumSubjectId, setSelectedCurriculumSubjectId] = useState("");
   const [selectedUnitId, setSelectedUnitId] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState("");
-  const [selectedObjectiveIds, setSelectedObjectiveIds] = useState<string[]>([]);
 
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -122,10 +130,6 @@ export function ContentFormModal({
     selectedUnitId,
     Boolean(selectedUnitId)
   );
-  const { data: objectives = [] } = useLearningObjectives(
-    selectedTopicId,
-    Boolean(selectedTopicId)
-  );
 
   useEffect(() => {
     setMounted(true);
@@ -142,7 +146,6 @@ export function ContentFormModal({
         setSelectedSubjectId(itemToEdit.subjectId || "");
         setSelectedGradeId(itemToEdit.gradeId || "");
         setSelectedUnitId(itemToEdit.unitId || "");
-        setChangeNote("");
 
         if (itemToEdit.targetGradeLevels && itemToEdit.targetGradeLevels.length > 0) {
           setSelectedGradeLevels([...itemToEdit.targetGradeLevels]);
@@ -154,7 +157,7 @@ export function ContentFormModal({
 
         if ("primaryTopic" in itemToEdit && itemToEdit.primaryTopic) {
           setSelectedTopicId(itemToEdit.primaryTopic.topicId);
-        } else if ("topics" in itemToEdit && itemToEdit.topics.length > 0) {
+        } else if ("topics" in itemToEdit && itemToEdit.topics && itemToEdit.topics.length > 0) {
           setSelectedTopicId(itemToEdit.topics[0]?.topicId || "");
         }
       } else {
@@ -168,9 +171,6 @@ export function ContentFormModal({
         setSelectedCurriculumSubjectId("");
         setSelectedUnitId("");
         setSelectedTopicId("");
-        setSelectedObjectiveIds([]);
-        setInitialText("");
-        setChangeNote("");
         setSelectedFiles([]);
       }
     }
@@ -196,40 +196,110 @@ export function ContentFormModal({
     }
   }, [versions]);
 
-  if (!mounted || !isOpen) return null;
+  useEffect(() => {
+    if (selectedGradeId && selectedSubjectId && curriculumSubjects.length > 0) {
+      const match = curriculumSubjects.find(
+        (cs) => cs.gradeId === selectedGradeId && cs.subjectId === selectedSubjectId
+      );
+      if (match) {
+        setSelectedCurriculumSubjectId(match.id);
+      } else {
+        setSelectedCurriculumSubjectId("");
+      }
+    } else if (!selectedGradeId || !selectedSubjectId) {
+      setSelectedCurriculumSubjectId("");
+    }
+  }, [selectedGradeId, selectedSubjectId, curriculumSubjects]);
 
-  const subjectOptions: readonly SelectDropdownOption[] = subjectsList.map(
-    (s) => ({
+  const filteredSubjectsList =
+    allowedSubjectIds && allowedSubjectIds.length > 0
+      ? subjectsList.filter((s) => allowedSubjectIds.includes(s.id))
+      : subjectsList;
+
+  const filteredGradesList =
+    allowedGradeIds && allowedGradeIds.length > 0
+      ? gradesList.filter((g) => allowedGradeIds.includes(g.id))
+      : gradesList;
+
+  const filteredCurriculumSubjects = curriculumSubjects.filter((cs) => {
+    if (
+      allowedSubjectIds &&
+      allowedSubjectIds.length > 0 &&
+      !allowedSubjectIds.includes(cs.subjectId)
+    ) {
+      return false;
+    }
+    if (
+      allowedGradeIds &&
+      allowedGradeIds.length > 0 &&
+      !allowedGradeIds.includes(cs.gradeId)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return filteredGradesList
+      .slice()
+      .sort((a, b) => a.level - b.level)
+      .map((g) => ({
+        value: g.id,
+        label: `Grade ${g.level}`,
+      }));
+  }, [filteredGradesList]);
+
+  const availableSubjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    let subjects = filteredSubjectsList;
+
+    if (selectedGradeId && curriculumSubjects.length > 0) {
+      const subjectIdsForGrade = new Set(
+        curriculumSubjects
+          .filter((cs) => cs.gradeId === selectedGradeId)
+          .map((cs) => cs.subjectId)
+      );
+      if (subjectIdsForGrade.size > 0) {
+        subjects = filteredSubjectsList.filter((s) => subjectIdsForGrade.has(s.id));
+      }
+    }
+
+    return subjects.map((s) => ({
       value: s.id,
-      label: `${s.name} (${s.code})`,
-    })
-  );
-
-  const gradeOptions: readonly SelectDropdownOption[] = gradesList.map((g) => ({
-    value: g.id,
-    label: `Grade ${g.level}`,
-  }));
-
-  const curriculumSubjectOptions: readonly SelectDropdownOption[] =
-    curriculumSubjects.map((cs) => ({
-      value: cs.id,
-      label: `${cs.subjectName} - Grade ${cs.gradeLevel}`,
+      label: s.code ? `${s.code} - ${s.name}` : s.name,
     }));
+  }, [filteredSubjectsList, selectedGradeId, curriculumSubjects]);
 
-  const unitOptions: readonly SelectDropdownOption[] = units.map((u) => ({
-    value: u.id,
-    label: `${u.code}: ${u.title}`,
-  }));
+  const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return filteredSubjectsList.map((s) => ({
+      value: s.id,
+      label: s.code ? `${s.code} - ${s.name}` : s.name,
+    }));
+  }, [filteredSubjectsList]);
 
-  const topicOptions: readonly SelectDropdownOption[] = topics.map((t) => ({
-    value: t.id,
-    label: `${t.code}: ${t.title}`,
-  }));
+  const unitOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return units.map((u) => ({
+      value: u.id,
+      label: u.code ? `${u.code}: ${u.title}` : u.title,
+    }));
+  }, [units]);
+
+  const topicOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return topics.map((t) => ({
+      value: t.id,
+      label: t.code ? `${t.code}: ${t.title}` : t.title,
+    }));
+  }, [topics]);
 
   const availableGradeLevels =
-    gradesList.length > 0
+    filteredGradesList.length > 0
+      ? filteredGradesList.map((g) => g.level).sort((a, b) => a - b)
+      : gradesList.length > 0
       ? gradesList.map((g) => g.level).sort((a, b) => a - b)
       : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  const visibleGradeBands = GRADE_BANDS.filter((band) =>
+    band.levels.some((lvl) => availableGradeLevels.includes(lvl))
+  );
 
   const toggleGradeLevel = (level: number) => {
     setSelectedGradeLevels((prev) =>
@@ -240,12 +310,13 @@ export function ContentFormModal({
   };
 
   const handleSelectGradeBand = (levels: readonly number[]) => {
+    const validLevels = levels.filter((lvl) => availableGradeLevels.includes(lvl));
     setSelectedGradeLevels((prev) => {
-      const allSelected = levels.every((l) => prev.includes(l));
+      const allSelected = validLevels.every((l) => prev.includes(l));
       if (allSelected) {
-        return prev.filter((l) => !levels.includes(l));
+        return prev.filter((l) => !validLevels.includes(l));
       }
-      return Array.from(new Set([...prev, ...levels])).sort((a, b) => a - b);
+      return Array.from(new Set([...prev, ...validLevels])).sort((a, b) => a - b);
     });
   };
 
@@ -256,7 +327,7 @@ export function ContentFormModal({
     setFormError(null);
 
     if (!title.trim()) {
-      setFormError("Material title is required.");
+      setFormError("Title is required.");
       return;
     }
 
@@ -270,38 +341,61 @@ export function ContentFormModal({
       }
     }
 
-    if (scope === "SUBJECT" && !selectedSubjectId) {
+    let finalSubjectId = selectedSubjectId;
+    let finalGradeId = resolvedGradeId;
+    let finalUnitId = selectedUnitId;
+    let finalTopicId = selectedTopicId;
+
+    if (scope === "UNIT" || scope === "TOPIC") {
+      if (selectedCurriculumSubjectId) {
+        const matchedCs = curriculumSubjects.find((c) => c.id === selectedCurriculumSubjectId);
+        if (matchedCs) {
+          finalSubjectId = matchedCs.subjectId;
+          finalGradeId = matchedCs.gradeId;
+        }
+      }
+    }
+
+    if (scope === "SUBJECT" && !finalSubjectId) {
       setFormError("Please select a subject.");
       return;
     }
 
-    if (isReferenceBook && sortedGradeLevels.length === 0 && !resolvedGradeId) {
-      setFormError(
-        "Please select at least one grade level for the reference book."
-      );
+    if (isReferenceBook && sortedGradeLevels.length === 0 && !finalGradeId) {
+      setFormError("Please select at least one grade level.");
       return;
     }
 
-    if (!isReferenceBook && scope === "GRADE_SUBJECT") {
-      if (!resolvedGradeId) {
+    if (!isReferenceBook && (scope === "GRADE_SUBJECT" || scope === "UNIT" || scope === "TOPIC")) {
+      if (!finalGradeId) {
         setFormError("Please select a grade.");
         return;
       }
-      if (!selectedSubjectId) {
+      if (!finalSubjectId) {
         setFormError("Please select a subject.");
         return;
       }
     }
 
-    if (scope === "UNIT" && !selectedUnitId) {
-      setFormError("Please select a curriculum unit.");
+    if (scope === "UNIT" && !finalUnitId) {
+      setFormError("Please select a unit.");
       return;
     }
 
-    if (scope === "TOPIC" && !selectedTopicId) {
-      setFormError("Please select a curriculum topic.");
+    if (scope === "TOPIC" && !finalTopicId) {
+      setFormError("Please select a topic.");
       return;
     }
+
+    const calculatedGradeLevels =
+      sortedGradeLevels.length > 0
+        ? sortedGradeLevels
+        : finalGradeId
+        ? (() => {
+            const match = gradesList.find((g) => g.id === finalGradeId);
+            return match ? [match.level] : [];
+          })()
+        : [];
 
     try {
       if (isEditing && itemToEdit) {
@@ -310,10 +404,11 @@ export function ContentFormModal({
           description: description.trim() || null,
           type,
           scope,
-          subjectId: selectedSubjectId || null,
-          gradeId: resolvedGradeId || null,
-          unitId: selectedUnitId || null,
-          targetGradeLevels: sortedGradeLevels,
+          subjectId: finalSubjectId || null,
+          gradeId: finalGradeId || null,
+          unitId: finalUnitId || null,
+          curriculumVersionId: selectedVersionId || null,
+          targetGradeLevels: calculatedGradeLevels,
         };
 
         await updateMetadataMutation.mutateAsync(updatePayload);
@@ -324,17 +419,14 @@ export function ContentFormModal({
           type,
           scope,
           source: "TEACHER",
-          subjectId: selectedSubjectId || undefined,
-          gradeId: resolvedGradeId || undefined,
-          unitId: selectedUnitId || undefined,
-          targetGradeLevels: sortedGradeLevels,
-          primaryTopicId: scope === "TOPIC" ? selectedTopicId : undefined,
+          subjectId: finalSubjectId || undefined,
+          gradeId: finalGradeId || undefined,
+          unitId: finalUnitId || undefined,
+          curriculumVersionId: selectedVersionId || undefined,
+          targetGradeLevels: calculatedGradeLevels,
+          primaryTopicId: scope === "TOPIC" ? finalTopicId : undefined,
           secondaryTopicIds: [],
-          objectiveIds: scope === "TOPIC" ? selectedObjectiveIds : [],
-          initialVersionBody: initialText.trim()
-            ? { text: initialText.trim() }
-            : undefined,
-          changeNote: changeNote.trim() || undefined,
+          objectiveIds: [],
         };
 
         const created = await createMutation.mutateAsync(createPayload);
@@ -349,6 +441,9 @@ export function ContentFormModal({
         }
       }
 
+      if (onContentCreated) {
+        onContentCreated();
+      }
       onClose();
     } catch (err: unknown) {
       setFormError(getErrorMessage(err, "Failed to save learning material"));
@@ -383,7 +478,11 @@ export function ContentFormModal({
   };
 
   const isPending =
-    createMutation.isPending || updateMetadataMutation.isPending;
+    createMutation.isPending ||
+    updateMetadataMutation.isPending ||
+    uploadAttachmentMutation.isPending;
+
+  if (!mounted || !isOpen) return null;
 
   return createPortal(
     <div
@@ -401,10 +500,10 @@ export function ContentFormModal({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-foreground">
-                {isEditing ? "Edit Learning Material" : "New Learning Material"}
+                {isEditing ? "Edit Material" : "Upload Material"}
               </h2>
               <p className="text-[11px] sm:text-xs text-muted-foreground">
-                Manage curriculum alignment and material metadata
+                Academic alignment and material information
               </p>
             </div>
           </div>
@@ -489,27 +588,16 @@ export function ContentFormModal({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1 text-[10px]">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectGradeBand([7, 8])}
-                        className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
-                      >
-                        Grades 7 & 8
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectGradeBand([9, 10])}
-                        className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
-                      >
-                        Grades 9 & 10
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectGradeBand([11, 12])}
-                        className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
-                      >
-                        Grades 11 & 12
-                      </button>
+                      {visibleGradeBands.map((band) => (
+                        <button
+                          key={band.label}
+                          type="button"
+                          onClick={() => handleSelectGradeBand(band.levels)}
+                          className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
+                        >
+                          {band.label}
+                        </button>
+                      ))}
                       <button
                         type="button"
                         onClick={() =>
@@ -567,52 +655,43 @@ export function ContentFormModal({
               </div>
             )}
 
-            {scope === "GRADE_SUBJECT" && !isReferenceBook && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Grade <span className="text-destructive">*</span>
-                  </label>
-                  <SelectDropdown
-                    options={gradeOptions}
-                    value={selectedGradeId}
-                    onChange={setSelectedGradeId}
-                    placeholder="Select grade"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Subject <span className="text-destructive">*</span>
-                  </label>
-                  <SelectDropdown
-                    options={subjectOptions}
-                    value={selectedSubjectId}
-                    onChange={setSelectedSubjectId}
-                    placeholder="Select subject"
-                  />
-                </div>
-              </div>
-            )}
-
-            {(scope === "UNIT" || scope === "TOPIC") && (
+            {!isReferenceBook && scope !== "SUBJECT" && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                      Grade <span className="text-destructive">*</span>
+                    </label>
+                    <SelectDropdown
+                      options={gradeOptions}
+                      value={selectedGradeId}
+                      onChange={(val) => {
+                        setSelectedGradeId(val);
+                        setSelectedUnitId("");
+                        setSelectedTopicId("");
+                      }}
+                      placeholder="Select grade"
+                    />
+                  </div>
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Subject <span className="text-destructive">*</span>
                     </label>
                     <SelectDropdown
-                      options={curriculumSubjectOptions}
-                      value={selectedCurriculumSubjectId}
+                      options={availableSubjectOptions}
+                      value={selectedSubjectId}
                       onChange={(val) => {
-                        setSelectedCurriculumSubjectId(val);
+                        setSelectedSubjectId(val);
                         setSelectedUnitId("");
                         setSelectedTopicId("");
                       }}
-                      placeholder="Select subject"
+                      placeholder={selectedGradeId ? "Select subject" : "Select grade first"}
+                      disabled={!selectedGradeId && availableSubjectOptions.length === 0}
                     />
                   </div>
+                </div>
 
+                {scope === "UNIT" && (
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Unit <span className="text-destructive">*</span>
@@ -624,24 +703,59 @@ export function ContentFormModal({
                         setSelectedUnitId(val);
                         setSelectedTopicId("");
                       }}
-                      placeholder="Select unit"
-                      disabled={!selectedCurriculumSubjectId}
+                      placeholder={
+                        !selectedSubjectId
+                          ? "Select subject first"
+                          : unitOptions.length === 0
+                          ? "No units available"
+                          : "Select unit"
+                      }
+                      disabled={!selectedCurriculumSubjectId || unitOptions.length === 0}
                     />
                   </div>
-                </div>
+                )}
 
                 {scope === "TOPIC" && (
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Topic <span className="text-destructive">*</span>
-                    </label>
-                    <SelectDropdown
-                      options={topicOptions}
-                      value={selectedTopicId}
-                      onChange={setSelectedTopicId}
-                      placeholder="Select topic"
-                      disabled={!selectedUnitId}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                        Unit <span className="text-destructive">*</span>
+                      </label>
+                      <SelectDropdown
+                        options={unitOptions}
+                        value={selectedUnitId}
+                        onChange={(val) => {
+                          setSelectedUnitId(val);
+                          setSelectedTopicId("");
+                        }}
+                        placeholder={
+                          !selectedSubjectId
+                            ? "Select subject first"
+                            : unitOptions.length === 0
+                            ? "No units available"
+                            : "Select unit"
+                        }
+                        disabled={!selectedCurriculumSubjectId || unitOptions.length === 0}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                        Topic <span className="text-destructive">*</span>
+                      </label>
+                      <SelectDropdown
+                        options={topicOptions}
+                        value={selectedTopicId}
+                        onChange={setSelectedTopicId}
+                        placeholder={
+                          !selectedUnitId
+                            ? "Select unit first"
+                            : topicOptions.length === 0
+                            ? "No topics available"
+                            : "Select topic"
+                        }
+                        disabled={!selectedUnitId || topicOptions.length === 0}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -657,7 +771,7 @@ export function ContentFormModal({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Physics Grade 9-12 or Unit 2 Review"
+              placeholder="Title"
               className="w-full h-9 px-3 text-xs bg-muted/30 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors"
             />
           </div>
@@ -670,7 +784,7 @@ export function ContentFormModal({
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief overview or description..."
+              placeholder="Description"
               className="w-full p-3 text-xs bg-muted/30 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors resize-none"
             />
           </div>
@@ -678,7 +792,7 @@ export function ContentFormModal({
           {!isEditing && (
             <div className="space-y-2">
               <label className="block text-xs font-semibold text-foreground">
-                Attach Files
+                Files
               </label>
 
               <div
@@ -751,21 +865,6 @@ export function ContentFormModal({
             </div>
           )}
 
-          {!isEditing && (
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Summary Notes
-              </label>
-              <textarea
-                rows={2}
-                value={initialText}
-                onChange={(e) => setInitialText(e.target.value)}
-                placeholder="Notes or instructions..."
-                className="w-full p-3 text-xs bg-muted/30 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors resize-none"
-              />
-            </div>
-          )}
-
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
             <button
               type="button"
@@ -776,10 +875,10 @@ export function ContentFormModal({
             </button>
             <SubmitButton
               isLoading={isPending}
-              loadingText="Saving..."
+              loadingText={isEditing ? "Saving..." : "Uploading..."}
               size="sm"
             >
-              {isEditing ? "Save Changes" : "Create Material"}
+              {isEditing ? "Save" : "Upload"}
             </SubmitButton>
           </div>
         </form>

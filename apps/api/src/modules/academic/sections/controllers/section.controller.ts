@@ -9,6 +9,7 @@ import {
   updateSectionStatusSchema,
 } from "../schemas/section.schema.js";
 import { SectionStatusType } from "../../../../shared/constants/section.constants.js";
+import { resolveTeacherScopeId } from "../../../../shared/utils/teacher-scope.util.js";
 
 function getTenantId(req: Request): string {
   const tenantId = req.user?.tenantId || (req.headers["x-tenant-id"] as string);
@@ -19,10 +20,11 @@ function getTenantId(req: Request): string {
 }
 
 export class SectionController {
-  constructor(private readonly service: SectionService = sectionService) {}
+  constructor(private readonly service: SectionService = sectionService) { }
 
   getSections = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
+    const teacherId = await resolveTeacherScopeId(req, tenantId);
     const academicYearId =
       typeof req.query.academicYearId === "string" ? req.query.academicYearId : undefined;
     const gradeId =
@@ -39,6 +41,7 @@ export class SectionController {
       gradeId,
       status,
       search,
+      teacherId,
     });
 
     res.status(200).json({

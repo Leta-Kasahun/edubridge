@@ -9,7 +9,7 @@ export type SchoolAdminTabId =
 export type TeacherTabId =
   | "overview"
   | "classes"
-  | "qualifications";
+  | "grades";
 
 export type SystemAdminTabId =
   | "overview"

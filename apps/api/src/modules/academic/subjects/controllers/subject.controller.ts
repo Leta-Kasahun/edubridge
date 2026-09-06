@@ -8,15 +8,18 @@ import {
 } from "../schemas/subject.schema.js";
 import { asyncHandler } from "../../../../shared/utils/async-handler.js";
 import { UnauthorizedError } from "../../../../shared/exceptions/index.js";
+import { resolveTeacherScopeId } from "../../../../shared/utils/teacher-scope.util.js";
 
 export class SubjectController {
   listSubjects = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const tenantId = req.user?.tenantId;
+    const teacherId = await resolveTeacherScopeId(req, tenantId);
     const filters = subjectFilterSchema.parse(req.query);
 
     const data = await subjectService.listSubjects({
       ...filters,
       tenantId,
+      teacherId,
     });
 
     res.json({ success: true, data });

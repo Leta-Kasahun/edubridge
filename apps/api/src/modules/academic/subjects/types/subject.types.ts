@@ -60,4 +60,6 @@ export interface SubjectFilterParams {
   readonly gradeLevel?: number;
   readonly isActive?: boolean;
   readonly search?: string;
+  readonly teacherId?: string;
 }
+

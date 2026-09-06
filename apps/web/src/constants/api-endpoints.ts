@@ -119,6 +119,9 @@ export const API_ENDPOINTS = {
     END: (id: string) => `/academic/assignments/teachers/${id}/end`,
     LOAD_SUMMARY: (teacherId: string) => `/academic/assignments/teachers/load/${teacherId}`,
   },
+  STUDENT_CLASS: {
+    MY_CLASS: "/academic/student-class/my-class",
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",
@@ -163,8 +166,10 @@ export const API_ENDPOINTS = {
     VERSION_BY_NUMBER: (id: string, versionNumber: number | string) =>
       `/learning-content/content/${id}/versions/${versionNumber}`,
     SUBMIT: (id: string) => `/learning-content/content/${id}/submit`,
+    APPROVE: (id: string) => `/learning-content/content/${id}/approve`,
     PUBLISH: (id: string) => `/learning-content/content/${id}/publish`,
     ARCHIVE: (id: string) => `/learning-content/content/${id}/archive`,
+    ACTIVATE: (id: string) => `/learning-content/content/${id}/activate`,
     ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,

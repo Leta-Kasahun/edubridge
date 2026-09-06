@@ -10,6 +10,7 @@ import {
 } from "../schemas/student-assignment.schema.js";
 import { asyncHandler } from "../../../../../shared/utils/async-handler.js";
 import { UnauthorizedError, BadRequestError } from "../../../../../shared/exceptions/index.js";
+import { resolveTeacherScopeId } from "../../../../../shared/utils/teacher-scope.util.js";
 
 function getTenantContext(req: Request): { tenantId: string; userId?: string } {
   const tenantId = req.user?.tenantId || (req.headers["x-tenant-id"] as string);
@@ -22,11 +23,13 @@ function getTenantContext(req: Request): { tenantId: string; userId?: string } {
 export class StudentAssignmentController {
   getRoster = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { tenantId } = getTenantContext(req);
+    const teacherId = await resolveTeacherScopeId(req, tenantId);
     const filters = rosterFilterSchema.parse(req.query);
 
     const result = await studentAssignmentService.getRoster({
       ...filters,
       tenantId,
+      teacherId,
     });
 
     res.json({

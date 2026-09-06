@@ -15,65 +15,77 @@ interface FaqItem {
 
 const FAQ_ITEMS: readonly FaqItem[] = [
   {
-    id: "grade-focus",
-    question: "How does EduBridge help Grade 8 and Grade 12 students prepare for national exams?",
+    id: "who-for",
+    question: "Who is EduBridge for?",
     answer:
-      "EduBridge provides targeted practice question banks and realistic mock exams structured around the Ethiopian national curriculum. Students can take timed tests, view step-by-step solutions, and identify which subjects need more practice before their real exams.",
+      "EduBridge is designed for private schools, academies, tutorial centers, and other learning institutions serving students from Grade 7 to Grade 12.",
   },
   {
-    id: "ai-support",
-    question: "How does AI support student learning?",
+    id: "create-materials",
+    question: "Can teachers create their own materials?",
     answer:
-      "Our AI assistant breaks down complicated questions into easy-to-understand explanations, recommends personalized study areas based on student performance, and assists in generating practice problems that match the student's learning level.",
+      "Yes. Teachers can create lessons, assignments, quizzes, homework, and other learning materials.",
   },
   {
-    id: "teacher-approved",
-    question: "Are the practice questions verified by teachers?",
+    id: "exam-prep-support",
+    question: "Can students prepare for Grade 8 and Grade 12 exams?",
     answer:
-      "Yes. All AI-generated practice questions and study materials are reviewed and approved by experienced subject teachers to ensure they follow the official Ethiopian educational guidelines and exam standards.",
+      "Yes. Students can practice teacher-approved questions, take timed or untimed exams, review results, and identify topics that need more practice.",
   },
   {
-    id: "first-login",
-    question: "How do students log in for the first time?",
+    id: "ai-function",
+    question: "How does AI help?",
     answer:
-      "Students use the ID and temporary password provided by their school. On the First Login Setup page, students enter their credentials to activate their account and set up their personal password for everyday study access.",
+      "AI helps teachers create explanations, practice questions, and other learning materials. Teachers review and approve AI-generated content before it is shared with students.",
   },
   {
-    id: "slow-internet",
-    question: "Can students use EduBridge on slow or weak internet connections?",
+    id: "student-progress-tracking",
+    question: "Can teachers see student progress?",
     answer:
-      "Yes. EduBridge is built as a lightweight progressive web app (PWA) optimized to load quickly and work smoothly even on weak mobile connections, using very little data.",
+      "Yes. Teachers can see class and individual student performance and identify topics where students may need additional support.",
+  },
+  {
+    id: "offline-support",
+    question: "Can students use EduBridge without internet?",
+    answer:
+      "EduBridge is designed to support learning when internet access is limited. Selected materials and activities can be available offline, with work updated when the connection returns.",
+  },
+  {
+    id: "data-protection",
+    question: "Is school information protected?",
+    answer:
+      "Yes. Each institution has its own protected space. Users can only access information available to them within their school and role.",
   },
 ];
 
 export function FaqSection() {
   return (
-    <section
-      id="faq"
-      className="py-16 sm:py-24 bg-muted/30 border-b border-border px-4 sm:px-6 lg:px-8"
-    >
-      <div className="max-w-7xl mx-auto space-y-10">
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
+    <section id="faq" className="py-12 sm:py-24 bg-slate-50/80 dark:bg-slate-900/60 px-3 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-10">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Common Questions
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground font-heading">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Learn more about AI exam preparation, student access, and practice modules.
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Everything you need to know about getting started with EduBridge.
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 sm:p-10 shadow-2xs">
+        <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-8 shadow-xs">
           <Accordion className="w-full">
             {FAQ_ITEMS.map((item) => (
               <AccordionItem
                 key={item.id}
                 value={item.id}
-                className="border-b border-border/80 last:border-b-0 py-1"
+                className="border-b border-border/70 last:border-b-0 py-1"
               >
-                <AccordionTrigger className="text-left font-semibold text-foreground text-sm sm:text-base py-4 hover:no-underline hover:text-primary transition-colors">
+                <AccordionTrigger className="text-left font-medium text-foreground text-xs sm:text-sm py-4 hover:no-underline hover:text-primary transition-colors">
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pt-1 pb-4">
+                <AccordionContent className="text-xs sm:text-sm font-light text-muted-foreground leading-relaxed pt-1 pb-4">
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>

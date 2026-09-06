@@ -1,8 +1,13 @@
 "use client";
 
-import { X } from "lucide-react";
-import { formatDisplayDate, formatStudentAccountStatus } from "@/shared/utils";
+import { X, User, GraduationCap, Users, MapPin } from "lucide-react";
+import {
+  formatDisplayDate,
+  formatPhoneDisplay,
+  formatStudentAccountStatus,
+} from "@/shared/utils";
 import { StudentRecord } from "../types/student-provisioning.types";
+import { useStudentProfileById } from "@/features/students/hooks/useStudentProfile";
 
 export interface StudentDetailModalProps {
   readonly student: StudentRecord | null;
@@ -15,6 +20,12 @@ export function StudentDetailModal({
   isOpen,
   onClose,
 }: StudentDetailModalProps) {
+  const profileId = student?.studentProfileId || student?.id || "";
+  const { data: profile } = useStudentProfileById(
+    profileId,
+    Boolean(isOpen && profileId)
+  );
+
   if (!isOpen || !student) return null;
 
   const fullName = [student.firstName, student.middleName, student.lastName]
@@ -27,9 +38,24 @@ export function StudentDetailModal({
 
   const formattedAccountStatus = formatStudentAccountStatus(student.status);
 
+  const primaryContact =
+    profile?.contacts?.find((c) => c.isPrimary) || profile?.contacts?.[0];
+
+  const address = profile?.address;
+  const addressDetailsExist = Boolean(
+    address?.regionName ||
+      address?.zoneName ||
+      address?.woredaName ||
+      address?.cityName ||
+      address?.kebeleName ||
+      address?.specificLocation ||
+      address?.formattedAddress
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-xs overflow-y-auto">
       <div className="w-full max-w-xl sm:max-w-2xl bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+        {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border bg-card">
           <div className="min-w-0">
             <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
@@ -51,95 +77,232 @@ export function StudentDetailModal({
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4 max-h-[calc(85vh-120px)] overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Full Name
-              </span>
-              <span className="text-sm font-medium text-foreground mt-1 block">
-                {fullName}
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Assigned Username
-              </span>
-              <span className="text-sm font-bold font-mono text-foreground mt-1 block">
-                {student.username}
+        {/* Body */}
+        <div className="p-4 sm:p-6 space-y-5 max-h-[calc(85vh-120px)] overflow-y-auto">
+          {/* Personal & Demographics */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <User size={14} className="text-muted-foreground" />
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Personal & Demographics
               </span>
             </div>
-
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Student Code
-              </span>
-              <span className="text-sm font-medium font-mono text-foreground mt-1 block">
-                {student.studentCode}
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Gender
-              </span>
-              <span className="text-sm font-medium uppercase text-foreground mt-1 block">
-                {student.gender}
-              </span>
-            </div>
-
-            {student.enrollment && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="p-3.5 rounded-xl border border-border bg-background/50">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Grade & Section
+                  Full Name
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
-                  Grade {student.enrollment.gradeLevel} — {student.enrollment.sectionName}
+                  {fullName}
                 </span>
               </div>
-            )}
 
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Account Status
-              </span>
-              <span className="text-sm font-medium text-foreground mt-1 block">
-                {formattedAccountStatus}
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Enrollment Status
-              </span>
-              <span className="text-sm font-medium text-foreground mt-1 block">
-                {student.enrollment?.status || student.studentStatus || "Active"}
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-border bg-background/50">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Role
-              </span>
-              <span className="text-sm font-medium text-foreground mt-1 block">
-                Student
-              </span>
-            </div>
-
-            {formattedCreatedAt && (
-              <div className="p-3.5 rounded-xl border border-border bg-background/50 sm:col-span-2">
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Onboarded Date
+                  Assigned Username
                 </span>
-                <span className="text-sm font-medium text-foreground mt-1 block">
-                  {formattedCreatedAt}
+                <span className="text-sm font-bold font-mono text-foreground mt-1 block">
+                  {student.username}
                 </span>
               </div>
-            )}
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Student Code
+                </span>
+                <span className="text-sm font-medium font-mono text-foreground mt-1 block">
+                  {student.studentCode}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Gender
+                </span>
+                <span className="text-sm font-medium uppercase text-foreground mt-1 block">
+                  {student.gender}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Account Status
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {formattedAccountStatus}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Enrollment Status
+                </span>
+                <span className="text-sm font-medium text-foreground mt-1 block">
+                  {student.enrollment?.status || student.studentStatus || "Active"}
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Academic Enrollment */}
+          {student.enrollment && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <GraduationCap size={14} className="text-muted-foreground" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Academic Enrollment
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Grade & Section
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    Grade {student.enrollment.gradeLevel} — {student.enrollment.sectionName}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Role
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    Student
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Parent / Guardian Contact (if registered) */}
+          {primaryContact && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-muted-foreground" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Parent / Guardian Contact
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Parent Name
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {primaryContact.fullName}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Relationship
+                  </span>
+                  <span className="text-sm font-medium capitalize text-foreground mt-1 block">
+                    {primaryContact.relationship.toLowerCase()}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Primary Phone
+                  </span>
+                  <span className="text-sm font-medium font-mono text-foreground mt-1 block">
+                    {formatPhoneDisplay(primaryContact.phoneNumber) || "—"}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Alternative Phone
+                  </span>
+                  <span className="text-sm font-medium font-mono text-foreground mt-1 block">
+                    {formatPhoneDisplay(primaryContact.alternativePhoneNumber || "") || "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Residential Address (if registered) */}
+          {addressDetailsExist && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPin size={14} className="text-muted-foreground" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Residential Address
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Region
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {address?.regionName || address?.regionId || "—"}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Zone / Sub-City
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {address?.zoneName || address?.zoneId || "—"}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Woreda
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {address?.woredaName || address?.woredaId || "—"}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    City / Kebele
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {[
+                      address?.cityName || address?.cityId,
+                      address?.kebeleName || address?.kebeleId,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-background/50 sm:col-span-2">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Specific Location / Street
+                  </span>
+                  <span className="text-sm font-medium text-foreground mt-1 block">
+                    {address?.specificLocation ||
+                      address?.formattedAddress ||
+                      "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Onboarded Date */}
+          {formattedCreatedAt && (
+            <div className="p-3.5 rounded-xl border border-border bg-background/50">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Onboarded Date
+              </span>
+              <span className="text-sm font-medium text-foreground mt-1 block">
+                {formattedCreatedAt}
+              </span>
+            </div>
+          )}
         </div>
 
+        {/* Footer */}
         <div className="flex items-center justify-end px-5 sm:px-6 py-3.5 border-t border-border bg-muted/20">
           <button
             type="button"

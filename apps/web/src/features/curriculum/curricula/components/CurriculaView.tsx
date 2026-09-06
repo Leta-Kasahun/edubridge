@@ -29,8 +29,12 @@ import {
   ErrorAlert,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
+import { useAuthStore } from "@/stores/auth.store";
 
 export function CurriculaView() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = user?.roles?.includes("TEACHER");
+
   const [filters, setFilters] = useState<CurriculumFilters>({
     page: 1,
     limit: 10,
@@ -162,14 +166,16 @@ export function CurriculaView() {
           searchPlaceholder="Search curriculum name, code, or authority..."
           filters={filterGroups}
           actionButton={
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
-            >
-              <Plus size={14} />
-              <span>Curriculum</span>
-            </button>
+            isTeacher ? undefined : (
+              <button
+                type="button"
+                onClick={handleOpenAdd}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              >
+                <Plus size={14} />
+                <span>Curriculum</span>
+              </button>
+            )
           }
         />
       </div>
@@ -181,6 +187,7 @@ export function CurriculaView() {
         onAddVersion={handleOpenAddVersion}
         onStatusChange={handleStatusChange}
         isUpdatingStatus={changeStatusMutation.isPending}
+        isReadOnly={isTeacher}
       />
 
       {pagination && pagination.totalPages > 1 && (

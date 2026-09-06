@@ -52,14 +52,24 @@ router.post(
   contentController.submitForReview
 );
 router.post(
-  "/:id/publish",
+  "/:id/approve",
   requireRoles("SCHOOL_ADMIN", "ADMIN"),
+  contentController.approveContent
+);
+router.post(
+  "/:id/publish",
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
   contentController.publishContent
 );
 router.post(
   "/:id/archive",
-  requireRoles("SCHOOL_ADMIN", "ADMIN"),
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
   contentController.archiveContent
+);
+router.post(
+  "/:id/activate",
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
+  contentController.activateContent
 );
 router.delete(
   "/:id",

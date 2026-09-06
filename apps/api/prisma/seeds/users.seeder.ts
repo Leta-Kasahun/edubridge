@@ -76,6 +76,97 @@ export async function seedTestUsers(tenants: Record<string, string>) {
         });
       }
 
+      if (item.roleCode === "STUDENT") {
+        const studentCode = `${item.tenantCode.toUpperCase()}STU_${item.username.toUpperCase()}`;
+        const profile = await prisma.studentProfile.upsert({
+          where: {
+            tenantId_studentCode: {
+              tenantId,
+              studentCode,
+            },
+          },
+          update: {
+            userId: user.id,
+            firstName: item.firstName,
+            middleName: "Demo",
+            lastName: item.lastName,
+            status: "ACTIVE",
+          },
+          create: {
+            tenantId,
+            userId: user.id,
+            studentCode,
+            firstName: item.firstName,
+            middleName: "Demo",
+            lastName: item.lastName,
+            gender: "MALE",
+            status: "ACTIVE",
+          },
+        });
+
+        const activeYear = await prisma.academicYear.findFirst({
+          where: { tenantId, status: "ACTIVE" },
+        });
+
+        if (activeYear) {
+          const section = await prisma.section.findFirst({
+            where: { tenantId, academicYearId: activeYear.id },
+            orderBy: { name: "asc" },
+          });
+
+          if (section) {
+            await prisma.studentEnrollment.upsert({
+              where: {
+                studentId_academicYearId: {
+                  studentId: profile.id,
+                  academicYearId: activeYear.id,
+                },
+              },
+              update: {
+                sectionId: section.id,
+                status: "ACTIVE",
+              },
+              create: {
+                tenantId,
+                studentId: profile.id,
+                academicYearId: activeYear.id,
+                sectionId: section.id,
+                status: "ACTIVE",
+              },
+            });
+          }
+        }
+      }
+
+      if (item.roleCode === "TEACHER") {
+        const employeeCode = `${item.tenantCode.toUpperCase()}TCH_${item.username.toUpperCase()}`;
+        await prisma.teacherProfile.upsert({
+          where: {
+            tenantId_employeeCode: {
+              tenantId,
+              employeeCode,
+            },
+          },
+          update: {
+            userId: user.id,
+            firstName: item.firstName,
+            middleName: "Demo",
+            lastName: item.lastName,
+            status: "ACTIVE",
+          },
+          create: {
+            tenantId,
+            userId: user.id,
+            employeeCode,
+            firstName: item.firstName,
+            middleName: "Demo",
+            lastName: item.lastName,
+            gender: "MALE",
+            status: "ACTIVE",
+          },
+        });
+      }
+
       createdUsers.push(user);
     }
 

@@ -1,110 +1,65 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, Globe, Sparkles } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Logo } from "@/shared/components";
+import { cn } from "@/lib/utils";
+
+const footerLinkClass = cn(
+  "relative group px-2.5 py-1 text-xs sm:text-sm font-medium",
+  "text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary transition-colors duration-200"
+);
+
+const footerUnderlineClass = cn(
+  "absolute bottom-0 left-2.5 right-2.5 h-px rounded-full",
+  "bg-primary scale-x-0 group-hover:scale-x-100",
+  "transition-transform duration-250 origin-left"
+);
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer id="contacts" className="border-t border-border bg-card text-muted-foreground">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="space-y-3">
-            <Link href={ROUTES.HOME} className="inline-block group">
+    <footer id="contacts" className="bg-white dark:bg-slate-950 text-foreground border-t border-slate-200/80 dark:border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+            <Link href={ROUTES.HOME} className="flex items-center">
               <Logo
                 variant="full"
                 size="sm"
                 frame="none"
-                subtext="Educational Intelligence Platform"
               />
             </Link>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              AI-supported exam preparation and practice questions for Grade 8 and Grade 12 students in Ethiopia.
-            </p>
-            <div className="inline-flex items-center gap-1.5 text-xs text-primary font-medium">
-              <Sparkles size={14} />
-              <span>Teacher-Approved AI Learning</span>
-            </div>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              &copy; {currentYear} EduBridge. All rights reserved.
+            </span>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground tracking-tight uppercase">
-              Quick Links
-            </h4>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/#features" className="hover:text-foreground transition-colors">
-                  Practice Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/#faq" className="hover:text-foreground transition-colors">
-                  Frequently Asked Questions
-                </Link>
-              </li>
-              <li>
-                <Link href="/#contacts" className="hover:text-foreground transition-colors">
-                  Contact &amp; Support
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground tracking-tight uppercase">
-              Student Portals
-            </h4>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href={ROUTES.AUTH.FIRST_LOGIN_SETUP} className="hover:text-foreground transition-colors">
-                  First-Time Account Activation
-                </Link>
-              </li>
-              <li>
-                <Link href={ROUTES.AUTH.LOGIN} className="hover:text-foreground transition-colors">
-                  Student &amp; Teacher Login
-                </Link>
-              </li>
-              <li>
-                <Link href={ROUTES.AUTH.RESET_PASSWORD} className="hover:text-foreground transition-colors">
-                  Reset Password
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground tracking-tight uppercase">
-              Contact
-            </h4>
-            <ul className="space-y-2 text-xs">
-              <li className="flex items-start gap-2 text-muted-foreground">
-                <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
-                <span>Addis Ababa, Ethiopia</span>
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Mail size={14} className="text-primary shrink-0" />
-                <span>support@edubridge.edu.et</span>
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Phone size={14} className="text-primary shrink-0" />
-                <span>+251 11 667 8900</span>
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Globe size={14} className="text-primary shrink-0" />
-                <span>Mon – Fri: 8:00 AM – 5:30 PM EAT</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>&copy; {currentYear} EduBridge. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-          </div>
+          <nav className="flex flex-wrap items-center justify-center gap-x-2 sm:gap-x-4 gap-y-2">
+            <Link href="/#features" className={footerLinkClass}>
+              Features
+              <span className={footerUnderlineClass} />
+            </Link>
+            <Link href="/#exam-prep" className={footerLinkClass}>
+              Exam Prep
+              <span className={footerUnderlineClass} />
+            </Link>
+            <Link href="/#how-it-works" className={footerLinkClass}>
+              How It Works
+              <span className={footerUnderlineClass} />
+            </Link>
+            <span className={cn(footerLinkClass, "cursor-pointer")}>
+              Privacy
+              <span className={footerUnderlineClass} />
+            </span>
+            <span className={cn(footerLinkClass, "cursor-pointer")}>
+              Terms
+              <span className={footerUnderlineClass} />
+            </span>
+            <a href="mailto:edubridge.et@gmail.com" className={footerLinkClass}>
+              Help
+              <span className={footerUnderlineClass} />
+            </a>
+          </nav>
         </div>
       </div>
     </footer>

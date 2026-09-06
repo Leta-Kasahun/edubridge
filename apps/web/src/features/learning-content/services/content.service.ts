@@ -145,6 +145,13 @@ export const contentService = {
     return response.data.data;
   },
 
+  async approveContent(id: string): Promise<LearningContentDetailItem> {
+    const response = await apiClient.post<
+      ApiResponse<LearningContentDetailItem>
+    >(API_ENDPOINTS.LEARNING_CONTENT.APPROVE(id));
+    return response.data.data;
+  },
+
   async publishContent(id: string): Promise<LearningContentDetailItem> {
     const response = await apiClient.post<
       ApiResponse<LearningContentDetailItem>
@@ -156,6 +163,13 @@ export const contentService = {
     const response = await apiClient.post<
       ApiResponse<LearningContentDetailItem>
     >(API_ENDPOINTS.LEARNING_CONTENT.ARCHIVE(id));
+    return response.data.data;
+  },
+
+  async activateContent(id: string): Promise<LearningContentDetailItem> {
+    const response = await apiClient.post<
+      ApiResponse<LearningContentDetailItem>
+    >(API_ENDPOINTS.LEARNING_CONTENT.ACTIVATE(id));
     return response.data.data;
   },
 

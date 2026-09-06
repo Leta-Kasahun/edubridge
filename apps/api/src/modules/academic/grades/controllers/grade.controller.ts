@@ -3,6 +3,7 @@ import { asyncHandler } from "../../../../shared/utils/async-handler.js";
 import { UnauthorizedError, BadRequestError } from "../../../../shared/exceptions/index.js";
 import { gradeService, GradeService } from "../services/grade.service.js";
 import { createGradeSchema } from "../schemas/grade.schema.js";
+import { resolveTeacherScopeId } from "../../../../shared/utils/teacher-scope.util.js";
 
 function getTenantId(req: Request): string {
   const tenantId = req.user?.tenantId || (req.headers["x-tenant-id"] as string);
@@ -13,10 +14,11 @@ function getTenantId(req: Request): string {
 }
 
 export class GradeController {
-  constructor(private readonly service: GradeService = gradeService) {}
+  constructor(private readonly service: GradeService = gradeService) { }
 
   getGrades = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
+    const teacherId = await resolveTeacherScopeId(req, tenantId);
     const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const isActiveParam = req.query.isActive;
     const isActive =
@@ -34,6 +36,7 @@ export class GradeController {
       isActive,
       category,
       academicYearId,
+      teacherId,
     });
 
     res.status(200).json({

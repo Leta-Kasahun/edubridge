@@ -176,6 +176,21 @@ export class TopicRepository {
     };
   }
 
+  async countTopicDependencies(id: string): Promise<{
+    readonly contentCount: number;
+    readonly questionCount: number;
+    readonly evidenceCount: number;
+  }> {
+    return runWithoutTenant(async () => {
+      const [contentCount, questionCount, evidenceCount] = await Promise.all([
+        prisma.contentTopic.count({ where: { topicId: id } }),
+        prisma.questionTopic.count({ where: { topicId: id } }),
+        prisma.learningEvidence.count({ where: { topicId: id } }),
+      ]);
+      return { contentCount, questionCount, evidenceCount };
+    });
+  }
+
   async deleteTopic(id: string): Promise<void> {
     await runWithoutTenant(() =>
       prisma.curriculumTopic.delete({

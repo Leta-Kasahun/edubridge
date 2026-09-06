@@ -1,4 +1,4 @@
-import { findNavNodeHierarchy, NAVIGATION_TREE } from "./navigation";
+import { findNavNodeHierarchy, NAVIGATION_TREE, NavNode } from "./navigation";
 import { ROUTES } from "@/constants/routes";
 
 export interface BreadcrumbItemData {
@@ -9,6 +9,8 @@ export interface BreadcrumbItemData {
 
 const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   dashboard: "Dashboard",
+  classes: "My Classes",
+  students: "My Students",
   academic: "Academic",
   years: "Academic Years",
   grades: "Grades",
@@ -18,7 +20,6 @@ const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   schools: "Manage Schools",
   provisioning: "Onboarding",
   teachers: "Teacher Onboarding",
-  students: "Student Onboarding",
   profile: "My Profile",
   onboarding: "Onboarding",
   curriculum: "Curriculum",
@@ -44,7 +45,8 @@ export function formatBreadcrumbSegment(segment: string): string {
 
 export function generateBreadcrumbs(
   pathname: string,
-  customLabels?: Readonly<Record<string, string>>
+  customLabels?: Readonly<Record<string, string>>,
+  navTree?: readonly NavNode[]
 ): readonly BreadcrumbItemData[] {
   const normalizedPath = pathname.split("?")[0].split("#")[0];
 
@@ -52,7 +54,7 @@ export function generateBreadcrumbs(
     return [{ label: "Dashboard", href: ROUTES.DASHBOARD, isCurrent: true }];
   }
 
-  const hierarchy = findNavNodeHierarchy(normalizedPath, NAVIGATION_TREE);
+  const hierarchy = findNavNodeHierarchy(normalizedPath, navTree ?? NAVIGATION_TREE);
   const items: BreadcrumbItemData[] = [
     { label: "Dashboard", href: ROUTES.DASHBOARD, isCurrent: false },
   ];

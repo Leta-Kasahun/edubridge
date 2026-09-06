@@ -6,7 +6,7 @@ import { SubjectsView } from "@/features/academic";
 
 export default function AcademicSubjectsPage() {
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
       <DashboardLayout>
         <SubjectsView />
       </DashboardLayout>
