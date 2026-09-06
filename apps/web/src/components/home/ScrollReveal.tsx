@@ -12,7 +12,7 @@ interface ScrollRevealProps {
 export function ScrollReveal({
   children,
   className,
-  threshold = 0.1,
+  threshold = 0.05,
 }: ScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
@@ -27,7 +27,7 @@ export function ScrollReveal({
       },
       {
         threshold,
-        rootMargin: "0px 0px -50px 0px",
+        rootMargin: "100px 0px 0px 0px",
       }
     );
 
@@ -47,10 +47,10 @@ export function ScrollReveal({
     <div
       ref={elementRef}
       className={cn(
-        "transition-all duration-700 ease-out will-change-transform",
+        "transition-all duration-500 ease-out will-change-transform",
         isVisible
           ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-8 pointer-events-none",
+          : "opacity-0 translate-y-4 pointer-events-none",
         className
       )}
     >

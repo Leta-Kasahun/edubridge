@@ -60,17 +60,17 @@ const FAQ_ITEMS: readonly FaqItem[] = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="py-10 sm:py-20 bg-muted/20 border-b border-border px-3 sm:px-6 lg:px-8">
+    <section id="faq" className="py-12 sm:py-24 bg-slate-50/80 dark:bg-slate-900/60 px-3 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-10">
-        <div className="text-center space-y-2.5">
-          <span className="text-xs font-medium uppercase tracking-widest text-primary">
-            Clear Answers
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Common Questions
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-foreground">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground font-heading">
             Frequently Asked Questions
           </h2>
-          <p className="text-xs sm:text-sm font-light text-muted-foreground">
-            Everything you need to know about using EduBridge in your school.
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Everything you need to know about getting started with EduBridge.
           </p>
         </div>
 

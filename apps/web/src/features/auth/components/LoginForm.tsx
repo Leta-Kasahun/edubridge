@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, ArrowRight } from "lucide-react";
 import { FormField, SubmitButton, ErrorAlert } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
@@ -16,7 +16,6 @@ import { useLogin } from "../hooks";
 import { loginValidationSchema, LoginFormData } from "../validations";
 import { AuthResponseData } from "../types";
 import { GoogleButton } from "./GoogleButton";
-import { AuthIdentifierToggle, AuthIdentifierMode } from "./AuthIdentifierToggle";
 
 export interface LoginFormProps {
   onSuccess?: (data: AuthResponseData) => void;
@@ -35,7 +34,6 @@ export function LoginForm({
   isGoogleLoading,
   forgotPasswordHref = ROUTES.AUTH.RESET_PASSWORD,
 }: LoginFormProps) {
-  const [authMode, setAuthMode] = useState<AuthIdentifierMode>("email");
   const [googleError, setGoogleError] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search).get("error");
@@ -105,21 +103,31 @@ export function LoginForm({
 
   const onSubmit = (values: LoginFormData) => {
     setGoogleError(null);
-    login(values, {
-      onSuccess: (data) => {
-        if (data.requiresOtp && onRequiresOtp) {
-          onRequiresOtp(data.userId);
-          return;
-        }
-        if (data.requiresFirstLoginSetup && onRequiresFirstLoginSetup) {
-          onRequiresFirstLoginSetup(data.userId);
-          return;
-        }
-        if (onSuccess) {
-          onSuccess(data);
-        }
+    const identifier = values.email.trim();
+    const isEmail = identifier.includes("@");
+
+    login(
+      {
+        email: isEmail ? identifier : undefined,
+        identifier: identifier,
+        password: values.password,
       },
-    });
+      {
+        onSuccess: (data) => {
+          if (data.requiresOtp && onRequiresOtp) {
+            onRequiresOtp(data.userId);
+            return;
+          }
+          if (data.requiresFirstLoginSetup && onRequiresFirstLoginSetup) {
+            onRequiresFirstLoginSetup(data.userId);
+            return;
+          }
+          if (onSuccess) {
+            onSuccess(data);
+          }
+        },
+      }
+    );
   };
 
   const handleGoogleClick = () => {
@@ -135,19 +143,17 @@ export function LoginForm({
   const currentError = error ? getErrorMessage(error) : googleError;
 
   return (
-    <div className="space-y-5 w-full">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 w-full">
+    <div className="space-y-4 sm:space-y-5 w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5 w-full">
         {currentError && <ErrorAlert message={currentError} />}
-
-        <AuthIdentifierToggle mode={authMode} onChange={setAuthMode} />
 
         <FormField
           id="email"
-          label={authMode === "email" ? "Email Address" : "Username"}
-          type={authMode === "email" ? "email" : "text"}
-          placeholder={authMode === "email" ? "Enter your email address" : "Enter your username"}
-          autoComplete={authMode === "email" ? "email" : "username"}
-          leftIcon={authMode === "email" ? <Mail size={18} /> : <User size={18} />}
+          label="Email or Username"
+          type="text"
+          placeholder="Enter your email or username"
+          autoComplete="username"
+          leftIcon={<User size={18} />}
           error={errors.email?.message}
           {...register("email")}
         />
@@ -182,7 +188,7 @@ export function LoginForm({
         </SubmitButton>
       </form>
 
-      <div className="relative flex items-center justify-center py-2">
+      <div className="relative flex items-center justify-center py-1">
         <div className="border-t border-border/80 w-full" />
         <span className="bg-card px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest absolute">
           Or continue with
