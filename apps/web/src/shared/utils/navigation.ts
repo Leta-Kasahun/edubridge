@@ -44,12 +44,9 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "Learning Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
-    children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-    ],
   },
   {
     label: "Settings",
@@ -93,12 +90,9 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "Learning Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
-    children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-    ],
   },
   {
     label: "Onboarding",
@@ -143,7 +137,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Users,
   },
   {
-    label: "My Materials",
+    label: "Learning Materials",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
   },
@@ -169,6 +163,16 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
+  },
+  {
+    label: "My Class",
+    href: ROUTES.STUDENT.MY_CLASS,
+    icon: Presentation,
+  },
+  {
+    label: "Learning Materials",
+    href: ROUTES.STUDENT.MATERIALS,
+    icon: BookMarked,
   },
   {
     label: "My Profile",

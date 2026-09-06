@@ -20,6 +20,8 @@ export const ROUTES = {
   },
   STUDENT: {
     DASHBOARD: "/dashboard",
+    MY_CLASS: "/dashboard/my-class",
+    MATERIALS: "/dashboard/learning-content/materials",
     PROFILE: "/dashboard/profile",
   },
   SCHOOLS: "/dashboard/schools-mng",

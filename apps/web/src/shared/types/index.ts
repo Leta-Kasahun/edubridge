@@ -41,5 +41,7 @@ export interface AuthUser {
   tenantId?: string;
   tenantName?: string;
   status?: string;
+  photoUrl?: string | null;
+  avatarUrl?: string | null;
   memberships?: UserMembershipInfo[];
 }
