@@ -1,23 +1,41 @@
 import { Header, Footer } from "@/components/layout";
 import {
   HeroSection,
-  SchoolTicker,
   FeaturesSection,
+  ExamAndIntelligenceSection,
+  ProgressAndInsightsSection,
+  HowItWorksSection,
   FaqSection,
-  CtaSection,
+  ScrollReveal,
 } from "@/components/home";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col w-full">
         <HeroSection />
-        <SchoolTicker />
-        <FeaturesSection />
-        <FaqSection />
-        <CtaSection />
+
+        <ScrollReveal>
+          <FeaturesSection />
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <ExamAndIntelligenceSection />
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <ProgressAndInsightsSection />
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <HowItWorksSection />
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <FaqSection />
+        </ScrollReveal>
       </main>
 
       <Footer />

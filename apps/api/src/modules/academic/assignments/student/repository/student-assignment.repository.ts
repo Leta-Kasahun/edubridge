@@ -21,24 +21,23 @@ export class StudentAssignmentRepository {
       academicYearId,
     };
 
-    if (sectionId) {
-      where.sectionId = sectionId;
-    } else if (gradeId) {
-      where.section = {
-        gradeId,
+    const sectionFilter: Prisma.SectionWhereInput = {};
+    if (gradeId) {
+      sectionFilter.gradeId = gradeId;
+    }
+    if (teacherId) {
+      sectionFilter.assignments = {
+        some: {
+          teacherId,
+          status: "ACTIVE",
+        },
       };
     }
 
-    if (teacherId) {
-      where.section = {
-        ...(where.section && typeof where.section === "object" ? where.section : {}),
-        assignments: {
-          some: {
-            teacherId,
-            status: "ACTIVE",
-          },
-        },
-      };
+    if (sectionId) {
+      where.sectionId = sectionId;
+    } else if (gradeId || teacherId) {
+      where.section = sectionFilter;
     }
 
     if (search) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   BookMarked,
@@ -8,6 +10,7 @@ import {
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
 import { ROUTES } from "@/constants/routes";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface LearningContentSectionItem {
   readonly title: string;
@@ -29,8 +32,18 @@ const LEARNING_CONTENT_SECTIONS: readonly LearningContentSectionItem[] = [
 ];
 
 export default function LearningContentDashboardPage() {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const isStudent = user?.roles?.includes("STUDENT");
+
+  useEffect(() => {
+    if (isStudent) {
+      router.replace(ROUTES.LEARNING_CONTENT.MATERIALS);
+    }
+  }, [isStudent, router]);
+
   return (
-    <RoleGuard allowedRoles={["SYSTEM_ADMIN", "SCHOOL_ADMIN", "TEACHER"]}>
+    <RoleGuard allowedRoles={["SYSTEM_ADMIN", "SCHOOL_ADMIN", "TEACHER", "STUDENT"]}>
       <DashboardLayout>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {LEARNING_CONTENT_SECTIONS.map((sec) => {

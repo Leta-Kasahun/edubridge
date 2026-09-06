@@ -119,6 +119,9 @@ export const API_ENDPOINTS = {
     END: (id: string) => `/academic/assignments/teachers/${id}/end`,
     LOAD_SUMMARY: (teacherId: string) => `/academic/assignments/teachers/load/${teacherId}`,
   },
+  STUDENT_CLASS: {
+    MY_CLASS: "/academic/student-class/my-class",
+  },
   STUDENT_PROFILE: {
     BASE: "/student-profile",
     ME: "/student-profile/me",

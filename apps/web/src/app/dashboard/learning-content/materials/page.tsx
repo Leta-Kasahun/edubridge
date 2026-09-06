@@ -2,13 +2,17 @@
 
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
-import { ContentListView } from "@/features/learning-content";
+import { ContentListView, StudentMaterialsView } from "@/features/learning-content";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default function LearningMaterialsPage() {
+  const user = useAuthStore((state) => state.user);
+  const isStudent = user?.roles?.includes("STUDENT");
+
   return (
-    <RoleGuard allowedRoles={["SYSTEM_ADMIN", "SCHOOL_ADMIN", "TEACHER"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "STUDENT"]}>
       <DashboardLayout>
-        <ContentListView />
+        {isStudent ? <StudentMaterialsView /> : <ContentListView />}
       </DashboardLayout>
     </RoleGuard>
   );

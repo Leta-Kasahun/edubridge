@@ -466,3 +466,59 @@
 .animate-marquee-reverse:hover {
   animation-play-state: paused;
 }
+
+@keyframes ken-burns-a {
+  0% {
+    transform: scale(1.12) translate(1%, 0.5%);
+  }
+  100% {
+    transform: scale(1.0) translate(-1%, -0.5%);
+  }
+}
+
+@keyframes ken-burns-b {
+  0% {
+    transform: scale(1.0) translate(-1%, -0.5%);
+  }
+  100% {
+    transform: scale(1.12) translate(1%, 0.5%);
+  }
+}
+
+@keyframes ken-burns-c {
+  0% {
+    transform: scale(1.1) translate(0.5%, -1%);
+  }
+  100% {
+    transform: scale(1.0) translate(-0.5%, 1%);
+  }
+}
+
+@keyframes ken-burns-d {
+  0% {
+    transform: scale(1.0) translate(-0.5%, 1%);
+  }
+  100% {
+    transform: scale(1.1) translate(0.5%, -1%);
+  }
+}
+
+.hero-ken-burns-a {
+  animation: ken-burns-a 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.hero-ken-burns-b {
+  animation: ken-burns-b 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.hero-ken-burns-c {
+  animation: ken-burns-c 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.hero-ken-burns-d {
+  animation: ken-burns-d 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
