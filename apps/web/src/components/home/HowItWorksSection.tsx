@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FolderTree, Presentation, BookOpenCheck, Dumbbell, PieChart, TrendingUp } from "lucide-react";
+import { FolderTree, BookOpen, Laptop, Dumbbell, BarChart3, HeartHandshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WorkflowStep {
@@ -14,39 +14,39 @@ interface WorkflowStep {
 const WORKFLOW_STEPS: readonly WorkflowStep[] = [
   {
     stepNumber: 1,
-    title: "Organize",
-    description: "The school organizes classes, subjects, teachers, students, and academic years.",
+    title: "School Setup",
+    description: "The school creates grades, sections, and assigns teachers and students to their classrooms.",
     icon: FolderTree,
   },
   {
     stepNumber: 2,
-    title: "Teach",
-    description: "Teachers create lessons, learning materials, assignments, quizzes, and practice activities.",
-    icon: Presentation,
+    title: "Curriculum Lessons",
+    description: "Teachers prepare lessons and classroom notes based on the Ethiopian curriculum, with AI support.",
+    icon: BookOpen,
   },
   {
     stepNumber: 3,
-    title: "Learn",
-    description: "Students access their learning materials and complete their assigned work.",
-    icon: BookOpenCheck,
+    title: "Daily Study",
+    description: "Students read lessons, review textbook topics, and complete class assignments on any device.",
+    icon: Laptop,
   },
   {
     stepNumber: 4,
-    title: "Practice",
-    description: "Students practice through quizzes, exercises, and exam-style questions.",
+    title: "Exam Practice",
+    description: "Students practice chapter questions and prepare for Grade 8 and Grade 12 national exams with clear guidance.",
     icon: Dumbbell,
   },
   {
     stepNumber: 5,
-    title: "Understand",
-    description: "Students and teachers can see progress and identify topics that need more attention.",
-    icon: PieChart,
+    title: "Progress Review",
+    description: "Teachers and students easily see quiz scores, subject strengths, and topics that need more practice.",
+    icon: BarChart3,
   },
   {
     stepNumber: 6,
-    title: "Improve",
-    description: "Students continue practicing while teachers provide additional support where needed.",
-    icon: TrendingUp,
+    title: "Teacher Support",
+    description: "Teachers give extra attention and practice to students who need help so every learner succeeds.",
+    icon: HeartHandshake,
   },
 ];
 
@@ -58,17 +58,17 @@ export function HowItWorksSection() {
       <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-            Platform Workflow
+            Simple Step-by-Step
           </span>
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground font-heading">
-            How EduBridge Works
+            How EduBridge Works in Your School
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            A simple, step-by-step cycle from lesson planning to student mastery.
+            A clear and easy guide showing how administrators, teachers, and students use the platform everyday.
           </p>
         </div>
 
-        <div className="hidden lg:flex flex-row gap-3 min-h-[300px] w-full items-stretch">
+        <div className="hidden lg:flex flex-row gap-3 min-h-[310px] w-full items-stretch">
           {WORKFLOW_STEPS.map((step, index) => {
             const Icon = step.icon;
             const isActive = activeIndex === index;
@@ -109,7 +109,7 @@ export function HowItWorksSection() {
                 </div>
 
                 <div className="space-y-2 pt-6">
-                  <h3 className="text-base sm:text-lg font-medium text-foreground tracking-tight whitespace-nowrap">
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground tracking-tight leading-snug">
                     {step.title}
                   </h3>
 
@@ -147,7 +147,7 @@ export function HowItWorksSection() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <h3 className="text-base font-medium text-foreground tracking-tight">
+                  <h3 className="text-base font-semibold text-foreground tracking-tight">
                     {step.stepNumber}. {step.title}
                   </h3>
                   <p className="text-xs sm:text-sm font-light text-muted-foreground leading-relaxed">
