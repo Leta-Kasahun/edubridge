@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useUiStore } from "@/stores/ui.store";
 import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -21,7 +22,9 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Sidebar />
+      <Suspense fallback={<div className="w-64 hidden lg:block bg-sidebar" />}>
+        <Sidebar />
+      </Suspense>
 
       <div
         className={cn(
@@ -29,10 +32,12 @@ export function DashboardLayout({
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
         )}
       >
-        <DashboardHeader
-          breadcrumbs={breadcrumbs}
-          customBreadcrumbLabels={customBreadcrumbLabels}
-        />
+        <Suspense fallback={<header className="h-14 w-full border-b border-border bg-card" />}>
+          <DashboardHeader
+            breadcrumbs={breadcrumbs}
+            customBreadcrumbLabels={customBreadcrumbLabels}
+          />
+        </Suspense>
 
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
           {children}

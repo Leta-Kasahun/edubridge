@@ -44,10 +44,14 @@ export function formatBreadcrumbSegment(segment: string): string {
 }
 
 export function generateBreadcrumbs(
-  pathname: string,
+  pathname?: string | null,
   customLabels?: Readonly<Record<string, string>>,
   navTree?: readonly NavNode[]
 ): readonly BreadcrumbItemData[] {
+  if (!pathname) {
+    return [{ label: "Dashboard", href: ROUTES.DASHBOARD, isCurrent: true }];
+  }
+
   const normalizedPath = pathname.split("?")[0].split("#")[0];
 
   if (!normalizedPath || normalizedPath === "/" || normalizedPath === ROUTES.DASHBOARD) {
