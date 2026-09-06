@@ -421,6 +421,18 @@
   border-bottom: 1px solid #E2E8F0;
 }
 
+@utility glass-header {
+  background-color: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+@utility glass-header-scrolled {
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
 @utility app-footer {
   background-color: #FFFFFF;
   color: #64748B;

@@ -24,12 +24,12 @@ const NAV_LINKS: readonly NavLinkItem[] = [
 ];
 
 const desktopNavLinkClass = cn(
-  "relative group px-3.5 py-2 rounded-xl text-xs xl:text-sm font-medium",
+  "relative group px-3.5 py-2 text-xs xl:text-sm font-medium",
   "text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary transition-colors duration-200"
 );
 
 const navUnderlineClass = cn(
-  "absolute bottom-1 left-3.5 right-3.5 h-px rounded-full",
+  "absolute bottom-0 left-3.5 right-3.5 h-0.5 rounded-full",
   "bg-primary scale-x-0 group-hover:scale-x-100",
   "transition-transform duration-250 origin-left"
 );
@@ -38,11 +38,11 @@ export function Header({ className }: { className?: string }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 12);
+      setScrolled(window.scrollY > 8);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -51,7 +51,7 @@ export function Header({ className }: { className?: string }) {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     };
@@ -65,21 +65,15 @@ export function Header({ className }: { className?: string }) {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3",
+        "sticky top-0 z-50 w-full transition-all duration-200 border-b border-slate-200/80 dark:border-slate-800/80",
+        scrolled ? "glass-header-scrolled shadow-xs" : "glass-header",
         className
       )}
     >
-      <div
-        ref={menuRef}
-        className={cn(
-          "max-w-7xl mx-auto rounded-2xl border transition-all duration-300",
-          scrolled
-            ? "bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-slate-200/90 dark:border-slate-800/90 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
-            : "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-slate-200/70 dark:border-slate-800/70 shadow-xs"
-        )}
-      >
-        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           <Link
             href={ROUTES.HOME}
             className="flex items-center gap-2 rounded-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary shrink-0"
@@ -94,7 +88,7 @@ export function Header({ className }: { className?: string }) {
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden lg:flex items-center gap-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.label} href={link.href} className={desktopNavLinkClass}>
                 {link.label}
@@ -103,7 +97,7 @@ export function Header({ className }: { className?: string }) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
               <UserMenu />
             ) : (
@@ -112,9 +106,9 @@ export function Header({ className }: { className?: string }) {
                   href={ROUTES.AUTH.FIRST_LOGIN_SETUP}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "hidden sm:inline-flex text-xs font-medium gap-1.5 rounded-xl px-3.5 py-2",
-                    "border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90",
-                    "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-primary transition-all duration-200 shadow-2xs"
+                    "hidden sm:inline-flex text-xs font-medium gap-1.5 rounded-lg px-3.5 py-2",
+                    "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
+                    "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-primary transition-colors shadow-2xs"
                   )}
                 >
                   <ShieldCheck size={14} className="text-primary" />
@@ -124,9 +118,9 @@ export function Header({ className }: { className?: string }) {
                   href={ROUTES.AUTH.LOGIN}
                   className={cn(
                     buttonVariants({ size: "sm" }),
-                    "hidden sm:inline-flex gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl",
+                    "hidden sm:inline-flex gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg",
                     "bg-primary hover:bg-primary/90 text-primary-foreground",
-                    "shadow-[0_2px_12px_rgba(14,165,233,0.25)] hover:shadow-[0_4px_20px_rgba(14,165,233,0.35)] transition-all duration-200"
+                    "shadow-[0_2px_10px_rgba(14,165,233,0.25)] transition-colors"
                   )}
                 >
                   <span>Login</span>
@@ -140,58 +134,57 @@ export function Header({ className }: { className?: string }) {
               aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="lg:hidden p-2 rounded-xl transition-colors duration-200 text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="lg:hidden p-2 rounded-lg transition-colors text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
-
-        {menuOpen && (
-          <div className="lg:hidden border-t border-slate-200/60 dark:border-slate-800/60 px-3 py-3 rounded-b-2xl bg-white/95 dark:bg-slate-950/95 backdrop-blur-md">
-            <nav className="flex flex-col gap-0.5">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={closeMenu}
-                  className="relative group flex items-center py-2.5 px-3 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors duration-200"
-                >
-                  {link.label}
-                  <span className="absolute bottom-1 left-3 right-3 h-px rounded-full bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-left" />
-                </Link>
-              ))}
-            </nav>
-
-            {!isAuthenticated && (
-              <div className="pt-3 mt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col gap-2">
-                <Link
-                  href={ROUTES.AUTH.FIRST_LOGIN_SETUP}
-                  onClick={closeMenu}
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "default" }),
-                    "w-full justify-center text-xs font-medium gap-2 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
-                  )}
-                >
-                  <ShieldCheck size={14} className="text-primary" />
-                  <span>First Login Setup</span>
-                </Link>
-                <Link
-                  href={ROUTES.AUTH.LOGIN}
-                  onClick={closeMenu}
-                  className={cn(
-                    buttonVariants({ size: "default" }),
-                    "w-full justify-center text-xs font-semibold gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_2px_12px_rgba(14,165,233,0.25)]"
-                  )}
-                >
-                  <span>Login</span>
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {menuOpen && (
+        <div className="lg:hidden border-t border-slate-200/80 dark:border-slate-800/80 glass-header-scrolled px-4 py-4 shadow-lg">
+          <nav className="flex flex-col gap-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={closeMenu}
+                className="flex items-center py-2.5 px-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {!isAuthenticated && (
+            <div className="pt-4 mt-3 border-t border-slate-200/70 dark:border-slate-800/70 flex flex-col gap-2.5">
+              <Link
+                href={ROUTES.AUTH.FIRST_LOGIN_SETUP}
+                onClick={closeMenu}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "default" }),
+                  "w-full justify-center text-xs font-medium gap-2 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
+                )}
+              >
+                <ShieldCheck size={14} className="text-primary" />
+                <span>First Login Setup</span>
+              </Link>
+              <Link
+                href={ROUTES.AUTH.LOGIN}
+                onClick={closeMenu}
+                className={cn(
+                  buttonVariants({ size: "default" }),
+                  "w-full justify-center text-xs font-semibold gap-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                )}
+              >
+                <span>Login</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

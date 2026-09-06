@@ -6,28 +6,30 @@ import { cn } from "@/lib/utils";
 interface ScrollRevealProps {
   readonly children: ReactNode;
   readonly className?: string;
+  readonly delay?: number;
   readonly threshold?: number;
 }
 
 export function ScrollReveal({
   children,
   className,
-  threshold = 0.05,
+  delay = 50,
+  threshold = 0.12,
 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setHasEntered(true);
           observer.unobserve(entry.target);
         }
       },
       {
         threshold,
-        rootMargin: "100px 0px 0px 0px",
+        rootMargin: "0px 0px -80px 0px",
       }
     );
 
@@ -46,11 +48,16 @@ export function ScrollReveal({
   return (
     <div
       ref={elementRef}
+      style={{
+        transitionDuration: "1150ms",
+        transitionTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        transitionDelay: `${delay}ms`,
+      }}
       className={cn(
-        "transition-all duration-500 ease-out will-change-transform",
-        isVisible
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-4 pointer-events-none",
+        "transition-all will-change-transform ease-out",
+        hasEntered
+          ? "opacity-100 translate-y-0 scale-100 blur-none"
+          : "opacity-0 translate-y-10 scale-[0.985] blur-[2px] pointer-events-none",
         className
       )}
     >
