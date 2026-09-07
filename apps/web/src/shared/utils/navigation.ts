@@ -10,6 +10,7 @@ import {
   BookOpen,
   BookMarked,
   Users,
+  FolderArchive,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -95,6 +96,15 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: BookMarked,
   },
   {
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BASE,
+    icon: FolderArchive,
+    children: [
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Exam Contexts", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
+    ],
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -137,6 +147,11 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Users,
   },
   {
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BANKS,
+    icon: FolderArchive,
+  },
+  {
     label: "Learning Materials",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
@@ -157,6 +172,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: User,
   },
 ];
+
 
 export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
   {

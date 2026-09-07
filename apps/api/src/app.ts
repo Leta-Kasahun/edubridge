@@ -24,6 +24,10 @@ import { academicYearRouter, gradeRouter, sectionRouter, subjectRoutes, studentA
 import { studentProfileRouter } from "./modules/students/route.js";
 import { curriculumRouter, structureRouter, curriculumImportRouter } from "./modules/curriculum/index.js";
 import { learningContentRouter } from "./modules/learning-content/index.js";
+import {
+  questionBankRouter,
+  examContextRouter,
+} from "./modules/question-bank/index.js";
 
 const app: Express = express();
 
@@ -78,8 +82,9 @@ app.use("/api/curricula", curriculumRouter);
 app.use("/api/curriculum/structure", structureRouter);
 app.use("/api/curriculum-structure", structureRouter);
 app.use("/api/curriculum/import", curriculumImportRouter);
-app.use("/api/curriculum-import", curriculumImportRouter);
 app.use("/api/learning-content", learningContentRouter);
+app.use("/api/question-banks", questionBankRouter);
+app.use("/api/exam-contexts", examContextRouter);
 
 app.use(errorHandler);
 

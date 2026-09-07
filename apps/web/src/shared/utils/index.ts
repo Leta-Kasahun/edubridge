@@ -17,4 +17,7 @@ export * from "./address.util";
 export * from "./curriculum.util";
 export * from "./table-lazy-load.util";
 export * from "./avatar.util";
+export * from "./question.util";
+export * from "./question-upload.util";
+export * from "./exam-context.util";
 export { cn } from "@/lib/utils";

@@ -53,6 +53,12 @@ export const ROUTES = {
     BASE: "/dashboard/learning-content",
     MATERIALS: "/dashboard/learning-content/materials",
   },
+  QUESTION_BANK: {
+    BASE: "/dashboard/question-banks",
+    BANKS: "/dashboard/question-banks/banks",
+    UPLOAD: "/dashboard/question-banks/upload",
+    EXAM_CONTEXTS: "/dashboard/question-banks/exam-contexts",
+  },
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",

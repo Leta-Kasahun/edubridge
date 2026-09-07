@@ -9,6 +9,7 @@ import { seedStudents } from "./seeds/students.seeder.js";
 import { seedCurriculum } from "./seeds/curriculum.seeder.js";
 import { seedSystemAdmin } from "./seeds/admin.seeder.js";
 import { seedTestUsers } from "./seeds/users.seeder.js";
+import { seedQuestionBanksAndContexts } from "./seeds/question-bank.seeder.js";
 
 async function main() {
   await cleanDatabase();
@@ -52,6 +53,8 @@ async function main() {
     demo: demoTenant.id,
     apex: apexTenant.id,
   });
+
+  await seedQuestionBanksAndContexts();
 }
 
 main()
