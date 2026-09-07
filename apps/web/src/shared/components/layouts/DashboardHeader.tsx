@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, Bell } from "lucide-react";
+import { Menu } from "lucide-react";
 import { UserMenu } from "@/shared/components/UserMenu";
 import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
 import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 interface DashboardHeaderProps {
   readonly className?: string;
@@ -46,14 +47,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
-        <button
-          type="button"
-          className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-hidden cursor-pointer"
-          aria-label="Notifications"
-        >
-          <Bell size={17} />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" />
-        </button>
+        <NotificationBell />
 
         <div className="h-5 w-px bg-border my-auto mx-0.5" />
 
