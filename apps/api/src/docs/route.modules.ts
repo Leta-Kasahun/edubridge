@@ -15,6 +15,7 @@ import { registerTeacherAssignmentDocs } from "../modules/academic/assignments/t
 import { registerSecurityPolicyDocs } from "../modules/security-policy/security-policy.doc.js";
 import { registerCurriculumDocs } from "../modules/curriculum/curricula/curriculum.doc.js";
 import { registerNotificationDocs } from "../modules/notifications/notification.doc.js";
+import { registerQuestionBankDocs } from "../modules/question-bank/question-bank.doc.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
@@ -34,4 +35,5 @@ export function registerAllModules(): void {
   registerTeacherAssignmentDocs();
   registerCurriculumDocs();
   registerNotificationDocs();
+  registerQuestionBankDocs();
 }

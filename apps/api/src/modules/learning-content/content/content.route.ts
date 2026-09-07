@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { authenticate } from "../../../middleware/auth.js";
+import { authenticate, optionalAuthenticate } from "../../../middleware/auth.js";
 import { requireRoles } from "../../../middleware/rbac.js";
 import { contentController } from "./controllers/content.controller.js";
 import { contentAttachmentController } from "./controllers/content-attachment.controller.js";
@@ -15,6 +15,17 @@ const upload = multer({
     fileSize: MAX_ATTACHMENT_SIZE_BYTES,
   },
 });
+
+router.get(
+  "/:id/attachments/:attachmentId/stream",
+  optionalAuthenticate,
+  contentAttachmentController.streamAttachment
+);
+router.get(
+  "/:id/attachments/:attachmentId/download",
+  optionalAuthenticate,
+  contentAttachmentController.streamAttachment
+);
 
 router.use(authenticate);
 

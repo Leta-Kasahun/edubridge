@@ -7,6 +7,8 @@ import { useLogout } from "@/features/auth/hooks";
 import { useClickOutside } from "./useClickOutside";
 import { ROUTES } from "@/constants/routes";
 
+import { getAvatarInitialsFromParts } from "@/shared/utils/avatar.util";
+
 export function useUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -27,9 +29,12 @@ export function useUserMenu() {
     user?.fullName ||
     (nameParts.length > 0 ? nameParts.join(" ") : user?.username || "User");
 
-  const initials =
-    ((firstName[0] || "") + (lastName[0] || middleName[0] || "")).toUpperCase() ||
-    (user?.username?.[0] || "U").toUpperCase();
+  const initials = getAvatarInitialsFromParts(
+    firstName,
+    middleName,
+    lastName,
+    user?.username?.[0] || "U"
+  );
 
   const primaryRole = user?.roles?.[0];
 

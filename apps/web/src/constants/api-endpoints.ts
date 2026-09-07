@@ -174,6 +174,22 @@ export const API_ENDPOINTS = {
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,
   },
+  QUESTION_BANKS: {
+    BASE: "/question-banks",
+    BY_ID: (id: string) => `/question-banks/${id}`,
+    QUESTIONS: (bankId: string) => `/question-banks/${bankId}/questions`,
+    QUESTIONS_BATCH: (bankId: string) => `/question-banks/${bankId}/questions/batch`,
+    QUESTION_BY_ID: (id: string) => `/question-banks/questions/${id}`,
+    QUESTION_PUBLISH: (id: string) => `/question-banks/questions/${id}/publish`,
+    UPLOAD: (bankId: string) => `/question-banks/${bankId}/upload`,
+    UPLOAD_PREVIEW: (uploadId: string) => `/question-banks/upload/${uploadId}/preview`,
+    UPLOAD_CONFIRM: (bankId: string, uploadId: string) =>
+      `/question-banks/${bankId}/upload/${uploadId}/confirm`,
+  },
+  EXAM_CONTEXTS: {
+    BASE: "/exam-contexts",
+    BY_ID: (id: string) => `/exam-contexts/${id}`,
+  },
   HEALTH: "/health",
   NOTIFICATIONS: {
     BASE: "/notifications",

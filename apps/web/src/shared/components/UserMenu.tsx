@@ -15,6 +15,7 @@ import { useUserMenu } from "../hooks";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { ChangePasswordForm } from "@/features/auth/components/ChangePasswordForm";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface UserMenuProps {
   readonly className?: string;
@@ -43,6 +44,8 @@ export function UserMenu({ className }: UserMenuProps) {
     handleLogout,
   } = useUserMenu();
 
+  const userPhoto = user?.photoUrl || user?.avatarUrl;
+
   return (
     <>
       <div ref={menuRef} className={cn("relative inline-block text-left", className)}>
@@ -53,9 +56,12 @@ export function UserMenu({ className }: UserMenuProps) {
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
-          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-semibold text-xs transition-transform active:scale-95">
-            {initials}
-          </div>
+          <Avatar className="h-8 w-8 border border-primary/20 shrink-0 transition-transform active:scale-95">
+            {userPhoto && <AvatarImage src={userPhoto} alt={fullName} />}
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <span className="hidden md:inline-block text-xs font-medium text-foreground max-w-[150px] truncate">
             {fullName}
           </span>

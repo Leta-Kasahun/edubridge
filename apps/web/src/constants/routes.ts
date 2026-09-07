@@ -20,6 +20,8 @@ export const ROUTES = {
   },
   STUDENT: {
     DASHBOARD: "/dashboard",
+    MY_CLASS: "/dashboard/my-class",
+    MATERIALS: "/dashboard/learning-content/materials",
     PROFILE: "/dashboard/profile",
   },
   SCHOOLS: "/dashboard/schools-mng",
@@ -50,6 +52,12 @@ export const ROUTES = {
   LEARNING_CONTENT: {
     BASE: "/dashboard/learning-content",
     MATERIALS: "/dashboard/learning-content/materials",
+  },
+  QUESTION_BANK: {
+    BASE: "/dashboard/question-banks",
+    BANKS: "/dashboard/question-banks/banks",
+    UPLOAD: "/dashboard/question-banks/upload",
+    EXAM_CONTEXTS: "/dashboard/question-banks/exam-contexts",
   },
   SETTINGS: {
     BASE: "/dashboard/settings",

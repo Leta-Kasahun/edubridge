@@ -26,6 +26,8 @@ const ROUTE_NAME_MAP: Readonly<Record<string, string>> = {
   curricula: "Curricula",
   structure: "Structure",
   import: "Import",
+  "learning-content": "Learning Materials",
+  materials: "Learning Materials",
   settings: "Settings",
   security: "Security Policy",
   roles: "Roles & Access",

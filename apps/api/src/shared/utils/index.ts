@@ -11,3 +11,6 @@ export * from "./file-validator.util.js";
 export * from "./media-optimizer.util.js";
 export * from "./curriculum-tree.util.js";
 export * from "./teacher-scope.util.js";
+export * from "./question-config.util.js";
+export * from "./grading.util.js";
+export * from "./mastery.util.js";

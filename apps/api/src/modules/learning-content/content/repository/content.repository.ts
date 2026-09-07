@@ -786,6 +786,17 @@ export class ContentRepository {
     });
   }
 
+  async findAttachmentByIdUnscoped(attachmentId: string) {
+    return prisma.contentAttachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        content: {
+          select: { id: true, tenantId: true, status: true },
+        },
+      },
+    });
+  }
+
   async findAttachmentsByContentId(tenantId: string, contentId: string) {
     return runWithTenant({ tenantId }, async () => {
       return prisma.contentAttachment.findMany({
