@@ -24,6 +24,7 @@ import { academicYearRouter, gradeRouter, sectionRouter, subjectRoutes, studentA
 import { studentProfileRouter } from "./modules/students/route.js";
 import { curriculumRouter, structureRouter, curriculumImportRouter } from "./modules/curriculum/index.js";
 import { learningContentRouter } from "./modules/learning-content/index.js";
+import { notificationRouter } from "./modules/notifications/index.js";
 
 const app: Express = express();
 
@@ -41,6 +42,7 @@ setupSwagger(app);
 
 app.use("/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/notifications", notificationRouter);
 app.use("/api", permissionRouter);
 app.use("/api/lookups", lookupRouter);
 app.use("/api/security-policy", securityPolicyRouter);
