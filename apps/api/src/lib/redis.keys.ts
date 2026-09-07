@@ -44,6 +44,14 @@ export const RedisKeys = {
     tokenRateLimit: (userId: string) => `ai:ratelimit:tokens:${userId}`,
     requestRateLimit: (userId: string) => `ai:ratelimit:requests:${userId}`,
   },
+  notification: {
+    // Pub/Sub channel per user for SSE fan-out
+    userChannel: (userId: string) => `notif:user:${userId}`,
+    // Pub/Sub channel per tenant (broadcast)
+    tenantChannel: (tenantId: string) => `notif:tenant:${tenantId}`,
+    // Unread badge count cache
+    unreadCount: (tenantId: string, userId: string) => `notif:unread:${tenantId}:${userId}`,
+  },
   patterns: {
     userPermissions: (tenantId: string) => `perm:user:${tenantId}:*`,
     userSessions: (userId: string) => `auth:user:${userId}:*`,

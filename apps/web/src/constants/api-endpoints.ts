@@ -191,6 +191,15 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/exam-contexts/${id}`,
   },
   HEALTH: "/health",
+  NOTIFICATIONS: {
+    BASE: "/notifications",
+    STREAM: "/notifications/stream",
+    UNREAD_COUNT: "/notifications/unread-count",
+    MARK_READ: "/notifications/mark-read",
+    MARK_ALL_READ: "/notifications/mark-all-read",
+    PREFERENCES: "/notifications/preferences",
+    SEND: "/notifications/send",
+  },
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;
