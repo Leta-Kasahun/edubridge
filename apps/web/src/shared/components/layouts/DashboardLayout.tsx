@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { cn } from "@/lib/utils";
+import { useNotificationStream } from "@/features/notifications/hooks/useNotificationStream";
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode;
@@ -19,6 +20,9 @@ export function DashboardLayout({
   customBreadcrumbLabels,
 }: DashboardLayoutProps) {
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
+
+  // Open SSE connection for real-time notifications
+  useNotificationStream();
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
