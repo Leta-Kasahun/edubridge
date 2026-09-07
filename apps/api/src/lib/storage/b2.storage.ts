@@ -1,5 +1,5 @@
 import { Readable, PassThrough } from "node:stream";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { env } from "../../config/env.js";
 import {
@@ -201,6 +201,34 @@ export class B2StorageProvider implements IStorageProvider {
       cloudName: this.getBucketName(),
       folder,
       uploadUrl: this.getEndpoint(),
+    };
+  }
+
+  async getFileStream(key: string, range?: string): Promise<{
+    readonly stream: NodeJS.ReadableStream;
+    readonly contentType?: string;
+    readonly contentLength?: number;
+    readonly contentRange?: string;
+    readonly etag?: string;
+  }> {
+    const command = new GetObjectCommand({
+      Bucket: this.getBucketName(),
+      Key: key,
+      Range: range,
+    });
+
+    const response = await this.getClient().send(command);
+
+    if (!response.Body) {
+      throw new Error(`File stream is empty for key: ${key}`);
+    }
+
+    return {
+      stream: response.Body as unknown as NodeJS.ReadableStream,
+      contentType: response.ContentType,
+      contentLength: response.ContentLength,
+      contentRange: response.ContentRange,
+      etag: response.ETag?.replace(/"/g, ""),
     };
   }
 

@@ -25,6 +25,8 @@ import {
 import { useContentDetail, useContentList } from "../../hooks/useLearningContent";
 import { LearningContentListItem } from "../../types/content.types";
 import { isPdfDocument, downloadFileFromDataUrl } from "@/shared/utils/document.util";
+import { env } from "@/config/env";
+import { getAccessToken } from "@/lib/apiClient";
 
 interface StudentMaterialReaderViewProps {
   readonly contentId: string;
@@ -90,14 +92,25 @@ export function StudentMaterialReaderView({
   }, [detail]);
 
   const primaryMediaUrl = useMemo(() => {
-    if (primaryAttachment?.deliveryUrl) {
-      return primaryAttachment.deliveryUrl;
+    const rawUrl = primaryAttachment?.deliveryUrl || activeVersion?.body?.resourceUrl;
+    if (!rawUrl || typeof rawUrl !== "string" || !rawUrl.trim()) {
+      return null;
     }
-    const bodyUrl = activeVersion?.body?.resourceUrl;
-    if (typeof bodyUrl === "string" && bodyUrl.trim()) {
-      return bodyUrl.trim();
+    const cleanUrl = rawUrl.trim();
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://") ||
+      cleanUrl.startsWith("blob:") ||
+      cleanUrl.startsWith("data:")
+    ) {
+      return cleanUrl;
     }
-    return null;
+
+    const token = getAccessToken();
+    const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : "";
+    const cleanPath = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
+
+    return `${cleanPath}${tokenQuery}`;
   }, [primaryAttachment, activeVersion]);
 
   const isPdf = isPdfDocument(primaryMediaUrl) || detail?.type === "PDF" || detail?.type === "TEXTBOOK" || detail?.type === "REFERENCE_BOOK";

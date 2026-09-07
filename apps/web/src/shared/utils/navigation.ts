@@ -10,6 +10,7 @@ import {
   BookOpen,
   BookMarked,
   Users,
+  FolderArchive,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -44,12 +45,9 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "Learning Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
-    children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
-    ],
   },
   {
     label: "Settings",
@@ -93,11 +91,17 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Content",
-    href: ROUTES.LEARNING_CONTENT.BASE,
+    label: "Learning Materials",
+    href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
+  },
+  {
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BASE,
+    icon: FolderArchive,
     children: [
-      { label: "Materials", href: ROUTES.LEARNING_CONTENT.MATERIALS },
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Exam Contexts", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
   {
@@ -143,7 +147,12 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Users,
   },
   {
-    label: "My Materials",
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BANKS,
+    icon: FolderArchive,
+  },
+  {
+    label: "Learning Materials",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
   },
@@ -164,11 +173,27 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
   },
 ];
 
+
 export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
   {
     label: "Dashboard",
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
+  },
+  {
+    label: "My Class",
+    href: ROUTES.STUDENT.MY_CLASS,
+    icon: Presentation,
+  },
+  {
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BANKS,
+    icon: FolderArchive,
+  },
+  {
+    label: "Learning Materials",
+    href: ROUTES.STUDENT.MATERIALS,
+    icon: BookMarked,
   },
   {
     label: "My Profile",

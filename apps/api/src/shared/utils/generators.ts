@@ -152,4 +152,22 @@ export const generateObjectiveCode = (topicCode: string, orderIndex: number): st
   return `${cleanTopic}O${orderIndex}`;
 };
 
+export const generateQuestionBankCode = (name: string): string => {
+  const prefix = (name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6) || "BANK").toUpperCase();
+  const random = crypto.randomInt(1000, 9999);
+  return `QB-${prefix}-${random}`;
+};
+
+export const generateExamContextCode = (scope: string, year?: number | null): string => {
+  const yearStr = year ? `-${year}` : "";
+  const random = crypto.randomInt(100, 999);
+  return `EXAM-${scope.toUpperCase()}${yearStr}-${random}`;
+};
+
+export const generateAssessmentCode = (type: string): string => {
+  const prefix = type.slice(0, 4).toUpperCase();
+  const random = crypto.randomInt(1000, 9999);
+  return `ASM-${prefix}-${random}`;
+};
+
 

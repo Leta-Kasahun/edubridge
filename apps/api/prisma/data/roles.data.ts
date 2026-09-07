@@ -27,6 +27,12 @@ export const PERMISSIONS = [
   { code: "EXAM_ATTEMPT", name: "ATTEMPT exam", resource: "exam", action: "attempt" },
   { code: "RESULT_VIEW_OWN", name: "VIEW own results", resource: "result", action: "view_own" },
   { code: "AI_TUTOR_USE", name: "USE AI tutor", resource: "ai_tutor", action: "use" },
+  { code: "QUESTION_BANK_MANAGE", name: "MANAGE question banks", resource: "question_bank", action: "manage" },
+  { code: "QUESTION_BANK_VIEW", name: "VIEW question banks", resource: "question_bank", action: "view" },
+  { code: "QUESTION_MANAGE", name: "MANAGE questions", resource: "question", action: "manage" },
+  { code: "QUESTION_VIEW", name: "VIEW questions", resource: "question", action: "view" },
+  { code: "EXAM_CONTEXT_MANAGE", name: "MANAGE exam contexts", resource: "exam_context", action: "manage" },
+  { code: "EXAM_CONTEXT_VIEW", name: "VIEW exam contexts", resource: "exam_context", action: "view" },
 ];
 
 export const ROLES = [
@@ -58,6 +64,12 @@ export const ROLES = [
       "ANALYTICS_VIEW",
       "SECURITY_POLICY_CONFIGURE",
       "INVITATION_SEND",
+      "QUESTION_BANK_MANAGE",
+      "QUESTION_BANK_VIEW",
+      "QUESTION_MANAGE",
+      "QUESTION_VIEW",
+      "EXAM_CONTEXT_MANAGE",
+      "EXAM_CONTEXT_VIEW",
     ],
   },
   {
@@ -78,6 +90,11 @@ export const ROLES = [
       "AI_CONTENT_GENERATE",
       "AI_CONTENT_APPROVE",
       "ANALYTICS_VIEW",
+      "QUESTION_BANK_MANAGE",
+      "QUESTION_BANK_VIEW",
+      "QUESTION_MANAGE",
+      "QUESTION_VIEW",
+      "EXAM_CONTEXT_VIEW",
     ],
   },
   {

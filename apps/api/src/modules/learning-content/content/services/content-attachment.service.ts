@@ -24,15 +24,24 @@ export class ContentAttachmentService {
     private readonly storage: StorageService = storageService
   ) {}
 
-  resolveDeliveryUrl(storageKey: string, mimeType: string): string {
-    const category = resolveMediaCategory(mimeType);
-    if (category === "image") {
-      return this.storage.getOptimizedDeliveryUrl(storageKey, {
-        quality: "auto",
-        format: "auto",
-      });
+  resolveDeliveryUrl(
+    contentId: string,
+    attachmentId: string,
+    storageKey: string,
+    mimeType: string
+  ): string {
+    const publicPrefix = (process.env.B2_PUBLIC_URL_PREFIX || "").trim();
+    if (publicPrefix) {
+      const category = resolveMediaCategory(mimeType);
+      if (category === "image") {
+        return this.storage.getOptimizedDeliveryUrl(storageKey, {
+          quality: "auto",
+          format: "auto",
+        });
+      }
+      return this.storage.getOptimizedDeliveryUrl(storageKey);
     }
-    return this.storage.getOptimizedDeliveryUrl(storageKey);
+    return `/api/learning-content/content/${contentId}/attachments/${attachmentId}/stream`;
   }
 
   formatAttachmentResponse(attachment: {
@@ -58,6 +67,8 @@ export class ContentAttachmentService {
       storageKey: attachment.storageKey,
       sizeBytes: attachment.sizeBytes.toString(),
       deliveryUrl: this.resolveDeliveryUrl(
+        attachment.contentId,
+        attachment.id,
         attachment.storageKey,
         attachment.mimeType
       ),
@@ -205,6 +216,56 @@ export class ContentAttachmentService {
       contentId
     );
     return attachments.map((att) => this.formatAttachmentResponse(att));
+  }
+
+  async getAttachmentStream(
+    tenantId: string | undefined,
+    contentId: string,
+    attachmentId: string,
+    range?: string
+  ): Promise<{
+    readonly stream: NodeJS.ReadableStream;
+    readonly fileName: string;
+    readonly mimeType: string;
+    readonly contentLength?: number;
+    readonly contentRange?: string;
+    readonly etag?: string;
+  }> {
+    let attachment: {
+      readonly id: string;
+      readonly contentId: string;
+      readonly storageKey: string;
+      readonly fileName: string;
+      readonly mimeType: string;
+    } | null = null;
+
+    if (tenantId) {
+      attachment = await this.repository.findAttachmentById(
+        tenantId,
+        attachmentId
+      );
+    } else {
+      attachment = await this.repository.findAttachmentByIdUnscoped(
+        attachmentId
+      );
+    }
+
+    if (!attachment || attachment.contentId !== contentId) {
+      throw new NotFoundError(
+        `Attachment ${attachmentId} not found for this content item`
+      );
+    }
+
+    const fileStreamData = await this.storage.getFileStream(
+      attachment.storageKey,
+      range
+    );
+
+    return {
+      ...fileStreamData,
+      fileName: attachment.fileName,
+      mimeType: attachment.mimeType || fileStreamData.contentType || "application/octet-stream",
+    };
   }
 
   async deleteStorageFile(
