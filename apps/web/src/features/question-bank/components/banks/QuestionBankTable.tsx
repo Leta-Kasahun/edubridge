@@ -6,9 +6,6 @@ import {
   Plus,
   Filter,
   Calendar,
-  FolderTree,
-  Copy,
-  Check,
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -41,7 +38,6 @@ export function QuestionBankTable() {
   const [academicYearFilter, setAcademicYearFilter] = useState<string>("ALL");
   const [selectedGradeId, setSelectedGradeId] = useState<string>("ALL");
   const [openSubjectIds, setOpenSubjectIds] = useState<Set<string>>(new Set());
-  const [copiedPath, setCopiedPath] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBank, setEditingBank] = useState<QuestionBankItem | null>(null);
@@ -112,25 +108,6 @@ export function QuestionBankTable() {
         item.gradeId === activeGrade.id || item.grade?.level === activeGrade.level
     );
   }, [rawItems, activeGrade]);
-
-  const activePathString = useMemo(() => {
-    const parts = ["Question Banks"];
-    if (activeGrade) {
-      parts.push(`Grade ${activeGrade.level}`);
-    } else {
-      parts.push("All Grades");
-    }
-    if (statusFilter !== "ALL") {
-      parts.push(statusFilter);
-    }
-    return parts.join(" / ");
-  }, [activeGrade, statusFilter]);
-
-  const handleCopyPath = () => {
-    navigator.clipboard.writeText(activePathString);
-    setCopiedPath(true);
-    setTimeout(() => setCopiedPath(false), 2000);
-  };
 
   const subjectGroups: readonly BankSubjectAccordionGroup[] = useMemo(() => {
     const map = new Map<string, QuestionBankItem[]>();
@@ -271,34 +248,6 @@ export function QuestionBankTable() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-xl border border-border px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs shadow-2xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <FolderTree size={14} className="text-muted-foreground shrink-0" />
-          <span className="font-mono text-[11px] text-muted-foreground truncate">
-            {activePathString}
-          </span>
-          <button
-            type="button"
-            onClick={handleCopyPath}
-            title="Copy path"
-            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer shrink-0"
-          >
-            {copiedPath ? (
-              <Check size={12} className="text-emerald-500" />
-            ) : (
-              <Copy size={12} />
-            )}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] text-muted-foreground hidden sm:inline font-medium">
-            {filteredByGradeItems.length}{" "}
-            {filteredByGradeItems.length === 1 ? "bank" : "banks"}
-          </span>
-        </div>
-      </div>
-
       <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={search}

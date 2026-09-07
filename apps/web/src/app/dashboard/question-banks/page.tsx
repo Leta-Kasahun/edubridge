@@ -15,33 +15,28 @@ interface QuestionBankSectionItem {
   readonly description: string;
   readonly href: string;
   readonly icon: React.ElementType;
-  readonly badge: string;
 }
 
 const QUESTION_BANK_SECTIONS: readonly QuestionBankSectionItem[] = [
   {
     title: "Question Banks",
-    description:
-      "Curriculum-aligned item banks, question authoring, multi-format questions, and automated version history.",
+    description: "Item banks, question authoring, and version management.",
     href: ROUTES.QUESTION_BANK.BANKS,
     icon: FolderArchive,
-    badge: "Item Repositories",
   },
   {
     title: "Exam Contexts",
-    description:
-      "Standardized exam blueprints, national/regional exam frameworks, and Ethiopian calendar configurations.",
+    description: "Exam blueprints and regional/national frameworks.",
     href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS,
     icon: Layers,
-    badge: "Exam Blueprints",
   },
 ];
 
 export default function QuestionBankDashboardPage() {
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "STUDENT"]}>
       <DashboardLayout>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 max-w-3xl gap-4">
           {QUESTION_BANK_SECTIONS.map((sec) => {
             const Icon = sec.icon;
 
@@ -49,30 +44,25 @@ export default function QuestionBankDashboardPage() {
               <Link
                 key={sec.href}
                 href={sec.href}
-                className="bg-card rounded-2xl border border-border p-5 shadow-xs hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-card rounded-2xl border border-border p-5 shadow-xs hover:border-primary/50 hover:shadow-sm transition-all flex flex-col justify-between group"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Icon size={22} />
-                    </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                      {sec.badge}
-                    </span>
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground mb-3 group-hover:scale-105 transition-transform">
+                    <Icon size={20} />
                   </div>
 
                   <h2 className="text-sm font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
                     {sec.title}
                   </h2>
-                  <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2">
                     {sec.description}
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-border mt-5 flex items-center justify-between text-xs font-semibold text-primary">
-                  <span>Manage</span>
+                <div className="pt-3 border-t border-border mt-4 flex items-center justify-between text-xs font-semibold text-primary">
+                  <span>Open</span>
                   <ChevronRight
-                    size={15}
+                    size={14}
                     className="group-hover:translate-x-0.5 transition-transform"
                   />
                 </div>

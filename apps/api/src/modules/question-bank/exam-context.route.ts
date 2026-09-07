@@ -23,14 +23,14 @@ router.post(
 
 router.get(
   "/",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   validate({ query: ExamContextQuerySchema }),
   controller.list
 );
 
 router.get(
   "/:id",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   controller.getById
 );
 

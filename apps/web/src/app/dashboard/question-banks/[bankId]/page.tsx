@@ -13,7 +13,7 @@ export default function BankQuestionsPage({ params }: BankQuestionsPageProps) {
   const resolvedParams = use(params);
 
   return (
-    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
+    <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "STUDENT"]}>
       <DashboardLayout>
         <div className="max-w-7xl mx-auto space-y-6">
           <QuestionListView bankId={resolvedParams.bankId} />

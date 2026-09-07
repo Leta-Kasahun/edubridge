@@ -10,8 +10,9 @@ import {
   Filter,
   CheckSquare,
   Binary,
-  Calendar,
+  RotateCcw,
 } from "lucide-react";
+import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -29,8 +30,7 @@ import {
   useDeleteQuestion,
 } from "../../hooks/useQuestions";
 import { useQuestionBank } from "../../hooks/useQuestionBanks";
-import { QuestionTypeBadge, QuestionDifficultyBadge, QuestionStatusBadge } from "./QuestionBadges";
-import { QuestionRowActions } from "./QuestionRowActions";
+import { QuestionCardItem } from "./QuestionCardItem";
 import { QuestionFormModal } from "./QuestionFormModal";
 import { QuestionPreviewModal } from "./QuestionPreviewModal";
 import { QuestionUploadModal } from "../upload/QuestionUploadModal";
@@ -40,11 +40,17 @@ interface QuestionListViewProps {
 }
 
 export function QuestionListView({ bankId }: QuestionListViewProps) {
+  const user = useAuthStore((state) => state.user);
+  const isStudent = user?.roles?.includes("STUDENT");
+
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
+
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [revealedExplanations, setRevealedExplanations] = useState<Record<string, boolean>>({});
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuestionListItem | null>(null);
@@ -61,8 +67,11 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         difficultyFilter === "ALL"
           ? undefined
           : (difficultyFilter as DifficultyLevel),
-      status:
-        statusFilter === "ALL" ? undefined : (statusFilter as QuestionStatus),
+      status: isStudent
+        ? ("PUBLISHED" as QuestionStatus)
+        : statusFilter === "ALL"
+        ? undefined
+        : (statusFilter as QuestionStatus),
       page,
       limit: 20,
     }
@@ -100,10 +109,45 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   };
 
+  const handleOptionSelect = (questionId: string, optionKey: string) => {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [questionId]: optionKey,
+    }));
+  };
+
+  const handleToggleExplanation = (questionId: string) => {
+    setRevealedExplanations((prev) => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
+
+  const handleResetPractice = () => {
+    setSelectedAnswers({});
+    setRevealedExplanations({});
+  };
+
   const items = questionsData?.items ?? [];
 
+  const practiceStats = useMemo(() => {
+    let correct = 0;
+    let attempted = 0;
+    for (const q of items) {
+      const selected = selectedAnswers[q.id];
+      if (selected) {
+        attempted++;
+        const correctOpt = q.options?.find((o) => o.isCorrect);
+        if (correctOpt && (correctOpt.id === selected || correctOpt.text === selected)) {
+          correct++;
+        }
+      }
+    }
+    return { correct, attempted, total: items.length };
+  }, [items, selectedAnswers]);
+
   const toolbarFilters: readonly FilterGroup[] = useMemo(() => {
-    return [
+    const filters: FilterGroup[] = [
       {
         id: "type",
         label: "Type",
@@ -140,7 +184,10 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Hard", value: "HARD" },
         ],
       },
-      {
+    ];
+
+    if (!isStudent) {
+      filters.push({
         id: "status",
         label: "Status",
         icon: Filter,
@@ -156,9 +203,11 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Published", value: "PUBLISHED" },
           { label: "Archived", value: "ARCHIVED" },
         ],
-      },
-    ];
-  }, [typeFilter, difficultyFilter, statusFilter]);
+      });
+    }
+
+    return filters;
+  }, [typeFilter, difficultyFilter, statusFilter, isStudent]);
 
   return (
     <div className="space-y-3.5 sm:space-y-4 max-w-7xl mx-auto w-full pb-10">
@@ -182,6 +231,11 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
             <h1 className="text-base sm:text-lg font-bold text-foreground">
               {bank?.name || "Question Bank"}
             </h1>
+            {isStudent && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                Practice Mode
+              </span>
+            )}
           </div>
           {bank?.description && (
             <p className="text-xs text-muted-foreground max-w-2xl line-clamp-2">
@@ -191,22 +245,48 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsUploadModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
-          >
-            <Upload size={14} />
-            <span>Upload Document</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleCreate}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
-          >
-            <Plus size={14} />
-            <span>Add Question</span>
-          </button>
+          {isStudent ? (
+            <div className="flex items-center gap-3">
+              <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-muted border border-border flex items-center gap-2">
+                <span className="text-muted-foreground">Score:</span>
+                <span className="text-foreground font-bold">
+                  {practiceStats.correct} / {practiceStats.attempted}
+                </span>
+                <span className="text-muted-foreground text-[10px]">
+                  ({practiceStats.total} total)
+                </span>
+              </div>
+              {practiceStats.attempted > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetPractice}
+                  className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <RotateCcw size={12} />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+              >
+                <Upload size={14} />
+                <span>Upload Document</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCreate}
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Plus size={14} />
+                <span>Add Question</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -239,96 +319,56 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
             No Questions in this Bank
           </h3>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
-            Add your first question manually or upload an exam document to extract questions automatically.
+            {isStudent
+              ? "No published questions are available in this question bank yet."
+              : "Add your first question manually or upload an exam document to extract questions automatically."}
           </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCreate}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
-            >
-              <Plus size={13} />
-              <span>Add Question</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsUploadModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
-            >
-              <Upload size={13} />
-              <span>Upload Document</span>
-            </button>
-          </div>
+          {!isStudent && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCreate}
+                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+              >
+                <Plus size={13} />
+                <span>Add Question</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <Upload size={13} />
+                <span>Upload Document</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((question) => {
-            const formattedDate = question.createdAt
-              ? new Date(question.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
-              : "—";
-
-            return (
-              <div
-                key={question.id}
-                className="bg-card rounded-2xl border border-border p-4 shadow-2xs hover:border-primary/40 transition-colors space-y-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <QuestionTypeBadge type={question.type} />
-                      <QuestionDifficultyBadge difficulty={question.difficulty} />
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-foreground border border-border">
-                        {question.defaultPoints} pt{question.defaultPoints === 1 ? "" : "s"}
-                      </span>
-                      <QuestionStatusBadge status={question.status} />
-                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground ml-auto">
-                        <Calendar size={12} />
-                        <span>{formattedDate}</span>
-                      </span>
-                    </div>
-
-                    <p className="text-xs sm:text-sm font-semibold text-foreground break-words line-clamp-3">
-                      {question.prompt}
-                    </p>
-                  </div>
-
-                  <QuestionRowActions
-                    question={question}
-                    onPreview={(q) => setPreviewQuestion(q)}
-                    onEdit={handleEdit}
-                    onPublish={handlePublish}
-                    onArchive={handleArchive}
-                    onActivate={handleActivate}
-                    onDelete={handleDelete}
-                    isBusy={publishMutation.isPending || deleteMutation.isPending || statusMutation.isPending}
-                  />
-                </div>
-
-                {question.options && question.options.length > 0 && (
-                  <div className="pt-2.5 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-                    {question.options.slice(0, 4).map((opt, idx) => (
-                      <div
-                        key={opt.id || idx}
-                        className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-2 ${opt.isCorrect
-                            ? "bg-muted/70 border-foreground/20 text-foreground font-medium"
-                            : "bg-card border-border text-muted-foreground"
-                          }`}
-                      >
-                        <span className="font-mono text-[11px] opacity-70">
-                          {String.fromCharCode(65 + idx)}.
-                        </span>
-                        <span className="truncate">{opt.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {items.map((question, qIndex) => (
+            <QuestionCardItem
+              key={question.id}
+              question={question}
+              qIndex={qIndex}
+              isStudent={isStudent}
+              selectedOptKey={selectedAnswers[question.id]}
+              onOptionSelect={handleOptionSelect}
+              isExplanationOpen={Boolean(revealedExplanations[question.id])}
+              onToggleExplanation={handleToggleExplanation}
+              onPreview={(q) => setPreviewQuestion(q)}
+              onEdit={handleEdit}
+              onPublish={handlePublish}
+              onArchive={handleArchive}
+              onActivate={handleActivate}
+              onDelete={handleDelete}
+              isBusy={
+                publishMutation.isPending ||
+                deleteMutation.isPending ||
+                statusMutation.isPending
+              }
+            />
+          ))}
         </div>
       )}
 

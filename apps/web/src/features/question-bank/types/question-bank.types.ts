@@ -158,6 +158,30 @@ export interface QuestionBankItem {
     readonly name: string;
     readonly level: number;
   } | null;
+  readonly examContexts?: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly code: string;
+    readonly scope: ExamScope;
+    readonly year?: number | null;
+    readonly gradeId?: string | null;
+    readonly subjectId?: string | null;
+    readonly grade?: {
+      readonly id: string;
+      readonly name: string;
+      readonly level: number;
+    } | null;
+    readonly subject?: {
+      readonly id: string;
+      readonly name: string;
+      readonly code: string;
+    } | null;
+  }[];
+  readonly createdBy?: {
+    readonly id: string;
+    readonly firstName: string;
+    readonly lastName: string;
+  } | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

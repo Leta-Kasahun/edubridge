@@ -44,7 +44,7 @@ router.use(authenticate);
 
 router.get(
   "/",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   validate({ query: QuestionBankQuerySchema }),
   bankController.list
 );
@@ -64,7 +64,7 @@ router.get(
 
 router.get(
   "/questions/:id",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   questionController.getById
 );
 
@@ -96,7 +96,7 @@ router.delete(
 
 router.get(
   "/:bankId/questions",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   validate({ query: QuestionQuerySchema }),
   questionController.listByBank
 );
@@ -131,7 +131,7 @@ router.post(
 
 router.get(
   "/:id",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   bankController.getById
 );
 

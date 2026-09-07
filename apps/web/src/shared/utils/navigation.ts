@@ -186,6 +186,11 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Presentation,
   },
   {
+    label: "Question Banks",
+    href: ROUTES.QUESTION_BANK.BANKS,
+    icon: FolderArchive,
+  },
+  {
     label: "Learning Materials",
     href: ROUTES.STUDENT.MATERIALS,
     icon: BookMarked,
