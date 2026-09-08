@@ -17,6 +17,7 @@ import {
   NotFoundError,
   BadRequestError,
 } from "../../../../../shared/exceptions/index.js";
+import { domainEventBus } from "../../../../../shared/events/domain-events.js";
 
 export class StudentAssignmentService {
   async getRoster(params: RosterFilterParams): Promise<PaginatedRosterResult> {
@@ -84,6 +85,14 @@ export class StudentAssignmentService {
       input.reason,
       userId
     );
+
+    domainEventBus.emitEvent("student.enrolled", {
+      tenantId,
+      studentId,
+      sectionId: input.targetSectionId,
+      academicYearId,
+      actorUserId: userId,
+    });
   }
 
   async transferBulk(
@@ -131,7 +140,7 @@ export class StudentAssignmentService {
       }
     }
 
-    return studentAssignmentRepository.transferBulk(
+    const count = await studentAssignmentRepository.transferBulk(
       tenantId,
       input.studentIds,
       academicYearId,
@@ -139,6 +148,18 @@ export class StudentAssignmentService {
       input.reason,
       userId
     );
+
+    for (const sId of input.studentIds) {
+      domainEventBus.emitEvent("student.enrolled", {
+        tenantId,
+        studentId: sId,
+        sectionId: input.targetSectionId,
+        academicYearId,
+        actorUserId: userId,
+      });
+    }
+
+    return count;
   }
 
   async getPromotionPreview(

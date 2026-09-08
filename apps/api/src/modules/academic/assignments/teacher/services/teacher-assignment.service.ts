@@ -14,6 +14,7 @@ import {
   BadRequestError,
   ConflictError,
 } from "../../../../../shared/exceptions/index.js";
+import { domainEventBus } from "../../../../../shared/events/domain-events.js";
 
 export class TeacherAssignmentService {
   async getAssignments(
@@ -130,6 +131,16 @@ export class TeacherAssignmentService {
       throw new BadRequestError("Failed to create teacher assignments");
     }
 
+    domainEventBus.emitEvent("teacher.assigned", {
+      tenantId,
+      teacherId: input.teacherId,
+      sectionIds: targetSectionIds,
+      subjectId: input.subjectId,
+      role: input.role,
+      actorUserId: userId,
+      assignmentId: createdAssignments[0].id,
+    });
+
     return createdAssignments[0];
   }
 
@@ -156,13 +167,24 @@ export class TeacherAssignmentService {
       throw new BadRequestError("Replacement teacher is not active or not found");
     }
 
-    return teacherAssignmentRepository.reassignAssignment(
+    const result = await teacherAssignmentRepository.reassignAssignment(
       tenantId,
       assignmentId,
       input.replacementTeacherId,
       input.reason,
       userId
     );
+
+    domainEventBus.emitEvent("teacher.reassigned", {
+      tenantId,
+      previousTeacherId: existing.teacherId,
+      replacementTeacherId: input.replacementTeacherId,
+      assignmentId,
+      reason: input.reason,
+      actorUserId: userId,
+    });
+
+    return result;
   }
 
   async endAssignment(
@@ -182,6 +204,14 @@ export class TeacherAssignmentService {
       input.reason,
       userId
     );
+
+    domainEventBus.emitEvent("teacher.assignment_ended", {
+      tenantId,
+      teacherId: existing.teacherId,
+      assignmentId,
+      reason: input.reason,
+      actorUserId: userId,
+    });
   }
 
   async getTeacherLoadSummary(

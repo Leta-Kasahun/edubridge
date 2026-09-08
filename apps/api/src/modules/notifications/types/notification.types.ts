@@ -69,7 +69,6 @@ export interface UpsertPreferenceInput {
   enabled: boolean;
 }
 
-// SSE payload shape pushed to clients
 export interface SseNotificationPayload {
   id: string;
   category: NotificationCategory;

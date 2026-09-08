@@ -32,6 +32,7 @@ import {
   ContentStatusEnum,
   ContentScopeEnum,
 } from "../../../../shared/constants/index.js";
+import { domainEventBus } from "../../../../shared/events/domain-events.js";
 
 export interface UserAuthContext {
   readonly tenantId: string;
@@ -980,7 +981,16 @@ export class ContentService {
     }
 
     await this.repository.updateStatus(tenantId, id, "PUBLISHED", userId);
-    return this.getContentDetail(tenantId, id, userContext);
+    const result = await this.getContentDetail(tenantId, id, userContext);
+    domainEventBus.emitEvent("learning_content.published", {
+      tenantId,
+      contentId: result.id,
+      title: result.title,
+      subjectName: result.subjectName,
+      gradeLevel: result.gradeLevel,
+      actorUserId: userId,
+    });
+    return result;
   }
 
   async archiveContent(
@@ -1035,7 +1045,16 @@ export class ContentService {
     }
 
     await this.repository.updateStatus(tenantId, id, "PUBLISHED", userId);
-    return this.getContentDetail(tenantId, id, userContext);
+    const result = await this.getContentDetail(tenantId, id, userContext);
+    domainEventBus.emitEvent("learning_content.published", {
+      tenantId,
+      contentId: result.id,
+      title: result.title,
+      subjectName: result.subjectName,
+      gradeLevel: result.gradeLevel,
+      actorUserId: userId,
+    });
+    return result;
   }
 
   async deleteContent(
