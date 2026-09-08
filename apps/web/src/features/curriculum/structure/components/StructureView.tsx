@@ -23,12 +23,12 @@ import { useCurricula, useCurriculumDetails } from "../../curricula/hooks/useCur
 import { UnitItem } from "./UnitItem";
 import { UnitFormModal } from "./UnitFormModal";
 import { SubjectFormModal } from "./SubjectFormModal";
-import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import {
   LoadingSpinner,
   ErrorAlert,
   SelectDropdown,
   SelectDropdownOption,
+  ConfirmDeleteModal,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";

@@ -7,8 +7,8 @@ import {
   FolderOpen,
   ChevronDown,
   BookOpen,
-  Layers,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { QuestionBankItem } from "../../types/question-bank.types";
 
 export interface BankSubjectAccordionGroup {
@@ -35,66 +35,74 @@ export function QuestionBankSubjectAccordion({
   renderRowActions,
 }: QuestionBankSubjectAccordionProps) {
   const totalQuestions = group.banks.reduce(
-    (acc, item) => acc + (item.questionCount || 0),
+    (acc, b) => acc + (b.questionCount || 0),
     0
   );
 
   return (
     <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all shadow-xs">
-      <button
-        type="button"
+      <div
         onClick={onToggle}
-        className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between text-left hover:bg-muted/40 transition-colors cursor-pointer select-none"
-        aria-expanded={isOpen}
+        className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer select-none"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="text-amber-500 shrink-0">
-            {isOpen ? <FolderOpen size={20} /> : <Folder size={20} />}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <ChevronDown
+            size={16}
+            className={cn(
+              "text-muted-foreground transition-transform duration-200 shrink-0",
+              isOpen && "transform rotate-180"
+            )}
+          />
+
+          <div className="flex items-center justify-center shrink-0 text-amber-500 dark:text-amber-400">
+            {isOpen ? (
+              <FolderOpen
+                size={20}
+                className="fill-amber-500/20 dark:fill-amber-400/20"
+              />
+            ) : (
+              <Folder
+                size={20}
+                className="fill-amber-500/20 dark:fill-amber-400/20"
+              />
+            )}
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-foreground truncate">
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
                 {group.name}
-              </span>
+              </h3>
               {group.code && (
-                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border uppercase">
                   {group.code}
                 </span>
               )}
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {group.banks.length} {group.banks.length === 1 ? "bank" : "banks"}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                {totalQuestions} {totalQuestions === 1 ? "question" : "questions"}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {group.banks.length} {group.banks.length === 1 ? "question bank" : "question banks"} · {totalQuestions} total questions
-            </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
-            {group.banks.length}
-          </span>
-          <ChevronDown
-            size={18}
-            className={`text-muted-foreground transition-transform duration-200 ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
+      </div>
 
       {isOpen && (
         <div className="border-t border-border">
           {group.banks.length === 0 ? (
             <div className="p-8 text-center text-xs text-muted-foreground">
-              No question banks in this subject.
+              No question banks found for this subject.
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div>
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-muted/30 text-muted-foreground font-semibold border-b border-border">
+                    <tr className="border-b border-border bg-muted/30 text-muted-foreground font-semibold">
                       <th className="py-2.5 px-4">Bank Name</th>
-                      <th className="py-2.5 px-4">Alignment</th>
+                      <th className="py-2.5 px-4">Grade</th>
                       <th className="py-2.5 px-3 text-center">Questions</th>
                       <th className="py-2.5 px-4">Status</th>
                       <th className="py-2.5 px-4">Created Date</th>
@@ -146,12 +154,9 @@ export function QuestionBankSubjectAccordion({
                           </td>
 
                           <td className="py-3 px-3 text-center font-medium text-foreground text-xs">
-                            <div className="inline-flex items-center gap-1 text-muted-foreground">
-                              <Layers size={12} />
-                              <span className="text-foreground font-semibold">
-                                {bank.questionCount}
-                              </span>
-                            </div>
+                            <span className="font-semibold text-foreground">
+                              {bank.questionCount}
+                            </span>
                           </td>
 
                           <td className="py-3 px-4">

@@ -135,7 +135,7 @@ export function QuestionFormModal({
 
   const contextOptions: readonly SelectDropdownOption[] = useMemo(() => {
     return [
-      { value: "", label: "General Exam" },
+      { value: "", label: "General Exam Type" },
       ...examContexts.map((ec) => ({ value: ec.id, label: ec.name })),
     ];
   }, [examContexts]);
@@ -193,18 +193,18 @@ export function QuestionFormModal({
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.prompt.trim()) {
-        setErrorMessage(`Question #${i + 1} prompt cannot be empty.`);
+        setErrorMessage(`Question ${i + 1} text cannot be empty.`);
         return;
       }
       if (q.type === "MCQ") {
         const hasEmptyOption = q.options.some((o) => !o.text.trim());
         if (hasEmptyOption) {
-          setErrorMessage(`All choices in Question #${i + 1} must have text.`);
+          setErrorMessage(`All choices in Question ${i + 1} must have text.`);
           return;
         }
         const hasCorrect = q.options.some((o) => o.isCorrect);
         if (!hasCorrect) {
-          setErrorMessage(`Question #${i + 1} must have at least one correct choice.`);
+          setErrorMessage(`Question ${i + 1} must have at least one correct choice.`);
           return;
         }
       }
@@ -277,6 +277,7 @@ export function QuestionFormModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close modal"
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <X size={18} />
@@ -289,7 +290,7 @@ export function QuestionFormModal({
 
             <div className="bg-muted/30 rounded-2xl border border-border p-3.5 space-y-3">
               <span className="text-xs font-bold text-foreground block">
-                Target Alignment
+                Curriculum Alignment
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <SelectDropdown
@@ -309,7 +310,7 @@ export function QuestionFormModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <SelectDropdown
-                  label="Exam Framework"
+                  label="Exam Type"
                   options={contextOptions}
                   value={examContextId}
                   onChange={(val) => setExamContextId(val)}

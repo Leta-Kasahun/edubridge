@@ -45,12 +45,12 @@ import { ContentFormModal } from "./ContentFormModal";
 import { ContentVersionModal } from "./ContentVersionModal";
 import { ContentDetailModal } from "./ContentDetailModal";
 import { ContentUploadModal } from "./ContentUploadModal";
-import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import {
   TableToolbar,
   FilterGroup,
   LoadingSpinner,
   ErrorAlert,
+  ConfirmDeleteModal,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";

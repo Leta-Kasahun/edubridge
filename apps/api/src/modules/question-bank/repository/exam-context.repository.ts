@@ -35,6 +35,12 @@ export class ExamContextRepository {
         grade: true,
         subject: true,
         curriculumVersion: true,
+        _count: {
+          select: {
+            questionBanks: true,
+            assessments: true,
+          },
+        },
       },
     });
   }
@@ -106,6 +112,12 @@ export class ExamContextRepository {
           grade: true,
           subject: true,
           curriculumVersion: true,
+          _count: {
+            select: {
+              questionBanks: true,
+              assessments: true,
+            },
+          },
         },
       }),
       prisma.examContext.count({ where }),
@@ -142,6 +154,12 @@ export class ExamContextRepository {
         grade: true,
         subject: true,
         curriculumVersion: true,
+        _count: {
+          select: {
+            questionBanks: true,
+            assessments: true,
+          },
+        },
       },
     });
   }

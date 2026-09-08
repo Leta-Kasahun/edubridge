@@ -147,6 +147,7 @@ export interface QuestionBankItem {
   readonly status: QuestionBankStatus;
   readonly subjectId?: string | null;
   readonly gradeId?: string | null;
+  readonly examContextId?: string | null;
   readonly questionCount: number;
   readonly subject?: {
     readonly id: string;
@@ -196,6 +197,7 @@ export interface CreateQuestionBankDto {
   readonly description?: string | null;
   readonly subjectId?: string | null;
   readonly gradeId?: string | null;
+  readonly examContextId?: string | null;
   readonly status?: QuestionBankStatus;
 }
 
@@ -204,6 +206,7 @@ export interface UpdateQuestionBankDto {
   readonly description?: string | null;
   readonly subjectId?: string | null;
   readonly gradeId?: string | null;
+  readonly examContextId?: string | null;
   readonly status?: QuestionBankStatus;
 }
 
@@ -225,7 +228,14 @@ export interface ExamContextItem {
   readonly scope: ExamScope;
   readonly status: ExamContextStatus;
   readonly year?: number | null;
-  readonly questionCount: number;
+  readonly examYear?: number | null;
+  readonly questionBankCount?: number;
+  readonly questionCount?: number;
+  readonly assessmentCount?: number;
+  readonly _count?: {
+    readonly questionBanks?: number;
+    readonly assessments?: number;
+  };
   readonly createdAt: string;
   readonly updatedAt: string;
 }

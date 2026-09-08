@@ -101,7 +101,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: FolderArchive,
     children: [
       { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
-      { label: "Exam Contexts", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
+      { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
   {

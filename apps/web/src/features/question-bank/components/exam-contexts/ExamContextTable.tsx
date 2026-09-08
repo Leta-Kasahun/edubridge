@@ -8,11 +8,11 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Layers,
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { getErrorMessage } from "@/shared/utils";
 import {
   ExamContextItem,
   ExamScope,
@@ -25,6 +25,7 @@ import { useAcademicYears } from "@/features/academic/academic-years";
 import { ExamContextFormModal } from "./ExamContextFormModal";
 import { ScopeBadge, ContextStatusBadge } from "./ExamContextBadges";
 import { ContextRowActions } from "./ExamContextRowActions";
+import { ConfirmDeleteModal } from "@/shared/components";
 
 export function ExamContextTable() {
   const [search, setSearch] = useState("");
@@ -33,6 +34,9 @@ export function ExamContextTable() {
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingContext, setEditingContext] = useState<ExamContextItem | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   const { data: yearsResponse } = useAcademicYears();
   const academicYears = yearsResponse?.data ?? [];
@@ -57,9 +61,24 @@ export function ExamContextTable() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete exam context "${name}"?`)) {
-      await deleteMutation.mutateAsync(id);
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteErrorMessage(null);
+    setDeleteTarget({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteErrorMessage(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      setDeleteErrorMessage(
+        getErrorMessage(
+          err,
+          "Failed to delete exam type. If this exam type is linked to question banks or assessments, archive it instead."
+        )
+      );
     }
   };
 
@@ -121,7 +140,7 @@ export function ExamContextTable() {
   if (error) {
     return (
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={error.message || "Failed to load exam contexts."} />
+        <ErrorAlert message={error.message || "Failed to load exam types."} />
       </div>
     );
   }
@@ -135,7 +154,7 @@ export function ExamContextTable() {
             setSearch(val);
             setPage(1);
           }}
-          searchPlaceholder="Search exam contexts..."
+          searchPlaceholder="Search exam types..."
           filters={toolbarFilters}
           actionButton={
             <button
@@ -144,7 +163,7 @@ export function ExamContextTable() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
-              <span>New Exam Context</span>
+              <span>New Exam Type</span>
             </button>
           }
         />
@@ -156,10 +175,10 @@ export function ExamContextTable() {
             <Award size={20} />
           </div>
           <h3 className="text-sm font-bold text-foreground mb-1">
-            No Exam Contexts Found
+            No Exam Types Found
           </h3>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
-            No exam blueprints match the selected filters. Add a new exam framework or adjust your search filters.
+            No exam types match the selected filters. Add a new exam type or adjust your filters.
           </p>
           <button
             type="button"
@@ -167,7 +186,7 @@ export function ExamContextTable() {
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
           >
             <Plus size={13} />
-            <span>New Context</span>
+            <span>New Exam Type</span>
           </button>
         </div>
       ) : (
@@ -181,6 +200,8 @@ export function ExamContextTable() {
                     year: "numeric",
                   })
                 : "—";
+
+              const bankCount = ctx.questionBankCount ?? ctx._count?.questionBanks ?? ctx.questionCount ?? 0;
 
               return (
                 <div
@@ -210,14 +231,14 @@ export function ExamContextTable() {
                     <ContextRowActions
                       context={ctx}
                       onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      isDeleting={deleteMutation.isPending}
+                      onDelete={handleDeleteClick}
+                      isDeleting={deleteMutation.isPending && deleteTarget?.id === ctx.id}
                     />
                   </div>
 
                   <div className="pt-2.5 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                     <span className="font-medium">
-                      {ctx.year ? `${ctx.year} E.C.` : "All Years"}
+                      {ctx.year ? `${ctx.year} E.C.` : "All Years"} • {bankCount} Question Banks
                     </span>
                     <span>{formattedDate}</span>
                   </div>
@@ -231,9 +252,9 @@ export function ExamContextTable() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                    <th className="py-3 px-4">Context Name</th>
+                    <th className="py-3 px-4">Exam Type Name</th>
                     <th className="py-3 px-4">Scope</th>
-                    <th className="py-3 px-3 text-center">Questions</th>
+                    <th className="py-3 px-3 text-center">Question Banks</th>
                     <th className="py-3 px-4">Year</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Created Date</th>
@@ -249,6 +270,8 @@ export function ExamContextTable() {
                           year: "numeric",
                         })
                       : "—";
+
+                    const bankCount = ctx.questionBankCount ?? ctx._count?.questionBanks ?? ctx.questionCount ?? 0;
 
                     return (
                       <tr
@@ -278,12 +301,9 @@ export function ExamContextTable() {
                         </td>
 
                         <td className="py-3.5 px-3 text-center font-medium text-foreground text-xs">
-                          <div className="inline-flex items-center gap-1 text-muted-foreground">
-                            <Layers size={12} />
-                            <span className="text-foreground font-semibold">
-                              {ctx.questionCount}
-                            </span>
-                          </div>
+                          <span className="font-semibold px-2 py-0.5 rounded-md bg-muted border border-border text-foreground">
+                            {bankCount}
+                          </span>
                         </td>
 
                         <td className="py-3.5 px-4 text-foreground font-medium text-xs">
@@ -302,8 +322,8 @@ export function ExamContextTable() {
                           <ContextRowActions
                             context={ctx}
                             onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            isDeleting={deleteMutation.isPending}
+                            onDelete={handleDeleteClick}
+                            isDeleting={deleteMutation.isPending && deleteTarget?.id === ctx.id}
                           />
                         </td>
                       </tr>
@@ -355,6 +375,20 @@ export function ExamContextTable() {
           setEditingContext(null);
         }}
         initialData={editingContext}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteErrorMessage(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Exam Type"
+        description="Are you sure you want to delete this exam type? This action cannot be undone."
+        itemName={deleteTarget?.name}
+        isPending={deleteMutation.isPending}
+        errorMessage={deleteErrorMessage}
       />
     </div>
   );
