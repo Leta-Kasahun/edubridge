@@ -24,13 +24,13 @@ declare module "next/dynamic" {
     retry?: () => void;
   };
 
-  export type DynamicOptions<P = {}> = {
+  export type DynamicOptions<P = Record<string, unknown>> = {
     loader?: () => Promise<ComponentType<P> | { default: ComponentType<P> }>;
     loading?: (loadingProps: DynamicOptionsLoadingProps) => ReactNode;
     ssr?: boolean;
   };
 
-  export default function dynamic<P = {}>(
+  export default function dynamic<P = Record<string, unknown>>(
     dynamicOptions: DynamicOptions<P> | (() => Promise<ComponentType<P> | { default: ComponentType<P> }>),
     options?: DynamicOptions<P>
   ): ComponentType<P>;
