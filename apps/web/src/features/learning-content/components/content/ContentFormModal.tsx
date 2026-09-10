@@ -343,8 +343,8 @@ export function ContentFormModal({
 
     let finalSubjectId = selectedSubjectId;
     let finalGradeId = resolvedGradeId;
-    let finalUnitId = selectedUnitId;
-    let finalTopicId = selectedTopicId;
+    const finalUnitId = selectedUnitId;
+    const finalTopicId = selectedTopicId;
 
     if (scope === "UNIT" || scope === "TOPIC") {
       if (selectedCurriculumSubjectId) {

@@ -7,6 +7,7 @@ import {
   ChevronRight,
   HelpCircle,
   FileQuestion,
+  BookOpen,
 } from "lucide-react";
 import { useQuestionBanks } from "../../hooks/useQuestionBanks";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
@@ -100,23 +101,23 @@ export function StudentQuestionBanksView(): React.JSX.Element {
   const filteredBanks = useMemo(() => {
     return gradeRestrictedBanks.filter((bank) => {
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchesName = bank.name.toLowerCase().includes(query);
-        const matchesSub = bank.subject?.name.toLowerCase().includes(query);
-        const matchesContext = bank.examContexts?.some((ctx) =>
-          ctx.name.toLowerCase().includes(query)
+        const q = searchQuery.toLowerCase();
+        const matchName = bank.name.toLowerCase().includes(q);
+        const matchSubject = bank.subject?.name.toLowerCase().includes(q);
+        const matchCode = bank.code.toLowerCase().includes(q);
+        const matchContext = bank.examContexts?.some((ctx) =>
+          ctx.name.toLowerCase().includes(q)
         );
-        if (!matchesName && !matchesSub && !matchesContext) {
+        if (!matchName && !matchSubject && !matchCode && !matchContext) {
           return false;
         }
       }
 
       if (selectedSubjectId !== "ALL") {
-        const matchesDirect = bank.subjectId === selectedSubjectId;
-        const matchesContextSubject = bank.examContexts?.some(
-          (ctx) => ctx.subjectId === selectedSubjectId || ctx.subject?.id === selectedSubjectId
-        );
-        if (!matchesDirect && !matchesContextSubject) {
+        const matchesSubject =
+          bank.subjectId === selectedSubjectId ||
+          bank.examContexts?.some((ctx) => ctx.subjectId === selectedSubjectId);
+        if (!matchesSubject) {
           return false;
         }
       }
@@ -223,26 +224,31 @@ export function StudentQuestionBanksView(): React.JSX.Element {
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="border-b border-border pb-4">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Grade {studentGradeLevel} Question Banks
-          </h1>
-          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-            Grade {studentGradeLevel}
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              Question Banks
+            </h1>
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              Grade {studentGradeLevel}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Browse question banks and practice curriculum exercises and exam questions by subject.
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
         <div className="sm:col-span-2 lg:col-span-6 relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
+            placeholder="Search by topic, keyword, or exam context..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search question banks..."
-            className="w-full h-10 rounded-xl border border-border bg-card pl-10 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/30 transition-all"
           />
         </div>
 
@@ -251,7 +257,7 @@ export function StudentQuestionBanksView(): React.JSX.Element {
             value={selectedScope}
             onChange={setSelectedScope}
             options={SCOPE_DROPDOWN_OPTIONS}
-            placeholder="Select Scope"
+            placeholder="Filter Scope"
           />
         </div>
 
@@ -260,72 +266,61 @@ export function StudentQuestionBanksView(): React.JSX.Element {
             value={selectedYearId}
             onChange={setSelectedYearId}
             options={yearDropdownOptions}
-            placeholder="Academic Year"
-            searchable={academicYears.length > 5}
+            placeholder="Filter Academic Year"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setSelectedSubjectId("ALL")}
-          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            selectedSubjectId === "ALL"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          }`}
-        >
-          All Subjects
-          <span
-            className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+      {subjects.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedSubjectId("ALL")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedSubjectId === "ALL"
-                ? "bg-primary-foreground/20 text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/60"
             }`}
           >
-            {gradeRestrictedBanks.length}
-          </span>
-        </button>
-
-        {subjects.map((sub) => {
-          const isSelected = selectedSubjectId === sub.id;
-          return (
-            <button
-              key={sub.id}
-              type="button"
-              onClick={() => setSelectedSubjectId(sub.id)}
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                isSelected
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              }`}
-            >
-              {sub.name}
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+            All Subjects
+          </button>
+          {subjects.map((sub) => {
+            const isSelected = selectedSubjectId === sub.id;
+            return (
+              <button
+                key={sub.id}
+                type="button"
+                onClick={() => setSelectedSubjectId(sub.id)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/60"
                 }`}
               >
-                {sub.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                <span>{sub.name}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    isSelected
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  {sub.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {filteredBanks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center flex flex-col items-center justify-center bg-card shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground mb-3">
             <HelpCircle className="h-6 w-6" />
           </div>
-          <h3 className="text-sm font-bold text-foreground mb-1">
-            No Question Banks Found
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-sm">
-            No Grade {studentGradeLevel} question banks match your current filter criteria.
+          <h3 className="text-sm font-bold text-foreground">No Question Banks Found</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            No question banks match your active search or filters. Try adjusting your subject, scope, or keyword filters.
           </p>
         </div>
       ) : (
@@ -333,7 +328,9 @@ export function StudentQuestionBanksView(): React.JSX.Element {
           {filteredBanks.map((bank) => {
             const primaryContext = bank.examContexts?.[0];
             const authorName = bank.createdBy
-              ? `${bank.createdBy.firstName} ${bank.createdBy.lastName}`
+              ? [bank.createdBy.firstName, bank.createdBy.lastName]
+                  .filter(Boolean)
+                  .join(" ")
               : null;
             const createdDate = formatCreatedDate(bank.createdAt);
 

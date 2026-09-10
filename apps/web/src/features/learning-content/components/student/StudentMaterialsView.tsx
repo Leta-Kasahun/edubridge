@@ -47,9 +47,9 @@ function getContentTypeLabel(type: ContentType): string {
     case "VIDEO":
       return "Video Lesson";
     case "TEXTBOOK":
-      return "Curriculum Textbook";
+      return "Textbook";
     case "REFERENCE_BOOK":
-      return "Reference Guide";
+      return "Reference Book";
     case "STUDY_GUIDE":
       return "Study Guide";
     case "TEACHER_GUIDE":
@@ -70,7 +70,7 @@ function getActionLabel(type: ContentType): string {
     case "VIDEO":
       return "Watch Video";
     case "TEXTBOOK":
-      return "Open Textbook";
+      return "Open Book";
     case "REFERENCE_BOOK":
       return "Open Reference";
     case "STUDY_GUIDE":
@@ -239,19 +239,17 @@ export function StudentMaterialsView(): React.JSX.Element {
         <button
           type="button"
           onClick={() => setSelectedSubjectId("ALL")}
-          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            selectedSubjectId === "ALL"
+          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${selectedSubjectId === "ALL"
               ? "bg-primary text-primary-foreground shadow-xs"
               : "border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          }`}
+            }`}
         >
           All Subjects
           <span
-            className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-              selectedSubjectId === "ALL"
+            className={`rounded-full px-1.5 py-0.5 text-[10px] ${selectedSubjectId === "ALL"
                 ? "bg-primary-foreground/20 text-primary-foreground"
                 : "bg-muted text-muted-foreground"
-            }`}
+              }`}
           >
             {allItems.length}
           </span>
@@ -264,19 +262,17 @@ export function StudentMaterialsView(): React.JSX.Element {
               key={sub.id}
               type="button"
               onClick={() => setSelectedSubjectId(sub.id)}
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                isSelected
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${isSelected
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              }`}
+                }`}
             >
               {sub.name}
               <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                  isSelected
+                className={`rounded-full px-1.5 py-0.5 text-[10px] ${isSelected
                     ? "bg-primary-foreground/20 text-primary-foreground"
                     : "bg-muted text-muted-foreground"
-                }`}
+                  }`}
               >
                 {sub.count}
               </span>
@@ -448,7 +444,7 @@ export function StudentMaterialsView(): React.JSX.Element {
               No Learning Materials Found
             </h3>
             <p className="text-xs text-muted-foreground max-w-sm">
-              No curriculum textbooks or lesson materials match your current filter criteria.
+              No textbooks or lesson materials match your current filter criteria.
             </p>
           </div>
         )}
