@@ -51,9 +51,8 @@ export class TeacherAssignmentService {
       throw new BadRequestError("Subject selection is required for subject teacher assignments");
     }
 
-    let verifiedSubject = null;
     if (input.role === "SUBJECT_TEACHER" && input.subjectId) {
-      verifiedSubject = await prisma.subject.findFirst({
+      const verifiedSubject = await prisma.subject.findFirst({
         where: { id: input.subjectId, isActive: true },
       });
 

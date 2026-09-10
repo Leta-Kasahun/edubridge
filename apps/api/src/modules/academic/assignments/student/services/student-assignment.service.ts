@@ -1,6 +1,5 @@
 import { studentAssignmentRepository } from "../repository/student-assignment.repository.js";
 import {
-  StudentRosterItem,
   StudentEnrollmentHistoryItem,
   SectionCapacityInfo,
   SingleTransferInput,

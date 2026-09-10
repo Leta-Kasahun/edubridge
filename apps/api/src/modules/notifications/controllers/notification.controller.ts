@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { BadRequestError } from "../../../shared/exceptions/index.js";
 import { notificationService } from "../services/notification.service.js";
-import { getTenantContext } from "../../../lib/prisma.js";
 import { NotificationCategory, NotificationChannel } from "../../../generated/prisma/client.js";
 
 export class NotificationController {

@@ -20,7 +20,7 @@ export const createNotificationSchema = z.object({
   title: z.string().trim().min(1).max(255),
   body: z.string().trim().min(1).max(2000),
   actionUrl: z.string().url().optional().nullable(),
-  metadata: z.record(z.unknown()).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
   sourceType: z.string().max(100).optional().nullable(),
   sourceId: z.string().uuid().optional().nullable(),
   channels: z.array(channelEnum).optional(),

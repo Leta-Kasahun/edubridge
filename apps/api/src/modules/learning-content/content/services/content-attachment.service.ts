@@ -231,24 +231,9 @@ export class ContentAttachmentService {
     readonly contentRange?: string;
     readonly etag?: string;
   }> {
-    let attachment: {
-      readonly id: string;
-      readonly contentId: string;
-      readonly storageKey: string;
-      readonly fileName: string;
-      readonly mimeType: string;
-    } | null = null;
-
-    if (tenantId) {
-      attachment = await this.repository.findAttachmentById(
-        tenantId,
-        attachmentId
-      );
-    } else {
-      attachment = await this.repository.findAttachmentByIdUnscoped(
-        attachmentId
-      );
-    }
+    const attachment = tenantId
+      ? await this.repository.findAttachmentById(tenantId, attachmentId)
+      : await this.repository.findAttachmentByIdUnscoped(attachmentId);
 
     if (!attachment || attachment.contentId !== contentId) {
       throw new NotFoundError(

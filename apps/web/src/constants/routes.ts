@@ -21,9 +21,12 @@ export const ROUTES = {
   STUDENT: {
     DASHBOARD: "/dashboard",
     MY_CLASS: "/dashboard/my-class",
+    EXAMS: "/dashboard/assessments",
+    PROGRESS: "/dashboard/progress",
     MATERIALS: "/dashboard/learning-content/materials",
     PROFILE: "/dashboard/profile",
   },
+  PROGRESS: "/dashboard/progress",
   SCHOOLS: "/dashboard/schools-mng",
   TEACHERS: "/dashboard/provisioning/teachers",
   STAFF_QUALIFICATIONS: "/dashboard/staff-qualifications",
@@ -58,6 +61,14 @@ export const ROUTES = {
     BANKS: "/dashboard/question-banks/banks",
     UPLOAD: "/dashboard/question-banks/upload",
     EXAM_CONTEXTS: "/dashboard/question-banks/exam-contexts",
+  },
+  ASSESSMENTS: {
+    BASE: "/dashboard/assessments",
+    LIST: "/dashboard/assessments/list",
+    BUILDER: "/dashboard/assessments/builder",
+    RESULTS: "/dashboard/assessments/results",
+    ATTEMPT: (id: string) => `/dashboard/assessments/${id}/attempt`,
+    RESULT: (id: string, attemptId: string) => `/dashboard/assessments/${id}/attempts/${attemptId}/result`,
   },
   SETTINGS: {
     BASE: "/dashboard/settings",

@@ -169,7 +169,7 @@ export class StudentBulkProvisioningService {
         }
 
         let targetSectionId: string | undefined = payload.sectionId;
-        let targetSectionName: string | undefined =
+        const targetSectionName: string | undefined =
           studentData.section?.trim() || payload.sectionName?.trim() || undefined;
 
         if (!targetSectionName && !targetSectionId) {
