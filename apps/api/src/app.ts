@@ -49,6 +49,7 @@ if (env.NODE_ENV !== "test") {
 setupSwagger(app);
 
 app.use("/health", healthRouter);
+app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api", permissionRouter);
