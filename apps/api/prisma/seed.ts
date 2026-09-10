@@ -10,6 +10,7 @@ import { seedCurriculum } from "./seeds/curriculum.seeder.js";
 import { seedSystemAdmin } from "./seeds/admin.seeder.js";
 import { seedTestUsers } from "./seeds/users.seeder.js";
 import { seedQuestionBanksAndContexts } from "./seeds/question-bank.seeder.js";
+import { seedAssessments } from "./seeds/assessment.seeder.js";
 
 async function main() {
   await cleanDatabase();
@@ -55,6 +56,7 @@ async function main() {
   });
 
   await seedQuestionBanksAndContexts();
+  await seedAssessments();
 }
 
 main()
