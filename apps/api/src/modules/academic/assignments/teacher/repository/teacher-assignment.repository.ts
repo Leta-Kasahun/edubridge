@@ -3,7 +3,6 @@ import { Prisma } from "../../../../../generated/prisma/client.js";
 import {
   TeacherAssignmentListItem,
   SingleTeacherAssignmentInput,
-  CreateTeacherAssignmentInput,
   TeacherLoadSummary,
   TeacherAssignmentFilterParams,
   PaginatedTeacherAssignmentsResult,
