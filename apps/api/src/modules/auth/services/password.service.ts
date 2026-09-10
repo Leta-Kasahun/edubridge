@@ -12,8 +12,6 @@ import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
-import { sendOtpEmail } from "../../../lib/email.js";
-import { OTPPurpose } from "../../../shared/enums/index.js";
 
 export class PasswordService {
   constructor(

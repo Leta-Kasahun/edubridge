@@ -1,5 +1,5 @@
 export function normalizeEthiopianPhone(phone: string): string {
-  const cleaned = phone.replace(/[\s\-\(\)]/g, "");
+  const cleaned = phone.replace(/[\s\-()]/g, "");
 
   if (cleaned.startsWith("+251")) {
     return cleaned;

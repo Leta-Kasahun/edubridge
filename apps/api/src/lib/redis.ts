@@ -2,7 +2,7 @@ import { Redis } from "ioredis";
 import { env } from "../config/env.js";
 import { RedisKeys } from "./redis.keys.js";
 
-const createRedisClient = (): Redis => {
+export const createRedisClient = (): Redis => {
   if (env.REDIS_URL) {
     return new Redis(env.REDIS_URL, {
       maxRetriesPerRequest: 3,
