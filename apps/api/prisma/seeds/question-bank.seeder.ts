@@ -164,11 +164,6 @@ export async function seedQuestionBanksAndContexts(tenantId?: string) {
       ];
 
       for (const config of bankConfigs) {
-        const matchedGrade = config.gradeLevel === 7 ? grade7 : grade8;
-        let matchedSubject = mathSubject;
-        if (config.subjectCode === "SCI") matchedSubject = scienceSubject;
-        if (config.subjectCode === "ENG") matchedSubject = englishSubject;
-
         const contextId = createdContexts.get(config.contextCode);
 
         let bank = await prisma.questionBank.findFirst({
