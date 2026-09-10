@@ -62,6 +62,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "EduBridge - AI-Powered Education Platform",
     description: "Enterprise Learning Intelligence & Exam Preparation Platform",
+    creator: "@edubridge_et",
+    site: "@edubridge_et",
     images: ["/logo.png"],
   },
   robots: {
