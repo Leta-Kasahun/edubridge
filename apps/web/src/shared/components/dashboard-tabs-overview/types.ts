@@ -15,7 +15,11 @@ export type SystemAdminTabId =
   | "overview"
   | "tenants";
 
-export type DashboardTabId = SchoolAdminTabId | TeacherTabId | SystemAdminTabId | string;
+export type DashboardTabId =
+  | SchoolAdminTabId
+  | TeacherTabId
+  | SystemAdminTabId
+  | string;
 
 export interface DashboardTabItem<T extends string = string> {
   readonly id: T;
