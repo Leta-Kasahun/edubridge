@@ -27,18 +27,32 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - env:
+      - name: Run Prisma Migrations
+        if: env.DATABASE_URL != ''
+        env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: pnpm --filter api prisma migrate deploy
+        run: pnpm --filter api prisma db push
 
-      - env:
+      - name: Trigger API Deploy Webhook
+        if: env.DEPLOY_WEBHOOK_API != ''
+        env:
           DEPLOY_WEBHOOK_API: ${{ secrets.DEPLOY_WEBHOOK_API }}
-        run: curl -f -X POST "$DEPLOY_WEBHOOK_API"
+        run: |
+          echo "Triggering API deploy webhook..."
+          curl -f -X POST "$DEPLOY_WEBHOOK_API"
 
-      - env:
+      - name: Trigger Web Deploy Webhook
+        if: env.DEPLOY_WEBHOOK_WEB != ''
+        env:
           DEPLOY_WEBHOOK_WEB: ${{ secrets.DEPLOY_WEBHOOK_WEB }}
-        run: curl -f -X POST "$DEPLOY_WEBHOOK_WEB"
+        run: |
+          echo "Triggering Web deploy webhook..."
+          curl -f -X POST "$DEPLOY_WEBHOOK_WEB"
 
-      - env:
+      - name: Check API Health
+        if: env.API_HEALTH_URL != ''
+        env:
           API_HEALTH_URL: ${{ secrets.API_HEALTH_URL }}
-        run: curl --fail --retry 3 --retry-delay 5 "$API_HEALTH_URL"
+        run: |
+          echo "Checking API health..."
+          curl --fail --retry 3 --retry-delay 5 "$API_HEALTH_URL"
