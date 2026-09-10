@@ -1,5 +1,4 @@
 import { redis, RedisKeys } from "../../../lib/redis.js";
-import { NotFoundError, BadRequestError } from "../../../shared/exceptions/index.js";
 import {
   NotificationRepository,
   notificationRepository,

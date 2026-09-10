@@ -1,22 +1,10 @@
 import { Request, Response } from "express";
-import { Redis } from "ioredis";
-import { env } from "../../../config/env.js";
-import { RedisKeys } from "../../../lib/redis.js";
+import { RedisKeys, createRedisClient } from "../../../lib/redis.js";
 import { verifyAccessToken } from "../../../shared/auth/jwt.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 
 const HEARTBEAT_INTERVAL_MS = 25_000;
 
-/**
- * GET /api/notifications/stream
- *
- * Opens an SSE connection. Each connection creates a **dedicated** Redis
- * subscriber so every server instance can fan-out independently — this is
- * the standard pattern for horizontally-scalable SSE with Redis Pub/Sub.
- *
- * Auth: token is accepted from Bearer header OR ?token= query param
- *       (browsers cannot set custom headers for EventSource).
- */
 export const sseHandler = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   let userId: string;
   let tenantId: string;
@@ -39,14 +27,12 @@ export const sseHandler = asyncHandler(async (req: Request, res: Response): Prom
     return;
   }
 
-  // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no"); // Nginx: disable proxy buffering
+  res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  // Helper: write a named event
   const send = (event: string, data: unknown) => {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   };
@@ -57,16 +43,7 @@ export const sseHandler = asyncHandler(async (req: Request, res: Response): Prom
     res.write(`: heartbeat\n\n`);
   }, HEARTBEAT_INTERVAL_MS);
 
-  // Dedicated subscriber per connection for horizontal scalability
-  const subscriber = new Redis(
-    env.REDIS_URL || {
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT,
-      password: env.REDIS_PASSWORD || undefined,
-      lazyConnect: false,
-    }
-  );
-
+  const subscriber = createRedisClient();
   const channel = RedisKeys.notification.userChannel(userId);
 
   try {
@@ -83,7 +60,7 @@ export const sseHandler = asyncHandler(async (req: Request, res: Response): Prom
       const payload = JSON.parse(message);
       send("notification", payload);
     } catch {
-      // malformed — ignore
+      return;
     }
   });
 
