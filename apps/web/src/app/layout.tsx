@@ -26,6 +26,22 @@ export const metadata: Metadata = {
     apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
     shortcut: ["/logo.png"],
   },
+  keywords: [
+    "EduBridge",
+    "Ethiopian Education Platform",
+    "AI Education Platform",
+    "School Management System",
+    "Curriculum Intelligence",
+    "Online Assessment Platform",
+    "National Exam Preparation",
+    "Student Information System",
+  ],
+  authors: [{ name: "EduBridge Team" }],
+  creator: "EduBridge",
+  publisher: "EduBridge",
+  alternates: {
+    canonical: "https://edubridge-et.vercel.app",
+  },
   openGraph: {
     title: "EduBridge - AI-Powered Education Platform",
     description: "Enterprise Learning Intelligence & Exam Preparation Platform",
@@ -41,6 +57,23 @@ export const metadata: Metadata = {
     ],
     locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EduBridge - AI-Powered Education Platform",
+    description: "Enterprise Learning Intelligence & Exam Preparation Platform",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "_zlsFf-2bPmzKSdCoAMjb4MZ96xpUjZWPyqkFc7IgWI",
