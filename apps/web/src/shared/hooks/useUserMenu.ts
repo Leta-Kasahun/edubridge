@@ -7,7 +7,7 @@ import { useLogout } from "@/features/auth/hooks";
 import { useClickOutside } from "./useClickOutside";
 import { ROUTES } from "@/constants/routes";
 
-import { getAvatarInitialsFromParts } from "@/shared/utils/avatar.util";
+import { getAvatarInitials, getAvatarInitialsFromParts } from "@/shared/utils/avatar.util";
 
 export function useUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,14 +27,11 @@ export function useUserMenu() {
   const nameParts = [firstName, middleName, lastName].filter(Boolean);
   const fullName =
     user?.fullName ||
-    (nameParts.length > 0 ? nameParts.join(" ") : user?.username || "User");
+    (nameParts.length > 0 ? nameParts.join(" ") : user?.username || user?.email?.split("@")[0] || "User");
 
-  const initials = getAvatarInitialsFromParts(
-    firstName,
-    middleName,
-    lastName,
-    user?.username?.[0] || "U"
-  );
+  const initials =
+    getAvatarInitialsFromParts(firstName, middleName, lastName, "") ||
+    getAvatarInitials(fullName, "U");
 
   const primaryRole = user?.roles?.[0];
 

@@ -48,12 +48,15 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       ...initialState,
       setAuth: ({ user, accessToken, expiresIn, tenantId }) => {
+        const resolvedTenantId = tenantId ?? user.tenantId ?? null;
         setAuthTokens(accessToken, expiresIn);
-        if (tenantId) setStorageTenantId(tenantId);
+        if (resolvedTenantId) {
+          setStorageTenantId(resolvedTenantId);
+        }
         set({
           user,
           accessToken,
-          tenantId: tenantId ?? user.tenantId ?? null,
+          tenantId: resolvedTenantId,
           isAuthenticated: true,
           isLoading: false,
           isHydrated: true,

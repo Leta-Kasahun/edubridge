@@ -14,6 +14,7 @@ export function useLogin() {
           user: data.user,
           accessToken: data.tokens.accessToken,
           expiresIn: data.tokens.expiresIn,
+          tenantId: data.user.tenantId,
         });
       }
     },
