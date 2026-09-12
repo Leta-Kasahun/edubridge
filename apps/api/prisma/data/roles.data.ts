@@ -33,6 +33,11 @@ export const PERMISSIONS = [
   { code: "QUESTION_VIEW", name: "VIEW questions", resource: "question", action: "view" },
   { code: "EXAM_CONTEXT_MANAGE", name: "MANAGE exam contexts", resource: "exam_context", action: "manage" },
   { code: "EXAM_CONTEXT_VIEW", name: "VIEW exam contexts", resource: "exam_context", action: "view" },
+  { code: "ASSESSMENT_MANAGE", name: "MANAGE assessments", resource: "assessment", action: "manage" },
+  { code: "ASSESSMENT_VIEW", name: "VIEW assessments", resource: "assessment", action: "view" },
+  { code: "ASSESSMENT_ASSIGN", name: "ASSIGN assessments", resource: "assessment", action: "assign" },
+  { code: "ASSESSMENT_GRADE", name: "GRADE assessments", resource: "assessment", action: "grade" },
+  { code: "ASSESSMENT_ATTEMPT", name: "ATTEMPT assessments", resource: "assessment", action: "attempt" },
 ];
 
 export const ROLES = [
@@ -70,6 +75,10 @@ export const ROLES = [
       "QUESTION_VIEW",
       "EXAM_CONTEXT_MANAGE",
       "EXAM_CONTEXT_VIEW",
+      "ASSESSMENT_MANAGE",
+      "ASSESSMENT_VIEW",
+      "ASSESSMENT_ASSIGN",
+      "ASSESSMENT_GRADE",
     ],
   },
   {
@@ -95,6 +104,10 @@ export const ROLES = [
       "QUESTION_MANAGE",
       "QUESTION_VIEW",
       "EXAM_CONTEXT_VIEW",
+      "ASSESSMENT_MANAGE",
+      "ASSESSMENT_VIEW",
+      "ASSESSMENT_ASSIGN",
+      "ASSESSMENT_GRADE",
     ],
   },
   {
@@ -109,6 +122,8 @@ export const ROLES = [
       "EXAM_ATTEMPT",
       "RESULT_VIEW_OWN",
       "AI_TUTOR_USE",
+      "ASSESSMENT_VIEW",
+      "ASSESSMENT_ATTEMPT",
     ],
   },
 ];

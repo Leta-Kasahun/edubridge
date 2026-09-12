@@ -102,7 +102,6 @@ export async function seedStudents(targetTenantId?: string) {
           const studentCode = `${tenant.code.toUpperCase()}STU${studentCodeSuffix}`;
           const username = `${firstName.toLowerCase()}.${middleName.toLowerCase()}.${tenant.code.toLowerCase()}${i}`;
           const email = `${firstName.toLowerCase()}.${middleName.toLowerCase()}.${studentCodeSuffix}@student.${tenant.code.toLowerCase()}.edubridge.et`;
-          const phoneNumber = `+2519${String(10000000 + studentIndex).slice(0, 8)}`;
           const guardianPhone = `+2519${String(20000000 + studentIndex).slice(0, 8)}`;
 
           const birthYear = 2026 - (6 + section.grade.level);

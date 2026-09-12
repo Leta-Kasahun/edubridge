@@ -29,6 +29,10 @@ import {
   questionBankRouter,
   examContextRouter,
 } from "./modules/question-bank/index.js";
+import {
+  assessmentRouter,
+  attemptRouter,
+} from "./modules/assessment/index.js";
 
 const app: Express = express();
 
@@ -45,6 +49,7 @@ if (env.NODE_ENV !== "test") {
 setupSwagger(app);
 
 app.use("/health", healthRouter);
+app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api", permissionRouter);
@@ -87,6 +92,8 @@ app.use("/api/curriculum/import", curriculumImportRouter);
 app.use("/api/learning-content", learningContentRouter);
 app.use("/api/question-banks", questionBankRouter);
 app.use("/api/exam-contexts", examContextRouter);
+app.use("/api/assessments", assessmentRouter);
+app.use("/api/assessments", attemptRouter);
 
 app.use(errorHandler);
 

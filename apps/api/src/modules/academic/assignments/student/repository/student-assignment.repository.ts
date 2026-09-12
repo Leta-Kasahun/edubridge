@@ -1,7 +1,6 @@
 import { prisma } from "../../../../../lib/prisma.js";
 import { Prisma } from "../../../../../generated/prisma/client.js";
 import {
-  StudentRosterItem,
   StudentEnrollmentHistoryItem,
   SectionCapacityInfo,
   PromotionPreviewRow,

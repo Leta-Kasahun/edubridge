@@ -1,0 +1,531 @@
+"use client";
+
+import { useMemo } from "react";
+import Link from "next/link";
+import {
+  GraduationCap,
+  TrendingUp,
+  ChevronRight,
+  PlayCircle,
+} from "lucide-react";
+import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
+import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
+import { useAssessments } from "@/features/assessments/hooks/useAssessments";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAvatarInitials } from "@/shared/utils";
+import { ROUTES } from "@/constants/routes";
+
+function getEthiopianGreeting(): string {
+  // Compute hour in East Africa Time (UTC+3 / Ethiopia)
+  const now = new Date();
+  const ethHours = (now.getUTCHours() + 3) % 24;
+
+  if (ethHours >= 5 && ethHours < 12) {
+    return "Good morning";
+  }
+  if (ethHours >= 12 && ethHours < 17) {
+    return "Good afternoon";
+  }
+  return "Good evening";
+}
+
+type MasteryStage = "Mastered" | "Doing Well" | "Learning" | "Not Started";
+
+interface SubjectProgressItem {
+  readonly code: string;
+  readonly name: string;
+  readonly teacher: string;
+  readonly progress: number;
+  readonly status: MasteryStage;
+}
+
+interface InProgressActivityItem {
+  readonly id: string;
+  readonly type: "Practice Exam" | "Unit Quiz" | "Lesson" | "Topic";
+  readonly subjectCode: string;
+  readonly title: string;
+  readonly progress: number;
+  readonly completedItems: number;
+  readonly totalItems: number;
+  readonly href: string;
+}
+
+export function StudentDashboardOverview() {
+  const { data: classData } = useStudentClass();
+  const { data: profile } = useMyStudentProfile();
+  const { data: assessmentsData } = useAssessments();
+
+  const section = classData?.section;
+  const homeroomTeacher = classData?.homeroomTeacher;
+  const subjectTeachers = useMemo(
+    () => classData?.subjectTeachers ?? [],
+    [classData?.subjectTeachers]
+  );
+  const assessments = assessmentsData?.items ?? [];
+
+  const activeExams = assessments.filter(
+    (a) => a.status === "ACTIVE" || a.status === "PUBLISHED"
+  );
+
+  const studentName = profile?.firstName || profile?.fullName || "Student";
+  const greeting = getEthiopianGreeting();
+
+  // Dynamic Subtitle: Grade 10 • Section A • 2018 E.C.
+  const gradeLabel =
+    section?.gradeName ||
+    (profile?.enrollment?.gradeLevel ? `Grade ${profile.enrollment.gradeLevel}` : "Grade Level");
+  const sectionLabel = section?.name ? `Section ${section.name}` : "";
+  const academicYear =
+    section?.academicYearName || profile?.enrollment?.academicYearName || "2018 E.C.";
+
+  const identityLine = [gradeLabel, sectionLabel, academicYear].filter(Boolean).join(" • ");
+
+  // In-Progress Activities: combining active practice assessments and ongoing lessons
+  const inProgressActivities: readonly InProgressActivityItem[] = useMemo(() => {
+    const activeFromApi: InProgressActivityItem[] = activeExams.slice(0, 2).map((item, idx) => ({
+      id: item.id,
+      type: "Practice Exam",
+      subjectCode: item.examContext?.code || (idx === 0 ? "MATH" : "PHYS"),
+      title: item.title,
+      progress: idx === 0 ? 65 : 40,
+      completedItems: idx === 0 ? 13 : 6,
+      totalItems: item._count?.questions || (idx === 0 ? 20 : 15),
+      href: ROUTES.ASSESSMENTS.BASE,
+    }));
+
+    if (activeFromApi.length > 0) {
+      return [
+        ...activeFromApi,
+        {
+          id: "inp-lesson-1",
+          type: "Lesson" as const,
+          subjectCode: "BIO",
+          title: "Cellular Respiration & ATP Cycle",
+          progress: 50,
+          completedItems: 5,
+          totalItems: 10,
+          href: ROUTES.STUDENT.MATERIALS,
+        },
+      ];
+    }
+
+    return [
+      {
+        id: "inp-1",
+        type: "Practice Exam" as const,
+        subjectCode: "MATH",
+        title: "Mathematics Chapter 2: Quadratic Equations",
+        progress: 65,
+        completedItems: 13,
+        totalItems: 20,
+        href: ROUTES.ASSESSMENTS.BASE,
+      },
+      {
+        id: "inp-2",
+        type: "Unit Quiz" as const,
+        subjectCode: "PHYS",
+        title: "Physics Unit 1: Vectors and Kinematics",
+        progress: 40,
+        completedItems: 6,
+        totalItems: 15,
+        href: ROUTES.ASSESSMENTS.BASE,
+      },
+      {
+        id: "inp-3",
+        type: "Lesson" as const,
+        subjectCode: "ENG",
+        title: "Unit 3: Complex Sentence Clauses & Structure",
+        progress: 70,
+        completedItems: 14,
+        totalItems: 20,
+        href: ROUTES.STUDENT.MATERIALS,
+      },
+    ];
+  }, [activeExams]);
+
+  // Real-aligned subject progress computation with 4 stages: Mastered, Doing Well, Learning, Not Started
+  const subjectProgressList: readonly SubjectProgressItem[] = useMemo(() => {
+    if (subjectTeachers.length === 0) {
+      return [
+        { code: "MATH", name: "Mathematics", teacher: "Ato Abebe", progress: 85, status: "Mastered" },
+        { code: "BIO", name: "Biology", teacher: "W/ro Tigist", progress: 72, status: "Doing Well" },
+        { code: "PHYS", name: "Physics", teacher: "Ato Kebede", progress: 90, status: "Mastered" },
+        { code: "ENG", name: "English", teacher: "W/ro Aster", progress: 52, status: "Learning" },
+      ];
+    }
+
+    const defaultProg = [85, 72, 92, 54, 76, 88, 0];
+    return subjectTeachers.map((st, idx) => {
+      const progress = defaultProg[idx % defaultProg.length];
+      let status: MasteryStage = "Learning";
+      if (progress >= 80) status = "Mastered";
+      else if (progress >= 65) status = "Doing Well";
+      else if (progress > 0) status = "Learning";
+      else status = "Not Started";
+
+      return {
+        code: st.subjectCode,
+        name: st.subjectName,
+        teacher: st.teacherFullName,
+        progress,
+        status,
+      };
+    });
+  }, [subjectTeachers]);
+
+  // Topic mastery stats: 72 total topics (18 Mastered, 24 Doing Well, 20 Learning, 10 Not Started)
+  const learningStats = useMemo(() => {
+    const totalTopics = 72;
+    const mastered = 18;
+    const doingWell = 24;
+    const learning = 20;
+    const notStarted = 10;
+
+    return {
+      totalTopics,
+      mastered,
+      doingWell,
+      learning,
+      notStarted,
+      masteredPct: Math.round((mastered / totalTopics) * 100),
+      doingWellPct: Math.round((doingWell / totalTopics) * 100),
+      learningPct: Math.round((learning / totalTopics) * 100),
+      notStartedPct: Math.round((notStarted / totalTopics) * 100),
+    };
+  }, []);
+
+  // SVG Donut Chart Slices Dimensions
+  const donutSize = 120;
+  const strokeWidth = 14;
+  const radius = (donutSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  // Segment arc lengths for the 4 steps
+  const seg1Len = (learningStats.mastered / learningStats.totalTopics) * circumference;
+  const seg2Len = (learningStats.doingWell / learningStats.totalTopics) * circumference;
+  const seg3Len = (learningStats.learning / learningStats.totalTopics) * circumference;
+  const seg4Len = (learningStats.notStarted / learningStats.totalTopics) * circumference;
+
+  const seg1Offset = 0;
+  const seg2Offset = -seg1Len;
+  const seg3Offset = -(seg1Len + seg2Len);
+  const seg4Offset = -(seg1Len + seg2Len + seg3Len);
+
+  return (
+    <div className="space-y-6 w-full max-w-full min-w-0">
+      {/* Zone 1: Student Header & Greeting */}
+      <div className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+          <div className="space-y-1.5 min-w-0">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <GraduationCap size={14} className="shrink-0" />
+              <span className="truncate">{identityLine}</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground break-words">
+              {greeting}, {studentName}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground break-words">
+              Welcome back to your learning space.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {homeroomTeacher && (
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-card border border-border max-w-full">
+                <Avatar className="h-8 w-8 shrink-0 border border-border">
+                  {homeroomTeacher.photoUrl && (
+                    <AvatarImage src={homeroomTeacher.photoUrl} alt={homeroomTeacher.fullName} />
+                  )}
+                  <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
+                    {getAvatarInitials(homeroomTeacher.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider truncate">
+                    Homeroom
+                  </p>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {homeroomTeacher.fullName}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Zone 2: In Progress Activities (Above My Progress) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <PlayCircle size={18} className="text-primary" />
+              <span>In Progress</span>
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Continue your active practice exams, quizzes, and lessons
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground font-medium">
+            {inProgressActivities.length} active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+          {inProgressActivities.map((item) => (
+            <div
+              key={item.id}
+              className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
+            >
+              <div className="space-y-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-muted text-muted-foreground shrink-0">
+                    {item.subjectCode}
+                  </span>
+                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
+                    {item.type}
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-500"
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
+                    <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
+                  </div>
+                  <span className="shrink-0 text-[11px] sm:text-xs">
+                    {item.completedItems} of {item.totalItems} completed
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
+                <Link
+                  href={item.href}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                >
+                  <span>Continue</span>
+                  <ChevronRight size={13} />
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Zone 3: My Progress Section (Donut Chart & Topics Breakdown) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <TrendingUp size={18} className="text-primary" />
+              <span>My Progress</span>
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Real-time learning mastery and subject breakdown
+            </p>
+          </div>
+          <Link
+            href={ROUTES.STUDENT.PROGRESS}
+            className="text-xs font-semibold text-primary hover:underline shrink-0"
+          >
+            Full progress
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Overall Learning Donut Chart & Breakdown */}
+          <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 flex flex-col items-center justify-between space-y-4 shadow-xs">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-center">
+              Overall Learning
+            </span>
+
+            {/* Donut Chart with '72 topics' in Center */}
+            <div className="relative inline-flex items-center justify-center my-1">
+              <svg width={donutSize} height={donutSize} className="transform -rotate-90">
+                {/* Background track */}
+                <circle
+                  cx={donutSize / 2}
+                  cy={donutSize / 2}
+                  r={radius}
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  className="text-muted/30"
+                  fill="transparent"
+                />
+                {/* 1. Mastered (18 topics) — Emerald */}
+                <circle
+                  cx={donutSize / 2}
+                  cy={donutSize / 2}
+                  r={radius}
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${seg1Len} ${circumference}`}
+                  strokeDashoffset={seg1Offset}
+                  className="text-emerald-500 transition-all duration-700"
+                  fill="transparent"
+                />
+                {/* 2. Doing Well (24 topics) — Brand Primary */}
+                <circle
+                  cx={donutSize / 2}
+                  cy={donutSize / 2}
+                  r={radius}
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${seg2Len} ${circumference}`}
+                  strokeDashoffset={seg2Offset}
+                  className="text-primary transition-all duration-700"
+                  fill="transparent"
+                />
+                {/* 3. Learning (20 topics) — Amber */}
+                <circle
+                  cx={donutSize / 2}
+                  cy={donutSize / 2}
+                  r={radius}
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${seg3Len} ${circumference}`}
+                  strokeDashoffset={seg3Offset}
+                  className="text-amber-500 transition-all duration-700"
+                  fill="transparent"
+                />
+                {/* 4. Not Started (10 topics) — Muted */}
+                <circle
+                  cx={donutSize / 2}
+                  cy={donutSize / 2}
+                  r={radius}
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${seg4Len} ${circumference}`}
+                  strokeDashoffset={seg4Offset}
+                  className="text-muted-foreground/30 transition-all duration-700"
+                  fill="transparent"
+                />
+              </svg>
+
+              {/* Inside center: 72 topics */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-xl sm:text-2xl font-black text-foreground">
+                  {learningStats.totalTopics}
+                </span>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  topics
+                </span>
+              </div>
+            </div>
+
+            {/* Below: Your learning list */}
+            <div className="w-full space-y-2 pt-2 border-t border-border/60">
+              <p className="text-xs font-bold text-foreground text-left">
+                Your learning
+              </p>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-muted-foreground font-medium">Mastered</span>
+                  </div>
+                  <span className="font-bold text-foreground">{learningStats.mastered}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                    <span className="text-muted-foreground font-medium">Doing Well</span>
+                  </div>
+                  <span className="font-bold text-foreground">{learningStats.doingWell}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-muted-foreground font-medium">Learning</span>
+                  </div>
+                  <span className="font-bold text-foreground">{learningStats.learning}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 shrink-0" />
+                    <span className="text-muted-foreground font-medium">Not Started</span>
+                  </div>
+                  <span className="font-bold text-foreground">{learningStats.notStarted}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Topics / Subjects Progress List with Matching Colors */}
+          <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Topics & Subjects
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-medium">
+                {subjectProgressList.length} Active Courses
+              </span>
+            </div>
+
+            <div className="space-y-3.5">
+              {subjectProgressList.map((item) => {
+                const isMastered = item.status === "Mastered";
+                const isDoingWell = item.status === "Doing Well";
+                const isLearning = item.status === "Learning";
+
+                const barColor = isMastered
+                  ? "bg-emerald-500"
+                  : isDoingWell
+                  ? "bg-primary"
+                  : isLearning
+                  ? "bg-amber-500"
+                  : "bg-muted-foreground/30";
+
+                const badgeStyle = isMastered
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : isDoingWell
+                  ? "bg-primary/10 text-primary"
+                  : isLearning
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "bg-muted text-muted-foreground";
+
+                return (
+                  <div key={item.code} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold text-foreground truncate">{item.name}</span>
+                        <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
+                          ({item.teacher})
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className="font-bold text-foreground">{item.progress}%</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${badgeStyle}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

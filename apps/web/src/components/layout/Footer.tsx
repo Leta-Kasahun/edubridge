@@ -47,14 +47,14 @@ export function Footer() {
               How It Works
               <span className={footerUnderlineClass} />
             </Link>
-            <span className={cn(footerLinkClass, "cursor-pointer")}>
+            <Link href="/privacy" className={footerLinkClass}>
               Privacy
               <span className={footerUnderlineClass} />
-            </span>
-            <span className={cn(footerLinkClass, "cursor-pointer")}>
+            </Link>
+            <Link href="/terms" className={footerLinkClass}>
               Terms
               <span className={footerUnderlineClass} />
-            </span>
+            </Link>
             <a href="mailto:edubridge.et@gmail.com" className={footerLinkClass}>
               Help
               <span className={footerUnderlineClass} />

@@ -10,7 +10,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useStudentClass } from "../hooks/useStudentClass";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
@@ -140,58 +139,57 @@ export const StudentClassView: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {subjectTeachers.map((st) => (
-              <Card
+              <div
                 key={`${st.subjectCode}-${st.teacherFullName}`}
-                className="rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-sm flex flex-col justify-between"
+                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-sm space-y-4"
               >
-                <CardHeader className="pb-3 pt-4 px-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
-                      <BookOpen className="w-4 h-4" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                      <BookOpen className="h-4 w-4" />
                     </div>
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <CardTitle className="text-sm font-bold truncate text-foreground">
-                        {st.subjectName}
-                      </CardTitle>
-                      <span className="inline-block text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border/60">
-                        {st.subjectCode}
-                      </span>
-                    </div>
+                    <span className="text-[10px] font-mono font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border/60">
+                      {st.subjectCode}
+                    </span>
                   </div>
-                </CardHeader>
 
-                <CardContent className="px-4 pb-4 pt-0 space-y-3">
-                  <div className="flex items-center gap-3 pt-3 border-t border-border/60">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                      {st.subjectName}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
                     <Avatar className="h-8 w-8 border border-border/70 shrink-0">
                       {st.photoUrl && (
                         <AvatarImage src={st.photoUrl} alt={st.teacherFullName} />
                       )}
-                      <AvatarFallback className="bg-muted text-foreground text-[10px] font-semibold">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
                         {getAvatarInitials(st.teacherFullName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] text-muted-foreground font-medium">Teacher</p>
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Teacher</p>
                       <p className="text-xs font-bold text-foreground truncate">
                         {st.teacherFullName}
                       </p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Materials
-                    </span>
-                    <Link
-                      href={ROUTES.STUDENT.MATERIALS}
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
-                      aria-label={`View ${st.subjectName} materials`}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Course
+                  </span>
+                  <Link
+                    href={ROUTES.STUDENT.MATERIALS}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-all hover:bg-primary/90 cursor-pointer"
+                  >
+                    <span>Study</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
             ))}
           </div>
         )}

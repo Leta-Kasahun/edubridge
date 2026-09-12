@@ -11,6 +11,9 @@ import {
   BookMarked,
   Users,
   FolderArchive,
+  CheckSquare,
+  GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -105,6 +108,11 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
+    label: "Assessments",
+    href: ROUTES.ASSESSMENTS.BASE,
+    icon: CheckSquare,
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -152,6 +160,11 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: FolderArchive,
   },
   {
+    label: "Assessments",
+    href: ROUTES.ASSESSMENTS.BASE,
+    icon: CheckSquare,
+  },
+  {
     label: "Learning Materials",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookMarked,
@@ -173,7 +186,6 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
   },
 ];
 
-
 export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
   {
     label: "Dashboard",
@@ -186,14 +198,19 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     icon: Presentation,
   },
   {
-    label: "Question Banks",
-    href: ROUTES.QUESTION_BANK.BANKS,
-    icon: FolderArchive,
+    label: "My Exams",
+    href: ROUTES.ASSESSMENTS.BASE,
+    icon: GraduationCap,
+  },
+  {
+    label: "My Progress",
+    href: ROUTES.STUDENT.PROGRESS,
+    icon: TrendingUp,
   },
   {
     label: "Learning Materials",
     href: ROUTES.STUDENT.MATERIALS,
-    icon: BookMarked,
+    icon: BookOpen,
   },
   {
     label: "My Profile",

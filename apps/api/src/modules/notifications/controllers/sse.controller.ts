@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createRedisClient, RedisKeys } from "../../../lib/redis.js";
+import { RedisKeys, createRedisClient } from "../../../lib/redis.js";
 import { verifyAccessToken } from "../../../shared/auth/jwt.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 

@@ -8,7 +8,6 @@ import {
 import { notificationController } from "./controllers/notification.controller.js";
 import { sseHandler } from "./controllers/sse.controller.js";
 import {
-  listNotificationsSchema,
   markReadSchema,
   upsertPreferenceSchema,
   createNotificationSchema,

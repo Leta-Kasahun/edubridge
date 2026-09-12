@@ -6,3 +6,4 @@ export { DashboardMetricCard } from "./DashboardMetricCard";
 export { DashboardDonutCard } from "./DashboardDonutCard";
 export * from "./types";
 export * from "./tabs";
+export * from "./tabs/student";

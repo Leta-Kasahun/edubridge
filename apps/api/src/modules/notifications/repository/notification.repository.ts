@@ -24,7 +24,7 @@ export class NotificationRepository {
           title: data.title,
           body: data.body,
           actionUrl: data.actionUrl ?? null,
-          metadata: (data.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
+          metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
           sourceType: data.sourceType ?? null,
           sourceId: data.sourceId ?? null,
           deliveries: data.channels?.length

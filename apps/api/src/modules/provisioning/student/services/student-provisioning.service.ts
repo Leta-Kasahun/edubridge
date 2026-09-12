@@ -213,7 +213,7 @@ export class StudentProvisioningService {
       ? new Date(payload.dateOfBirth)
       : undefined;
 
-    const { user, enrollment } = await this.repo.createProvisionedStudent({
+    const { user } = await this.repo.createProvisionedStudent({
       tenantId: tenant.id,
       academicYearId: academicYear.id,
       sectionId: section.id,

@@ -1097,6 +1097,7 @@ export class ContentService {
                 att.mimeType
               );
             } catch {
+              // Best-effort storage cleanup on deletion
             }
           }
         }

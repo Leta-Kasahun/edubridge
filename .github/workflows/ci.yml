@@ -27,7 +27,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter api prisma validate
+      - run: pnpm --filter api run prisma:validate
+      - run: pnpm --filter api run prisma:generate
 
       - run: |
           pnpm --filter api lint
