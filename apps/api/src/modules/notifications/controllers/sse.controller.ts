@@ -64,7 +64,9 @@ export const sseHandler = asyncHandler(
       try {
         const payload = JSON.parse(message);
         send("notification", payload);
-      } catch {}
+      } catch {
+        // Ignore malformed or unparseable JSON messages
+      }
     });
 
     const cleanup = () => {

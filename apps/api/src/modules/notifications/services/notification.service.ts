@@ -2,7 +2,6 @@ import { redis, RedisKeys } from "../../../lib/redis.js";
 import {
   sendEmail,
   buildEmailWrapper,
-  sendRoleNotificationEmail,
 } from "../../../lib/email.js";
 import {
   NotificationRepository,
