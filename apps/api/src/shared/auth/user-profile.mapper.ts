@@ -4,6 +4,7 @@ interface ProfileNames {
   firstName?: string | null;
   middleName?: string | null;
   lastName?: string | null;
+  photoUrl?: string | null;
 }
 
 export const mapUserProfile = (
@@ -11,7 +12,8 @@ export const mapUserProfile = (
     teacherProfile?: ProfileNames | null;
     studentProfile?: ProfileNames | null;
   },
-  activeTenantId?: string
+  activeTenantId?: string,
+  extra?: { photoUrl?: string | null }
 ): UserAuthProfile => {
   const memberships = user.memberships.map((m) => ({
     tenantId: m.tenantId,
@@ -33,15 +35,16 @@ export const mapUserProfile = (
     : currentMembership?.roles ?? [];
 
   const profile = user.teacherProfile || user.studentProfile;
-  const firstName = profile?.firstName || user.firstName;
+  const firstName = profile?.firstName || user.firstName || "";
   const middleName = profile?.middleName || null;
-  const lastName = profile?.lastName || user.lastName;
+  const lastName = profile?.lastName || user.lastName || "";
+  const photoUrl = extra?.photoUrl || profile?.photoUrl || null;
 
-  const nameParts = [firstName, middleName, profile?.lastName ? lastName : null].filter(Boolean);
+  const nameParts = [firstName, middleName, lastName].filter(Boolean);
   const fullName =
     nameParts.length > 0
       ? nameParts.join(" ")
-      : `${firstName} ${lastName}`.trim() || user.username || "User";
+      : user.username || user.email?.split("@")[0] || "User";
 
   return {
     id: user.id,
@@ -55,7 +58,10 @@ export const mapUserProfile = (
     emailVerified: user.emailVerified,
     roles: effectiveRoles,
     tenantId: currentMembership?.tenantId,
+    tenantName: currentMembership?.tenantName,
     memberships,
     currentTenantId: currentMembership?.tenantId,
+    photoUrl,
+    avatarUrl: photoUrl,
   };
 };

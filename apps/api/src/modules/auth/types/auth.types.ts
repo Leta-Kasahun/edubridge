@@ -47,8 +47,11 @@ export interface UserAuthProfile {
   emailVerified: boolean;
   roles: string[];
   tenantId?: string;
+  tenantName?: string;
   memberships?: Array<{ tenantId: string; tenantName: string; roles: string[] }>;
   currentTenantId?: string;
+  photoUrl?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface AuthResponse {

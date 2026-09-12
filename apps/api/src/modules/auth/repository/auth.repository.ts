@@ -25,6 +25,7 @@ const AUTH_USER_INCLUDE = {
       firstName: true,
       middleName: true,
       lastName: true,
+      photoUrl: true,
     },
   },
   studentProfile: {
@@ -32,6 +33,7 @@ const AUTH_USER_INCLUDE = {
       firstName: true,
       middleName: true,
       lastName: true,
+      photoUrl: true,
     },
   },
 } as const;
