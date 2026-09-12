@@ -61,12 +61,12 @@ export class AuthService {
     return this.googleAuthSvc.processGoogleCallback(code, metadata, tenantId);
   }
 
-  getGoogleRedirectUrl(result: AuthResponse): string {
-    return this.googleAuthSvc.resolveFrontendRedirect(result);
+  getGoogleRedirectUrl(result: AuthResponse, customOrigin?: string): string {
+    return this.googleAuthSvc.resolveFrontendRedirect(result, customOrigin);
   }
 
-  getGoogleErrorRedirectUrl(errorMessage: string): string {
-    return this.googleAuthSvc.resolveFrontendErrorRedirect(errorMessage);
+  getGoogleErrorRedirectUrl(errorMessage: string, customOrigin?: string): string {
+    return this.googleAuthSvc.resolveFrontendErrorRedirect(errorMessage, customOrigin);
   }
 
   async googleAuth(

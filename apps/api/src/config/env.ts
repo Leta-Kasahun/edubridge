@@ -37,6 +37,7 @@ export const env = {
   B2_APPLICATION_KEY: (process.env.B2_APPLICATION_KEY ?? process.env.AWS_SECRET_ACCESS_KEY ?? "").trim(),
   B2_REGION: (process.env.B2_REGION ?? process.env.AWS_REGION ?? "").trim(),
   B2_PUBLIC_URL_PREFIX: (process.env.B2_PUBLIC_URL_PREFIX ?? "").trim(),
+  FRONTEND_URL: (process.env.FRONTEND_URL ?? "").trim(),
 } as const;
 
 export type Env = typeof env;

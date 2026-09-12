@@ -26,7 +26,7 @@ export class GoogleAuthService {
     private readonly securityRepo: SecurityRepository = securityRepository,
     private readonly tokenSvc: TokenService = tokenService,
     private readonly sessionSvc: SessionService = sessionService
-  ) {}
+  ) { }
 
   getAuthorizationUrl(customState?: string): string {
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CALLBACK_URL) {
@@ -82,24 +82,52 @@ export class GoogleAuthService {
     return this.authenticateWithGoogle(profile.sub, profile.email, metadata, tenantId);
   }
 
-  getFrontendBaseUrl(): string {
-    const firstOrigin = env.CORS_ORIGIN ? env.CORS_ORIGIN.split(",")[0] : null;
-    if (env.CORS_ORIGIN === "*" || !env.CORS_ORIGIN || !firstOrigin) {
-      return "http://localhost:3000";
-    }
-    return firstOrigin.trim();
+  private isAllowedOrigin(origin: string): boolean {
+    if (env.CORS_ORIGIN === "*") return true;
+    const cleanOrigin = origin.replace(/\/$/, "");
+    const origins = (env.CORS_ORIGIN || "")
+      .split(",")
+      .map((o) => o.trim().replace(/\/$/, ""))
+      .filter(Boolean);
+    const cleanFrontendUrl = env.FRONTEND_URL ? env.FRONTEND_URL.trim().replace(/\/$/, "") : "";
+    return origins.includes(cleanOrigin) || (Boolean(cleanFrontendUrl) && cleanFrontendUrl === cleanOrigin);
   }
 
-  resolveFrontendRedirect(result: AuthResponse): string {
-    const baseUrl = this.getFrontendBaseUrl();
+  getFrontendBaseUrl(customOrigin?: string): string {
+    if (customOrigin && this.isAllowedOrigin(customOrigin)) {
+      return customOrigin.replace(/\/$/, "");
+    }
+
+    if (env.FRONTEND_URL) {
+      return env.FRONTEND_URL.replace(/\/$/, "");
+    }
+
+    const origins = (env.CORS_ORIGIN || "")
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    if (env.NODE_ENV === "production") {
+      const prodOrigin = origins.find(
+        (o) => !o.includes("localhost") && !o.includes("127.0.0.1") && o !== "*"
+      );
+      if (prodOrigin) return prodOrigin.replace(/\/$/, "");
+    }
+
+    const firstValid = origins.find((o) => o !== "*");
+    return (firstValid || "http://localhost:3000").replace(/\/$/, "");
+  }
+
+  resolveFrontendRedirect(result: AuthResponse, customOrigin?: string): string {
+    const baseUrl = this.getFrontendBaseUrl(customOrigin);
     const token = result.tokens?.accessToken || "";
     const expiresIn = result.tokens?.expiresIn || 900;
     const userData = encodeURIComponent(JSON.stringify(result.user || {}));
     return `${baseUrl}/login?google_success=true&token=${encodeURIComponent(token)}&expiresIn=${expiresIn}&userData=${userData}`;
   }
 
-  resolveFrontendErrorRedirect(errorMessage: string): string {
-    const baseUrl = this.getFrontendBaseUrl();
+  resolveFrontendErrorRedirect(errorMessage: string, customOrigin?: string): string {
+    const baseUrl = this.getFrontendBaseUrl(customOrigin);
     return `${baseUrl}/login?error=${encodeURIComponent(errorMessage)}`;
   }
 

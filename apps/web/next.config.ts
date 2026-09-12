@@ -1,6 +1,21 @@
 import type { NextConfig } from "next";
 
-const apiDestination = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
+const normalizeApiUrl = (url?: string): string => {
+  if (!url) return "http://localhost:5000/api";
+  let formatted = url.trim();
+  if (!formatted.startsWith("http://") && !formatted.startsWith("https://")) {
+    formatted = `https://${formatted}`;
+  }
+  formatted = formatted.replace(/\/$/, "");
+  if (!formatted.endsWith("/api")) {
+    formatted = `${formatted}/api`;
+  }
+  return formatted;
+};
+
+const apiDestination = normalizeApiUrl(
+  process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL
+);
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",

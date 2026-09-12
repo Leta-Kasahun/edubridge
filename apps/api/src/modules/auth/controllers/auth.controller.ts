@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { Request, Response } from "express";
 import { authService, AuthService } from "../services/auth.service.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
@@ -24,17 +25,39 @@ export class AuthController {
     return (req.headers["x-tenant-id"] as string) || req.tenantId;
   }
 
-  initiateGoogleAuth = asyncHandler(async (_req: Request, res: Response) => {
-    const authUrl = this.authSvc.getGoogleAuthUrl();
+  initiateGoogleAuth = asyncHandler(async (req: Request, res: Response) => {
+    let origin: string | undefined = req.query.origin as string | undefined;
+    if (!origin && req.headers.referer) {
+      try {
+        origin = new URL(req.headers.referer).origin;
+      } catch {
+        origin = undefined;
+      }
+    }
+    const statePayload = Buffer.from(
+      JSON.stringify({ origin, nonce: crypto.randomBytes(8).toString("hex") })
+    ).toString("base64url");
+    const authUrl = this.authSvc.getGoogleAuthUrl(statePayload);
     res.redirect(authUrl);
   });
 
   handleGoogleCallback = asyncHandler(async (req: Request, res: Response) => {
-    const { code, error } = req.query;
+    const { code, error, state } = req.query;
+    let customOrigin: string | undefined;
+    if (typeof state === "string") {
+      try {
+        const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+        if (parsed?.origin && typeof parsed.origin === "string") {
+          customOrigin = parsed.origin;
+        }
+      } catch {
+        customOrigin = undefined;
+      }
+    }
 
     if (error || !code) {
       const errorMsg = (error as string) || "Google authentication was cancelled or failed";
-      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(errorMsg));
+      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(errorMsg, customOrigin));
       return;
     }
 
@@ -44,10 +67,10 @@ export class AuthController {
     try {
       const result = await this.authSvc.handleGoogleCallback(code as string, metadata, tenantId);
       setRefreshCookie(res, result.tokens?.refreshToken);
-      res.redirect(this.authSvc.getGoogleRedirectUrl(result));
+      res.redirect(this.authSvc.getGoogleRedirectUrl(result, customOrigin));
     } catch (authError) {
       const msg = authError instanceof Error ? authError.message : "Authentication failed";
-      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(msg));
+      res.redirect(this.authSvc.getGoogleErrorRedirectUrl(msg, customOrigin));
     }
   });
 

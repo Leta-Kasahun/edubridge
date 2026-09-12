@@ -137,7 +137,8 @@ export function LoginForm({
       return;
     }
 
-    window.location.href = `${env.apiUrl}/auth/google`;
+    const originParam = typeof window !== "undefined" ? `?origin=${encodeURIComponent(window.location.origin)}` : "";
+    window.location.href = `${env.apiUrl}/auth/google${originParam}`;
   };
 
   const currentError = error ? getErrorMessage(error) : googleError;
