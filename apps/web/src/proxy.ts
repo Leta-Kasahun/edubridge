@@ -19,7 +19,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute && refreshToken && !pathname.startsWith("/first-login-setup")) {
+  const hasAuthParams =
+    request.nextUrl.searchParams.has("google_success") ||
+    request.nextUrl.searchParams.has("auth_data");
+
+  if (
+    isAuthRoute &&
+    refreshToken &&
+    !pathname.startsWith("/first-login-setup") &&
+    !hasAuthParams
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

@@ -10,8 +10,8 @@ import { getErrorMessage } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores";
-import { setAuthTokens } from "@/lib/apiClient";
 import { AuthUser } from "@/shared/types";
+import { authService } from "../services";
 import { useLogin } from "../hooks";
 import { loginValidationSchema, LoginFormData } from "../validations";
 import { AuthResponseData } from "../types";
@@ -24,6 +24,21 @@ export interface LoginFormProps {
   onGoogleClick?: () => void;
   isGoogleLoading?: boolean;
   forgotPasswordHref?: string;
+}
+
+function parseAuthData(param: string | null): { tokens?: { accessToken: string; expiresIn?: number }; user?: AuthUser } | null {
+  if (!param) return null;
+  try {
+    const base64 = param.replace(/-/g, "+").replace(/_/g, "/");
+    const padLength = (4 - (base64.length % 4)) % 4;
+    const padded = base64 + "=".repeat(padLength);
+    const binaryString = atob(padded);
+    const bytes = Uint8Array.from(binaryString, (c) => c.charCodeAt(0));
+    const decoded = new TextDecoder().decode(bytes);
+    return JSON.parse(decoded) as { tokens?: { accessToken: string; expiresIn?: number }; user?: AuthUser };
+  } catch {
+    return null;
+  }
 }
 
 export function LoginForm({
@@ -60,45 +75,54 @@ export function LoginForm({
 
     const params = new URLSearchParams(window.location.search);
     const googleSuccess = params.get("google_success");
-    const token = params.get("token");
-    const expiresIn = params.get("expiresIn");
-    const userDataRaw = params.get("userData");
     const authError = params.get("error");
+    const authDataParam = params.get("auth_data");
 
     if (authError) {
       window.history.replaceState(null, "", window.location.pathname);
       return;
     }
 
-    if (googleSuccess === "true" && token) {
-      let parsedUser: AuthUser | null = null;
-      if (userDataRaw) {
-        try {
-          parsedUser = JSON.parse(decodeURIComponent(userDataRaw)) as AuthUser;
-        } catch {
-          parsedUser = null;
-        }
-      }
+    if (googleSuccess !== "true") return;
 
-      const numExpiresIn = expiresIn ? Number(expiresIn) : 900;
-      setAuthTokens(token, numExpiresIn);
-
-      if (parsedUser) {
-        setAuth({
-          user: parsedUser,
-          accessToken: token,
-          expiresIn: numExpiresIn,
-        });
-      }
-
+    const parsedAuth = parseAuthData(authDataParam);
+    if (parsedAuth?.user && parsedAuth?.tokens?.accessToken) {
       window.history.replaceState(null, "", window.location.pathname);
+      setAuth({
+        user: parsedAuth.user,
+        accessToken: parsedAuth.tokens.accessToken,
+        expiresIn: parsedAuth.tokens.expiresIn,
+        tenantId: parsedAuth.user.tenantId,
+      });
       if (onSuccess) {
         onSuccess({
-          tokens: { accessToken: token, expiresIn: numExpiresIn },
-          user: parsedUser ?? undefined,
+          tokens: parsedAuth.tokens,
+          user: parsedAuth.user,
         });
       }
+      return;
     }
+
+    window.history.replaceState(null, "", window.location.pathname);
+
+    authService
+      .refreshSession()
+      .then((data) => {
+        if (data.user && data.tokens) {
+          setAuth({
+            user: data.user as AuthUser,
+            accessToken: data.tokens.accessToken,
+            expiresIn: data.tokens.expiresIn,
+            tenantId: data.user.tenantId,
+          });
+          if (onSuccess) {
+            onSuccess(data);
+          }
+        }
+      })
+      .catch(() => {
+        setGoogleError("Authentication failed. Please try again.");
+      });
   }, [onSuccess, setAuth]);
 
   const onSubmit = (values: LoginFormData) => {
