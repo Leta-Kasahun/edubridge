@@ -27,7 +27,7 @@ export class AuthService {
     private readonly sessionSvc: SessionService = sessionService,
     private readonly sessionRepo: SessionRepository = sessionRepository,
     private readonly authRepo: AuthRepository = authRepository
-  ) {}
+  ) { }
 
   async login(dto: LoginDto, metadata: SessionMetadata, tenantId?: string): Promise<AuthResponse> {
     return this.loginSvc.login(dto, metadata, tenantId);
@@ -61,8 +61,8 @@ export class AuthService {
     return this.googleAuthSvc.processGoogleCallback(code, metadata, tenantId);
   }
 
-  getGoogleRedirectUrl(result: AuthResponse, customOrigin?: string): string {
-    return this.googleAuthSvc.resolveFrontendRedirect(result, customOrigin);
+  getGoogleRedirectUrl(customOrigin?: string, authResult?: AuthResponse): string {
+    return this.googleAuthSvc.resolveFrontendRedirect(customOrigin, authResult);
   }
 
   getGoogleErrorRedirectUrl(errorMessage: string, customOrigin?: string): string {

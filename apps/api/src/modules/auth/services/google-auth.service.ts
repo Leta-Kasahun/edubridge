@@ -18,6 +18,11 @@ interface GoogleTokenResponse {
 interface GoogleUserInfo {
   sub: string;
   email: string;
+  name?: string;
+  given_name?: string;
+  family_name?: string;
+  picture?: string;
+  email_verified?: boolean;
 }
 
 export class GoogleAuthService {
@@ -79,7 +84,12 @@ export class GoogleAuthService {
   ): Promise<AuthResponse> {
     const tokenData = await this.exchangeCodeForTokens(code);
     const profile = await this.fetchGoogleProfile(tokenData.access_token);
-    return this.authenticateWithGoogle(profile.sub, profile.email, metadata, tenantId);
+    return this.authenticateWithGoogle(profile.sub, profile.email, metadata, tenantId, {
+      name: profile.name,
+      givenName: profile.given_name,
+      familyName: profile.family_name,
+      picture: profile.picture,
+    });
   }
 
   private isAllowedOrigin(origin: string): boolean {
@@ -118,12 +128,18 @@ export class GoogleAuthService {
     return (firstValid || "http://localhost:3000").replace(/\/$/, "");
   }
 
-  resolveFrontendRedirect(result: AuthResponse, customOrigin?: string): string {
+  resolveFrontendRedirect(customOrigin?: string, authResult?: AuthResponse): string {
     const baseUrl = this.getFrontendBaseUrl(customOrigin);
-    const token = result.tokens?.accessToken || "";
-    const expiresIn = result.tokens?.expiresIn || 900;
-    const userData = encodeURIComponent(JSON.stringify(result.user || {}));
-    return `${baseUrl}/login?google_success=true&token=${encodeURIComponent(token)}&expiresIn=${expiresIn}&userData=${userData}`;
+    if (authResult?.tokens?.accessToken && authResult?.user) {
+      const payload = Buffer.from(
+        JSON.stringify({
+          tokens: authResult.tokens,
+          user: authResult.user,
+        })
+      ).toString("base64url");
+      return `${baseUrl}/login?google_success=true&auth_data=${payload}`;
+    }
+    return `${baseUrl}/login?google_success=true`;
   }
 
   resolveFrontendErrorRedirect(errorMessage: string, customOrigin?: string): string {
@@ -135,7 +151,13 @@ export class GoogleAuthService {
     googleId: string,
     email: string,
     metadata: SessionMetadata,
-    tenantId?: string
+    tenantId?: string,
+    googleProfileData?: {
+      name?: string;
+      givenName?: string;
+      familyName?: string;
+      picture?: string;
+    }
   ): Promise<AuthResponse> {
     let user = await this.authRepo.findByGoogleId(googleId);
 
@@ -170,7 +192,9 @@ export class GoogleAuthService {
       throw new UnauthorizedError("Google authentication is disabled for this school.");
     }
 
-    const userProfile = mapUserProfile(user, activeTenantId);
+    const userProfile = mapUserProfile(user, activeTenantId, {
+      photoUrl: googleProfileData?.picture,
+    });
     const tempSessionId = crypto.randomUUID();
 
     const parsedDevice = parseUserAgent(metadata.userAgent);

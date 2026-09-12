@@ -10,7 +10,7 @@ import {
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
 
 export class AuthController {
-  constructor(private readonly authSvc: AuthService = authService) {}
+  constructor(private readonly authSvc: AuthService = authService) { }
 
   private extractMetadata(req: Request) {
     return {
@@ -67,7 +67,7 @@ export class AuthController {
     try {
       const result = await this.authSvc.handleGoogleCallback(code as string, metadata, tenantId);
       setRefreshCookie(res, result.tokens?.refreshToken);
-      res.redirect(this.authSvc.getGoogleRedirectUrl(result, customOrigin));
+      res.redirect(this.authSvc.getGoogleRedirectUrl(customOrigin, result));
     } catch (authError) {
       const msg = authError instanceof Error ? authError.message : "Authentication failed";
       res.redirect(this.authSvc.getGoogleErrorRedirectUrl(msg, customOrigin));
