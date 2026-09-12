@@ -159,7 +159,7 @@ export function ExamContextFormModal({
       }
       onClose();
     } catch (err: unknown) {
-      setErrorMessage(getErrorMessage(err, "Failed to save exam context."));
+      setErrorMessage(getErrorMessage(err, "Failed to save exam type."));
     }
   };
 
@@ -173,13 +173,14 @@ export function ExamContextFormModal({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-foreground">
-                {isEditing ? "Edit Exam Context" : "New Exam Context"}
+                {isEditing ? "Edit Exam Type" : "New Exam Type"}
               </h3>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close modal"
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <X size={18} />
@@ -192,11 +193,11 @@ export function ExamContextFormModal({
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">
-                Context Name <span className="text-destructive">*</span>
+                Exam Type Name <span className="text-destructive">*</span>
               </label>
               <input
                 {...register("name")}
-                placeholder="Enter context name"
+                placeholder="Enter exam type name (e.g. National Exam, Midterm)"
                 className="w-full h-10 px-3.5 rounded-xl border border-border bg-card text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
               {errors.name && (
@@ -255,7 +256,7 @@ export function ExamContextFormModal({
               isLoading={isLoading}
               size="sm"
             >
-              {isEditing ? "Save Changes" : "Create Context"}
+              {isEditing ? "Save Changes" : "Create Exam Type"}
             </SubmitButton>
           </div>
         </form>

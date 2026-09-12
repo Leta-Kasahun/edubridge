@@ -1,8 +1,11 @@
 import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { redis } from "./lib/redis.js";
+import { registerNotificationListeners } from "./modules/notifications/index.js";
 
 const startServer = async () => {
+  registerNotificationListeners();
+
   try {
     await redis.ping();
     process.stdout.write("Redis connected successfully\n");
@@ -12,7 +15,9 @@ const startServer = async () => {
 
   const server = app.listen(env.PORT, () => {
     process.stdout.write(`Server running on http://localhost:${env.PORT}\n`);
-    process.stdout.write(`Swagger docs available at http://localhost:${env.PORT}/api-docs\n`);
+    process.stdout.write(
+      `Swagger docs available at http://localhost:${env.PORT}/api-docs\n`
+    );
   });
 
   const shutdown = async () => {

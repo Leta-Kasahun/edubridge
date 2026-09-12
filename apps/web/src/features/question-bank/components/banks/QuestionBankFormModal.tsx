@@ -17,6 +17,7 @@ import {
   useCreateQuestionBank,
   useUpdateQuestionBank,
 } from "../../hooks/useQuestionBanks";
+import { useExamContexts } from "../../hooks/useExamContexts";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import { getErrorMessage } from "@/shared/utils";
@@ -27,6 +28,7 @@ const questionBankSchema = z.object({
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]),
   subjectId: z.string().optional(),
   gradeId: z.string().optional(),
+  examContextId: z.string().optional(),
 });
 
 type QuestionBankFormData = z.infer<typeof questionBankSchema>;
@@ -54,6 +56,8 @@ export function QuestionBankFormModal({
 
   const { data: subjectsList = [] } = useSubjects();
   const { data: gradesList = [] } = useGrades();
+  const { data: examContextsData } = useExamContexts({ limit: 100 });
+  const examContexts = examContextsData?.items ?? [];
 
   const {
     register,
@@ -70,12 +74,14 @@ export function QuestionBankFormModal({
       status: "DRAFT",
       subjectId: "",
       gradeId: "",
+      examContextId: "",
     },
   });
 
   const selectedStatus = watch("status");
   const selectedSubjectId = watch("subjectId");
   const selectedGradeId = watch("gradeId");
+  const selectedExamContextId = watch("examContextId");
 
   useEffect(() => {
     setMounted(true);
@@ -84,12 +90,15 @@ export function QuestionBankFormModal({
   useEffect(() => {
     setErrorMessage(null);
     if (initialData) {
+      const initialExamContextId =
+        initialData.examContexts?.[0]?.id || initialData.examContextId || "";
       reset({
         name: initialData.name,
         description: initialData.description || "",
         status: initialData.status,
         subjectId: initialData.subjectId || "",
         gradeId: initialData.gradeId || "",
+        examContextId: initialExamContextId,
       });
     } else {
       reset({
@@ -98,9 +107,20 @@ export function QuestionBankFormModal({
         status: "DRAFT",
         subjectId: "",
         gradeId: "",
+        examContextId: "",
       });
     }
   }, [initialData, reset, isOpen]);
+
+  const examTypeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return [
+      { value: "", label: "General Assessment (No Exam Type)" },
+      ...examContexts.map((ec) => ({
+        value: ec.id,
+        label: `${ec.name} (${ec.scope})`,
+      })),
+    ];
+  }, [examContexts]);
 
   const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
     return [
@@ -139,6 +159,7 @@ export function QuestionBankFormModal({
           status: formData.status as QuestionBankStatus,
           subjectId: formData.subjectId || undefined,
           gradeId: formData.gradeId || undefined,
+          examContextId: formData.examContextId || undefined,
         });
       } else {
         await createMutation.mutateAsync({
@@ -147,6 +168,7 @@ export function QuestionBankFormModal({
           status: formData.status as QuestionBankStatus,
           subjectId: formData.subjectId || undefined,
           gradeId: formData.gradeId || undefined,
+          examContextId: formData.examContextId || undefined,
         });
       }
       onClose();
@@ -172,6 +194,7 @@ export function QuestionBankFormModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close modal"
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <X size={18} />
@@ -211,6 +234,13 @@ export function QuestionBankFormModal({
                 onChange={(val) => setValue("gradeId", val)}
               />
             </div>
+
+            <SelectDropdown
+              label="Exam Type"
+              options={examTypeOptions}
+              value={selectedExamContextId || ""}
+              onChange={(val) => setValue("examContextId", val)}
+            />
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">

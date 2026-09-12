@@ -23,8 +23,7 @@ import {
 } from "../hooks/useStructure";
 import { ObjectiveItem } from "./ObjectiveItem";
 import { ObjectiveFormModal } from "./ObjectiveFormModal";
-import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, ConfirmDeleteModal } from "@/shared/components";
 
 interface TopicItemProps {
   readonly topic: CurriculumTopicItem;

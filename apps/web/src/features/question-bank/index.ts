@@ -17,3 +17,4 @@ export * from "./components/exam-contexts/ExamContextTable";
 export * from "./components/exam-contexts/ExamContextFormModal";
 export * from "./components/student/StudentQuestionBanksView";
 export * from "./components/student/StudentQuestionPracticeView";
+export * from "./components/ConfirmDeleteModal";

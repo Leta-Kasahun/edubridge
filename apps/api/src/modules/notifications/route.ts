@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { authenticate, requireTenant, requireRoles, validate } from "../../middleware/index.js";
+import {
+  authenticate,
+  requireTenant,
+  requireRoles,
+  validate,
+} from "../../middleware/index.js";
 import { notificationController } from "./controllers/notification.controller.js";
 import { sseHandler } from "./controllers/sse.controller.js";
 import {
@@ -10,15 +15,16 @@ import {
 
 const router = Router();
 
-// ── SSE stream ────────────────────────────────────────────────────────────────
-// Auth + tenant are resolved inside sseHandler from the token,
-// allowing standard browser EventSource (no custom headers).
 router.get("/stream", sseHandler);
 
-// ── All other routes ──────────────────────────────────────────────────────────
 router.get("/", authenticate, requireTenant, notificationController.list);
 
-router.get("/unread-count", authenticate, requireTenant, notificationController.unreadCount);
+router.get(
+  "/unread-count",
+  authenticate,
+  requireTenant,
+  notificationController.unreadCount
+);
 
 router.patch(
   "/mark-read",
@@ -28,9 +34,18 @@ router.patch(
   notificationController.markRead
 );
 
-router.patch("/mark-all-read", authenticate, requireTenant, notificationController.markAllRead);
+router.patch(
+  "/mark-all-read",
+  authenticate,
+  requireTenant,
+  notificationController.markAllRead
+);
 
-router.get("/preferences", authenticate, notificationController.getPreferences);
+router.get(
+  "/preferences",
+  authenticate,
+  notificationController.getPreferences
+);
 
 router.put(
   "/preferences",

@@ -1,9 +1,11 @@
 import { create } from "zustand";
-import { NotificationItem, SseNotificationPayload } from "@/features/notifications/types/notification.types";
+import {
+  NotificationItem,
+  SseNotificationPayload,
+} from "@/features/notifications/types/notification.types";
 
 interface NotificationState {
   unreadCount: number;
-  // Recent items received via SSE — keeps latest 50 for the bell dropdown
   recentItems: NotificationItem[];
 }
 
@@ -35,7 +37,6 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
 
   pushSseItem: (payload) =>
     set((s) => {
-      // Convert SSE payload to a NotificationItem shape
       const item: NotificationItem = {
         id: payload.id,
         tenantId: "",
@@ -67,7 +68,9 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
       ).length;
       return {
         recentItems: s.recentItems.map((n) =>
-          idSet.has(n.id) ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+          idSet.has(n.id)
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n
         ),
         unreadCount: Math.max(0, s.unreadCount - unreadMarked),
       };

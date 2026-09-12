@@ -6,10 +6,12 @@ import {
   Plus,
   Filter,
   Calendar,
+  Award,
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { getErrorMessage } from "@/shared/utils";
 import {
   QuestionBankItem,
   QuestionBankStatus,
@@ -19,6 +21,7 @@ import {
   useUpdateQuestionBankStatus,
   useDeleteQuestionBank,
 } from "../../hooks/useQuestionBanks";
+import { useExamContexts } from "../../hooks/useExamContexts";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import { useAcademicYears } from "@/features/academic/academic-years";
@@ -31,11 +34,13 @@ import { BankRowActions } from "./BankRowActions";
 import { QuestionBankFormModal } from "./QuestionBankFormModal";
 import { QuestionFormModal } from "../questions/QuestionFormModal";
 import { QuestionUploadModal } from "../upload/QuestionUploadModal";
+import { ConfirmDeleteModal } from "@/shared/components";
 
 export function QuestionBankTable() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [academicYearFilter, setAcademicYearFilter] = useState<string>("ALL");
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("ALL");
   const [selectedGradeId, setSelectedGradeId] = useState<string>("ALL");
   const [openSubjectIds, setOpenSubjectIds] = useState<Set<string>>(new Set());
 
@@ -43,15 +48,20 @@ export function QuestionBankTable() {
   const [editingBank, setEditingBank] = useState<QuestionBankItem | null>(null);
   const [uploadBankId, setUploadBankId] = useState<string | null>(null);
   const [addQuestionBankId, setAddQuestionBankId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   const { data: subjectsList = [] } = useSubjects();
   const { data: gradesList = [] } = useGrades();
   const { data: yearsResponse } = useAcademicYears();
   const academicYears = yearsResponse?.data ?? [];
+  const { data: examContextsData } = useExamContexts({ limit: 100 });
+  const examContexts = examContextsData?.items ?? [];
 
   const { data, isLoading, error } = useQuestionBanks({
     search: search.trim() || undefined,
     status: statusFilter === "ALL" ? undefined : (statusFilter as QuestionBankStatus),
+    examContextId: examTypeFilter === "ALL" ? undefined : examTypeFilter,
     limit: 100,
   });
 
@@ -72,9 +82,24 @@ export function QuestionBankTable() {
     await statusMutation.mutateAsync({ id, status });
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete question bank "${name}"?`)) {
-      await deleteMutation.mutateAsync(id);
+  const handleDelete = (id: string, name: string) => {
+    setDeleteErrorMessage(null);
+    setDeleteTarget({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteErrorMessage(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      setDeleteErrorMessage(
+        getErrorMessage(
+          err,
+          "Failed to delete question bank. If it contains questions or is linked to assessments, archive it instead."
+        )
+      );
     }
   };
 
@@ -227,8 +252,25 @@ export function QuestionBankTable() {
       });
     }
 
+    if (examContexts.length > 0) {
+      filters.push({
+        id: "examType",
+        label: "Exam Type",
+        icon: Award,
+        selectedValue: examTypeFilter,
+        onSelect: (val) => setExamTypeFilter(val),
+        options: [
+          { label: "All", value: "ALL" },
+          ...examContexts.map((ec) => ({
+            label: ec.name,
+            value: ec.id,
+          })),
+        ],
+      });
+    }
+
     return filters;
-  }, [statusFilter, academicYearFilter, academicYears]);
+  }, [statusFilter, academicYearFilter, examTypeFilter, academicYears, examContexts]);
 
   if (isLoading) {
     return (
@@ -345,6 +387,20 @@ export function QuestionBankTable() {
           onClose={() => setAddQuestionBankId(null)}
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteErrorMessage(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Question Bank"
+        description="Are you sure you want to delete this question bank? This action cannot be undone."
+        itemName={deleteTarget?.name}
+        isPending={deleteMutation.isPending}
+        errorMessage={deleteErrorMessage}
+      />
     </div>
   );
 }

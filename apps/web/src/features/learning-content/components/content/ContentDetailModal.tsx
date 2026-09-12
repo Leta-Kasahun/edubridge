@@ -36,8 +36,7 @@ import {
 import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
 import { ContentScopeBadge } from "./ContentScopeBadge";
-import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, ConfirmDeleteModal } from "@/shared/components";
 import { getErrorMessage, formatFileSize } from "@/shared/utils";
 
 interface ContentDetailModalProps {

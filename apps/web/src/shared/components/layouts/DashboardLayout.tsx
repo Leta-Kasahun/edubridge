@@ -21,7 +21,6 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
 
-  // Open SSE connection for real-time notifications
   useNotificationStream();
 
   return (

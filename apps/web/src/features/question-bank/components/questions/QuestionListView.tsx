@@ -34,6 +34,8 @@ import { QuestionCardItem } from "./QuestionCardItem";
 import { QuestionFormModal } from "./QuestionFormModal";
 import { QuestionPreviewModal } from "./QuestionPreviewModal";
 import { QuestionUploadModal } from "../upload/QuestionUploadModal";
+import { ConfirmDeleteModal } from "@/shared/components";
+import { getErrorMessage } from "@/shared/utils";
 
 interface QuestionListViewProps {
   readonly bankId: string;
@@ -55,6 +57,8 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuestionListItem | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<QuestionListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; code: string } | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const { data: bank, isLoading: isBankLoading } = useQuestionBank(bankId);
@@ -103,9 +107,24 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     await statusMutation.mutateAsync({ id, status: "DRAFT" });
   };
 
-  const handleDelete = async (id: string, code: string) => {
-    if (window.confirm(`Are you sure you want to delete question "${code}"?`)) {
-      await deleteMutation.mutateAsync(id);
+  const handleDelete = (id: string, code: string) => {
+    setDeleteErrorMessage(null);
+    setDeleteTarget({ id, code });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteErrorMessage(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      setDeleteErrorMessage(
+        getErrorMessage(
+          err,
+          "Failed to delete question. Please ensure it is not locked by active assessments."
+        )
+      );
     }
   };
 
@@ -392,6 +411,20 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         bankId={bankId}
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteErrorMessage(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+        itemName={deleteTarget?.code}
+        isPending={deleteMutation.isPending}
+        errorMessage={deleteErrorMessage}
       />
     </div>
   );

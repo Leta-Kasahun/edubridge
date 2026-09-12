@@ -150,8 +150,21 @@ export class NotificationRepository {
         select: { enabled: true },
       })
     );
-    // Default to enabled when no preference row exists
     return pref?.enabled ?? true;
+  }
+
+  async getUserEmailAndName(userId: string) {
+    return runWithoutTenant(() =>
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      })
+    );
   }
 
   async updateDeliveryStatus(

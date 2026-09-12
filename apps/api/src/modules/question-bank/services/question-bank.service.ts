@@ -8,6 +8,7 @@ import {
   BadRequestError,
 } from "../../../shared/exceptions/index.js";
 import { QuestionBankStatusEnum } from "../../../shared/constants/question-bank.constants.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
 
 interface RawExamContext {
   id: string;
@@ -84,7 +85,18 @@ export class QuestionBankService {
     input: CreateQuestionBankInput
   ) {
     const created = await this.repository.create(tenantId, createdById, input);
-    return formatQuestionBank(created as unknown as RawQuestionBank);
+    const formatted = formatQuestionBank(created as unknown as RawQuestionBank);
+    if (formatted.status === "ACTIVE") {
+      domainEventBus.emitEvent("question_bank.published", {
+        tenantId,
+        bankId: formatted.id,
+        name: formatted.name,
+        gradeLevel: formatted.grade?.level ?? null,
+        subjectName: formatted.subject?.name ?? null,
+        actorUserId: createdById,
+      });
+    }
+    return formatted;
   }
 
   async findById(tenantId: string, id: string) {
@@ -123,9 +135,20 @@ export class QuestionBankService {
     id: string,
     input: UpdateQuestionBankInput
   ) {
-    await this.findById(tenantId, id);
+    const before = await this.findById(tenantId, id);
     const updated = await this.repository.update(tenantId, id, input);
-    return formatQuestionBank(updated as unknown as RawQuestionBank);
+    const formatted = formatQuestionBank(updated as unknown as RawQuestionBank);
+    if (formatted.status === "ACTIVE" && before.status !== "ACTIVE") {
+      domainEventBus.emitEvent("question_bank.published", {
+        tenantId,
+        bankId: formatted.id,
+        name: formatted.name,
+        gradeLevel: formatted.grade?.level ?? null,
+        subjectName: formatted.subject?.name ?? null,
+        actorUserId: undefined,
+      });
+    }
+    return formatted;
   }
 
   async delete(tenantId: string, id: string) {

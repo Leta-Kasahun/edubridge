@@ -20,13 +20,13 @@ interface QuestionBankSectionItem {
 const QUESTION_BANK_SECTIONS: readonly QuestionBankSectionItem[] = [
   {
     title: "Question Banks",
-    description: "Item banks, question authoring, and version management.",
+    description: "Author, organize, and manage subject question repositories.",
     href: ROUTES.QUESTION_BANK.BANKS,
     icon: FolderArchive,
   },
   {
-    title: "Exam Contexts",
-    description: "Exam blueprints and regional/national frameworks.",
+    title: "Exam Types",
+    description: "National, regional, and school-level exam types and blueprints.",
     href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS,
     icon: Layers,
   },

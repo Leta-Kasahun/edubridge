@@ -13,8 +13,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNotificationList, useMarkRead, useMarkAllRead } from "../hooks/useNotifications";
-import { NotificationItem, NotificationCategory } from "../types/notification.types";
+import {
+  useNotificationList,
+  useMarkRead,
+  useMarkAllRead,
+} from "../hooks/useNotifications";
+import {
+  NotificationItem,
+  NotificationCategory,
+} from "../types/notification.types";
 
 interface NotificationDropdownProps {
   readonly onClose: () => void;
@@ -69,7 +76,6 @@ function NotificationRow({
         !item.isRead && "bg-primary/5"
       )}
     >
-      {/* Category icon */}
       <div
         className={cn(
           "mt-0.5 shrink-0 p-1.5 rounded-lg",
@@ -86,7 +92,9 @@ function NotificationRow({
           <p
             className={cn(
               "text-xs truncate",
-              item.isRead ? "text-muted-foreground font-normal" : "text-foreground font-semibold"
+              item.isRead
+                ? "text-muted-foreground font-normal"
+                : "text-foreground font-semibold"
             )}
           >
             {item.title}
@@ -101,7 +109,6 @@ function NotificationRow({
         </p>
       </div>
 
-      {/* Unread dot */}
       {!item.isRead && (
         <span
           className={cn(
@@ -129,15 +136,16 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
   return (
     <div
-      className="absolute right-0 mt-2 w-[340px] origin-top-right rounded-xl bg-card border border-border shadow-lg ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden"
+      className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] origin-top-right rounded-xl bg-card border border-border shadow-lg ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden"
       role="dialog"
       aria-label="Notifications"
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Bell size={15} className="text-primary" />
-          <span className="text-sm font-semibold text-foreground">Notifications</span>
+          <span className="text-sm font-semibold text-foreground">
+            Notifications
+          </span>
           {unreadCount > 0 && (
             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full">
               {unreadCount}
@@ -162,7 +170,6 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         )}
       </div>
 
-      {/* Body */}
       <div className="max-h-[400px] overflow-y-auto divide-y divide-border/60">
         {isLoading && (
           <div className="flex items-center justify-center py-10">
@@ -187,7 +194,6 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           ))}
       </div>
 
-      {/* Footer */}
       {items.length > 0 && (
         <div className="border-t border-border px-4 py-2.5 text-center">
           <button

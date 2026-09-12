@@ -12,7 +12,6 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Bootstrap the server-side count into the store on first render
   useUnreadCount();
 
   const unreadCount = useNotificationStore((s) => s.unreadCount);

@@ -31,7 +31,9 @@ export class NotificationController {
     const tenantId = req.tenantId!;
     const userId = req.user!.userId;
     const { ids } = req.body as { ids: string[] };
-    if (!ids?.length) throw new BadRequestError("ids array is required", "IDS_REQUIRED");
+    if (!ids?.length) {
+      throw new BadRequestError("ids array is required", "IDS_REQUIRED");
+    }
     await notificationService.markRead(tenantId, userId, ids);
     res.status(200).json({ success: true, data: null });
   });
@@ -65,10 +67,12 @@ export class NotificationController {
     res.status(200).json({ success: true, data: result });
   });
 
-  // Internal-use endpoint — only accessible with SYSTEM_ADMIN or SCHOOL_ADMIN role
   send = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = req.tenantId!;
-    const notification = await notificationService.create({ tenantId, ...req.body });
+    const notification = await notificationService.create({
+      tenantId,
+      ...req.body,
+    });
     res.status(201).json({ success: true, data: notification });
   });
 }

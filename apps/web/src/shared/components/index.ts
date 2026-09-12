@@ -12,3 +12,4 @@ export * from "./document";
 export * from "./SelectDropdown";
 export * from "./dashboard-tabs-overview";
 export * from "./Logo";
+export * from "./ConfirmDeleteModal";

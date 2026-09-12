@@ -13,7 +13,7 @@ interface ScrollRevealProps {
 export function ScrollReveal({
   children,
   className,
-  delay = 50,
+  delay = 0,
   threshold = 0.12,
 }: ScrollRevealProps) {
   const [hasEntered, setHasEntered] = useState(false);
@@ -29,7 +29,7 @@ export function ScrollReveal({
       },
       {
         threshold,
-        rootMargin: "0px 0px -80px 0px",
+        rootMargin: "0px 0px -40px 0px",
       }
     );
 
@@ -49,15 +49,15 @@ export function ScrollReveal({
     <div
       ref={elementRef}
       style={{
-        transitionDuration: "1150ms",
-        transitionTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        transitionDuration: "750ms",
+        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transitionDelay: `${delay}ms`,
       }}
       className={cn(
-        "transition-all will-change-transform ease-out",
+        "transition-all will-change-[opacity,transform,filter] ease-out",
         hasEntered
           ? "opacity-100 translate-y-0 scale-100 blur-none"
-          : "opacity-0 translate-y-10 scale-[0.985] blur-[2px] pointer-events-none",
+          : "opacity-0 translate-y-12 scale-[0.98] blur-[4px] pointer-events-none",
         className
       )}
     >

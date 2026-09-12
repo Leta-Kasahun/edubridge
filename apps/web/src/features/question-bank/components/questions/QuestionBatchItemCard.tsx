@@ -20,11 +20,11 @@ export interface BatchQuestionDraft {
 }
 
 const TYPE_OPTIONS: readonly SelectDropdownOption[] = [
-  { value: "MCQ", label: "Multiple Choice (MCQ)" },
+  { value: "MCQ", label: "Multiple Choice" },
   { value: "TRUE_FALSE", label: "True / False" },
   { value: "SHORT_ANSWER", label: "Short Answer" },
-  { value: "NUMERIC", label: "Numeric Answer" },
-  { value: "LONG_ANSWER", label: "Long Answer (Essay)" },
+  { value: "NUMERIC", label: "Numeric" },
+  { value: "LONG_ANSWER", label: "Essay / Long Answer" },
 ];
 
 const DIFFICULTY_OPTIONS: readonly SelectDropdownOption[] = [
@@ -62,6 +62,8 @@ export function QuestionBatchItemCard({
         { text: "", isCorrect: false, orderIndex: 2 },
         { text: "", isCorrect: false, orderIndex: 3 },
       ];
+    } else if (newType === "SHORT_ANSWER" || newType === "NUMERIC" || newType === "LONG_ANSWER") {
+      newOptions = [];
     }
     onChange({
       ...item,
@@ -117,7 +119,7 @@ export function QuestionBatchItemCard({
             {index + 1}
           </span>
           <span className="text-xs font-bold text-foreground">
-            Question #{index + 1}
+            Question {index + 1}
           </span>
         </div>
 
@@ -125,7 +127,7 @@ export function QuestionBatchItemCard({
           <button
             type="button"
             onClick={onRemove}
-            title="Remove this question"
+            aria-label={`Remove question ${index + 1}`}
             className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
           >
             <Trash2 size={14} />
@@ -151,10 +153,11 @@ export function QuestionBatchItemCard({
         />
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
+          <label className="text-xs font-semibold text-foreground" htmlFor={`points-${item.id}`}>
             Points
           </label>
           <input
+            id={`points-${item.id}`}
             type="number"
             step="0.5"
             min="0.5"
@@ -172,14 +175,15 @@ export function QuestionBatchItemCard({
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground">
-          Question Prompt <span className="text-destructive">*</span>
+        <label className="text-xs font-semibold text-foreground" htmlFor={`prompt-${item.id}`}>
+          Question Text <span className="text-destructive">*</span>
         </label>
         <textarea
+          id={`prompt-${item.id}`}
           rows={2}
           value={item.prompt}
           onChange={(e) => onChange({ ...item, prompt: e.target.value })}
-          placeholder={`Enter prompt for Question #${index + 1}`}
+          placeholder={`Enter question text for Question ${index + 1}`}
           className="w-full p-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
         />
       </div>
@@ -188,7 +192,7 @@ export function QuestionBatchItemCard({
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-muted-foreground">
-              Answer Choices (Click circle to select correct answer)
+              Choices (Select correct answer)
             </span>
             {item.type === "MCQ" && item.options.length < 6 && (
               <button
@@ -215,7 +219,8 @@ export function QuestionBatchItemCard({
                 <button
                   type="button"
                   onClick={() => handleSetCorrectOption(optIdx)}
-                  title={opt.isCorrect ? "Correct answer" : "Mark as correct"}
+                  aria-pressed={opt.isCorrect}
+                  aria-label={`Mark choice ${String.fromCharCode(65 + optIdx)} as correct`}
                   className={`h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all cursor-pointer ${
                     opt.isCorrect
                       ? "bg-primary text-primary-foreground shadow-xs scale-105"
@@ -236,6 +241,7 @@ export function QuestionBatchItemCard({
                   onChange={(e) =>
                     handleOptionTextChange(optIdx, e.target.value)
                   }
+                  aria-label={`Choice ${String.fromCharCode(65 + optIdx)} text`}
                   placeholder={`Choice ${String.fromCharCode(65 + optIdx)}`}
                   className="flex-1 h-7 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
@@ -244,6 +250,7 @@ export function QuestionBatchItemCard({
                   <button
                     type="button"
                     onClick={() => handleRemoveOption(optIdx)}
+                    aria-label={`Remove choice ${String.fromCharCode(65 + optIdx)}`}
                     className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                   >
                     <Trash2 size={12} />
@@ -252,6 +259,22 @@ export function QuestionBatchItemCard({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {(item.type === "SHORT_ANSWER" || item.type === "NUMERIC" || item.type === "LONG_ANSWER") && (
+        <div className="space-y-1.5 pt-1">
+          <label className="text-xs font-semibold text-muted-foreground" htmlFor={`explanation-${item.id}`}>
+            Answer Explanation / Evaluation Criteria
+          </label>
+          <input
+            id={`explanation-${item.id}`}
+            type="text"
+            value={item.explanation || ""}
+            onChange={(e) => onChange({ ...item, explanation: e.target.value })}
+            placeholder="Optional explanation or grading criteria"
+            className="w-full h-9 px-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
         </div>
       )}
     </div>
