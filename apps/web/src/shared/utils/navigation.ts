@@ -104,7 +104,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: FolderArchive,
     children: [
       { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
-      { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
+      { label: "Exam Contexts", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
   {
@@ -210,7 +210,7 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
   {
     label: "Learning Materials",
     href: ROUTES.STUDENT.MATERIALS,
-    icon: BookOpen,
+    icon: BookMarked,
   },
   {
     label: "My Profile",
