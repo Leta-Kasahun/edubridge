@@ -1,6 +1,7 @@
 import { AttemptRepository } from "../repository/attempt.repository.js";
 import { AssessmentRepository } from "../repository/assessment.repository.js";
 import { GradingEngine, QuestionVersionForGrading } from "../../grading/grading.engine.js";
+import { MasteryService } from "../../mastery/index.js";
 import {
   SaveAnswerDto,
   BatchSaveAnswersDto,
@@ -26,7 +27,8 @@ import type {
 export class AttemptService {
   constructor(
     private readonly attemptRepo: AttemptRepository = new AttemptRepository(),
-    private readonly assessmentRepo: AssessmentRepository = new AssessmentRepository()
+    private readonly assessmentRepo: AssessmentRepository = new AssessmentRepository(),
+    private readonly masteryService: MasteryService = new MasteryService()
   ) {}
 
   async startAttempt(
@@ -266,7 +268,7 @@ export class AttemptService {
     const percentage = calculatePercentage(totalAwarded, totalMax);
     const finalStatus: AttemptStatus = requiresManualGrading ? "GRADING" : "GRADED";
 
-    return this.attemptRepo.finalizeAttempt(attemptId, {
+    const finalized = await this.attemptRepo.finalizeAttempt(attemptId, {
       status: finalStatus,
       submittedAt: new Date(),
       gradedAt: finalStatus === "GRADED" ? new Date() : null,
@@ -275,6 +277,16 @@ export class AttemptService {
       percentage,
       answers: gradedAnswers,
     });
+
+    if (finalStatus === "GRADED") {
+      try {
+        await this.masteryService.recordEvidenceForAttempt(attemptId, tenantId);
+      } catch {
+        // Evidence recording is non-blocking to submission completion
+      }
+    }
+
+    return finalized;
   }
 
   async getAttemptResult(
@@ -327,7 +339,15 @@ export class AttemptService {
       throw new NotFoundError("Attempt not found");
     }
 
-    return this.attemptRepo.applyManualGrading(attemptId, teacherUserId, dto);
+    const graded = await this.attemptRepo.applyManualGrading(attemptId, teacherUserId, dto);
+    if (graded.status === "GRADED") {
+      try {
+        await this.masteryService.recordEvidenceForAttempt(attemptId, tenantId);
+      } catch {
+        // Evidence recording is non-blocking
+      }
+    }
+    return graded;
   }
 
   async listAttempts(
