@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# 1. Validate Prisma schema
+echo "[pre-push] Validating Prisma schema..."
+pnpm --filter api prisma:validate || exit 1
+
+# 2. TypeScript compilation check
+echo "[pre-push] Checking types..."
+pnpm typecheck || exit 1
+
+# 3. ESLint check
+echo "[pre-push] Running linter..."
+pnpm lint || exit 1

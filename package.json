@@ -9,18 +9,15 @@
     "web:build": "pnpm --filter web build",
     "web:start": "pnpm --filter web start",
     "web:lint": "pnpm --filter web lint",
-
     "api:dev": "pnpm --filter api dev",
     "api:build": "pnpm --filter api build",
     "api:start": "pnpm --filter api start",
     "api:lint": "pnpm --filter api lint",
-
     "build": "pnpm -r build",
     "start": "pnpm -r --parallel start",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
-
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:rebuild": "docker compose up -d --build",
@@ -34,7 +31,6 @@
     "docker:ps": "docker compose ps",
     "docker:clean": "docker compose down -v",
     "docker:reset": "docker compose down -v --remove-orphans",
-
     "db:generate": "pnpm --filter api prisma generate",
     "db:migrate": "pnpm --filter api prisma migrate dev",
     "db:deploy": "pnpm --filter api prisma migrate deploy",
@@ -49,8 +45,8 @@
     "db:format": "pnpm --filter api prisma format",
     "db:validate": "pnpm --filter api prisma validate",
     "db:clean": "pnpm --filter api db:clean",
-
-    "setup": "pnpm install"
+    "setup": "pnpm install",
+    "prepare": "husky"
   },
   "pnpm": {
     "overrides": {
@@ -63,5 +59,8 @@
       "mysql2": "^3.22.0",
       "sharp": "^0.35.4"
     }
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
