@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   FormField,
+  DatePicker,
   LoadingSpinner,
   ErrorAlert,
   AddressHierarchyFields,
@@ -522,12 +523,11 @@ export function StudentProfileView() {
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-border">
-                <FormField
+                <DatePicker
                   id="editDob"
                   label="Date of Birth"
-                  type="date"
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  onChange={setDateOfBirth}
                 />
 
                 <FormField

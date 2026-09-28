@@ -9,6 +9,7 @@ import {
   ProfilePhotoUpload,
   AddressHierarchyFields,
   AddressFormValues,
+  DatePicker,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { formatDisplayDate, getMinMaxDobStrings } from "@/shared/utils/date.util";
@@ -510,14 +511,13 @@ export function TeacherProfileView() {
                 </div>
               </div>
 
-              <FormField
+              <DatePicker
                 id="editDob"
                 label="Date of Birth"
-                type="date"
                 min={minDate}
                 max={maxDate}
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={setDateOfBirth}
               />
 
               <FormField

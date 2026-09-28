@@ -13,3 +13,4 @@ export * from "./SelectDropdown";
 export * from "./dashboard-tabs-overview";
 export * from "./Logo";
 export * from "./ConfirmDeleteModal";
+export * from "./DatePicker";

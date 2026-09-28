@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Briefcase } from "lucide-react";
-import { FormField, SubmitButton, ErrorAlert } from "@/shared/components";
+import { FormField, SubmitButton, ErrorAlert, DatePicker } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import {
   TeacherExperience,
@@ -173,29 +173,29 @@ export function ExperienceFormModal({
 
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <FormField
+              <DatePicker
                 id="expStartDate"
                 label="Start Date"
-                type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={setStartDate}
                 required
               />
 
               {!isCurrentRole ? (
-                <FormField
+                <DatePicker
                   id="expEndDate"
                   label="End Date"
-                  type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={setEndDate}
+                  min={startDate || undefined}
+                  align="right"
                 />
               ) : (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wider text-foreground/80 block">
                     End Date
                   </label>
-                  <div className="h-11 sm:h-12 w-full rounded-xl border border-border bg-muted/40 px-3.5 flex items-center text-xs sm:text-sm font-medium text-muted-foreground">
+                  <div className="h-10 w-full rounded-xl border border-border bg-muted/40 px-3.5 flex items-center text-xs sm:text-sm font-medium text-muted-foreground">
                     Present (Current Role)
                   </div>
                 </div>

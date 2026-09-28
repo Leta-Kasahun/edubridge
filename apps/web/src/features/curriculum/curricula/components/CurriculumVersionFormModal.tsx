@@ -13,7 +13,7 @@ import {
   useCreateCurriculumVersion,
   useUpdateCurriculumVersion,
 } from "../hooks/useCurricula";
-import { SubmitButton, ErrorAlert } from "@/shared/components";
+import { SubmitButton, ErrorAlert, DatePicker } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
 interface CurriculumVersionFormModalProps {
@@ -196,39 +196,22 @@ export function CurriculumVersionFormModal({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="v-effective-from"
-                className="block text-xs font-semibold uppercase tracking-wider text-foreground/80 mb-1.5 select-none"
-              >
-                Effective From
-              </label>
-              <input
-                id="v-effective-from"
-                type="date"
-                value={effectiveFrom}
-                onChange={(e) => setEffectiveFrom(e.target.value)}
-                className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm shadow-2xs transition-all text-foreground focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-hidden"
-                disabled={isLoading}
-              />
-            </div>
+            <DatePicker
+              id="v-effective-from"
+              label="Effective From"
+              value={effectiveFrom}
+              onChange={setEffectiveFrom}
+              disabled={isLoading}
+            />
 
-            <div>
-              <label
-                htmlFor="v-effective-to"
-                className="block text-xs font-semibold uppercase tracking-wider text-foreground/80 mb-1.5 select-none"
-              >
-                Effective To
-              </label>
-              <input
-                id="v-effective-to"
-                type="date"
-                value={effectiveTo}
-                onChange={(e) => setEffectiveTo(e.target.value)}
-                className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background/50 px-3.5 text-xs sm:text-sm shadow-2xs transition-all text-foreground focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-hidden"
-                disabled={isLoading}
-              />
-            </div>
+            <DatePicker
+              id="v-effective-to"
+              label="Effective To"
+              value={effectiveTo}
+              onChange={setEffectiveTo}
+              align="right"
+              disabled={isLoading}
+            />
           </div>
 
           <div>

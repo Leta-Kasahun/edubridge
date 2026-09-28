@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, Calendar, Filter } from "lucide-react";
-import { SubmitButton, ErrorAlert, SelectDropdown, SelectDropdownOption } from "@/shared/components";
+import { SubmitButton, ErrorAlert, SelectDropdown, SelectDropdownOption, DatePicker } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { formatDateForInput } from "@/shared/utils/academic-year.util";
 import {
@@ -191,31 +191,21 @@ export function AcademicYearFormModal({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground block">
-                Start Date <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                required
-              />
-            </div>
+            <DatePicker
+              label="Start Date"
+              value={startDate}
+              onChange={setStartDate}
+              required
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground block">
-                End Date <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-xs sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                required
-              />
-            </div>
+            <DatePicker
+              label="End Date"
+              value={endDate}
+              onChange={setEndDate}
+              min={startDate || undefined}
+              align="right"
+              required
+            />
           </div>
 
           <SelectDropdown

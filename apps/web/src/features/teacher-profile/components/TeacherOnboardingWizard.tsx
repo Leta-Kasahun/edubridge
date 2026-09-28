@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, User } from "lucide-react";
 import {
   FormField,
+  DatePicker,
   LoadingSpinner,
   ErrorAlert,
   OnboardingLayout,
@@ -318,11 +319,10 @@ export function TeacherOnboardingWizard({
                   <button
                     type="button"
                     onClick={() => setGender("FEMALE")}
-                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${
-                      gender === "FEMALE"
-                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
-                        : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
-                    }`}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${gender === "FEMALE"
+                      ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                      : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                      }`}
                   >
                     <User size={16} className="shrink-0" />
                     <span>Female</span>
@@ -330,11 +330,10 @@ export function TeacherOnboardingWizard({
                   <button
                     type="button"
                     onClick={() => setGender("MALE")}
-                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${
-                      gender === "MALE"
-                        ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
-                        : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
-                    }`}
+                    className={`rounded-xl text-xs sm:text-sm font-semibold tracking-wide uppercase border transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] ${gender === "MALE"
+                      ? "border-2 border-primary text-primary bg-primary/5 font-bold shadow-xs"
+                      : "border border-input text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background/50"
+                      }`}
                   >
                     <User size={16} className="shrink-0" />
                     <span>Male</span>
@@ -342,14 +341,16 @@ export function TeacherOnboardingWizard({
                 </div>
               </div>
 
-              <FormField
+              <DatePicker
                 id="dateOfBirth"
                 label="Date of Birth"
-                type="date"
                 min={minDate}
                 max={maxDate}
                 value={dateOfBirth}
-                onChange={(e) => { setDateOfBirth(e.target.value); clearFieldError("dateOfBirth"); }}
+                onChange={(val) => {
+                  setDateOfBirth(val);
+                  clearFieldError("dateOfBirth");
+                }}
                 error={validationErrors.dateOfBirth}
                 required
               />

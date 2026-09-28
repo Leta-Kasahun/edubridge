@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, User } from "lucide-react";
 import {
   FormField,
+  DatePicker,
   LoadingSpinner,
   ErrorAlert,
   OnboardingLayout,
@@ -387,14 +388,16 @@ export function StudentOnboardingWizard({
                 </div>
               </div>
 
-              <FormField
+              <DatePicker
                 id="dateOfBirth"
                 label="Date of Birth"
-                type="date"
                 min={minDate}
                 max={maxDate}
                 value={dateOfBirth}
-                onChange={(e) => { setDateOfBirth(e.target.value); clearFieldError("dateOfBirth"); }}
+                onChange={(val) => {
+                  setDateOfBirth(val);
+                  clearFieldError("dateOfBirth");
+                }}
                 error={validationErrors.dateOfBirth}
                 required
               />
