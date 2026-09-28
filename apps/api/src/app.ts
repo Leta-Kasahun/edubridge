@@ -33,6 +33,7 @@ import {
   assessmentRouter,
   attemptRouter,
 } from "./modules/assessment/index.js";
+import { masteryRouter } from "./modules/mastery/index.js";
 
 const app: Express = express();
 
@@ -94,6 +95,7 @@ app.use("/api/question-banks", questionBankRouter);
 app.use("/api/exam-contexts", examContextRouter);
 app.use("/api/assessments", assessmentRouter);
 app.use("/api/assessments", attemptRouter);
+app.use("/api/mastery", masteryRouter);
 
 app.use(errorHandler);
 
