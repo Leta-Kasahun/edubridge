@@ -16,6 +16,7 @@ import { registerSecurityPolicyDocs } from "../modules/security-policy/security-
 import { registerCurriculumDocs } from "../modules/curriculum/curricula/curriculum.doc.js";
 import { registerNotificationDocs } from "../modules/notifications/notification.doc.js";
 import { registerQuestionBankDocs } from "../modules/question-bank/question-bank.doc.js";
+import { registerMasteryDocs } from "../modules/mastery/mastery.doc.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
@@ -36,4 +37,6 @@ export function registerAllModules(): void {
   registerCurriculumDocs();
   registerNotificationDocs();
   registerQuestionBankDocs();
+  registerMasteryDocs();
 }
+
