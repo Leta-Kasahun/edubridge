@@ -204,6 +204,12 @@ export const API_ENDPOINTS = {
     ATTEMPT_RESULT: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/result`,
     MANUAL_GRADE: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/manual-grade`,
   },
+  MASTERY: {
+    SECTION_MATRIX: (sectionId: string) => `/mastery/sections/${sectionId}`,
+    STUDENT: (studentId: string) => `/mastery/students/${studentId}`,
+    TOPIC_HISTORY: (studentId: string, topicId: string) => `/mastery/students/${studentId}/topics/${topicId}/history`,
+    RECALCULATE: "/mastery/recalculate",
+  },
   HEALTH: "/health",
   NOTIFICATIONS: {
     BASE: "/notifications",
