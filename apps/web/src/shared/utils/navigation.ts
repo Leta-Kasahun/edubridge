@@ -113,6 +113,11 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     icon: CheckSquare,
   },
   {
+    label: "Learning Progress",
+    href: ROUTES.MASTERY,
+    icon: TrendingUp,
+  },
+  {
     label: "Onboarding",
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
@@ -163,6 +168,11 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Assessments",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: CheckSquare,
+  },
+  {
+    label: "Learning Progress",
+    href: ROUTES.MASTERY,
+    icon: TrendingUp,
   },
   {
     label: "Learning Materials",
