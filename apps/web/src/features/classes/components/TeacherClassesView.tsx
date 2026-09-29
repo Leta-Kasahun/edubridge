@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   School,
   GraduationCap,
@@ -11,171 +10,83 @@ import {
   MoreVertical,
   ShieldCheck,
   Users,
+  BookOpen,
+  UserCheck,
 } from "lucide-react";
 import { LoadingSpinner, ErrorAlert } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage } from "@/shared/utils";
-import { useSections } from "@/features/academic/sections/hooks/useSections";
-import { useAcademicYears } from "@/features/academic/academic-years";
-import { useGrades } from "@/features/academic/grades";
 import { SectionDetailModal } from "@/features/academic/sections/components/SectionDetailModal";
 import { SectionRecord, SectionFilterParams } from "@/features/academic/sections/types/section.types";
 import { formatCapacityUtilization } from "@/shared/utils/section.util";
 import { SECTION_STATUS_LABELS } from "@/shared/constants/section.constants";
-import { useAuthStore } from "@/stores/auth.store";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { useTeacherClasses, TeacherRoleFilter } from "../hooks/useTeacherClasses";
 
-interface ClassRowActionsProps {
+interface ClassActionsProps {
   readonly section: SectionRecord;
   readonly onViewDetails: (section: SectionRecord) => void;
 }
 
-function ClassRowActions({ section, onViewDetails }: ClassRowActionsProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const updatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const menuWidth = 160;
-    const menuHeight = 80;
-    let top = rect.bottom + 4;
-    if (top + menuHeight > window.innerHeight) {
-      top = Math.max(10, rect.top - menuHeight - 4);
-    }
-    let left = rect.right - menuWidth;
-    if (left < 10) left = 10;
-    setCoords({ top, left });
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    updatePosition();
-    const onScroll = () => updatePosition();
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [isOpen, updatePosition]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        menuRef.current && !menuRef.current.contains(target) &&
-        buttonRef.current && !buttonRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [isOpen]);
+function ClassActions({ section, onViewDetails }: ClassActionsProps) {
+  const router = useRouter();
 
   return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen((prev) => !prev);
-        }}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-        aria-label="Actions"
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        aria-label="Class actions"
+        onClick={(e) => e.stopPropagation()}
       >
         <MoreVertical size={16} />
-      </button>
-
-      {isOpen && coords && createPortal(
-        <div
-          ref={menuRef}
-          onClick={(e) => e.stopPropagation()}
-          style={{ position: "fixed", top: `${coords.top}px`, left: `${coords.left}px`, zIndex: 9999 }}
-          className="w-40 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44 p-1">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetails(section);
+          }}
+          className="flex items-center gap-2 cursor-pointer text-xs"
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(false);
-              onViewDetails(section);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
-          >
-            <Eye size={13} className="text-muted-foreground" />
-            <span>View Details</span>
-          </button>
-          <Link
-            href={`/dashboard/students?sectionId=${section.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
-          >
-            <Users size={13} className="text-muted-foreground" />
-            <span>View Students</span>
-          </Link>
-        </div>,
-        document.body
-      )}
-    </>
+          <Eye size={14} className="text-muted-foreground" />
+          <span>View Details</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/dashboard/students?sectionId=${section.id}`);
+          }}
+          className="flex items-center gap-2 cursor-pointer text-xs"
+        >
+          <Users size={14} className="text-muted-foreground" />
+          <span>View Students</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 export function TeacherClassesView() {
-  const user = useAuthStore((s) => s.user);
   const [filters, setFilters] = useState<SectionFilterParams>({});
-  const [roleFilter, setRoleFilter] = useState<"ALL" | "HOMEROOM" | "SUBJECT">("ALL");
+  const [roleFilter, setRoleFilter] = useState<TeacherRoleFilter>("ALL");
   const [selectedSection, setSelectedSection] = useState<SectionRecord | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const { data: academicYearsResponse } = useAcademicYears();
-  const academicYears = academicYearsResponse?.data || [];
-
-  const { data: grades = [] } = useGrades({ isActive: true });
-
-  const activeYear = useMemo(
-    () => academicYears.find((y) => y.status === "ACTIVE"),
-    [academicYears]
-  );
-
-  const effectiveAcademicYearId = filters.academicYearId || activeYear?.id || "";
-
   const {
-    data: sections = [],
+    sections,
+    stats,
+    academicYears,
+    availableGrades,
+    effectiveAcademicYearId,
     isLoading,
     error,
-  } = useSections({
-    ...filters,
-    academicYearId: effectiveAcademicYearId || undefined,
-  });
-
-  const availableGrades = useMemo(() => {
-    const gradeIdSet = new Set(sections.map((s) => s.gradeId));
-    const gradeLevelSet = new Set(sections.map((s) => s.gradeLevel));
-    return grades.filter((g) => gradeIdSet.has(g.id) || gradeLevelSet.has(g.level));
-  }, [grades, sections]);
-
-  const filteredSections = useMemo(() => {
-    if (roleFilter === "ALL") return sections;
-    return sections.filter((sec) => {
-      const isHomeroom = Boolean(
-        sec.homeroomTeacher &&
-          (sec.homeroomTeacher.teacherId === user?.id ||
-            sec.homeroomTeacher.id === user?.id)
-      );
-      return roleFilter === "HOMEROOM" ? isHomeroom : !isHomeroom;
-    });
-  }, [sections, roleFilter, user?.id]);
+    isHomeroomSection,
+  } = useTeacherClasses({ filters, roleFilter });
 
   const handleSearchChange = (val: string) => {
     setFilters((prev) => ({
@@ -191,7 +102,7 @@ export function TeacherClassesView() {
       icon: GraduationCap,
       selectedValue: filters.gradeId || "ALL",
       options: [
-        { label: "All", value: "ALL" },
+        { label: "All Grades", value: "ALL" },
         ...availableGrades.map((g) => ({
           label: `Grade ${g.level}`,
           value: g.id,
@@ -210,12 +121,12 @@ export function TeacherClassesView() {
       icon: ShieldCheck,
       selectedValue: roleFilter,
       options: [
-        { label: "All", value: "ALL" },
+        { label: "All Roles", value: "ALL" },
         { label: "Homeroom", value: "HOMEROOM" },
         { label: "Subject", value: "SUBJECT" },
       ],
       onSelect: (val) => {
-        setRoleFilter(val as "ALL" | "HOMEROOM" | "SUBJECT");
+        setRoleFilter(val as TeacherRoleFilter);
       },
     },
     {
@@ -224,7 +135,7 @@ export function TeacherClassesView() {
       icon: Calendar,
       selectedValue: effectiveAcademicYearId || "ALL",
       options: [
-        { label: "All", value: "ALL" },
+        { label: "All Years", value: "ALL" },
         ...academicYears.map((y) => ({
           label: y.name,
           value: y.id,
@@ -257,16 +168,61 @@ export function TeacherClassesView() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <School size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground truncate">Total Classes</p>
+            <p className="text-lg font-bold text-foreground">{stats.totalClasses}</p>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <UserCheck size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground truncate">Homeroom</p>
+            <p className="text-lg font-bold text-foreground">{stats.homeroomClasses}</p>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <BookOpen size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground truncate">Subject</p>
+            <p className="text-lg font-bold text-foreground">{stats.subjectClasses}</p>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <Users size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground truncate">Total Students</p>
+            <p className="text-lg font-bold text-foreground">{stats.totalStudents}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar & Filters */}
       <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={filters.search || ""}
           onSearchChange={handleSearchChange}
-          searchPlaceholder="Search classes..."
+          searchPlaceholder="Search classes by name or code..."
           filters={filterGroups}
         />
       </div>
 
-      {filteredSections.length === 0 ? (
+      {/* Classes Content */}
+      {sections.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border min-h-[260px] flex flex-col items-center justify-center p-8 text-center shadow-xs">
           <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <School size={22} />
@@ -280,71 +236,70 @@ export function TeacherClassesView() {
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Mobile responsive card list (< md and below 320px) */}
+          {/* Mobile responsive card list */}
           <div className="md:hidden space-y-3">
-            {filteredSections.map((sec) => (
-              <div
-                key={sec.id}
-                onClick={() => {
-                  setSelectedSection(sec);
-                  setIsDetailModalOpen(true);
-                }}
-                className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-foreground truncate">
-                      Section {sec.name}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
-                      Grade {sec.gradeLevel}
-                    </p>
+            {sections.map((sec) => {
+              const isHomeroom = isHomeroomSection(sec);
+              return (
+                <div
+                  key={sec.id}
+                  onClick={() => {
+                    setSelectedSection(sec);
+                    setIsDetailModalOpen(true);
+                  }}
+                  className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-foreground truncate">
+                          Section {sec.name}
+                        </p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-muted text-muted-foreground">
+                          {isHomeroom ? "Homeroom" : "Subject"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                        Grade {sec.gradeLevel} &bull; {sec.academicYearName}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <ClassActions
+                        section={sec}
+                        onViewDetails={(s) => {
+                          setSelectedSection(s);
+                          setIsDetailModalOpen(true);
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  <div
-                    className="shrink-0 flex items-center gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ClassRowActions
-                      section={sec}
-                      onViewDetails={(s) => {
-                        setSelectedSection(s);
-                        setIsDetailModalOpen(true);
-                      }}
-                    />
+                  <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Homeroom</span>
+                      <p className="text-xs font-medium text-foreground truncate">
+                        {sec.homeroomTeacher?.fullName || "Unassigned"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Students</span>
+                      <p className="text-xs font-medium text-foreground">
+                        {sec.studentCount} / {sec.capacity ?? "—"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Status</span>
+                      <span className="font-medium text-foreground text-xs">
+                        {SECTION_STATUS_LABELS[sec.status] || sec.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Homeroom
-                    </span>
-                    <p className="text-xs font-medium text-foreground truncate">
-                      {sec.homeroomTeacher?.fullName || "Unassigned"}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Students
-                    </span>
-                    <p className="text-xs font-medium text-foreground">
-                      {sec.studentCount}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Status
-                    </span>
-                    <span className="font-medium text-foreground text-xs">
-                      {SECTION_STATUS_LABELS[sec.status] || sec.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Desktop structured table */}
@@ -355,21 +310,17 @@ export function TeacherClassesView() {
                   <tr>
                     <th className="py-3 px-4">Class</th>
                     <th className="py-3 px-4">Grade Level</th>
+                    <th className="py-3 px-4">Academic Year</th>
                     <th className="py-3 px-4">Homeroom Teacher</th>
                     <th className="py-3 px-4">Enrolled Students</th>
-                    <th className="py-3 px-4">Role</th>
+                    <th className="py-3 px-4">Your Role</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right w-16">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {filteredSections.map((sec) => {
-                    const isHomeroom = Boolean(
-                      sec.homeroomTeacher &&
-                        (sec.homeroomTeacher.teacherId === user?.id ||
-                          sec.homeroomTeacher.id === user?.id)
-                    );
-
+                  {sections.map((sec) => {
+                    const isHomeroom = isHomeroomSection(sec);
                     return (
                       <tr
                         key={sec.id}
@@ -377,14 +328,18 @@ export function TeacherClassesView() {
                           setSelectedSection(sec);
                           setIsDetailModalOpen(true);
                         }}
-                        className="hover:bg-muted/20 transition-colors"
+                        className="hover:bg-muted/20 transition-colors cursor-pointer"
                       >
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-foreground">Section {sec.name}</div>
+                        <td className="py-3.5 px-4 font-semibold text-foreground">
+                          Section {sec.name}
                         </td>
 
                         <td className="py-3.5 px-4 font-medium text-foreground">
                           Grade {sec.gradeLevel}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-muted-foreground">
+                          {sec.academicYearName}
                         </td>
 
                         <td className="py-3.5 px-4 text-foreground">
@@ -395,8 +350,16 @@ export function TeacherClassesView() {
                           {formatCapacityUtilization(sec.studentCount, sec.capacity)}
                         </td>
 
-                        <td className="py-3.5 px-4 font-medium text-foreground">
-                          {isHomeroom ? "Homeroom Teacher" : "Subject Teacher"}
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ${
+                              isHomeroom
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {isHomeroom ? "Homeroom Teacher" : "Subject Teacher"}
+                          </span>
                         </td>
 
                         <td className="py-3.5 px-4 font-medium text-foreground">
@@ -407,15 +370,13 @@ export function TeacherClassesView() {
                           className="py-3.5 px-4 text-right"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="flex items-center justify-end gap-1.5">
-                            <ClassRowActions
-                              section={sec}
-                              onViewDetails={(s) => {
-                                setSelectedSection(s);
-                                setIsDetailModalOpen(true);
-                              }}
-                            />
-                          </div>
+                          <ClassActions
+                            section={sec}
+                            onViewDetails={(s) => {
+                              setSelectedSection(s);
+                              setIsDetailModalOpen(true);
+                            }}
+                          />
                         </td>
                       </tr>
                     );
