@@ -1,7 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Edit2, Save, X, Check, User, Phone, MapPin } from "lucide-react";
+import Link from "next/link";
+import {
+  Edit2,
+  Save,
+  X,
+  Check,
+  User,
+  Phone,
+  MapPin,
+  Award,
+  BookOpen,
+  School,
+  ArrowRight,
+  ShieldCheck,
+  Calendar,
+  Users,
+} from "lucide-react";
 import {
   FormField,
   ErrorAlert,
@@ -16,11 +32,24 @@ import { formatDisplayDate, getMinMaxDobStrings } from "@/shared/utils/date.util
 import { formatPhoneDisplay } from "@/shared/utils/phone.util";
 import { fileToDataUrl } from "@/shared/utils/image.util";
 import { useMyTeacherProfile, useUpdateTeacherProfile } from "../hooks/useTeacherProfile";
+import { useMyTeacherQualifications } from "../hooks/useTeacherQualifications";
+import { useMyTeacherExperiences } from "../hooks/useTeacherExperience";
+import { useTeacherClasses } from "@/features/classes/hooks/useTeacherClasses";
 import { Gender, UpdateTeacherProfilePayload } from "../types/teacher-profile.types";
+import { TeacherQualificationsView } from "./TeacherQualificationsView";
+import { formatCapacityUtilization } from "@/shared/utils/section.util";
+import { ROUTES } from "@/constants/routes";
+
+type ProfileTab = "personal" | "qualifications" | "teaching";
 
 export function TeacherProfileView() {
+  const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
   const { data: profile, isLoading, error } = useMyTeacherProfile();
   const updateMutation = useUpdateTeacherProfile();
+
+  const { data: qualifications = [] } = useMyTeacherQualifications();
+  const { data: experiences = [] } = useMyTeacherExperiences();
+  const { sections, stats: classStats } = useTeacherClasses();
 
   const [isEditing, setIsEditing] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -56,6 +85,7 @@ export function TeacherProfileView() {
     });
     setSavedSuccess(false);
     setIsEditing(true);
+    setActiveTab("personal");
   };
 
   const cancelEditing = () => {
@@ -68,8 +98,12 @@ export function TeacherProfileView() {
   };
 
   const handleSave = async () => {
+    const hasAddress = Object.values(addressValues).some(
+      (v) => typeof v === "string" && v.trim().length > 0
+    );
+
     const payload: UpdateTeacherProfilePayload = {
-      firstName: firstName.trim(),
+      ...(firstName.trim() ? { firstName: firstName.trim() } : {}),
       middleName: middleName.trim(),
       lastName: lastName.trim(),
       gender,
@@ -78,14 +112,16 @@ export function TeacherProfileView() {
       email: email.trim() || null,
       nationality: nationality.trim() || null,
       photoUrl: photoUrl || null,
-      address: {
-        regionId: addressValues.regionId?.trim() || null,
-        zoneId: addressValues.zoneId?.trim() || null,
-        woredaId: addressValues.woredaId?.trim() || null,
-        cityId: addressValues.cityId?.trim() || null,
-        kebeleId: addressValues.kebeleId?.trim() || null,
-        specificLocation: addressValues.specificLocation?.trim() || null,
-      },
+      address: hasAddress
+        ? {
+            regionId: addressValues.regionId?.trim() || null,
+            zoneId: addressValues.zoneId?.trim() || null,
+            woredaId: addressValues.woredaId?.trim() || null,
+            cityId: addressValues.cityId?.trim() || null,
+            kebeleId: addressValues.kebeleId?.trim() || null,
+            specificLocation: addressValues.specificLocation?.trim() || null,
+          }
+        : null,
     };
 
     await updateMutation.mutateAsync(payload, {
@@ -104,25 +140,27 @@ export function TeacherProfileView() {
   if (isLoading) {
     return (
       <div className="p-12 text-center space-y-3">
-        <LoadingSpinner size={24} />
-        <p className="text-xs text-muted-foreground">Loading profile details...</p>
+        <LoadingSpinner size={28} />
+        <p className="text-xs text-muted-foreground">Loading teacher profile...</p>
       </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <ErrorAlert
-        message={getErrorMessage(
-          error,
-          "Failed to load profile details. Please try again."
-        )}
-      />
+      <div className="max-w-5xl mx-auto space-y-4">
+        <ErrorAlert
+          message={getErrorMessage(
+            error,
+            "Failed to load profile details. Please try again."
+          )}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6 w-full max-w-5xl mx-auto">
+    <div className="space-y-6 w-full max-w-5xl mx-auto pb-12">
       {updateMutation.error && (
         <ErrorAlert
           message={getErrorMessage(
@@ -132,10 +170,11 @@ export function TeacherProfileView() {
         />
       )}
 
+      {/* Header Profile Banner */}
       <div className="bg-card rounded-2xl border border-border p-5 sm:p-7 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xl sm:text-2xl overflow-hidden shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xl sm:text-2xl overflow-hidden shrink-0 shadow-2xs">
               {profile.photoUrl ? (
                 <img
                   src={profile.photoUrl}
@@ -145,7 +184,7 @@ export function TeacherProfileView() {
               ) : (
                 <span>
                   {profile.firstName[0]}
-                  {profile.middleName[0]}
+                  {profile.middleName[0] || profile.lastName[0] || "T"}
                 </span>
               )}
             </div>
@@ -158,11 +197,27 @@ export function TeacherProfileView() {
                 <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-2xs">
                   Teacher
                 </span>
+                {profile.emailVerified && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck size={12} />
+                    Verified
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap font-mono">
                 <span className="font-semibold text-foreground">{profile.employeeCode}</span>
-                <span>•</span>
-                <span>Username: {profile.username}</span>
+                {profile.username && (
+                  <>
+                    <span>•</span>
+                    <span>@{profile.username}</span>
+                  </>
+                )}
+                {profile.email && (
+                  <>
+                    <span>•</span>
+                    <span>{profile.email}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -171,7 +226,7 @@ export function TeacherProfileView() {
             <button
               type="button"
               onClick={startEditing}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto"
             >
               <Edit2 size={14} />
               <span>Edit Profile</span>
@@ -182,7 +237,7 @@ export function TeacherProfileView() {
                 type="button"
                 onClick={cancelEditing}
                 disabled={updateMutation.isPending}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
               >
                 <X size={14} />
                 <span>Cancel</span>
@@ -192,7 +247,7 @@ export function TeacherProfileView() {
                 type="button"
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
               >
                 {savedSuccess ? (
                   <>
@@ -214,9 +269,93 @@ export function TeacherProfileView() {
             </div>
           )}
         </div>
+
+        {/* Quick Stat Highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 mt-5 border-t border-border/80">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-background/60 border border-border/60">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Assigned Classes
+            </span>
+            <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+              {classStats.totalClasses}
+            </p>
+          </div>
+
+          <div className="p-2.5 sm:p-3 rounded-xl bg-background/60 border border-border/60">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Students Taught
+            </span>
+            <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+              {classStats.totalStudents}
+            </p>
+          </div>
+
+          <div className="p-2.5 sm:p-3 rounded-xl bg-background/60 border border-border/60">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Qualifications
+            </span>
+            <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+              {qualifications.length}
+            </p>
+          </div>
+
+          <div className="p-2.5 sm:p-3 rounded-xl bg-background/60 border border-border/60">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Work Experiences
+            </span>
+            <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+              {experiences.length}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {!isEditing ? (
+      {/* Tabs Switcher (when not in full edit mode) */}
+      {!isEditing && (
+        <div className="flex items-center gap-1.5 p-1 bg-muted/60 border border-border rounded-xl w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab("personal")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "personal"
+                ? "bg-card text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <User size={13} />
+            <span>Personal Details</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("qualifications")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "qualifications"
+                ? "bg-card text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Award size={13} />
+            <span>Qualifications & Experience</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("teaching")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "teaching"
+                ? "bg-card text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <School size={13} />
+            <span>Teaching Assignments</span>
+          </button>
+        </div>
+      )}
+
+      {/* Tab 1: Personal Details (View Mode) */}
+      {!isEditing && activeTab === "personal" && (
         <div className="space-y-6">
           <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 border-b border-border pb-3">
@@ -241,7 +380,7 @@ export function TeacherProfileView() {
                   Middle Name
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
-                  {profile.middleName}
+                  {profile.middleName || "—"}
                 </span>
               </div>
 
@@ -250,7 +389,7 @@ export function TeacherProfileView() {
                   Last Name
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
-                  {profile.lastName}
+                  {profile.lastName || "—"}
                 </span>
               </div>
 
@@ -298,7 +437,7 @@ export function TeacherProfileView() {
             <div className="flex items-center gap-2 border-b border-border pb-3">
               <Phone size={16} className="text-muted-foreground" />
               <h2 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider">
-                Contact Details
+                Contact & Account Details
               </h2>
             </div>
 
@@ -323,16 +462,16 @@ export function TeacherProfileView() {
 
               <div className="p-3.5 rounded-xl border border-border bg-background/50">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Verification Status
+                  Account Status
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
-                  {profile.emailVerified ? "Verified Account" : "Pending Verification"}
+                  {profile.status}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl border border-border bg-background/50">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Registered On
+                  Registered Since
                 </span>
                 <span className="text-sm font-medium text-foreground mt-1 block">
                   {formatDisplayDate(profile.createdAt)}
@@ -424,7 +563,10 @@ export function TeacherProfileView() {
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Tab 1: Edit Mode */}
+      {isEditing && (
         <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 space-y-6 shadow-xs">
           <div className="border-b border-border pb-3">
             <h2 className="text-sm font-semibold text-foreground">
@@ -555,6 +697,82 @@ export function TeacherProfileView() {
               onChange={handleAddressChange}
             />
           </div>
+        </div>
+      )}
+
+      {/* Tab 2: Qualifications & Experience */}
+      {!isEditing && activeTab === "qualifications" && (
+        <div className="space-y-6">
+          <TeacherQualificationsView />
+        </div>
+      )}
+
+      {/* Tab 3: Teaching Assignments */}
+      {!isEditing && activeTab === "teaching" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-bold text-foreground">Active Class Assignments</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Overview of your homeroom and subject teaching responsibilities.
+              </p>
+            </div>
+            <Link
+              href={ROUTES.TEACHER.CLASSES}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-2xs cursor-pointer shrink-0"
+            >
+              <span>Manage Classes</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          {sections.length === 0 ? (
+            <div className="bg-card rounded-2xl border border-border p-8 text-center shadow-xs min-h-[200px] flex flex-col items-center justify-center">
+              <School size={28} className="text-muted-foreground mb-2" />
+              <p className="text-xs font-semibold text-foreground">No active class assignments</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                You have not been assigned to any sections for this academic period.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {sections.map((sec) => (
+                <div
+                  key={sec.id}
+                  className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        Section {sec.name}
+                      </p>
+                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                        Grade {sec.gradeLevel} &bull; {sec.academicYearName}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-muted-foreground shrink-0">
+                      {sec.homeroomTeacher?.teacherId === profile.id ? "Homeroom" : "Subject"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-xs text-center">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Students</span>
+                      <p className="text-xs font-medium text-foreground">
+                        {sec.studentCount} / {sec.capacity ?? "—"}
+                      </p>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Utilization</span>
+                      <p className="text-xs font-medium text-foreground">
+                        {formatCapacityUtilization(sec.studentCount, sec.capacity)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

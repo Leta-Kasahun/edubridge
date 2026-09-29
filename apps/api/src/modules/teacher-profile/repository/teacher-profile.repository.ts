@@ -1,4 +1,5 @@
 import { prisma, ExtendedPrismaClient } from "../../../lib/prisma.js";
+import { BadRequestError } from "../../../shared/exceptions/index.js";
 import {
   calculateAge,
   formatFullAddress,
@@ -280,7 +281,7 @@ export class TeacherProfileRepository {
   ): Promise<string> {
     const validation = validateAddressHierarchy(data);
     if (!validation.isValid) {
-      throw new Error(validation.error || "Invalid address hierarchy");
+      throw new BadRequestError(validation.error || "Invalid address hierarchy");
     }
 
     const regionId = await resolveOrCreateRegion(data.regionId);
@@ -371,8 +372,8 @@ export class TeacherProfileRepository {
     const updateData: Record<string, unknown> = {};
 
     if (payload.firstName !== undefined) updateData.firstName = payload.firstName;
-    if (payload.middleName !== undefined) updateData.middleName = payload.middleName;
-    if (payload.lastName !== undefined) updateData.lastName = payload.lastName;
+    if (payload.middleName !== undefined) updateData.middleName = payload.middleName ?? "";
+    if (payload.lastName !== undefined) updateData.lastName = payload.lastName ?? "";
     if (payload.gender !== undefined) updateData.gender = payload.gender;
     if (payload.dateOfBirth !== undefined) {
       updateData.dateOfBirth = payload.dateOfBirth ? parseDate(payload.dateOfBirth) : null;
