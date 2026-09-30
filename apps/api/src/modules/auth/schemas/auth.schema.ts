@@ -79,6 +79,12 @@ export const resetPasswordConfirmSchema = z.object({
   newPassword: z.string().min(8).max(128),
 });
 
+export const adminResetPasswordSchema = z.object({
+  userId: z.string().uuid("Invalid user ID"),
+  newPassword: z.string().min(1).optional(),
+  autoGenerate: z.boolean().optional(),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type VerifyOtpDto = z.infer<typeof verifyOtpSchema>;
 export type ResendOtpDto = z.infer<typeof resendOtpSchema>;
@@ -87,3 +93,4 @@ export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
 export type ResetPasswordRequestDto = z.infer<typeof resetPasswordRequestSchema>;
 export type ResetPasswordConfirmDto = z.infer<typeof resetPasswordConfirmSchema>;
+export type AdminResetPasswordDto = z.infer<typeof adminResetPasswordSchema>;
