@@ -21,7 +21,7 @@ export class PasswordService {
     private readonly otpSvc: OtpService = otpService,
     private readonly sessionSvc: SessionService = sessionService,
     private readonly securityEventSvc: SecurityEventService = securityEventService
-  ) {}
+  ) { }
 
   async firstLoginSetup(
     dto: FirstLoginSetupDto,
@@ -153,6 +153,57 @@ export class PasswordService {
     });
 
     return { message: "Password updated successfully" };
+  }
+
+
+  async adminResetPassword(
+    tenantId: string | undefined,
+    targetUserId: string,
+    newPassword?: string,
+    adminUserId?: string
+  ): Promise<{ username: string; tempPassword: string; fullName: string }> {
+    const user = await this.authRepo.findById(targetUserId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const activeTenantId = tenantId || user.memberships[0]?.tenantId;
+    let effectivePassword = newPassword?.trim();
+
+    if (!effectivePassword) {
+      const digits = String(crypto.randomInt(1000, 10000));
+      effectivePassword = `Temp@${digits}`;
+    }
+
+    await this.securityEventSvc.validatePasswordPolicy(effectivePassword, activeTenantId);
+
+    const newPasswordHash = await hashPassword(effectivePassword);
+    await this.authRepo.updatePassword(user.id, newPasswordHash);
+
+    const policy = activeTenantId ? await this.securityRepo.findSecurityPolicy(activeTenantId) : null;
+    if (policy?.revokeSessionsOnPasswordChange) {
+      await this.sessionSvc.revokeAllUserSessions(user.id, "Password reset by administrator");
+    }
+
+    await this.securityRepo.createSecurityEvent({
+      tenantId: activeTenantId,
+      userId: user.id,
+      type: "PASSWORD_CHANGED",
+      riskLevel: "LOW",
+      description: `Password reset by administrator (${adminUserId || "System"}).`,
+    });
+
+    const fullName = user.teacherProfile
+      ? `${user.teacherProfile.firstName} ${user.teacherProfile.lastName || ""}`.trim()
+      : user.studentProfile
+      ? `${user.studentProfile.firstName} ${user.studentProfile.middleName || ""} ${user.studentProfile.lastName || ""}`.trim()
+      : user.username || user.email || "User";
+
+    return {
+      username: user.username || user.email || "",
+      tempPassword: effectivePassword,
+      fullName,
+    };
   }
 }
 
