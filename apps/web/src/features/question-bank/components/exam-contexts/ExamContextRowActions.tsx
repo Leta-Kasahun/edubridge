@@ -6,7 +6,7 @@ import { MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ExamContextItem } from "../../types/question-bank.types";
 
-interface ContextRowActionsProps {
+export interface ContextRowActionsProps {
   readonly context: ExamContextItem;
   readonly onEdit: (context: ExamContextItem) => void;
   readonly onDelete: (id: string, name: string) => void;
@@ -20,39 +20,45 @@ export function ContextRowActions({
   isDeleting,
 }: ContextRowActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
   const updatePosition = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 90;
-      const menuWidth = 140;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 176;
+    const menuHeight = 100;
 
-      const top = openUpwards ? rect.top - menuHeight - 4 : rect.bottom + 4;
-      const left = Math.max(8, rect.right - menuWidth);
-
-      setCoords({ top, left });
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
     }
-  };
 
-  const handleToggle = () => {
-    if (!isOpen) {
-      updatePosition();
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
     }
+
+    setCoords({ top, left });
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
 
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         menuRef.current &&
         !menuRef.current.contains(target) &&
@@ -63,19 +69,10 @@ export function ContextRowActions({
       }
     };
 
-    const handleScrollOrResize = () => {
-      setIsOpen(false);
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
   }, [isOpen]);
 
   return (
@@ -83,12 +80,16 @@ export function ContextRowActions({
       <button
         ref={buttonRef}
         type="button"
-        onClick={handleToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         disabled={isDeleting}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
-        {isDeleting ? <LoadingSpinner size={14} /> : <MoreVertical size={15} />}
+        {isDeleting ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
       {isOpen &&
@@ -103,7 +104,7 @@ export function ContextRowActions({
               left: `${coords.left}px`,
               zIndex: 9999,
             }}
-            className="w-36 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+            className="w-44 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 animate-in fade-in-0 zoom-in-95 text-xs"
           >
             <button
               type="button"
@@ -111,9 +112,9 @@ export function ContextRowActions({
                 setIsOpen(false);
                 onEdit(context);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Edit2 size={13} className="text-muted-foreground" />
+              <Edit2 size={13} className="text-muted-foreground shrink-0" />
               <span>Edit</span>
             </button>
 
@@ -125,9 +126,9 @@ export function ContextRowActions({
                 setIsOpen(false);
                 onDelete(context.id, context.name);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Trash2 size={13} className="text-destructive" />
+              <Trash2 size={13} className="shrink-0" />
               <span>Delete</span>
             </button>
           </div>,
@@ -136,3 +137,6 @@ export function ContextRowActions({
     </>
   );
 }
+
+
+
