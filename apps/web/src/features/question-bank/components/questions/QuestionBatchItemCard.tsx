@@ -1,6 +1,5 @@
-"use client";
-
-import { Trash2, Plus, Check } from "lucide-react";
+import { useState } from "react";
+import { Trash2, Plus, Check, Image as ImageIcon, Sparkles, X } from "lucide-react";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import {
   QuestionType,
@@ -17,6 +16,7 @@ export interface BatchQuestionDraft {
   readonly options: readonly QuestionOptionItem[];
   readonly explanation?: string;
   readonly hint?: string;
+  readonly imageUrl?: string;
 }
 
 const TYPE_OPTIONS: readonly SelectDropdownOption[] = [
@@ -48,6 +48,8 @@ export function QuestionBatchItemCard({
   onChange,
   onRemove,
 }: QuestionBatchItemCardProps) {
+  const [showImageInput, setShowImageInput] = useState(Boolean(item.imageUrl));
+
   const handleTypeChange = (newType: QuestionType) => {
     let newOptions = item.options;
     if (newType === "TRUE_FALSE") {
@@ -123,16 +125,39 @@ export function QuestionBatchItemCard({
           </span>
         </div>
 
-        {totalCount > 1 && (
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={onRemove}
-            aria-label={`Remove question ${index + 1}`}
-            className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            onClick={() => {
+              const next = !showImageInput;
+              setShowImageInput(next);
+              if (!next && item.imageUrl) {
+                onChange({ ...item, imageUrl: undefined });
+              }
+            }}
+            aria-pressed={showImageInput}
+            aria-label="Toggle diagram or image input"
+            className={`inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[11px] font-medium transition-colors cursor-pointer border ${
+              item.imageUrl || showImageInput
+                ? "bg-primary/10 border-primary/30 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
           >
-            <Trash2 size={14} />
+            <ImageIcon size={12} />
+            <span>{item.imageUrl ? "Diagram Added" : "Add Image"}</span>
           </button>
-        )}
+
+          {totalCount > 1 && (
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={`Remove question ${index + 1}`}
+              className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -187,6 +212,56 @@ export function QuestionBatchItemCard({
           className="w-full p-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
         />
       </div>
+
+      {showImageInput && (
+        <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-2.5 animate-in fade-in-0 duration-150">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5" htmlFor={`image-url-${item.id}`}>
+              <ImageIcon size={13} className="text-primary" />
+              <span>Diagram / Image URL</span>
+            </label>
+            {item.imageUrl && (
+              <button
+                type="button"
+                onClick={() => onChange({ ...item, imageUrl: undefined })}
+                className="text-[11px] font-semibold text-destructive hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <X size={11} />
+                <span>Remove Image</span>
+              </button>
+            )}
+          </div>
+
+          <input
+            id={`image-url-${item.id}`}
+            type="url"
+            value={item.imageUrl || ""}
+            onChange={(e) => onChange({ ...item, imageUrl: e.target.value })}
+            placeholder="https://example.com/diagram.png"
+            className="w-full h-9 px-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+
+          {item.imageUrl && item.imageUrl.trim() !== "" && (
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-card border border-border">
+              <div className="h-16 w-24 rounded-md border border-border bg-muted/40 overflow-hidden flex items-center justify-center shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.imageUrl}
+                  alt="Question Diagram Preview"
+                  className="h-full w-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              </div>
+              <div className="text-[11px] text-muted-foreground min-w-0">
+                <span className="font-semibold text-foreground block truncate">Diagram Preview</span>
+                <span className="truncate block opacity-80">{item.imageUrl}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {(item.type === "MCQ" || item.type === "TRUE_FALSE") && (
         <div className="space-y-2 pt-1">
@@ -262,21 +337,20 @@ export function QuestionBatchItemCard({
         </div>
       )}
 
-      {(item.type === "SHORT_ANSWER" || item.type === "NUMERIC" || item.type === "LONG_ANSWER") && (
-        <div className="space-y-1.5 pt-1">
-          <label className="text-xs font-semibold text-muted-foreground" htmlFor={`explanation-${item.id}`}>
-            Answer Explanation / Evaluation Criteria
-          </label>
-          <input
-            id={`explanation-${item.id}`}
-            type="text"
-            value={item.explanation || ""}
-            onChange={(e) => onChange({ ...item, explanation: e.target.value })}
-            placeholder="Optional explanation or grading criteria"
-            className="w-full h-9 px-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-      )}
+      <div className="space-y-1.5 pt-1">
+        <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5" htmlFor={`explanation-${item.id}`}>
+          <Sparkles size={12} className="text-primary" />
+          <span>Answer Explanation</span>
+        </label>
+        <input
+          id={`explanation-${item.id}`}
+          type="text"
+          value={item.explanation || ""}
+          onChange={(e) => onChange({ ...item, explanation: e.target.value })}
+          placeholder="Explain the correct answer"
+          className="w-full h-9 px-3 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+      </div>
     </div>
   );
 }
