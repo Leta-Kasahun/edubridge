@@ -9,8 +9,14 @@ import {
   HelpCircle,
   Filter,
   CheckSquare,
+  Square,
   Binary,
   RotateCcw,
+  Send,
+  Archive,
+  Trash2,
+  CheckCheck,
+  Tag,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
@@ -28,6 +34,10 @@ import {
   useUpdateQuestionStatus,
   usePublishQuestion,
   useDeleteQuestion,
+  useResolveQuestionReport,
+  useBulkPublishQuestions,
+  useBulkArchiveQuestions,
+  useBulkDeleteQuestions,
 } from "../../hooks/useQuestions";
 import { useQuestionBank } from "../../hooks/useQuestionBanks";
 import { QuestionCardItem } from "./QuestionCardItem";
@@ -46,6 +56,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const isStudent = user?.roles?.includes("STUDENT");
 
   const [search, setSearch] = useState("");
+  const [topicFilter, setTopicFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -53,11 +64,13 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
 
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [revealedExplanations, setRevealedExplanations] = useState<Record<string, boolean>>({});
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuestionListItem | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<QuestionListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; code: string } | null>(null);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -66,6 +79,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     bankId,
     {
       search: search.trim() || undefined,
+      topicId: topicFilter === "ALL" ? undefined : topicFilter,
       type: typeFilter === "ALL" ? undefined : (typeFilter as QuestionType),
       difficulty:
         difficultyFilter === "ALL"
@@ -77,13 +91,97 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         ? undefined
         : (statusFilter as QuestionStatus),
       page,
-      limit: 20,
+      limit: 50,
     }
   );
 
   const statusMutation = useUpdateQuestionStatus(bankId);
   const publishMutation = usePublishQuestion(bankId);
   const deleteMutation = useDeleteQuestion(bankId);
+  const resolveReportMutation = useResolveQuestionReport(bankId);
+  const bulkPublishMutation = useBulkPublishQuestions(bankId);
+  const bulkArchiveMutation = useBulkArchiveQuestions(bankId);
+  const bulkDeleteMutation = useBulkDeleteQuestions(bankId);
+
+  const items = questionsData?.items ?? [];
+
+  const draftQuestions = useMemo(
+    () => items.filter((q) => q.status === "DRAFT" || q.status === "REVIEW"),
+    [items]
+  );
+
+  const publishedQuestions = useMemo(
+    () => items.filter((q) => q.status === "PUBLISHED"),
+    [items]
+  );
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedQuestionIds.size === items.length) {
+      setSelectedQuestionIds(new Set());
+    } else {
+      setSelectedQuestionIds(new Set(items.map((q) => q.id)));
+    }
+  };
+
+  const handleBulkPublishSelected = async () => {
+    const ids = Array.from(selectedQuestionIds);
+    if (ids.length === 0) return;
+    await bulkPublishMutation.mutateAsync(ids);
+    setSelectedQuestionIds(new Set());
+  };
+
+  const handleBulkArchiveSelected = async () => {
+    const ids = Array.from(selectedQuestionIds);
+    if (ids.length === 0) return;
+    await bulkArchiveMutation.mutateAsync(ids);
+    setSelectedQuestionIds(new Set());
+  };
+
+  const handlePublishAllDrafts = async () => {
+    const ids = draftQuestions.map((q) => q.id);
+    if (ids.length === 0) return;
+    await bulkPublishMutation.mutateAsync(ids);
+  };
+
+  const handleArchiveAllPublished = async () => {
+    const ids = publishedQuestions.map((q) => q.id);
+    if (ids.length === 0) return;
+    await bulkArchiveMutation.mutateAsync(ids);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const ids = Array.from(selectedQuestionIds);
+    if (ids.length === 0) return;
+    setDeleteErrorMessage(null);
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      setSelectedQuestionIds(new Set());
+      setIsBulkDeleteOpen(false);
+    } catch (err: unknown) {
+      setDeleteErrorMessage(
+        getErrorMessage(
+          err,
+          "Failed to delete some selected questions. They may be locked by active assessments."
+        )
+      );
+    }
+  };
+
+  const handleResolveReport = async (questionId: string, reportId: string) => {
+    await resolveReportMutation.mutateAsync({ questionId, reportId });
+  };
 
   const handleCreate = () => {
     setEditingQuestion(null);
@@ -147,8 +245,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     setRevealedExplanations({});
   };
 
-  const items = questionsData?.items ?? [];
-
   const practiceStats = useMemo(() => {
     let correct = 0;
     let attempted = 0;
@@ -165,8 +261,40 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     return { correct, attempted, total: items.length };
   }, [items, selectedAnswers]);
 
+  const availableTopics = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const q of items) {
+      if (q.topic?.id && q.topic?.title) {
+        map.set(q.topic.id, q.topic.title);
+      }
+    }
+    return Array.from(map.entries()).map(([id, title]) => ({
+      label: title,
+      value: id,
+    }));
+  }, [items]);
+
   const toolbarFilters: readonly FilterGroup[] = useMemo(() => {
-    const filters: FilterGroup[] = [
+    const filters: FilterGroup[] = [];
+
+    if (availableTopics.length > 0) {
+      filters.push({
+        id: "topic",
+        label: "Topic",
+        icon: Tag,
+        selectedValue: topicFilter,
+        onSelect: (val) => {
+          setTopicFilter(val);
+          setPage(1);
+        },
+        options: [
+          { label: "All Topics", value: "ALL" },
+          ...availableTopics,
+        ],
+      });
+    }
+
+    filters.push(
       {
         id: "type",
         label: "Type",
@@ -202,8 +330,8 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Medium", value: "MEDIUM" },
           { label: "Hard", value: "HARD" },
         ],
-      },
-    ];
+      }
+    );
 
     if (!isStudent) {
       filters.push({
@@ -226,7 +354,12 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
 
     return filters;
-  }, [typeFilter, difficultyFilter, statusFilter, isStudent]);
+  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter, isStudent]);
+
+  const isAnyBulkPending =
+    bulkPublishMutation.isPending ||
+    bulkArchiveMutation.isPending ||
+    bulkDeleteMutation.isPending;
 
   return (
     <div className="space-y-3.5 sm:space-y-4 max-w-7xl mx-auto w-full pb-10">
@@ -325,6 +458,120 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         />
       </div>
 
+      {/* Bulk Action & Management Toolbar (For Teachers & Admins) */}
+      {!isStudent && items.length > 0 && (
+        <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap animate-in fade-in-0">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleToggleSelectAll}
+              className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+            >
+              {selectedQuestionIds.size === items.length ? (
+                <CheckSquare size={16} className="text-primary" />
+              ) : (
+                <Square size={16} className="text-muted-foreground" />
+              )}
+              <span>
+                {selectedQuestionIds.size === items.length
+                  ? "Deselect All"
+                  : "Select All"}
+              </span>
+            </button>
+
+            <span className="text-xs text-muted-foreground font-medium">
+              {selectedQuestionIds.size} of {items.length} selected
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap ml-auto">
+            {selectedQuestionIds.size > 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkPublishSelected}
+                  disabled={isAnyBulkPending}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                >
+                  <Send size={12} />
+                  <span>
+                    {bulkPublishMutation.isPending
+                      ? "Publishing..."
+                      : `Publish Selected (${selectedQuestionIds.size})`}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleBulkArchiveSelected}
+                  disabled={isAnyBulkPending}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                >
+                  <Archive size={12} />
+                  <span>
+                    {bulkArchiveMutation.isPending
+                      ? "Archiving..."
+                      : `Archive Selected (${selectedQuestionIds.size})`}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsBulkDeleteOpen(true)}
+                  disabled={isAnyBulkPending}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 border border-destructive/30 transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                >
+                  <Trash2 size={12} />
+                  <span>Delete Selected</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedQuestionIds(new Set())}
+                  className="text-xs text-muted-foreground hover:underline px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              </>
+            ) : (
+              <>
+                {draftQuestions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePublishAllDrafts}
+                    disabled={bulkPublishMutation.isPending}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/20 border border-emerald-600/30 transition-colors cursor-pointer"
+                  >
+                    <CheckCheck size={13} />
+                    <span>
+                      {bulkPublishMutation.isPending
+                        ? "Publishing..."
+                        : `Publish All Drafts (${draftQuestions.length})`}
+                    </span>
+                  </button>
+                )}
+
+                {publishedQuestions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleArchiveAllPublished}
+                    disabled={bulkArchiveMutation.isPending}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    <Archive size={12} />
+                    <span>
+                      {bulkArchiveMutation.isPending
+                        ? "Archiving..."
+                        : `Archive All (${publishedQuestions.length})`}
+                    </span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {isQuestionsLoading || isBankLoading ? (
         <div className="min-h-[300px] flex items-center justify-center p-8">
           <LoadingSpinner size={32} />
@@ -371,6 +618,8 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
               question={question}
               qIndex={qIndex}
               isStudent={isStudent}
+              isSelected={selectedQuestionIds.has(question.id)}
+              onToggleSelect={() => handleToggleSelect(question.id)}
               selectedOptKey={selectedAnswers[question.id]}
               onOptionSelect={handleOptionSelect}
               isExplanationOpen={Boolean(revealedExplanations[question.id])}
@@ -381,10 +630,15 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
               onArchive={handleArchive}
               onActivate={handleActivate}
               onDelete={handleDelete}
+              onResolveReport={handleResolveReport}
               isBusy={
                 publishMutation.isPending ||
                 deleteMutation.isPending ||
-                statusMutation.isPending
+                statusMutation.isPending ||
+                resolveReportMutation.isPending ||
+                bulkPublishMutation.isPending ||
+                bulkArchiveMutation.isPending ||
+                bulkDeleteMutation.isPending
               }
             />
           ))}
@@ -405,6 +659,14 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         isOpen={Boolean(previewQuestion)}
         onClose={() => setPreviewQuestion(null)}
         question={previewQuestion}
+        onEdit={(q) => {
+          setPreviewQuestion(null);
+          setEditingQuestion(q as QuestionListItem);
+          setIsFormOpen(true);
+        }}
+        onPublish={handlePublish}
+        onArchive={handleArchive}
+        isStudent={isStudent}
       />
 
       <QuestionUploadModal
@@ -426,6 +688,21 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         isPending={deleteMutation.isPending}
         errorMessage={deleteErrorMessage}
       />
+
+      <ConfirmDeleteModal
+        isOpen={isBulkDeleteOpen}
+        onClose={() => {
+          setIsBulkDeleteOpen(false);
+          setDeleteErrorMessage(null);
+        }}
+        onConfirm={handleConfirmBulkDelete}
+        title="Delete Selected Questions"
+        description={`Are you sure you want to delete ${selectedQuestionIds.size} selected question(s)? This action cannot be undone.`}
+        itemName={`${selectedQuestionIds.size} questions`}
+        isPending={bulkDeleteMutation.isPending}
+        errorMessage={deleteErrorMessage}
+      />
     </div>
   );
 }
+
