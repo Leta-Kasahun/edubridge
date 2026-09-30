@@ -75,6 +75,21 @@ function formatQuestion(q: RawQuestion) {
   const type = latestVersion?.type || "MCQ";
   const difficulty = latestVersion?.difficulty || "MEDIUM";
 
+  const rawConfig =
+    latestVersion?.configuration && typeof latestVersion.configuration === "object"
+      ? (latestVersion.configuration as Record<string, unknown>)
+      : null;
+
+  const imageUrl =
+    rawConfig && typeof rawConfig.imageUrl === "string" && rawConfig.imageUrl.trim() !== ""
+      ? rawConfig.imageUrl
+      : null;
+
+  const reports =
+    rawConfig && Array.isArray(rawConfig.reports)
+      ? rawConfig.reports
+      : [];
+
   const options = (latestVersion?.options || []).map((opt) => ({
     id: opt.id,
     optionKey: opt.optionKey,
@@ -105,6 +120,9 @@ function formatQuestion(q: RawQuestion) {
     prompt,
     questionText: prompt,
     explanation: latestVersion?.explanation || null,
+    imageUrl,
+    configuration: rawConfig,
+    reports,
     options,
     topicId: primaryTopic?.id || null,
     topic: primaryTopic ? { id: primaryTopic.id, title: primaryTopic.title, code: primaryTopic.code } : null,
@@ -286,6 +304,44 @@ export class QuestionService {
 
     const published = await this.repository.publish(questionId, latestVersion.id);
     return formatQuestion(published as unknown as RawQuestion);
+  }
+
+  async resolveReport(
+    tenantId: string | null,
+    questionId: string,
+    reportId: string,
+    userId: string
+  ) {
+    const question = await this.findById(tenantId, questionId);
+    const latestVersion = question.versions[0];
+    if (!latestVersion) {
+      throw new NotFoundError("Question version not found");
+    }
+
+    const currentConfig =
+      typeof latestVersion.configuration === "object" && latestVersion.configuration !== null
+        ? { ...(latestVersion.configuration as Record<string, unknown>) }
+        : {};
+
+    const rawReports = Array.isArray(currentConfig.reports) ? currentConfig.reports : [];
+
+    const updatedReports = rawReports.map((rep) => {
+      if (typeof rep === "object" && rep !== null && (rep as Record<string, unknown>).id === reportId) {
+        return {
+          ...(rep as Record<string, unknown>),
+          status: "RESOLVED",
+          resolvedAt: new Date().toISOString(),
+          resolvedById: userId,
+        };
+      }
+      return rep;
+    });
+
+    currentConfig.reports = updatedReports;
+
+    return this.update(tenantId, questionId, userId, {
+      configuration: currentConfig,
+    });
   }
 
   async delete(tenantId: string | null, questionId: string) {
