@@ -98,8 +98,9 @@ function StudentRowActions({
           e.stopPropagation();
           setIsOpen((prev) => !prev);
         }}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden transition-colors cursor-pointer inline-flex items-center justify-center"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
         <MoreVertical size={16} />
       </button>
@@ -108,32 +109,32 @@ function StudentRowActions({
         <div
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}
-          style={{ position: "fixed", top: `${coords.top}px`, left: `${coords.left}px`, zIndex: 99999 }}
-          className="w-48 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+          style={{ position: "fixed", top: `${coords.top}px`, left: `${coords.left}px`, zIndex: 9999 }}
+          className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 text-xs"
         >
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onTransferSingle(item); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
           >
-            <ArrowRightLeft size={14} className="text-muted-foreground" />
+            <ArrowRightLeft size={13} className="text-muted-foreground shrink-0" />
             <span>Transfer Section</span>
           </button>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onShowHistory(item); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
           >
-            <History size={14} className="text-muted-foreground" />
+            <History size={13} className="text-muted-foreground shrink-0" />
             <span>Enrollment History</span>
           </button>
           <div className="my-1 border-t border-border" />
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onWithdraw(item); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
           >
-            <UserMinus size={14} />
+            <UserMinus size={13} className="shrink-0" />
             <span>Withdraw Student</span>
           </button>
         </div>,
