@@ -43,12 +43,16 @@ interface QuestionBankFormModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly initialData?: QuestionBankItem | null;
+  readonly allowedSubjectIds?: readonly string[];
+  readonly allowedGradeIds?: readonly string[];
 }
 
 export function QuestionBankFormModal({
   isOpen,
   onClose,
   initialData,
+  allowedSubjectIds,
+  allowedGradeIds,
 }: QuestionBankFormModalProps) {
   const [mounted, setMounted] = useState(false);
   const isEditing = Boolean(initialData);
@@ -123,24 +127,34 @@ export function QuestionBankFormModal({
   }, [examContexts]);
 
   const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    const list =
+      allowedSubjectIds && allowedSubjectIds.length > 0
+        ? subjectsList.filter((s) => allowedSubjectIds.includes(s.id))
+        : subjectsList;
+
     return [
       { value: "", label: "General Bank (All Subjects)" },
-      ...subjectsList.map((s) => ({
+      ...list.map((s) => ({
         value: s.id,
         label: s.name,
       })),
     ];
-  }, [subjectsList]);
+  }, [subjectsList, allowedSubjectIds]);
 
   const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    const list =
+      allowedGradeIds && allowedGradeIds.length > 0
+        ? gradesList.filter((g) => allowedGradeIds.includes(g.id))
+        : gradesList;
+
     return [
       { value: "", label: "General Level (All Grades)" },
-      ...gradesList.map((g) => ({
+      ...list.map((g) => ({
         value: g.id,
         label: `Grade ${g.level}`,
       })),
     ];
-  }, [gradesList]);
+  }, [gradesList, allowedGradeIds]);
 
   const createMutation = useCreateQuestionBank();
   const updateMutation = useUpdateQuestionBank(initialData?.id || "");
