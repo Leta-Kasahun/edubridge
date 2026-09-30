@@ -25,12 +25,14 @@ export interface TeacherListTableProps {
   readonly onAddTeacher: () => void;
   readonly onImportCsv: () => void;
   readonly onViewTeacher: (teacher: TeacherRecord) => void;
+  readonly onResetPassword?: (teacher: TeacherRecord) => void;
 }
 
 export function TeacherListTable({
   onAddTeacher,
   onImportCsv,
   onViewTeacher,
+  onResetPassword,
 }: TeacherListTableProps) {
   const [search, setSearch] = useState("");
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
@@ -230,6 +232,7 @@ export function TeacherListTable({
                           teacher={teacher}
                           onView={onViewTeacher}
                           onToggleStatus={handleToggleStatus}
+                          onResetPassword={onResetPassword}
                         />
                       </td>
                     </tr>
@@ -260,6 +263,7 @@ export function TeacherListTable({
                         teacher={teacher}
                         onView={onViewTeacher}
                         onToggleStatus={handleToggleStatus}
+                        onResetPassword={onResetPassword}
                       />
                     </div>
                   </div>
