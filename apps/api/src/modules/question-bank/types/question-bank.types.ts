@@ -52,11 +52,23 @@ export interface QuestionBankQueryDto {
   limit?: number;
 }
 
+export interface QuestionReportItem {
+  id: string;
+  studentName?: string;
+  reason: string;
+  comment?: string;
+  status: "PENDING" | "RESOLVED";
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedById?: string;
+}
+
 export interface CreateQuestionInput {
   type: QuestionTypeEnum;
   difficulty?: DifficultyLevelEnum;
   questionText: string;
   explanation?: string | null;
+  imageUrl?: string | null;
   points?: number;
   source?: QuestionSourceTypeEnum;
   options?: QuestionOptionDto[];
@@ -70,6 +82,7 @@ export interface UpdateQuestionInput {
   difficulty?: DifficultyLevelEnum;
   questionText?: string;
   explanation?: string | null;
+  imageUrl?: string | null;
   points?: number;
   options?: QuestionOptionDto[];
   configuration?: Record<string, unknown> | null;
