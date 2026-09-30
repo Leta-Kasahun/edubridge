@@ -78,3 +78,16 @@ export interface AuthResponseData {
   purpose?: OtpPurpose;
   message?: string;
 }
+
+export interface AdminResetPasswordPayload {
+  userId: string;
+  newPassword?: string;
+  autoGenerate?: boolean;
+}
+
+export interface AdminResetPasswordResult {
+  username: string;
+  tempPassword: string;
+  fullName?: string;
+  message?: string;
+}
