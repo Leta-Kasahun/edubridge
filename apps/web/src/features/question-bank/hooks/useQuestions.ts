@@ -114,6 +114,27 @@ export function usePublishQuestion(bankId: string) {
   });
 }
 
+export function useResolveQuestionReport(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    QuestionDetailItem,
+    Error,
+    { questionId: string; reportId: string }
+  >({
+    mutationFn: ({ questionId, reportId }) =>
+      questionBankService.resolveQuestionReport(questionId, reportId),
+    onSuccess: (_, { questionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, bankId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, "detail", questionId],
+      });
+    },
+  });
+}
+
 export function useDeleteQuestion(bankId: string) {
   const queryClient = useQueryClient();
 
@@ -129,3 +150,63 @@ export function useDeleteQuestion(bankId: string) {
     },
   });
 }
+
+export function useBulkPublishQuestions(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<number, Error, readonly string[]>({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map((id) => questionBankService.publishQuestion(id)));
+      return ids.length;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, bankId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUESTION_BANKS_QUERY_KEY,
+      });
+    },
+  });
+}
+
+export function useBulkArchiveQuestions(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<number, Error, readonly string[]>({
+    mutationFn: async (ids) => {
+      await Promise.all(
+        ids.map((id) => questionBankService.updateQuestion(id, { status: "ARCHIVED" }))
+      );
+      return ids.length;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, bankId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUESTION_BANKS_QUERY_KEY,
+      });
+    },
+  });
+}
+
+export function useBulkDeleteQuestions(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<number, Error, readonly string[]>({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map((id) => questionBankService.deleteQuestion(id)));
+      return ids.length;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, bankId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUESTION_BANKS_QUERY_KEY,
+      });
+    },
+  });
+}
+
