@@ -14,6 +14,7 @@ import { useQuestions } from "../../hooks/useQuestions";
 import { ROUTES } from "@/constants/routes";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { practiceSessionStorage } from "../../utils/practice-session.util";
 import { PracticeHeader } from "./practice/PracticeHeader";
 import { PracticeQuestionCanvas } from "./practice/PracticeQuestionCanvas";
 import { PracticeSummaryReport } from "./practice/PracticeSummaryReport";
@@ -50,6 +51,64 @@ export function StudentQuestionPracticeView({
   const questions = questionsData?.items ?? [];
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIndex] || null;
+
+  // Hydrate saved practice session from localStorage if available
+  useEffect(() => {
+    const saved = practiceSessionStorage.getSession(bankId);
+    if (saved && Object.keys(saved.selectedAnswers || {}).length > 0) {
+      if (saved.selectedAnswers) setSelectedAnswers(saved.selectedAnswers);
+      if (saved.flaggedQuestionIds) setFlaggedQuestionIds(new Set(saved.flaggedQuestionIds));
+      if (saved.revealedExplanations) setRevealedExplanations(saved.revealedExplanations);
+      if (saved.eliminatedOptions) {
+        const mapped: Record<string, Set<string>> = {};
+        for (const [k, v] of Object.entries(saved.eliminatedOptions)) {
+          mapped[k] = new Set(v);
+        }
+        setEliminatedOptions(mapped);
+      }
+      if (typeof saved.secondsElapsed === "number") setSecondsElapsed(saved.secondsElapsed);
+      if (typeof saved.currentIndex === "number") setCurrentIndex(saved.currentIndex);
+    }
+  }, [bankId]);
+
+  // Persist current practice state to localStorage
+  useEffect(() => {
+    if (isFinished || totalQuestions === 0) return;
+    if (Object.keys(selectedAnswers).length === 0 && secondsElapsed === 0) return;
+
+    const elimMap: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(eliminatedOptions)) {
+      elimMap[k] = Array.from(v);
+    }
+
+    practiceSessionStorage.saveSession({
+      bankId,
+      bankTitle: bank?.name || "Practice Session",
+      subjectCode: bank?.subject?.code,
+      subjectName: bank?.subject?.name,
+      currentIndex,
+      selectedAnswers,
+      flaggedQuestionIds: Array.from(flaggedQuestionIds),
+      eliminatedOptions: elimMap,
+      revealedExplanations,
+      secondsElapsed,
+      lastUpdated: Date.now(),
+      totalQuestions,
+    });
+  }, [
+    bankId,
+    bank?.name,
+    bank?.subject?.code,
+    bank?.subject?.name,
+    currentIndex,
+    selectedAnswers,
+    flaggedQuestionIds,
+    eliminatedOptions,
+    revealedExplanations,
+    secondsElapsed,
+    isFinished,
+    totalQuestions,
+  ]);
 
   useEffect(() => {
     if (!isTimerRunning || isFinished) return;
@@ -113,7 +172,13 @@ export function StudentQuestionPracticeView({
     }));
   }, [currentQuestion]);
 
+  const handleFinishPractice = useCallback(() => {
+    practiceSessionStorage.clearSession(bankId);
+    setIsFinished(true);
+  }, [bankId]);
+
   const handleRetake = () => {
+    practiceSessionStorage.clearSession(bankId);
     setSelectedAnswers({});
     setFlaggedQuestionIds(new Set());
     setEliminatedOptions({});
@@ -238,7 +303,7 @@ export function StudentQuestionPracticeView({
         isCurrentFlagged={isCurrentFlagged}
         onToggleFlag={handleToggleFlag}
         onOpenPalette={() => setIsPaletteOpen(true)}
-        onFinish={() => setIsFinished(true)}
+        onFinish={handleFinishPractice}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
@@ -299,7 +364,7 @@ export function StudentQuestionPracticeView({
           {currentIndex === totalQuestions - 1 ? (
             <button
               type="button"
-              onClick={() => setIsFinished(true)}
+              onClick={handleFinishPractice}
               className="h-9 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
             >
               <Check size={16} />
@@ -330,7 +395,7 @@ export function StudentQuestionPracticeView({
         onSelectIndex={(idx) => setCurrentIndex(idx)}
         selectedAnswers={selectedAnswers}
         flaggedQuestionIds={flaggedQuestionIds}
-        onFinish={() => setIsFinished(true)}
+        onFinish={handleFinishPractice}
       />
     </div>
   );
