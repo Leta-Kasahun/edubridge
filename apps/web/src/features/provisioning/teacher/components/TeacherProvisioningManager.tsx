@@ -7,6 +7,7 @@ import { TeacherProvisioningForm } from "./TeacherProvisioningForm";
 import { TeacherBulkProvisioningForm } from "./TeacherBulkProvisioningForm";
 import { TeacherProvisioningResultCard } from "./TeacherProvisioningResultCard";
 import { TeacherDetailModal } from "./TeacherDetailModal";
+import { AdminResetPasswordModal } from "@/features/auth";
 import {
   TeacherRecord,
   TeacherProvisionResult,
@@ -17,6 +18,8 @@ export function TeacherProvisioningManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedTeacherForView, setSelectedTeacherForView] =
+    useState<TeacherRecord | null>(null);
+  const [resettingTeacher, setResettingTeacher] =
     useState<TeacherRecord | null>(null);
 
   const [provisionResult, setProvisionResult] =
@@ -45,6 +48,7 @@ export function TeacherProvisioningManager() {
         onAddTeacher={() => setIsAddModalOpen(true)}
         onImportCsv={() => setIsImportModalOpen(true)}
         onViewTeacher={(teacher) => setSelectedTeacherForView(teacher)}
+        onResetPassword={(teacher) => setResettingTeacher(teacher)}
       />
 
       {isAddModalOpen && (
@@ -127,6 +131,17 @@ export function TeacherProvisioningManager() {
           teacher={selectedTeacherForView}
           isOpen={Boolean(selectedTeacherForView)}
           onClose={() => setSelectedTeacherForView(null)}
+        />
+      )}
+
+      {resettingTeacher && (
+        <AdminResetPasswordModal
+          userId={resettingTeacher.id}
+          targetName={`${resettingTeacher.firstName} ${resettingTeacher.lastName || ""}`.trim()}
+          targetIdentifier={resettingTeacher.employeeCode}
+          roleLabel="Teacher"
+          isOpen={Boolean(resettingTeacher)}
+          onClose={() => setResettingTeacher(null)}
         />
       )}
     </div>
