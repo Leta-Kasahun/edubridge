@@ -51,10 +51,16 @@ export const CreateQuestionSchema = z
         objectiveIds = [{ objectiveId: v.objectiveId }];
       }
 
+      let configuration = v.configuration as Record<string, unknown> | undefined;
+      if (typeof v.imageUrl === "string" && v.imageUrl.trim() !== "") {
+        configuration = { ...(configuration || {}), imageUrl: v.imageUrl.trim() };
+      }
+
       return {
         ...v,
         questionText,
         points,
+        configuration,
         topicIds: Array.isArray(topicIds) ? topicIds : undefined,
         objectiveIds: Array.isArray(objectiveIds) ? objectiveIds : undefined,
       };
@@ -68,6 +74,7 @@ export const CreateQuestionSchema = z
       .trim()
       .min(3, "Question text must be at least 3 characters"),
     explanation: z.string().trim().max(3000).optional().nullable(),
+    imageUrl: z.string().trim().max(2000).optional().nullable(),
     points: z.coerce.number().positive().default(1),
     source: z.enum(QUESTION_SOURCE_TYPES).optional().default("TEACHER"),
     options: z.array(QuestionOptionSchema).optional().default([]),
@@ -124,10 +131,19 @@ export const UpdateQuestionSchema = z.preprocess((val) => {
       objectiveIds = [{ objectiveId: v.objectiveId }];
     }
 
+    let configuration = v.configuration as Record<string, unknown> | undefined;
+    if (v.imageUrl !== undefined) {
+      configuration = {
+        ...(configuration || {}),
+        imageUrl: typeof v.imageUrl === "string" && v.imageUrl.trim() !== "" ? v.imageUrl.trim() : null,
+      };
+    }
+
     return {
       ...v,
       ...(questionText !== undefined && { questionText }),
       ...(points !== undefined && { points }),
+      ...(configuration !== undefined && { configuration }),
       ...(topicIds !== undefined && { topicIds }),
       ...(objectiveIds !== undefined && { objectiveIds }),
     };
@@ -142,6 +158,7 @@ export const UpdateQuestionSchema = z.preprocess((val) => {
     .min(3, "Question text must be at least 3 characters")
     .optional(),
   explanation: z.string().trim().max(3000).optional().nullable(),
+  imageUrl: z.string().trim().max(2000).optional().nullable(),
   points: z.coerce.number().positive().optional(),
   options: z.array(QuestionOptionSchema).optional(),
   configuration: z.record(z.string(), z.unknown()).optional().nullable(),
