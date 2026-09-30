@@ -17,6 +17,7 @@ export interface StudentSectionListProps {
   readonly onViewDetails: (student: StudentRecord) => void;
   readonly onActivate: (student: StudentRecord) => void;
   readonly onDeactivate: (student: StudentRecord) => void;
+  readonly onResetPassword?: (student: StudentRecord) => void;
 }
 
 function extractSectionSortKey(name: string): string {
@@ -37,6 +38,7 @@ export function StudentSectionList({
   onViewDetails,
   onActivate,
   onDeactivate,
+  onResetPassword,
 }: StudentSectionListProps) {
   const sortedSections = useMemo(() => {
     return [...sections].sort((a, b) =>
@@ -78,6 +80,7 @@ export function StudentSectionList({
           onViewDetails={onViewDetails}
           onActivate={onActivate}
           onDeactivate={onDeactivate}
+          onResetPassword={onResetPassword}
         />
       ))}
 

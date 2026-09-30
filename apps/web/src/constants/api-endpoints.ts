@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     LOGOUT: "/auth/logout",
     LOGOUT_ALL: "/auth/logout-all",
     CHANGE_PASSWORD: "/auth/change-password",
+    ADMIN_RESET_PASSWORD: "/auth/admin-reset-password",
   },
   ROLES: {
     BASE: "/roles",
