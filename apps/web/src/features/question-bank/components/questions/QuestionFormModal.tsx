@@ -107,6 +107,10 @@ export function QuestionFormModal({
           prompt: initialData.prompt,
           explanation: initialData.explanation || undefined,
           hint: initialData.hint || undefined,
+          imageUrl:
+            initialData.imageUrl ||
+            (initialData.configuration?.imageUrl as string | undefined) ||
+            undefined,
           options: initialOpts,
         },
       ]);
@@ -226,6 +230,7 @@ export function QuestionFormModal({
           prompt: single.prompt.trim(),
           explanation: single.explanation || undefined,
           hint: single.hint || undefined,
+          imageUrl: single.imageUrl || undefined,
           examContextId: examContextId || undefined,
           subjectId: subjectId || undefined,
           gradeId: gradeId || undefined,
@@ -243,6 +248,7 @@ export function QuestionFormModal({
           prompt: q.prompt.trim(),
           explanation: q.explanation || undefined,
           hint: q.hint || undefined,
+          imageUrl: q.imageUrl || undefined,
           examContextId: examContextId || undefined,
           subjectId: subjectId || undefined,
           gradeId: gradeId || undefined,
