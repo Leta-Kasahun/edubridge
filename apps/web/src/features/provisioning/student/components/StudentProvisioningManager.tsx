@@ -22,6 +22,7 @@ import { StudentCsvImportModal } from "./StudentCsvImportModal";
 import { AddGradeModal } from "./AddGradeModal";
 import { AddSectionModal } from "./AddSectionModal";
 import { StudentProvisioningResultModal } from "./StudentProvisioningResultModal";
+import { AdminResetPasswordModal } from "@/features/auth";
 import {
   StudentRecord,
   StudentAccountStatus,
@@ -47,6 +48,7 @@ export function StudentProvisioningManager() {
   const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
 
   const [detailStudent, setDetailStudent] = useState<StudentRecord | null>(null);
+  const [resettingStudent, setResettingStudent] = useState<StudentRecord | null>(null);
   const [provisionResult, setProvisionResult] = useState<
     StudentBulkProvisionResult | StudentProvisionResult | null
   >(null);
@@ -210,7 +212,7 @@ export function StudentProvisioningManager() {
       {isStructureLoading || isStudentsLoading ? (
         <div className="rounded-2xl bg-card border border-border p-12 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
           <LoadingSpinner size={24} />
-          <span>Loading student provisioning data...</span>
+          <span>Loading student onboarding data...</span>
         </div>
       ) : grades.length === 0 ? (
         <div className="rounded-2xl bg-card border border-border p-10 text-center space-y-3">
@@ -235,6 +237,7 @@ export function StudentProvisioningManager() {
           onViewDetails={setDetailStudent}
           onActivate={handleActivateStudent}
           onDeactivate={handleDeactivateStudent}
+          onResetPassword={setResettingStudent}
         />
       )}
 
@@ -286,6 +289,17 @@ export function StudentProvisioningManager() {
         isOpen={Boolean(provisionResult)}
         onClose={() => setProvisionResult(null)}
       />
+
+      {resettingStudent && (
+        <AdminResetPasswordModal
+          userId={resettingStudent.id}
+          targetName={`${resettingStudent.firstName} ${resettingStudent.middleName || ""} ${resettingStudent.lastName || ""}`.trim()}
+          targetIdentifier={resettingStudent.studentCode}
+          roleLabel="Student"
+          isOpen={Boolean(resettingStudent)}
+          onClose={() => setResettingStudent(null)}
+        />
+      )}
     </div>
   );
 }
