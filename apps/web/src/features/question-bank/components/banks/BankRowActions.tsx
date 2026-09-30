@@ -16,7 +16,7 @@ import {
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { QuestionBankItem, QuestionBankStatus } from "../../types/question-bank.types";
 
-interface BankRowActionsProps {
+export interface BankRowActionsProps {
   readonly bank: QuestionBankItem;
   readonly onEdit: (bank: QuestionBankItem) => void;
   readonly onUpload?: (bank: QuestionBankItem) => void;
@@ -36,39 +36,45 @@ export function BankRowActions({
   isBusy,
 }: BankRowActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
   const updatePosition = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 220;
-      const menuWidth = 160;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 184;
+    const menuHeight = 200;
 
-      const top = openUpwards ? rect.top - menuHeight - 4 : rect.bottom + 4;
-      const left = Math.max(8, rect.right - menuWidth);
-
-      setCoords({ top, left });
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
     }
-  };
 
-  const handleToggle = () => {
-    if (!isOpen) {
-      updatePosition();
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
     }
+
+    setCoords({ top, left });
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
 
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         menuRef.current &&
         !menuRef.current.contains(target) &&
@@ -79,19 +85,10 @@ export function BankRowActions({
       }
     };
 
-    const handleScrollOrResize = () => {
-      setIsOpen(false);
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
   }, [isOpen]);
 
   return (
@@ -99,12 +96,16 @@ export function BankRowActions({
       <button
         ref={buttonRef}
         type="button"
-        onClick={handleToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         disabled={isBusy}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
-        {isBusy ? <LoadingSpinner size={14} /> : <MoreVertical size={15} />}
+        {isBusy ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
       {isOpen &&
@@ -119,14 +120,14 @@ export function BankRowActions({
               left: `${coords.left}px`,
               zIndex: 9999,
             }}
-            className="w-40 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+            className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 animate-in fade-in-0 zoom-in-95 text-xs"
           >
             <Link
               href={`/dashboard/question-banks/${bank.id}`}
               onClick={() => setIsOpen(false)}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Eye size={13} className="text-muted-foreground" />
+              <Eye size={13} className="text-muted-foreground shrink-0" />
               <span>View Questions</span>
             </Link>
 
@@ -137,9 +138,9 @@ export function BankRowActions({
                   setIsOpen(false);
                   onAddQuestion(bank);
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
               >
-                <Plus size={13} className="text-muted-foreground" />
+                <Plus size={13} className="text-primary shrink-0" />
                 <span>Add Question</span>
               </button>
             )}
@@ -151,9 +152,9 @@ export function BankRowActions({
                   setIsOpen(false);
                   onUpload(bank);
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
               >
-                <Upload size={13} className="text-muted-foreground" />
+                <Upload size={13} className="text-muted-foreground shrink-0" />
                 <span>Upload Document</span>
               </button>
             )}
@@ -164,10 +165,10 @@ export function BankRowActions({
                 setIsOpen(false);
                 onEdit(bank);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Edit2 size={13} className="text-muted-foreground" />
-              <span>Edit Bank</span>
+              <Edit2 size={13} className="text-muted-foreground shrink-0" />
+              <span>Edit</span>
             </button>
 
             {bank.status !== "ACTIVE" && (
@@ -177,9 +178,9 @@ export function BankRowActions({
                   setIsOpen(false);
                   onStatusChange(bank.id, "ACTIVE");
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <CheckCircle size={13} className="text-muted-foreground" />
+                <CheckCircle size={13} className="shrink-0" />
                 <span>Activate</span>
               </button>
             )}
@@ -191,9 +192,9 @@ export function BankRowActions({
                   setIsOpen(false);
                   onStatusChange(bank.id, "ARCHIVED");
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <Archive size={13} className="text-muted-foreground" />
+                <Archive size={13} className="shrink-0" />
                 <span>Archive</span>
               </button>
             )}
@@ -206,9 +207,9 @@ export function BankRowActions({
                 setIsOpen(false);
                 onDelete(bank.id, bank.name);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Trash2 size={13} className="text-destructive" />
+              <Trash2 size={13} className="shrink-0" />
               <span>Delete</span>
             </button>
           </div>,
@@ -217,3 +218,6 @@ export function BankRowActions({
     </>
   );
 }
+
+
+
