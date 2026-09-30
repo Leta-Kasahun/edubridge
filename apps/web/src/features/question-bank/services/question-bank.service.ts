@@ -246,6 +246,16 @@ export const questionBankService = {
     return response.data.data;
   },
 
+  async resolveQuestionReport(
+    questionId: string,
+    reportId: string
+  ): Promise<QuestionDetailItem> {
+    const response = await apiClient.post<ApiResponse<QuestionDetailItem>>(
+      API_ENDPOINTS.QUESTION_BANKS.RESOLVE_REPORT(questionId, reportId)
+    );
+    return response.data.data;
+  },
+
   async deleteQuestion(
     id: string
   ): Promise<{ success: boolean; message: string }> {
