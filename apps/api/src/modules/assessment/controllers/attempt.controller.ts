@@ -9,6 +9,7 @@ import {
   SubmitAttemptInput,
   ManualGradeAttemptInput,
   AttemptQueryInput,
+  SubmitQuestionFeedbackInput,
 } from "../schemas/attempt.schema.js";
 
 export class AttemptController {
@@ -149,6 +150,24 @@ export class AttemptController {
     res.status(200).json({
       success: true,
       ...result,
+    });
+  });
+
+  submitQuestionFeedback = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.tenantId || !req.user?.userId) {
+      throw new UnauthorizedError();
+    }
+    const id = req.params.id as string;
+    const body = req.body as SubmitQuestionFeedbackInput;
+    const result = await this.attemptService.submitQuestionFeedback(
+      req.user.tenantId,
+      req.user.userId,
+      id,
+      body
+    );
+    res.status(200).json({
+      success: true,
+      data: result,
     });
   });
 }
