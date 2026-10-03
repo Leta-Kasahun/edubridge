@@ -44,6 +44,7 @@ export default function AssessmentAttemptPage({ params }: AssessmentAttemptPageP
     return (
       <RoleGuard allowedRoles={["STUDENT", "TEACHER", "SCHOOL_ADMIN"]}>
         <StudentAssessmentRunnerView
+          key={activeSession.attemptId}
           session={activeSession}
           onRetake={handleStartAttempt}
         />

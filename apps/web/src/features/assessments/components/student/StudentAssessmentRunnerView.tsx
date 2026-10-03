@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft,
   Flag,
   Send,
   Menu,
@@ -19,6 +21,7 @@ import { StudentAssessmentQuestionCard } from "./StudentAssessmentQuestionCard";
 import { AssessmentSubmitConfirmModal } from "./AssessmentSubmitConfirmModal";
 import { StudentAssessmentCompletedView } from "./StudentAssessmentCompletedView";
 import { formatTimeRemaining } from "@/shared/utils/assessment.util";
+import { ROUTES } from "@/constants/routes";
 
 interface StudentAssessmentRunnerViewProps {
   readonly session: StudentActiveAttemptSession;
@@ -173,13 +176,23 @@ export function StudentAssessmentRunnerView({
   const currentQuestion = session.questions[activeIdx];
   const isUrgentTime = secondsRemaining !== null && secondsRemaining <= 300;
 
+  const handleRetake = async () => {
+    setSubmittedResult(null);
+    setAnswers(new Map());
+    setFlaggedIds(new Set());
+    setActiveIdx(0);
+    if (onRetake) {
+      await onRetake();
+    }
+  };
+
   if (submittedResult) {
     return (
       <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8">
         <StudentAssessmentCompletedView
           attempt={submittedResult}
-          canRetake={true}
-          onRetake={onRetake}
+          canRetake={Boolean(onRetake)}
+          onRetake={handleRetake}
         />
       </div>
     );
@@ -187,38 +200,38 @@ export function StudentAssessmentRunnerView({
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border px-4 py-3 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border px-3 py-2.5 sm:px-6 sm:py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+            <Link
+              href={ROUTES.STUDENT.PRACTICE}
+              className="p-1.5 sm:p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold shrink-0"
+              title="Exit Exam"
+            >
+              <ArrowLeft size={15} />
+              <span className="hidden md:inline">Exit</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => setIsDrawerOpen((prev) => !prev)}
-              className="lg:hidden p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground cursor-pointer"
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               title="Toggle Question Grid"
             >
-              <Menu size={18} />
+              <Menu size={16} />
             </button>
-
-            <div className="min-w-0">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-primary block">
-                Exam Session
-              </span>
-              <h1 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                Attempt #{session.attemptNumber} · {session.totalQuestions} Questions
-              </h1>
-            </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {secondsRemaining !== null && (
               <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-mono font-bold text-xs sm:text-sm transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border font-mono font-bold text-xs sm:text-sm transition-colors ${
                   isUrgentTime
                     ? "bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400 animate-pulse"
                     : "bg-muted/50 border-border text-foreground"
                 }`}
               >
-                <Clock size={16} className={isUrgentTime ? "text-rose-500" : "text-primary"} />
+                <Clock size={15} className={isUrgentTime ? "text-rose-500" : "text-primary"} />
                 <span>{formatTimeRemaining(secondsRemaining)}</span>
               </div>
             )}
@@ -226,16 +239,16 @@ export function StudentAssessmentRunnerView({
             <button
               type="button"
               onClick={() => setIsConfirmModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
             >
-              <Send size={14} />
+              <Send size={13} />
               <span className="hidden sm:inline">Review & Submit</span>
               <span className="sm:hidden">Submit</span>
             </button>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-2.5">
+        <div className="max-w-7xl mx-auto pt-2">
           <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300 rounded-full"
@@ -245,10 +258,11 @@ export function StudentAssessmentRunnerView({
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <main className="lg:col-span-8 xl:col-span-9 space-y-6 flex flex-col justify-between">
+      <div className="max-w-7xl mx-auto w-full p-3.5 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+        <main className="lg:col-span-8 xl:col-span-9 space-y-5 sm:space-y-6 flex flex-col justify-between">
           {currentQuestion ? (
             <StudentAssessmentQuestionCard
+              assessmentId={session.assessmentId}
               question={currentQuestion}
               questionIndex={activeIdx}
               totalQuestions={session.questions.length}
@@ -265,18 +279,18 @@ export function StudentAssessmentRunnerView({
             </div>
           )}
 
-          <div className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-2xs">
             <button
               type="button"
               onClick={() => setActiveIdx((prev) => Math.max(0, prev - 1))}
               disabled={activeIdx === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft size={16} />
               <span>Previous</span>
             </button>
 
-            <span className="text-xs text-muted-foreground font-semibold">
+            <span className="hidden sm:inline text-xs text-muted-foreground font-semibold">
               {activeIdx + 1} / {totalCount}
             </span>
 
@@ -284,7 +298,7 @@ export function StudentAssessmentRunnerView({
               <button
                 type="button"
                 onClick={() => setActiveIdx((prev) => Math.min(totalCount - 1, prev + 1))}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
               >
                 <span>Next</span>
                 <ChevronRight size={16} />
@@ -293,7 +307,7 @@ export function StudentAssessmentRunnerView({
               <button
                 type="button"
                 onClick={() => setIsConfirmModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
               >
                 <span>Finish & Submit</span>
                 <Send size={14} />
@@ -311,7 +325,7 @@ export function StudentAssessmentRunnerView({
               </span>
             </div>
 
-            <div className="grid grid-cols-5 gap-2 max-h-[50vh] overflow-y-auto pr-1">
+            <div className="grid grid-cols-5 gap-2 max-h-[60vh] overflow-y-auto pr-1">
               {session.questions.map((q, idx) => {
                 const isCurrent = idx === activeIdx;
                 const isAnswered = answers.has(q.questionVersionId);
@@ -339,21 +353,6 @@ export function StudentAssessmentRunnerView({
                   </button>
                 );
               })}
-            </div>
-
-            <div className="pt-3 border-t border-border flex flex-col gap-2 text-[11px] text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-md bg-primary/20 border border-primary/40" />
-                <span>Answered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-md bg-muted/30 border border-border" />
-                <span>Unanswered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-md bg-amber-500" />
-                <span>Flagged for Review</span>
-              </div>
             </div>
           </div>
         </aside>
