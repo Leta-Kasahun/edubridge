@@ -7,6 +7,7 @@ import {
   TopicMasteryHistoryItem,
   SectionMasteryQueryParams,
   RecalculateMasteryPayload,
+  RecordPracticeEvidencePayload,
 } from "../types/mastery.types";
 
 export const masteryService = {
@@ -56,5 +57,14 @@ export const masteryService = {
 
   async recalculateMastery(payload: RecalculateMasteryPayload = {}): Promise<void> {
     await apiClient.post(API_ENDPOINTS.MASTERY.RECALCULATE, payload);
+  },
+
+  async recordPracticeEvidence(
+    payload: RecordPracticeEvidencePayload
+  ): Promise<{ success: boolean; recordedCount: number }> {
+    const response = await apiClient.post<
+      ApiResponse<{ success: boolean; recordedCount: number }>
+    >(API_ENDPOINTS.MASTERY.PRACTICE, payload);
+    return response.data.data;
   },
 };
