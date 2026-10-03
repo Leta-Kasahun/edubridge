@@ -3,6 +3,7 @@ import type { QuestionOption } from "../../generated/prisma/client.js";
 import { gradeMcq, GradingResult } from "./strategies/mcq.strategy.js";
 import { gradeTrueFalse } from "./strategies/true-false.strategy.js";
 import { gradeNumeric } from "./strategies/numeric.strategy.js";
+import { gradeShortAnswer } from "./strategies/short-answer.strategy.js";
 import { gradeManualPending } from "./strategies/manual.strategy.js";
 
 export interface QuestionVersionForGrading {
@@ -38,15 +39,17 @@ export class GradingEngine {
 
     switch (question.type) {
       case "MCQ":
-        return gradeMcq(studentResponse, options, maxPoints);
+        return gradeMcq(studentResponse, options, maxPoints, question.configuration);
 
       case "TRUE_FALSE":
-        return gradeTrueFalse(studentResponse, options, maxPoints);
+        return gradeTrueFalse(studentResponse, options, maxPoints, question.configuration);
 
       case "NUMERIC":
         return gradeNumeric(studentResponse, question.configuration, maxPoints);
 
       case "SHORT_ANSWER":
+        return gradeShortAnswer(studentResponse, options, question.configuration, maxPoints);
+
       case "LONG_ANSWER":
       case "MATCHING":
       case "ORDERING":
@@ -55,3 +58,4 @@ export class GradingEngine {
     }
   }
 }
+
