@@ -23,6 +23,8 @@ import type {
   AttemptStatus,
   AnswerStatus,
 } from "../../../generated/prisma/enums.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
+import { prisma } from "../../../lib/prisma.js";
 
 export class AttemptService {
   constructor(
@@ -284,6 +286,17 @@ export class AttemptService {
       } catch {
         // Evidence recording is non-blocking to submission completion
       }
+
+      domainEventBus.emitEvent("assessment.graded", {
+        tenantId,
+        assessmentId,
+        assessmentTitle: attempt.assessment.title,
+        attemptId,
+        studentUserId: userId,
+        teacherName: null,
+        percentage: Math.round(percentage),
+        isManual: false,
+      });
     }
 
     return finalized;
@@ -345,6 +358,24 @@ export class AttemptService {
         await this.masteryService.recordEvidenceForAttempt(attemptId, tenantId);
       } catch {
         // Evidence recording is non-blocking
+      }
+
+      const studentUserId = attempt.student?.user?.id ?? null;
+      if (studentUserId) {
+        const teacherProfile = await prisma.teacherProfile.findFirst({
+          where: { userId: teacherUserId, tenantId },
+          select: { firstName: true, lastName: true },
+        });
+        domainEventBus.emitEvent("assessment.graded", {
+          tenantId,
+          assessmentId,
+          assessmentTitle: attempt.assessment.title,
+          attemptId,
+          studentUserId,
+          teacherName: teacherProfile ? `${teacherProfile.firstName} ${teacherProfile.lastName}` : null,
+          percentage: Math.round(Number(graded.percentage ?? 0)),
+          isManual: true,
+        });
       }
     }
     return graded;
