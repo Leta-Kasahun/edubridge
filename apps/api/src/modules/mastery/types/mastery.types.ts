@@ -115,3 +115,17 @@ export interface RecordEvidenceInput {
   readonly awardedPoints: number;
   readonly maxPoints: number;
 }
+
+export interface PracticeEvidenceItem {
+  readonly questionId: string;
+  readonly questionVersionId?: string;
+  readonly isCorrect: boolean;
+  readonly awardedPoints: number;
+  readonly maxPoints: number;
+  readonly selectedOptionKey?: string;
+}
+
+export interface RecordPracticeEvidenceDto {
+  readonly bankId: string;
+  readonly results: PracticeEvidenceItem[];
+}

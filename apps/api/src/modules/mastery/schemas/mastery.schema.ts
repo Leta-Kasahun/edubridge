@@ -32,3 +32,19 @@ export const recalculateMasterySchema = z.object({
 });
 
 export type RecalculateMasteryDto = z.infer<typeof recalculateMasterySchema>;
+
+export const recordPracticeEvidenceSchema = z.object({
+  bankId: z.string().min(1, "Bank ID is required"),
+  results: z.array(
+    z.object({
+      questionId: z.string().min(1, "Question ID is required"),
+      questionVersionId: z.string().optional(),
+      isCorrect: z.boolean(),
+      awardedPoints: z.number().default(0),
+      maxPoints: z.number().default(1),
+      selectedOptionKey: z.string().optional(),
+    })
+  ),
+});
+
+export type RecordPracticeEvidenceSchemaDto = z.infer<typeof recordPracticeEvidenceSchema>;
