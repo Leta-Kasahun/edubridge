@@ -421,6 +421,7 @@ masteryHistory         MasteryHistory[]
   address               Address?               @relation(fields: [addressId], references: [id])
 
   notifications          Notification[]
+  studentBookmarks       StudentBookmark[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -916,6 +917,7 @@ model StudentProfile {
   topicPerformances StudentTopicPerformance[]
   topicMasteries    StudentTopicMastery[]
   masteryHistory    MasteryHistory[]
+  bookmarks         StudentBookmark[]
 
   @@unique([tenantId, studentCode])
   @@index([tenantId, status])
@@ -2102,3 +2104,36 @@ model NotificationPreference {
   @@unique([userId, category, channel])
   @@index([userId])
 }
+
+// ============================================================
+// STUDENT BOOKMARKS
+// ============================================================
+
+enum BookmarkTargetType {
+  QUESTION
+  TOPIC
+  LEARNING_CONTENT
+}
+
+model StudentBookmark {
+  id         String             @id @default(uuid()) @db.Uuid
+  tenantId   String             @db.Uuid
+  studentId  String             @db.Uuid
+
+  targetType BookmarkTargetType
+  targetId   String             @db.Uuid
+
+  note       String?            @db.VarChar(500)
+  metadata   Json?
+
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student    StudentProfile     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([studentId, targetType, targetId])
+  @@index([tenantId, studentId, targetType])
+  @@index([tenantId, targetType, targetId])
+}
+
