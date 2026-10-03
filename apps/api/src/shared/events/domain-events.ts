@@ -107,6 +107,18 @@ export interface StudentWithdrawnEvent {
   studentId: string;
 }
 
+export interface QuestionFeedbackSubmittedEvent {
+  tenantId: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  questionVersionId: string;
+  studentUserId: string;
+  studentName: string;
+  feedbackText: string;
+  category?: string;
+  teacherUserId?: string;
+}
+
 export interface DomainEventMap {
   "teacher.assigned": TeacherAssignedEvent;
   "teacher.reassigned": TeacherReassignedEvent;
@@ -122,6 +134,7 @@ export interface DomainEventMap {
   "teacher.status_changed": TeacherStatusChangedEvent;
   "student.promotion_committed": StudentPromotionCommittedEvent;
   "student.withdrawn": StudentWithdrawnEvent;
+  "assessment.question-feedback": QuestionFeedbackSubmittedEvent;
 }
 
 export class DomainEventBus extends EventEmitter {
