@@ -11,6 +11,7 @@ import {
   Settings,
   CheckCheck,
   Loader2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -56,15 +57,20 @@ function timeAgo(iso: string): string {
 function NotificationRow({
   item,
   onRead,
+  onClose,
 }: {
   item: NotificationItem;
   onRead: (id: string) => void;
+  onClose?: () => void;
 }) {
   const router = useRouter();
 
   const handleClick = () => {
     if (!item.isRead) onRead(item.id);
-    if (item.actionUrl) router.push(item.actionUrl);
+    if (item.actionUrl) {
+      router.push(item.actionUrl);
+      onClose?.();
+    }
   };
 
   return (
@@ -72,23 +78,23 @@ function NotificationRow({
       type="button"
       onClick={handleClick}
       className={cn(
-        "w-full text-left flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/60 cursor-pointer",
+        "w-full text-left flex items-start gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 sm:py-3 transition-colors hover:bg-muted/60 active:bg-muted/80 cursor-pointer",
         !item.isRead && "bg-primary/5"
       )}
     >
       <div
         className={cn(
-          "mt-0.5 shrink-0 p-1.5 rounded-lg",
+          "mt-0.5 shrink-0 p-1.5 rounded-lg flex items-center justify-center",
           item.isRead
             ? "bg-muted text-muted-foreground"
             : "bg-primary/10 text-primary"
         )}
       >
-        {CATEGORY_ICON[item.category]}
+        {CATEGORY_ICON[item.category] ?? <Bell size={14} />}
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           <p
             className={cn(
               "text-xs truncate",
@@ -99,12 +105,12 @@ function NotificationRow({
           >
             {item.title}
           </p>
-          <span className="shrink-0 text-[10px] text-muted-foreground">
+          <span className="shrink-0 text-[10px] text-muted-foreground whitespace-nowrap">
             {timeAgo(item.createdAt)}
           </span>
         </div>
 
-        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 break-words">
           {item.body}
         </p>
       </div>
@@ -136,41 +142,52 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
   return (
     <div
-      className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] origin-top-right rounded-xl bg-card border border-border shadow-lg ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden"
+      className="fixed inset-x-2.5 top-15 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-[380px] max-w-[calc(100vw-1.25rem)] sm:max-w-md origin-top-right rounded-xl bg-card border border-border shadow-xl ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden flex flex-col"
       role="dialog"
       aria-label="Notifications"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Bell size={15} className="text-primary" />
-          <span className="text-sm font-semibold text-foreground">
+      <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Bell size={15} className="text-primary shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
             Notifications
           </span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full shrink-0">
               {unreadCount}
             </span>
           )}
         </div>
 
-        {unreadCount > 0 && (
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={handleMarkAll}
+              disabled={isMarkingAll}
+              className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {isMarkingAll ? (
+                <Loader2 size={12} className="animate-spin shrink-0" />
+              ) : (
+                <CheckCheck size={12} className="shrink-0" />
+              )}
+              <span>Mark all read</span>
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={handleMarkAll}
-            disabled={isMarkingAll}
-            className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50 cursor-pointer"
+            onClick={onClose}
+            className="sm:hidden p-1 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Close notifications"
           >
-            {isMarkingAll ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <CheckCheck size={12} />
-            )}
-            Mark all read
+            <X size={15} />
           </button>
-        )}
+        </div>
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto divide-y divide-border/60">
+      <div className="max-h-[min(380px,calc(100dvh-11rem))] sm:max-h-[420px] overflow-y-auto divide-y divide-border/60 overscroll-contain">
         {isLoading && (
           <div className="flex items-center justify-center py-10">
             <Loader2 size={20} className="animate-spin text-muted-foreground" />
@@ -178,7 +195,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         )}
 
         {!isLoading && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-10 px-4 gap-2 text-muted-foreground text-center">
             <Bell size={24} className="opacity-30" />
             <p className="text-xs">No notifications yet</p>
           </div>
@@ -190,16 +207,17 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
               key={item.id}
               item={item}
               onRead={(id) => markRead([id])}
+              onClose={onClose}
             />
           ))}
       </div>
 
       {items.length > 0 && (
-        <div className="border-t border-border px-4 py-2.5 text-center">
+        <div className="border-t border-border px-4 py-2.5 bg-muted/20 text-center shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
+            className="text-[11px] sm:text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer py-0.5"
           >
             View all notifications
           </button>

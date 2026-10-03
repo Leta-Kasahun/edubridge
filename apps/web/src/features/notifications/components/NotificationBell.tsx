@@ -45,7 +45,16 @@ export function NotificationBell() {
         )}
       </button>
 
-      {open && <NotificationDropdown onClose={() => setOpen(false)} />}
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-2xs sm:hidden"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <NotificationDropdown onClose={() => setOpen(false)} />
+        </>
+      )}
     </div>
   );
 }
