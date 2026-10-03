@@ -4,19 +4,29 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
-  Clock,
   Award,
   ArrowRight,
+  ArrowLeft,
   RotateCcw,
   Check,
   X,
   Lightbulb,
   MessageSquare,
   Send,
+  AlertCircle,
 } from "lucide-react";
 import { AssessmentAttemptResult } from "../../types/assessment.types";
 import { ROUTES } from "@/constants/routes";
-import { formatPercentage, getAttemptStatusBadge } from "@/shared/utils/assessment.util";
+import { getAttemptStatusBadge } from "@/shared/utils/assessment.util";
+import { useSubmitQuestionFeedback } from "../../hooks/useAssessmentAttempt";
+import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+
+const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
+  { value: "CLARIFICATION", label: "Need Help" },
+  { value: "TYPO_REPORT", label: "Typo Error" },
+  { value: "CONTENT_ISSUE", label: "Incorrect Answer" },
+  { value: "GENERAL", label: "General" },
+];
 
 interface StudentAssessmentCompletedViewProps {
   readonly attempt: AssessmentAttemptResult;
@@ -40,8 +50,10 @@ export function StudentAssessmentCompletedView({
 
   const [expandedExplanations, setExpandedExplanations] = useState<Set<string>>(new Set());
   const [activeFeedbackId, setActiveFeedbackId] = useState<string | null>(null);
+  const [feedbackCategory, setFeedbackCategory] = useState<"CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL">("CLARIFICATION");
   const [feedbackTexts, setFeedbackTexts] = useState<Map<string, string>>(new Map());
   const [submittedFeedbackIds, setSubmittedFeedbackIds] = useState<Set<string>>(new Set());
+  const submitFeedbackMutation = useSubmitQuestionFeedback();
 
   const toggleExplanation = (questionId: string) => {
     setExpandedExplanations((prev) => {
@@ -55,15 +67,57 @@ export function StudentAssessmentCompletedView({
     });
   };
 
-  const handleFeedbackSubmit = (questionId: string) => {
-    const text = feedbackTexts.get(questionId);
-    if (!text || !text.trim()) return;
-    setSubmittedFeedbackIds((prev) => new Set(prev).add(questionId));
-    setActiveFeedbackId(null);
+  const handleFeedbackSubmit = async (questionVersionId: string) => {
+    const text = feedbackTexts.get(questionVersionId);
+    if (!text || !text.trim() || !attempt.assessmentId) return;
+
+    try {
+      await submitFeedbackMutation.mutateAsync({
+        assessmentId: attempt.assessmentId,
+        payload: {
+          questionVersionId,
+          message: text.trim(),
+          category: feedbackCategory,
+        },
+      });
+      setSubmittedFeedbackIds((prev) => new Set(prev).add(questionVersionId));
+      setActiveFeedbackId(null);
+    } catch {
+      // Handled by mutation error state
+    }
   };
+
+  const displayAnswers = (attempt.answers && attempt.answers.length > 0)
+    ? attempt.answers
+    : (attempt.assessment?.questions || []).map((q, idx) => ({
+        id: q.questionVersionId || String(idx),
+        questionVersionId: q.questionVersionId,
+        questionVersion: q.questionVersion,
+        answer: null,
+        isCorrect: null,
+        awardedPoints: 0,
+        maxPoints: Number(q.points) || 1,
+        feedback: null,
+      }));
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 py-4 animate-in fade-in-0 duration-300">
+      <div className="flex items-center justify-between gap-3 px-1">
+        <Link
+          href={ROUTES.STUDENT.PRACTICE}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={14} />
+          <span>Back to Practice</span>
+        </Link>
+
+        <Link
+          href={ROUTES.STUDENT.PROGRESS}
+          className="text-xs font-semibold text-primary hover:underline transition-colors"
+        >
+          View Progress Matrix
+        </Link>
+      </div>
       <div className="bg-card rounded-2xl border border-border shadow-xs p-6 sm:p-8 text-center space-y-4">
         <div
           className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
@@ -164,20 +218,23 @@ export function StudentAssessmentCompletedView({
         </div>
       </div>
 
-      {isGraded && attempt.answers && attempt.answers.length > 0 && (
+      {displayAnswers.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-foreground px-1">
             Question Breakdown
           </h2>
 
           <div className="space-y-3">
-            {attempt.answers.map((ans, idx) => {
-              const qv = ans.questionVersion;
+            {displayAnswers.map((ans, idx) => {
+              const matchedAssessmentQ = attempt.assessment?.questions?.find(
+                (q) => q.questionVersionId === ans.questionVersionId
+              );
+              const qv = ans.questionVersion || matchedAssessmentQ?.questionVersion;
               const qKey = ans.questionVersionId || String(idx);
               const isCorrect = ans.isCorrect === true;
               const isWrong = ans.isCorrect === false;
               const awardedPts = Number(ans.awardedPoints) || 0;
-              const maxPts = Number(ans.maxPoints) || 1;
+              const maxPts = Number(ans.maxPoints) || Number(matchedAssessmentQ?.points) || 1;
               const isExplanationOpen = expandedExplanations.has(qKey);
               const isFeedbackOpen = activeFeedbackId === qKey;
               const isFeedbackSubmitted = submittedFeedbackIds.has(qKey);
@@ -192,31 +249,23 @@ export function StudentAssessmentCompletedView({
                       <span className="text-xs font-bold text-foreground">
                         Question {idx + 1}
                       </span>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                          isCorrect
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                            : isWrong
-                            ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
-                            : "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
-                        }`}
-                      >
-                        {isCorrect ? (
-                          <>
-                            <Check size={12} strokeWidth={3} /> Correct
-                          </>
-                        ) : isWrong ? (
-                          <>
-                            <X size={12} strokeWidth={3} /> Incorrect
-                          </>
-                        ) : (
-                          "Pending Review"
-                        )}
-                      </span>
+                      {ans.isCorrect === true ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                          <Check size={12} strokeWidth={3} /> Correct
+                        </span>
+                      ) : ans.isCorrect === false ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400">
+                          <X size={12} strokeWidth={3} /> Incorrect
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400">
+                          Pending Evaluation
+                        </span>
+                      )}
                     </div>
 
                     <span className="text-xs font-bold font-mono text-muted-foreground">
-                      {awardedPts} / {maxPts} pts
+                      {ans.isCorrect !== null ? `${awardedPts} / ${maxPts} pts` : `— / ${maxPts} pts`}
                     </span>
                   </div>
 
@@ -270,7 +319,7 @@ export function StudentAssessmentCompletedView({
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                       <Lightbulb size={14} className="text-amber-500" />
-                      <span>{isExplanationOpen ? "Hide Solution & Explanation" : "View Solution & Explanation"}</span>
+                      <span>{isExplanationOpen ? "Hide Solution" : "View Solution"}</span>
                     </button>
 
                     <button
@@ -279,51 +328,80 @@ export function StudentAssessmentCompletedView({
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                       <MessageSquare size={13} />
-                      <span>{isFeedbackSubmitted ? "Comment Submitted" : "Submit Question Feedback"}</span>
+                      <span>{isFeedbackSubmitted ? "Feedback Sent" : "Feedback"}</span>
                     </button>
                   </div>
 
                   {isExplanationOpen && (
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    <div className="p-4 rounded-xl bg-muted/40 border border-border text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       <strong className="text-foreground block mb-1">
-                        Step-by-Step Solution & Rationale:
+                        Solution & Rationale:
                       </strong>
                       <p>
-                        {qv?.explanation || "No additional solution note provided for this question."}
+                        {qv?.explanation || "No solution note provided for this question."}
                       </p>
                     </div>
                   )}
 
                   {isFeedbackOpen && !isFeedbackSubmitted && (
                     <div className="p-4 rounded-xl bg-card border border-border text-xs space-y-3 animate-in fade-in-0 shadow-xs">
-                      <span className="font-semibold text-foreground block">
-                        Leave feedback or question note:
-                      </span>
-                      <textarea
-                        rows={2}
-                        placeholder="Write your feedback or comment about this question..."
-                        value={feedbackTexts.get(qKey) || ""}
-                        onChange={(e) =>
-                          setFeedbackTexts((prev) => new Map(prev).set(qKey, e.target.value))
-                        }
-                        className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground block">
+                          Question Feedback
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveFeedbackId(null)}
+                          className="text-muted-foreground hover:text-foreground p-1"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+
+                      {submitFeedbackMutation.isError && (
+                        <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-1.5">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>Failed to submit feedback. Please try again.</span>
+                        </div>
+                      )}
+
+                      <SelectDropdown
+                        label="Category"
+                        value={feedbackCategory}
+                        onChange={(val) => setFeedbackCategory(val as typeof feedbackCategory)}
+                        options={FEEDBACK_CATEGORY_OPTIONS}
+                        placeholder="Select category"
                       />
+
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground mb-1">Comment</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Write your message or question..."
+                          value={feedbackTexts.get(qKey) || ""}
+                          onChange={(e) =>
+                            setFeedbackTexts((prev) => new Map(prev).set(qKey, e.target.value))
+                          }
+                          className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-xs leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-primary/20 resize-none"
+                        />
+                      </div>
+
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => setActiveFeedbackId(null)}
-                          className="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                         >
                           Cancel
                         </button>
                         <button
                           type="button"
                           onClick={() => handleFeedbackSubmit(qKey)}
-                          disabled={!feedbackTexts.get(qKey)?.trim()}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-50"
+                          disabled={!feedbackTexts.get(qKey)?.trim() || submitFeedbackMutation.isPending}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
                         >
                           <Send size={12} />
-                          <span>Submit Comment</span>
+                          <span>{submitFeedbackMutation.isPending ? "Sending..." : "Submit Feedback"}</span>
                         </button>
                       </div>
                     </div>
