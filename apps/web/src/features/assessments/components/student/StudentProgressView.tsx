@@ -133,6 +133,8 @@ export function StudentProgressView(): React.JSX.Element {
     limit: 6,
   });
 
+  const [selectedSubjectCode, setSelectedSubjectCode] = React.useState<string>("");
+
   const isLoading = isProfileLoading || isMasteryLoading || isClassLoading;
 
   const studentGradeLevel =
@@ -140,15 +142,31 @@ export function StudentProgressView(): React.JSX.Element {
     classData?.section?.gradeLevel ??
     "10";
 
+  // Deduplicated list of mastery subjects
+  const uniqueSubjects = useMemo(() => {
+    if (!masteryData?.subjects) return [];
+    const seen = new Set<string>();
+    return masteryData.subjects.filter((s) => {
+      const key = s.subjectCode.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [masteryData?.subjects]);
+
   // Dynamic Subject Mastery from real database mastery + enrolled class metadata
   const subjectMasteryList: readonly SubjectMasteryItem[] = useMemo(() => {
-    const masterySubjects = masteryData?.subjects ?? [];
     const subjectTeachers = classData?.subjectTeachers ?? [];
+    const seenCodes = new Set<string>();
+    const mapped: SubjectMasteryItem[] = [];
 
-    const mapped: SubjectMasteryItem[] = masterySubjects.map((s) => {
+    for (const s of uniqueSubjects) {
+      const codeKey = s.subjectCode.toLowerCase();
+      if (seenCodes.has(codeKey)) continue;
+      seenCodes.add(codeKey);
+
       const teacherMatch = subjectTeachers.find(
-        (st) =>
-          st.subjectCode.toLowerCase() === s.subjectCode.toLowerCase()
+        (st) => st.subjectCode.toLowerCase() === codeKey
       );
       const progress = s.overallAccuracy !== null ? Math.round(s.overallAccuracy) : 0;
       const stage =
@@ -158,8 +176,8 @@ export function StudentProgressView(): React.JSX.Element {
           ? "Learning"
           : "Not Started";
 
-      return {
-        id: s.subjectId,
+      mapped.push({
+        id: s.subjectId || s.subjectCode,
         code: s.subjectCode,
         name: s.subjectName,
         teacher: teacherMatch?.teacherFullName ?? "Assigned Teacher",
@@ -167,17 +185,14 @@ export function StudentProgressView(): React.JSX.Element {
         stage,
         totalTopics: s.totalTopics,
         masteredCount: s.masteredCount,
-      };
-    });
+      });
+    }
 
     // Merge in any class subjects not yet present in student mastery data
     for (const st of subjectTeachers) {
-      if (
-        !mapped.some(
-          (m) =>
-            m.code.toLowerCase() === st.subjectCode.toLowerCase()
-        )
-      ) {
+      const codeKey = st.subjectCode.toLowerCase();
+      if (!seenCodes.has(codeKey)) {
+        seenCodes.add(codeKey);
         mapped.push({
           id: st.subjectCode,
           code: st.subjectCode,
@@ -192,11 +207,11 @@ export function StudentProgressView(): React.JSX.Element {
     }
 
     return mapped;
-  }, [masteryData, classData]);
+  }, [uniqueSubjects, classData]);
 
   // Adaptive Recommended Topics derived from lowest accuracy / developing topics
   const recommendedTopics: readonly RecommendedTopicItem[] = useMemo(() => {
-    if (!masteryData?.subjects || masteryData.subjects.length === 0) {
+    if (uniqueSubjects.length === 0) {
       return [];
     }
 
@@ -211,7 +226,7 @@ export function StudentProgressView(): React.JSX.Element {
       reason: string;
     }> = [];
 
-    for (const s of masteryData.subjects) {
+    for (const s of uniqueSubjects) {
       for (const u of s.units) {
         for (const t of u.topics) {
           const score = t.accuracy !== null ? Math.round(t.accuracy) : 0;
@@ -265,7 +280,7 @@ export function StudentProgressView(): React.JSX.Element {
         return a.currentScore - b.currentScore;
       })
       .slice(0, 6);
-  }, [masteryData]);
+  }, [uniqueSubjects]);
 
   // Active / Published In-Progress Assessment items
   const inProgressAssessments: readonly InProgressAssessmentItem[] = useMemo(() => {
@@ -289,11 +304,11 @@ export function StudentProgressView(): React.JSX.Element {
 
   // Recent Completed Activity derived from recorded topic practice and assessment evidence
   const recentActivities: readonly RecentActivityItem[] = useMemo(() => {
-    if (!masteryData?.subjects) return [];
+    if (uniqueSubjects.length === 0) return [];
 
     const activities: RecentActivityItem[] = [];
 
-    for (const s of masteryData.subjects) {
+    for (const s of uniqueSubjects) {
       for (const u of s.units) {
         for (const t of u.topics) {
           if (t.questionCount > 0) {
@@ -315,22 +330,20 @@ export function StudentProgressView(): React.JSX.Element {
     }
 
     return activities.sort((a, b) => b.rawDate - a.rawDate).slice(0, 4);
-  }, [masteryData]);
+  }, [uniqueSubjects]);
 
   // High-level aggregate metrics
   const totalMasteredTopics = useMemo(() => {
-    if (!masteryData?.subjects) return 0;
-    return masteryData.subjects.reduce((sum, s) => sum + s.masteredCount, 0);
-  }, [masteryData]);
+    return uniqueSubjects.reduce((sum, s) => sum + s.masteredCount, 0);
+  }, [uniqueSubjects]);
 
   const totalCurriculumTopics = useMemo(() => {
-    if (!masteryData?.subjects) return 0;
-    return masteryData.subjects.reduce((sum, s) => sum + s.totalTopics, 0);
-  }, [masteryData]);
+    return uniqueSubjects.reduce((sum, s) => sum + s.totalTopics, 0);
+  }, [uniqueSubjects]);
 
   const averageAccuracy = useMemo(() => {
-    if (!masteryData?.subjects || masteryData.subjects.length === 0) return null;
-    const subjectsWithScore = masteryData.subjects.filter(
+    if (uniqueSubjects.length === 0) return null;
+    const subjectsWithScore = uniqueSubjects.filter(
       (s) => s.overallAccuracy !== null
     );
     if (subjectsWithScore.length === 0) return null;
@@ -339,7 +352,7 @@ export function StudentProgressView(): React.JSX.Element {
       0
     );
     return Math.round(totalAcc / subjectsWithScore.length);
-  }, [masteryData]);
+  }, [uniqueSubjects]);
 
   if (isLoading) {
     return (
@@ -376,7 +389,7 @@ export function StudentProgressView(): React.JSX.Element {
         </div>
 
         {/* Quick summary badges */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs flex-wrap">
           {totalCurriculumTopics > 0 && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-foreground font-semibold">
               <Award size={14} className="text-primary" />
@@ -394,12 +407,12 @@ export function StudentProgressView(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Section 1: In Progress / Active Exams */}
+      {/* Section 1: In Progress */}
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
             <PlayCircle size={18} className="text-primary" />
-            <span>Active Exams & Assessments</span>
+            <span>In Progress</span>
           </h2>
           <Link
             href={ROUTES.ASSESSMENTS.BASE}
@@ -428,9 +441,9 @@ export function StudentProgressView(): React.JSX.Element {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {inProgressAssessments.map((item) => (
+            {inProgressAssessments.map((item, idx) => (
               <div
-                key={item.id}
+                key={`in-prog-${item.id}-${idx}`}
                 className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
               >
                 <div className="space-y-2.5 min-w-0">
@@ -502,12 +515,12 @@ export function StudentProgressView(): React.JSX.Element {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recommendedTopics.map((item) => {
+            {recommendedTopics.map((item, idx) => {
               const colors = getMasteryColors(item.stage);
 
               return (
                 <div
-                  key={item.id}
+                  key={`rec-topic-${item.id}-${idx}`}
                   className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
                 >
                   <div className="space-y-2.5 min-w-0">
@@ -586,12 +599,12 @@ export function StudentProgressView(): React.JSX.Element {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subjectMasteryList.map((item) => {
+            {subjectMasteryList.map((item, idx) => {
               const colors = getMasteryColors(item.stage);
 
               return (
                 <div
-                  key={item.code}
+                  key={`subj-mastery-${item.id || item.code}-${idx}`}
                   className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
                 >
                   <div className="space-y-2.5 min-w-0">
@@ -648,7 +661,179 @@ export function StudentProgressView(): React.JSX.Element {
         )}
       </div>
 
-      {/* Section 4: Recent Activity */}
+      {/* Section 4: Curriculum Units & Topic Mastery Breakdown */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <BookOpen size={18} className="text-primary" />
+              <span>Units & Topics Breakdown</span>
+            </h2>
+          </div>
+
+          {/* Subject Switcher Tabs */}
+          {uniqueSubjects.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/40 rounded-2xl border border-border">
+              {uniqueSubjects.map((s, idx) => {
+                const isSelected = (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode;
+                return (
+                  <button
+                    type="button"
+                    key={`subj-tab-${s.subjectId || s.subjectCode}-${idx}`}
+                    onClick={() => setSelectedSubjectCode(s.subjectCode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        isSelected
+                          ? "bg-primary-foreground/20 text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {s.subjectCode}
+                    </span>
+                    <span className="truncate max-w-[130px] sm:max-w-[180px]">{s.subjectName}</span>
+                    {s.overallAccuracy !== null && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+                          isSelected
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {Math.round(s.overallAccuracy)}%
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Selected Subject Unit & Topic Breakdown */}
+        {(() => {
+          const activeSubject =
+            uniqueSubjects.find(
+              (s) => (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode
+            ) || uniqueSubjects[0];
+
+          if (!activeSubject || activeSubject.units.length === 0) {
+            return (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">
+                No units or topic structures registered yet for this subject.
+              </div>
+            );
+          }
+
+          return (
+            <div className="space-y-4">
+              {activeSubject.units.map((unit, unitIdx) => {
+                const masteredInUnit = unit.topics.filter(
+                  (t) => t.level === "MASTERED" || (t.accuracy !== null && t.accuracy >= 80)
+                ).length;
+                const unitTopicCount = unit.topics.length;
+                const unitProgress = unitTopicCount > 0 ? Math.round((masteredInUnit / unitTopicCount) * 100) : 0;
+
+                return (
+                  <div
+                    key={`unit-${unit.unitId || unit.unitCode}-${unitIdx}`}
+                    className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs space-y-3 p-4 sm:p-5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                            {unit.unitCode}
+                          </span>
+                          <h3 className="text-sm font-bold text-foreground truncate">
+                            {unit.unitTitle}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-muted-foreground font-medium">
+                          {masteredInUnit}/{unitTopicCount} Topics Mastered
+                        </span>
+                        <div className="w-20 sm:w-28 h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.max(unitProgress, 4)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      {unit.topics.map((topic, topicIdx) => {
+                        const score = topic.accuracy !== null ? Math.round(topic.accuracy) : 0;
+                        const stage =
+                          topic.accuracy !== null
+                            ? getMasteryStage(score)
+                            : topic.level === "DEVELOPING"
+                            ? "Needs Practice"
+                            : "Not Started";
+                        const colors = getMasteryColors(stage);
+
+                        return (
+                          <div
+                            key={`topic-${topic.topicId || topic.topicCode}-${topicIdx}`}
+                            className="p-3.5 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col justify-between space-y-2.5"
+                          >
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-mono font-medium text-muted-foreground truncate">
+                                  {topic.topicCode}
+                                </span>
+                                <span
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}
+                                >
+                                  {stage}
+                                </span>
+                              </div>
+
+                              <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug break-words">
+                                {topic.topicTitle}
+                              </h4>
+                            </div>
+
+                            <div className="space-y-1.5 pt-1 border-t border-border/50">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-muted-foreground">
+                                  {topic.questionCount > 0
+                                    ? `${topic.correctCount}/${topic.questionCount} correct`
+                                    : "No attempts yet"}
+                                </span>
+                                <span className={`font-bold font-mono ${colors.text}`}>
+                                  {topic.accuracy !== null ? `${score}%` : "—"}
+                                </span>
+                              </div>
+
+                              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${colors.bar}`}
+                                  style={{ width: `${Math.max(score, 3)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Section 5: Recent Activity */}
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -675,9 +860,9 @@ export function StudentProgressView(): React.JSX.Element {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {recentActivities.map((item) => (
+            {recentActivities.map((item, idx) => (
               <div
-                key={item.id}
+                key={`activity-${item.id}-${idx}`}
                 className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
               >
                 <div className="space-y-1.5 min-w-0">
