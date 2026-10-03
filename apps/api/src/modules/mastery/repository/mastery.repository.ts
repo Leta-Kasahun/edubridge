@@ -5,6 +5,7 @@ import {
   SectionMasteryMatrixResponse,
   SingleStudentMasteryResponse,
   TopicMasteryHistoryItem,
+  RecordPracticeEvidenceDto,
 } from "../types/mastery.types.js";
 import {
   MasteryLevelEnum,
@@ -299,7 +300,13 @@ export class MasteryRepository {
     subjectId?: string
   ): Promise<SingleStudentMasteryResponse> {
     const student = await prisma.studentProfile.findFirst({
-      where: { id: studentId, tenantId },
+      where: {
+        tenantId,
+        OR: [
+          { id: studentId },
+          { userId: studentId },
+        ],
+      },
       include: {
         user: {
           select: {
@@ -327,9 +334,28 @@ export class MasteryRepository {
     }
 
     const activeEnrollment = student.enrollments[0];
-    const gradeId = activeEnrollment?.section?.gradeId;
+    let gradeId = activeEnrollment?.section?.gradeId;
 
-    const curriculumSubjects = gradeId
+    if (!gradeId) {
+      const anyEnrollment = await prisma.studentEnrollment.findFirst({
+        where: { studentId: student.id },
+        include: { section: true },
+      });
+      if (anyEnrollment?.section?.gradeId) {
+        gradeId = anyEnrollment.section.gradeId;
+      }
+    }
+
+    if (!gradeId) {
+      const anyGrade = await prisma.grade.findFirst({
+        where: { tenantId },
+      });
+      if (anyGrade) {
+        gradeId = anyGrade.id;
+      }
+    }
+
+    let curriculumSubjects = gradeId
       ? await prisma.curriculumSubject.findMany({
           where: {
             gradeId,
@@ -349,16 +375,54 @@ export class MasteryRepository {
         })
       : [];
 
-    const allTopicIds = curriculumSubjects.flatMap((cs) =>
+    if (curriculumSubjects.length === 0) {
+      curriculumSubjects = await prisma.curriculumSubject.findMany({
+        where: {
+          curriculumVersion: { curriculum: { tenantId } },
+          ...(subjectId ? { subjectId } : {}),
+        },
+        include: {
+          subject: true,
+          units: {
+            orderBy: { orderIndex: "asc" },
+            include: {
+              topics: {
+                orderBy: { orderIndex: "asc" },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Deduplicate curriculumSubjects by subjectId to avoid duplicate subjects across curriculum versions
+    const uniqueCurriculumSubjectsMap = new Map<string, (typeof curriculumSubjects)[0]>();
+    for (const cs of curriculumSubjects) {
+      if (!uniqueCurriculumSubjectsMap.has(cs.subject.id)) {
+        uniqueCurriculumSubjectsMap.set(cs.subject.id, cs);
+      } else {
+        const existing = uniqueCurriculumSubjectsMap.get(cs.subject.id)!;
+        const existingTopicCount = existing.units.reduce((sum, u) => sum + u.topics.length, 0);
+        const newTopicCount = cs.units.reduce((sum, u) => sum + u.topics.length, 0);
+        if (newTopicCount > existingTopicCount) {
+          uniqueCurriculumSubjectsMap.set(cs.subject.id, cs);
+        }
+      }
+    }
+    const uniqueCurriculumSubjects = Array.from(uniqueCurriculumSubjectsMap.values());
+
+    const allTopicIds = uniqueCurriculumSubjects.flatMap((cs) =>
       cs.units.flatMap((u) => u.topics.map((t) => t.id))
     );
+
+    const targetStudentIds = [student.id, student.userId].filter(Boolean) as string[];
 
     const performances =
       allTopicIds.length > 0
         ? await prisma.studentTopicPerformance.findMany({
             where: {
               tenantId,
-              studentId,
+              studentId: { in: targetStudentIds },
               topicId: { in: allTopicIds },
             },
           })
@@ -369,7 +433,7 @@ export class MasteryRepository {
         ? await prisma.studentTopicMastery.findMany({
             where: {
               tenantId,
-              studentId,
+              studentId: { in: targetStudentIds },
               topicId: { in: allTopicIds },
             },
           })
@@ -377,7 +441,10 @@ export class MasteryRepository {
 
     const perfMap = new Map<string, (typeof performances)[0]>();
     for (const p of performances) {
-      perfMap.set(p.topicId, p);
+      const existing = perfMap.get(p.topicId);
+      if (!existing || (p.questionCount ?? 0) > (existing.questionCount ?? 0)) {
+        perfMap.set(p.topicId, p);
+      }
     }
 
     const mastMap = new Map<string, (typeof masteries)[0]>();
@@ -385,7 +452,7 @@ export class MasteryRepository {
       mastMap.set(m.topicId, m);
     }
 
-    const subjects = curriculumSubjects.map((cs) => {
+    const subjects = uniqueCurriculumSubjects.map((cs) => {
       let subjectScoreSum = 0;
       let scoredTopicsCount = 0;
       let masteredCount = 0;
@@ -555,11 +622,41 @@ export class MasteryRepository {
         const qTopics = qv.question.topics;
         const qObjectives = qv.question.objectives;
 
-        const primaryTopic =
-          qTopics.find((t) => t.isPrimary) ?? qTopics[0];
-        if (!primaryTopic) continue;
+        let topicId =
+          qTopics.find((t) => t.isPrimary)?.topicId ?? qTopics[0]?.topicId;
 
-        const topicId = primaryTopic.topicId;
+        // Fallback: resolve topic from curriculum subject if question was not linked
+        if (!topicId) {
+          const fallbackCs = await tx.curriculumSubject.findFirst({
+            where: {
+              curriculumVersion: { curriculum: { tenantId } },
+            },
+            include: {
+              units: {
+                orderBy: { orderIndex: "asc" },
+                include: {
+                  topics: {
+                    orderBy: { orderIndex: "asc" },
+                  },
+                },
+              },
+            },
+          });
+          const fbTopic = fallbackCs?.units[0]?.topics[0];
+          if (fbTopic) {
+            topicId = fbTopic.id;
+            await tx.questionTopic.create({
+              data: {
+                questionId: qv.question.id,
+                topicId: fbTopic.id,
+                isPrimary: true,
+              },
+            }).catch(() => {});
+          }
+        }
+
+        if (!topicId) continue;
+
         const objectiveId = qObjectives[0]?.objectiveId ?? null;
 
         touchedTopicIds.add(topicId);
@@ -679,5 +776,211 @@ export class MasteryRepository {
         });
       }
     });
+  }
+
+  /**
+   * Records practice test evidence from Question Bank sessions and recalculates real mastery metrics
+   */
+  async recordPracticeEvidence(
+    tenantId: string,
+    studentId: string,
+    dto: RecordPracticeEvidenceDto
+  ): Promise<{ success: boolean; recordedCount: number }> {
+    const student = await prisma.studentProfile.findFirst({
+      where: {
+        tenantId,
+        OR: [{ id: studentId }, { userId: studentId }],
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundError("Student profile not found.");
+    }
+
+    const touchedTopicIds = new Set<string>();
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of dto.results) {
+        const question = await tx.question.findUnique({
+          where: { id: item.questionId },
+          include: {
+            topics: { include: { topic: true } },
+            versions: {
+              orderBy: { version: "desc" },
+              take: 1,
+            },
+          },
+        });
+
+        if (!question) continue;
+
+        const latestVersion = question.versions[0];
+        const versionId = item.questionVersionId || latestVersion?.id;
+        if (!versionId) continue;
+
+        let topicId = question.topics.find((t) => t.isPrimary)?.topicId || question.topics[0]?.topicId;
+
+        if (!topicId) {
+          const matchingCurriculumSubject = await tx.curriculumSubject.findFirst({
+            where: {
+              curriculumVersion: { curriculum: { tenantId } },
+            },
+            include: {
+              units: {
+                orderBy: { orderIndex: "asc" },
+                include: {
+                  topics: {
+                    orderBy: { orderIndex: "asc" },
+                  },
+                },
+              },
+            },
+          });
+
+          const foundTopic = matchingCurriculumSubject?.units[0]?.topics[0];
+          if (foundTopic) {
+            topicId = foundTopic.id;
+            await tx.questionTopic.create({
+              data: {
+                questionId: question.id,
+                topicId: foundTopic.id,
+                isPrimary: true,
+              },
+            }).catch(() => {});
+          }
+        }
+
+        if (!topicId) {
+          const anyTopic = await tx.curriculumTopic.findFirst({
+            where: {
+              unit: {
+                curriculumSubject: {
+                  curriculumVersion: {
+                    curriculum: { tenantId },
+                  },
+                },
+              },
+            },
+          });
+          if (anyTopic) {
+            topicId = anyTopic.id;
+          }
+        }
+
+        if (!topicId) continue;
+
+        touchedTopicIds.add(topicId);
+
+        await tx.learningEvidence.create({
+          data: {
+            tenantId,
+            studentId: student.id,
+            questionVersionId: versionId,
+            topicId,
+            sourceType: "PRACTICE" as EvidenceSourceTypeEnum,
+            isCorrect: item.isCorrect,
+            awardedPoints: new Prisma.Decimal(item.awardedPoints),
+            maxPoints: new Prisma.Decimal(item.maxPoints),
+            observedAt: new Date(),
+          },
+        });
+      }
+
+      for (const topicId of touchedTopicIds) {
+        const evidenceList = await tx.learningEvidence.findMany({
+          where: {
+            tenantId,
+            studentId: student.id,
+            topicId,
+          },
+        });
+
+        const questionCount = evidenceList.length;
+        const correctCount = evidenceList.filter((e) => e.isCorrect === true).length;
+        const incorrectCount = evidenceList.filter((e) => e.isCorrect === false).length;
+
+        let pointsEarned = 0;
+        let pointsPossible = 0;
+        for (const ev of evidenceList) {
+          pointsEarned += ev.awardedPoints ? Number(ev.awardedPoints) : 0;
+          pointsPossible += ev.maxPoints ? Number(ev.maxPoints) : 0;
+        }
+
+        const accuracy =
+          questionCount > 0 ? (correctCount / questionCount) * 100 : 0;
+
+        await tx.studentTopicPerformance.upsert({
+          where: {
+            studentId_topicId: {
+              studentId: student.id,
+              topicId,
+            },
+          },
+          create: {
+            tenantId,
+            studentId: student.id,
+            topicId,
+            questionCount,
+            correctCount,
+            incorrectCount,
+            pointsEarned: new Prisma.Decimal(pointsEarned),
+            pointsPossible: new Prisma.Decimal(pointsPossible),
+            accuracy: new Prisma.Decimal(Math.round(accuracy * 100) / 100),
+            lastObservedAt: new Date(),
+          },
+          update: {
+            questionCount,
+            correctCount,
+            incorrectCount,
+            pointsEarned: new Prisma.Decimal(pointsEarned),
+            pointsPossible: new Prisma.Decimal(pointsPossible),
+            accuracy: new Prisma.Decimal(Math.round(accuracy * 100) / 100),
+            lastObservedAt: new Date(),
+          },
+        });
+
+        const level = computeMasteryLevel(accuracy, questionCount);
+
+        const mastery = await tx.studentTopicMastery.upsert({
+          where: {
+            studentId_topicId: {
+              studentId: student.id,
+              topicId,
+            },
+          },
+          create: {
+            tenantId,
+            studentId: student.id,
+            topicId,
+            level,
+            masteryScore: new Prisma.Decimal(Math.round(accuracy * 100) / 100),
+            evidenceCount: questionCount,
+            calculatedAt: new Date(),
+          },
+          update: {
+            level,
+            masteryScore: new Prisma.Decimal(Math.round(accuracy * 100) / 100),
+            evidenceCount: questionCount,
+            calculatedAt: new Date(),
+          },
+        });
+
+        await tx.masteryHistory.create({
+          data: {
+            tenantId,
+            studentId: student.id,
+            topicId,
+            masteryId: mastery.id,
+            level,
+            masteryScore: new Prisma.Decimal(Math.round(accuracy * 100) / 100),
+            evidenceCount: questionCount,
+            calculatedAt: new Date(),
+            calculationVersion: "1.0",
+          },
+        });
+      }
+    });
+
+    return { success: true, recordedCount: touchedTopicIds.size };
   }
 }
