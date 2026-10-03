@@ -135,3 +135,20 @@ export function useManualGradeAttempt() {
     },
   });
 }
+
+export function useSubmitQuestionFeedback() {
+  return useMutation({
+    mutationFn: ({
+      assessmentId,
+      payload,
+    }: {
+      assessmentId: string;
+      payload: {
+        questionVersionId: string;
+        message: string;
+        category?: "CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL";
+      };
+    }) => attemptService.submitQuestionFeedback(assessmentId, payload),
+  });
+}
+
