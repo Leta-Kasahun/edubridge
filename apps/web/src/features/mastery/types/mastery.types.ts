@@ -110,3 +110,17 @@ export interface RecalculateMasteryPayload {
   studentId?: string;
   topicId?: string;
 }
+
+export interface PracticeEvidenceItem {
+  questionId: string;
+  questionVersionId?: string;
+  isCorrect: boolean;
+  awardedPoints: number;
+  maxPoints: number;
+  selectedOptionKey?: string;
+}
+
+export interface RecordPracticeEvidencePayload {
+  bankId: string;
+  results: PracticeEvidenceItem[];
+}

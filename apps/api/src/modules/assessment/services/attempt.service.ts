@@ -11,6 +11,7 @@ import {
   StudentActiveAttemptSession,
   StudentQuestionView,
 } from "../types/assessment.types.js";
+import { SubmitQuestionFeedbackInput } from "../schemas/attempt.schema.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
 import { ForbiddenError } from "../../../shared/exceptions/forbidden-error.js";
@@ -23,6 +24,8 @@ import type {
   AttemptStatus,
   AnswerStatus,
 } from "../../../generated/prisma/enums.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
+import { prisma } from "../../../lib/prisma.js";
 
 export class AttemptService {
   constructor(
@@ -225,11 +228,19 @@ export class AttemptService {
       const qPoints = Number(q.points) || 0;
       totalMax += qPoints;
 
+      const dtoAnswer = dto.answers?.find(
+        (a) => a.questionVersionId === q.questionVersionId
+      );
       const savedAnswer = existingAnswers.find(
         (ans: { questionVersionId: string; answer?: unknown }) =>
           ans.questionVersionId === q.questionVersionId
       );
-      const studentResponse = savedAnswer ? savedAnswer.answer : null;
+      const studentResponse =
+        dtoAnswer && dtoAnswer.response !== undefined && dtoAnswer.response !== null && dtoAnswer.response !== ""
+          ? dtoAnswer.response
+          : savedAnswer
+          ? savedAnswer.answer
+          : null;
 
       const qvForGrading: QuestionVersionForGrading = {
         id: qv.id,
@@ -284,6 +295,17 @@ export class AttemptService {
       } catch {
         // Evidence recording is non-blocking to submission completion
       }
+
+      domainEventBus.emitEvent("assessment.graded", {
+        tenantId,
+        assessmentId,
+        assessmentTitle: attempt.assessment.title,
+        attemptId,
+        studentUserId: userId,
+        teacherName: null,
+        percentage: Math.round(percentage),
+        isManual: false,
+      });
     }
 
     return finalized;
@@ -345,6 +367,24 @@ export class AttemptService {
         await this.masteryService.recordEvidenceForAttempt(attemptId, tenantId);
       } catch {
         // Evidence recording is non-blocking
+      }
+
+      const studentUserId = attempt.student?.user?.id ?? null;
+      if (studentUserId) {
+        const teacherProfile = await prisma.teacherProfile.findFirst({
+          where: { userId: teacherUserId, tenantId },
+          select: { firstName: true, lastName: true },
+        });
+        domainEventBus.emitEvent("assessment.graded", {
+          tenantId,
+          assessmentId,
+          assessmentTitle: attempt.assessment.title,
+          attemptId,
+          studentUserId,
+          teacherName: teacherProfile ? `${teacherProfile.firstName} ${teacherProfile.lastName}` : null,
+          percentage: Math.round(Number(graded.percentage ?? 0)),
+          isManual: true,
+        });
       }
     }
     return graded;
@@ -423,8 +463,20 @@ export class AttemptService {
         orderIndex: opt.orderIndex,
       }));
 
-      if (assessment.randomizeOptions) {
-        options = options.sort(() => Math.random() - 0.5);
+      if (options.length === 0 && qv.configuration && typeof qv.configuration === "object") {
+        const conf = qv.configuration as Record<string, unknown>;
+        if (Array.isArray(conf.options)) {
+          options = (conf.options as Array<Record<string, unknown>>).map((opt, oIdx) => ({
+            id: String(opt.id || opt.optionKey || oIdx),
+            optionKey: String(opt.optionKey || opt.key || String.fromCharCode(65 + oIdx)),
+            optionText: String(opt.optionText || opt.text || opt.label || ""),
+            orderIndex: Number(opt.orderIndex ?? oIdx),
+          }));
+        }
+      }
+
+      if (assessment.randomizeOptions && options.length > 0) {
+        options = [...options].sort(() => Math.random() - 0.5);
       }
 
       const savedAnswer = attempt.answers?.find(
@@ -458,5 +510,36 @@ export class AttemptService {
       totalPoints,
       questions: questionsView,
     };
+  }
+
+  async submitQuestionFeedback(
+    tenantId: string,
+    userId: string,
+    assessmentId: string,
+    dto: SubmitQuestionFeedbackInput
+  ) {
+    const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
+    if (!assessment) {
+      throw new NotFoundError("Assessment not found");
+    }
+
+    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
+    const studentName = student
+      ? `${student.firstName} ${student.lastName ?? ""}`.trim()
+      : "Student";
+
+    domainEventBus.emitEvent("assessment.question-feedback", {
+      tenantId,
+      assessmentId,
+      assessmentTitle: assessment.title,
+      questionVersionId: dto.questionVersionId,
+      studentUserId: userId,
+      studentName,
+      feedbackText: dto.message,
+      category: dto.category,
+      teacherUserId: assessment.createdById,
+    });
+
+    return { success: true, message: "Feedback submitted successfully" };
   }
 }

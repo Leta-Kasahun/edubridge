@@ -22,6 +22,8 @@ import {
   ProvisionedStudentRecord,
   AcademicStructureResponse,
 } from "../types/student-provisioning.types.js";
+import { domainEventBus } from "../../../../shared/events/domain-events.js";
+import { prisma } from "../../../../lib/prisma.js";
 
 export class StudentProvisioningService {
   constructor(
@@ -99,6 +101,19 @@ export class StudentProvisioningService {
     if (!updated) {
       throw new NotFoundError("Student profile not found");
     }
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: { id: profileId, tenantId },
+      select: { userId: true },
+    });
+    if (profile?.userId) {
+      domainEventBus.emitEvent("student.status_changed", {
+        tenantId,
+        studentUserId: profile.userId,
+        newStatus: "ACTIVE",
+      });
+    }
+
     return updated;
   }
 
@@ -117,6 +132,19 @@ export class StudentProvisioningService {
     if (!updated) {
       throw new NotFoundError("Student profile not found");
     }
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: { id: profileId, tenantId },
+      select: { userId: true },
+    });
+    if (profile?.userId) {
+      domainEventBus.emitEvent("student.status_changed", {
+        tenantId,
+        studentUserId: profile.userId,
+        newStatus: status === "SUSPENDED" ? "SUSPENDED" : "INACTIVE",
+      });
+    }
+
     return updated;
   }
 

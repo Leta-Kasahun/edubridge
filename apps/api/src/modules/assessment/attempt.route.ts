@@ -10,6 +10,7 @@ import {
   SubmitAttemptSchema,
   ManualGradeAttemptSchema,
   AttemptQuerySchema,
+  SubmitQuestionFeedbackSchema,
 } from "./schemas/attempt.schema.js";
 
 const router: Router = Router();
@@ -63,6 +64,13 @@ router.get(
   requireRoles("TEACHER", "SCHOOL_ADMIN", "STUDENT"),
   validate({ query: AttemptQuerySchema }),
   attemptController.listAttempts
+);
+
+router.post(
+  "/:id/question-feedback",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
+  validate(SubmitQuestionFeedbackSchema),
+  attemptController.submitQuestionFeedback
 );
 
 export default router;

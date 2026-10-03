@@ -8,6 +8,8 @@ import {
   HelpCircle,
   FileQuestion,
   BookOpen,
+  PlayCircle,
+  X,
 } from "lucide-react";
 import { useQuestionBanks } from "../../hooks/useQuestionBanks";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
@@ -17,6 +19,10 @@ import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile
 import { QuestionBankItem, ExamScope } from "../../types/question-bank.types";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import {
+  practiceSessionStorage,
+  StoredPracticeSession,
+} from "../../utils/practice-session.util";
 
 const SCOPE_DROPDOWN_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "ALL", label: "All Scopes" },
@@ -45,11 +51,17 @@ export function StudentQuestionBanksView(): React.JSX.Element {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("ALL");
   const [selectedScope, setSelectedScope] = useState<string>("ALL");
   const [selectedYearId, setSelectedYearId] = useState<string>("ALL");
+  const [activeSession, setActiveSession] = useState<StoredPracticeSession | null>(null);
 
   const { data: profile } = useMyStudentProfile();
   const { data: subjectsList = [] } = useSubjects();
   const { data: gradesList = [] } = useGrades();
   const { data: academicYearsResponse } = useAcademicYears();
+
+  // Load any in-progress practice session from local storage
+  React.useEffect(() => {
+    setActiveSession(practiceSessionStorage.getLatestActiveSession());
+  }, []);
 
   const academicYears = useMemo(() => {
     return academicYearsResponse?.data ?? [];
@@ -239,6 +251,77 @@ export function StudentQuestionBanksView(): React.JSX.Element {
           </p>
         </div>
       </div>
+
+      {/* Resume Practice Session Banner */}
+      {activeSession && (
+        <div className="rounded-2xl border border-border border-l-4 border-l-primary bg-card p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <PlayCircle className="h-5 w-5" />
+            </div>
+
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                  In Progress Practice
+                </span>
+                {activeSession.subjectCode && (
+                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                    {activeSession.subjectCode}
+                  </span>
+                )}
+                <h2 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                  {activeSession.bankTitle}
+                </h2>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-24 sm:w-28 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.round(
+                          (Object.keys(activeSession.selectedAnswers || {}).length /
+                            (activeSession.totalQuestions || 1)) *
+                            100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    {Object.keys(activeSession.selectedAnswers || {}).length} of{" "}
+                    {activeSession.totalQuestions} answered
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                practiceSessionStorage.clearSession(activeSession.bankId);
+                setActiveSession(null);
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground text-xs font-semibold hover:bg-muted/60 transition-all cursor-pointer"
+              title="Discard saved progress"
+            >
+              <X size={13} />
+              <span>Discard</span>
+            </button>
+
+            <Link
+              href={`/practice/${activeSession.bankId}`}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            >
+              <span>Resume</span>
+              <ChevronRight size={13} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
         <div className="sm:col-span-2 lg:col-span-6 relative">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { MoreVertical, Edit2, CheckCircle2, Eye, Archive, RotateCcw } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components";
 import {
@@ -38,107 +39,166 @@ function YearRowActions({
   readonly isProcessing: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 192;
+    const menuHeight = 190;
+
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
+    }
+
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
+    }
+
+    setCoords({ top, left });
+  };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [isOpen]);
 
   const isActive = year.status === "ACTIVE";
   const isArchived = year.status === "ARCHIVED";
 
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         disabled={isProcessing}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
         {isProcessing ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-9 w-40 bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onViewDetails(year);
+      {isOpen &&
+        coords &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 9999,
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+            className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 text-xs"
           >
-            <Eye size={13} className="text-primary" />
-            <span>View Details</span>
-          </button>
-
-          {!isActive && !isArchived && (
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                onSetActive(year);
+                onViewDetails(year);
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <CheckCircle2 size={13} className="text-primary" />
-              <span>Set as Active</span>
+              <Eye size={13} className="text-muted-foreground shrink-0" />
+              <span>View Details</span>
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onEdit(year);
-            }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
-          >
-            <Edit2 size={13} className="text-muted-foreground" />
-            <span>Edit</span>
-          </button>
-
-          {isArchived ? (
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                onRestore(year);
+                onEdit(year);
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <RotateCcw size={13} className="text-primary" />
-              <span className="text-primary font-medium">Restore</span>
+              <Edit2 size={13} className="text-muted-foreground shrink-0" />
+              <span>Edit</span>
             </button>
-          ) : (
-            !isActive && (
+
+            {!isActive && !isArchived && (
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
-                  onArchive(year);
+                  onSetActive(year);
                 }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <Archive size={13} className="text-destructive" />
-                <span className="text-destructive">Archive</span>
+                <CheckCircle2 size={13} className="shrink-0" />
+                <span>Set as Active</span>
               </button>
-            )
-          )}
-        </div>
-      )}
-    </div>
+            )}
+
+            {(isArchived || !isActive) && <div className="my-1 border-t border-border" />}
+
+            {isArchived ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onRestore(year);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <RotateCcw size={13} className="shrink-0" />
+                <span>Restore</span>
+              </button>
+            ) : (
+              !isActive && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onArchive(year);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+                >
+                  <Archive size={13} className="shrink-0" />
+                  <span>Archive</span>
+                </button>
+              )
+            )}
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 

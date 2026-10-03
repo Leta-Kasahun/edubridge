@@ -274,7 +274,8 @@ export function PracticeSummaryReport({
                     {question.prompt}
                   </p>
 
-                  {question.options && question.options.length > 0 && (
+                  {/* MCQ Review */}
+                  {question.type === "MCQ" && question.options && question.options.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
                       {question.options.map((opt, idx) => {
                         const optKey = opt.id || opt.text || String(idx);
@@ -310,6 +311,62 @@ export function PracticeSummaryReport({
                     </div>
                   )}
 
+                  {/* TRUE / FALSE Review */}
+                  {question.type === "TRUE_FALSE" && (
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      {["True", "False"].map((tfValue) => {
+                        const isUserSelected = selectedKey?.toLowerCase() === tfValue.toLowerCase();
+                        const optObj = question.options?.find((o) => o.text.toLowerCase() === tfValue.toLowerCase());
+                        const isThisCorrect = optObj?.isCorrect ?? (tfValue === "True");
+
+                        let style = "bg-muted/30 border-border text-muted-foreground";
+                        if (isThisCorrect) {
+                          style = "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-semibold";
+                        } else if (isUserSelected) {
+                          style = "bg-destructive/10 border-destructive text-destructive font-semibold";
+                        }
+
+                        return (
+                          <div
+                            key={tfValue}
+                            className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 ${style}`}
+                          >
+                            <span className="font-bold">{tfValue}</span>
+                            {isThisCorrect && (
+                              <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            )}
+                            {!isThisCorrect && isUserSelected && (
+                              <XCircle size={14} className="text-destructive shrink-0" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Short Answer & Numeric Review */}
+                  {(question.type === "SHORT_ANSWER" || question.type === "LONG_ANSWER" || question.type === "NUMERIC") && (
+                    <div className="space-y-2 pt-1 text-xs">
+                      <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold block">
+                          Your Submitted Response:
+                        </span>
+                        <p className="font-medium text-foreground font-mono">
+                          {selectedKey || <em className="text-muted-foreground font-sans">No response provided</em>}
+                        </p>
+                      </div>
+                      {correctOpt && (
+                        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1 text-emerald-700 dark:text-emerald-400">
+                          <span className="text-[10px] uppercase font-bold block">
+                            Expected Standard Solution:
+                          </span>
+                          <p className="font-semibold font-mono">{correctOpt.text}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Detailed Explanation Note */}
                   {question.explanation && (
                     <div className="pt-2 border-t border-border">
                       <button
@@ -317,7 +374,7 @@ export function PracticeSummaryReport({
                         onClick={() => toggleExplanation(question.id)}
                         className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       >
-                        <span>Explanation</span>
+                        <span>Explanation & Concept Notes</span>
                         <ChevronDown
                           size={12}
                           className={`transition-transform ${isExpOpen ? "rotate-180" : ""}`}
@@ -325,7 +382,7 @@ export function PracticeSummaryReport({
                       </button>
 
                       {isExpOpen && (
-                        <p className="mt-1.5 p-3 rounded-xl bg-muted/60 border border-border text-xs text-muted-foreground leading-relaxed animate-in fade-in-0">
+                        <p className="mt-1.5 p-3 rounded-xl bg-muted/60 border border-border text-xs text-muted-foreground leading-relaxed">
                           {question.explanation}
                         </p>
                       )}

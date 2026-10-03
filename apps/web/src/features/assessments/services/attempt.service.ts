@@ -132,4 +132,19 @@ export const attemptService = {
       totalPages: 0,
     };
   },
+
+  async submitQuestionFeedback(
+    assessmentId: string,
+    payload: {
+      questionVersionId: string;
+      message: string;
+      category?: "CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL";
+    }
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>(
+      API_ENDPOINTS.ASSESSMENTS.QUESTION_FEEDBACK(assessmentId),
+      payload
+    );
+    return response.data.data;
+  },
 };

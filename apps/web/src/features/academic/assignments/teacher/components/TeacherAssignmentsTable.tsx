@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   MoreVertical,
   ArrowRightLeft,
@@ -39,20 +40,59 @@ function TeacherRowActions({
   readonly onViewLoad: (assignment: TeacherAssignmentListItem) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 184;
+    const menuHeight = 140;
+
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
+    }
+
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
+    }
+
+    setCoords({ top, left });
+  };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [isOpen]);
 
   const handleViewLoad = (e: React.MouseEvent) => {
@@ -77,56 +117,69 @@ function TeacherRowActions({
   };
 
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setIsOpen((prev) => !prev);
         }}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-flex items-center justify-center"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer inline-flex items-center justify-center"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
         <MoreVertical size={16} />
       </button>
 
-      {isOpen && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-9 w-44 rounded-xl bg-card border border-border shadow-xl p-1 z-50 flex flex-col text-xs animate-in fade-in-0 zoom-in-95"
-        >
-          <button
-            type="button"
-            onClick={handleViewLoad}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+      {isOpen &&
+        coords &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={menuRef}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 9999,
+            }}
+            className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 text-xs"
           >
-            <Layers size={14} className="text-muted-foreground" />
-            <span>View Teacher Load</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleViewLoad}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+            >
+              <Layers size={13} className="text-muted-foreground shrink-0" />
+              <span>View Teacher Load</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleReassign}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-          >
-            <ArrowRightLeft size={14} className="text-muted-foreground" />
-            <span>Reassign Teacher</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleReassign}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+            >
+              <ArrowRightLeft size={13} className="text-muted-foreground shrink-0" />
+              <span>Reassign Teacher</span>
+            </button>
 
-          <div className="my-1 border-t border-border" />
+            <div className="my-1 border-t border-border" />
 
-          <button
-            type="button"
-            onClick={handleEndAssignment}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
-          >
-            <UserX size={14} />
-            <span>End Assignment</span>
-          </button>
-        </div>
-      )}
-    </div>
+            <button
+              type="button"
+              onClick={handleEndAssignment}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+            >
+              <UserX size={13} className="shrink-0" />
+              <span>End Assignment</span>
+            </button>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 

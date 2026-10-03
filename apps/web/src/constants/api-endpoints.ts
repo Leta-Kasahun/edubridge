@@ -206,12 +206,14 @@ export const API_ENDPOINTS = {
     SUBMIT_ATTEMPT: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/submit`,
     ATTEMPT_RESULT: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/result`,
     MANUAL_GRADE: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/manual-grade`,
+    QUESTION_FEEDBACK: (id: string) => `/assessments/${id}/question-feedback`,
   },
   MASTERY: {
     SECTION_MATRIX: (sectionId: string) => `/mastery/sections/${sectionId}`,
     STUDENT: (studentId: string) => `/mastery/students/${studentId}`,
     TOPIC_HISTORY: (studentId: string, topicId: string) => `/mastery/students/${studentId}/topics/${topicId}/history`,
     RECALCULATE: "/mastery/recalculate",
+    PRACTICE: "/mastery/practice",
   },
   HEALTH: "/health",
   NOTIFICATIONS: {

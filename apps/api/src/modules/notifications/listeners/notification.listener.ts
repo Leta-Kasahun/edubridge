@@ -6,6 +6,15 @@ import {
   QuestionBankPublishedEvent,
   LearningContentPublishedEvent,
   StudentEnrolledEvent,
+  AssessmentGradedEvent,
+  AssessmentAssignedEvent,
+  PasswordResetByAdminEvent,
+  PasswordChangedSelfEvent,
+  StudentStatusChangedEvent,
+  TeacherStatusChangedEvent,
+  StudentPromotionCommittedEvent,
+  StudentWithdrawnEvent,
+  QuestionFeedbackSubmittedEvent,
 } from "../../../shared/events/domain-events.js";
 import { prisma, runWithoutTenant } from "../../../lib/prisma.js";
 import { notificationService } from "../services/notification.service.js";
@@ -318,6 +327,231 @@ async function handleStudentEnrolled(
   }
 }
 
+async function handleAssessmentGraded(
+  event: AssessmentGradedEvent
+): Promise<void> {
+  const title = event.isManual ? "Exam Results Published" : "Exam Graded";
+  const body = event.isManual
+    ? `${event.teacherName ?? "Your teacher"} has reviewed your ${event.assessmentTitle} submission. Score: ${event.percentage}%.`
+    : `Your results for ${event.assessmentTitle} are now available. Score: ${event.percentage}%.`;
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: event.studentUserId,
+    category: "ASSESSMENT",
+    priority: "HIGH",
+    title,
+    body,
+    actionUrl: `/dashboard/assessments/${event.assessmentId}`,
+    sourceType: "ASSESSMENT_ATTEMPT",
+    sourceId: event.attemptId,
+  });
+}
+
+async function handleAssessmentAssigned(
+  event: AssessmentAssignedEvent
+): Promise<void> {
+  const students = await runWithoutTenant(() =>
+    prisma.studentProfile.findMany({
+      where: {
+        tenantId: event.tenantId,
+        status: "ACTIVE",
+        enrollments: {
+          some: {
+            status: "ACTIVE",
+            sectionId: { in: event.sectionIds },
+          },
+        },
+      },
+      select: { userId: true },
+    })
+  );
+
+  const duePart = event.availableUntil
+    ? ` Due: ${new Date(event.availableUntil).toLocaleDateString()}.`
+    : "";
+
+  for (const s of students) {
+    if (s.userId) {
+      void notificationService.sendToUser({
+        tenantId: event.tenantId,
+        userId: s.userId,
+        category: "ASSESSMENT",
+        priority: "HIGH",
+        title: "New Exam Scheduled",
+        body: `${event.assessmentTitle} has been assigned to your class.${duePart}`,
+        actionUrl: `/dashboard/assessments/${event.assessmentId}`,
+        sourceType: "ASSESSMENT",
+        sourceId: event.assessmentId,
+      });
+    }
+  }
+}
+
+async function handlePasswordResetByAdmin(
+  event: PasswordResetByAdminEvent
+): Promise<void> {
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: event.targetUserId,
+    category: "SECURITY",
+    priority: "HIGH",
+    title: "Password Reset",
+    body: "Your password was reset by your school administrator. Please log in with the new credentials you received and change your password.",
+    actionUrl: "/login",
+    sourceType: "SECURITY_EVENT",
+    sourceId: event.targetUserId,
+  });
+}
+
+async function handlePasswordChangedSelf(
+  event: PasswordChangedSelfEvent
+): Promise<void> {
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: event.userId,
+    category: "SECURITY",
+    priority: "NORMAL",
+    title: "Password Changed",
+    body: "Your password was updated successfully. If you did not make this change, contact your school administrator immediately.",
+    actionUrl: "/dashboard",
+    sourceType: "SECURITY_EVENT",
+    sourceId: event.userId,
+  });
+}
+
+async function handleStudentStatusChanged(
+  event: StudentStatusChangedEvent
+): Promise<void> {
+  const isActive = event.newStatus === "ACTIVE";
+  const isSuspended = event.newStatus === "SUSPENDED";
+
+  const title = isActive ? "Account Activated" : "Account Deactivated";
+  const body = isActive
+    ? "Your student account is now active. You can log in and access your classes."
+    : isSuspended
+      ? "Your student account has been suspended. Contact your school administrator for more information."
+      : "Your student account has been deactivated. Contact your school administrator for more information.";
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: event.studentUserId,
+    category: "ACADEMIC",
+    priority: "HIGH",
+    title,
+    body,
+    actionUrl: "/dashboard",
+    sourceType: "STUDENT_ENROLLMENT",
+    sourceId: event.studentUserId,
+  });
+}
+
+async function handleTeacherStatusChanged(
+  event: TeacherStatusChangedEvent
+): Promise<void> {
+  const isActive = event.newStatus === "ACTIVE";
+  const isSuspended = event.newStatus === "SUSPENDED";
+
+  const title = isActive ? "Account Activated" : "Account Deactivated";
+  const body = isActive
+    ? "Your teacher account is now active. You can log in and access your classes."
+    : isSuspended
+      ? "Your teacher account has been suspended. Contact school administration for more information."
+      : "Your teacher account has been deactivated. Contact school administration for more information.";
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: event.teacherUserId,
+    category: "TEACHER",
+    priority: "HIGH",
+    title,
+    body,
+    actionUrl: "/dashboard",
+    sourceType: "TEACHER_ASSIGNMENT",
+    sourceId: event.teacherUserId,
+  });
+}
+
+async function handleStudentPromotionCommitted(
+  event: StudentPromotionCommittedEvent
+): Promise<void> {
+  const student = await runWithoutTenant(() =>
+    prisma.studentProfile.findFirst({
+      where: { id: event.studentId },
+      select: { userId: true },
+    })
+  );
+
+  if (!student?.userId) return;
+
+  const title = event.isPromoted ? "Grade Promotion" : "Grade Placement Confirmed";
+  const body = event.isPromoted
+    ? `You have been promoted to Grade ${event.targetGradeLevel} for the ${event.targetAcademicYearName} academic year.`
+    : `Your placement in Grade ${event.targetGradeLevel} for the ${event.targetAcademicYearName} academic year has been confirmed.`;
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: student.userId,
+    category: "ACADEMIC",
+    priority: "HIGH",
+    title,
+    body,
+    actionUrl: "/dashboard",
+    sourceType: "STUDENT_ENROLLMENT",
+    sourceId: event.studentId,
+  });
+}
+
+async function handleStudentWithdrawn(
+  event: StudentWithdrawnEvent
+): Promise<void> {
+  const student = await runWithoutTenant(() =>
+    prisma.studentProfile.findFirst({
+      where: { id: event.studentId },
+      select: { userId: true },
+    })
+  );
+
+  if (!student?.userId) return;
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: student.userId,
+    category: "ACADEMIC",
+    priority: "HIGH",
+    title: "Enrollment Withdrawn",
+    body: "Your enrollment has been withdrawn. Contact your school administrator for more information.",
+    actionUrl: "/dashboard",
+    sourceType: "STUDENT_ENROLLMENT",
+    sourceId: event.studentId,
+  });
+}
+
+async function handleQuestionFeedbackSubmitted(
+  event: QuestionFeedbackSubmittedEvent
+): Promise<void> {
+  const targetUserId = event.teacherUserId;
+  if (!targetUserId) return;
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: targetUserId,
+    category: "ASSESSMENT",
+    priority: "NORMAL",
+    title: `Question Feedback from ${event.studentName}`,
+    body: `${event.studentName} sent feedback on "${event.assessmentTitle}": "${event.feedbackText}"`,
+    actionUrl: `/dashboard/assessments/${event.assessmentId}`,
+    sourceType: "ASSESSMENT_QUESTION_FEEDBACK",
+    sourceId: event.assessmentId,
+    metadata: {
+      questionVersionId: event.questionVersionId,
+      category: event.category,
+      studentUserId: event.studentUserId,
+      feedbackText: event.feedbackText,
+    },
+  });
+}
+
 export function registerNotificationListeners(): void {
   domainEventBus.onEvent("teacher.assigned", handleTeacherAssigned);
   domainEventBus.onEvent("teacher.reassigned", handleTeacherReassigned);
@@ -325,4 +559,13 @@ export function registerNotificationListeners(): void {
   domainEventBus.onEvent("question_bank.published", handleQuestionBankPublished);
   domainEventBus.onEvent("learning_content.published", handleLearningContentPublished);
   domainEventBus.onEvent("student.enrolled", handleStudentEnrolled);
+  domainEventBus.onEvent("assessment.graded", handleAssessmentGraded);
+  domainEventBus.onEvent("assessment.assigned", handleAssessmentAssigned);
+  domainEventBus.onEvent("auth.password_reset_by_admin", handlePasswordResetByAdmin);
+  domainEventBus.onEvent("auth.password_changed_self", handlePasswordChangedSelf);
+  domainEventBus.onEvent("student.status_changed", handleStudentStatusChanged);
+  domainEventBus.onEvent("teacher.status_changed", handleTeacherStatusChanged);
+  domainEventBus.onEvent("student.promotion_committed", handleStudentPromotionCommitted);
+  domainEventBus.onEvent("student.withdrawn", handleStudentWithdrawn);
+  domainEventBus.onEvent("assessment.question-feedback", handleQuestionFeedbackSubmitted);
 }

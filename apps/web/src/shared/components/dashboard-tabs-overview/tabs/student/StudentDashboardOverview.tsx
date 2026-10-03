@@ -7,10 +7,12 @@ import {
   TrendingUp,
   ChevronRight,
   PlayCircle,
+  BookOpen,
 } from "lucide-react";
 import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
 import { useAssessments } from "@/features/assessments/hooks/useAssessments";
+import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
@@ -41,7 +43,7 @@ interface SubjectProgressItem {
 
 interface InProgressActivityItem {
   readonly id: string;
-  readonly type: "Practice Exam" | "Unit Quiz" | "Lesson" | "Topic";
+  readonly type: "Practice Exam" | "Practice Test" | "Lesson" | "Topic";
   readonly subjectCode: string;
   readonly title: string;
   readonly progress: number;
@@ -51,9 +53,14 @@ interface InProgressActivityItem {
 }
 
 export function StudentDashboardOverview() {
-  const { data: classData } = useStudentClass();
-  const { data: profile } = useMyStudentProfile();
-  const { data: assessmentsData } = useAssessments();
+  const { data: classData, isLoading: isClassLoading } = useStudentClass();
+  const { data: profile, isLoading: isProfileLoading } = useMyStudentProfile();
+  
+  const studentId = profile?.id ?? "";
+  const { data: masteryData, isLoading: isMasteryLoading } = useStudentMastery(studentId);
+  const { data: assessmentsData, isLoading: isAssessmentsLoading } = useAssessments();
+
+  const isLoading = isClassLoading || isProfileLoading || isMasteryLoading || isAssessmentsLoading;
 
   const section = classData?.section;
   const homeroomTeacher = classData?.homeroomTeacher;
@@ -63,123 +70,154 @@ export function StudentDashboardOverview() {
   );
   const assessments = assessmentsData?.items ?? [];
 
-  const activeExams = assessments.filter(
-    (a) => a.status === "ACTIVE" || a.status === "PUBLISHED"
-  );
+  const activeExams = useMemo(() => {
+    return assessments.filter(
+      (a) => a.status === "ACTIVE" || a.status === "PUBLISHED"
+    );
+  }, [assessments]);
 
   const studentName = profile?.firstName || profile?.fullName || "Student";
   const greeting = getEthiopianGreeting();
 
-  // Dynamic Subtitle: Grade 10 • Section A • 2018 E.C.
+  // Dynamic Subtitle: Grade 8 • Section A • 2018 E.C.
   const gradeLabel =
+    (profile?.enrollment?.gradeLevel ? `Grade ${profile.enrollment.gradeLevel}` : null) ||
     section?.gradeName ||
-    (profile?.enrollment?.gradeLevel ? `Grade ${profile.enrollment.gradeLevel}` : "Grade Level");
-  const sectionLabel = section?.name ? `Section ${section.name}` : "";
+    "Grade 8";
+  const sectionLabel = section?.name ? `Section ${section.name}` : "Section A";
   const academicYear =
     section?.academicYearName || profile?.enrollment?.academicYearName || "2018 E.C.";
 
   const identityLine = [gradeLabel, sectionLabel, academicYear].filter(Boolean).join(" • ");
 
-  // In-Progress Activities: combining active practice assessments and ongoing lessons
+  // Real In-Progress Activities from live published assessments & curriculum materials
   const inProgressActivities: readonly InProgressActivityItem[] = useMemo(() => {
-    const activeFromApi: InProgressActivityItem[] = activeExams.slice(0, 2).map((item, idx) => ({
-      id: item.id,
-      type: "Practice Exam",
-      subjectCode: item.examContext?.code || (idx === 0 ? "MATH" : "PHYS"),
-      title: item.title,
-      progress: idx === 0 ? 65 : 40,
-      completedItems: idx === 0 ? 13 : 6,
-      totalItems: item._count?.questions || (idx === 0 ? 20 : 15),
-      href: ROUTES.ASSESSMENTS.BASE,
-    }));
-
-    if (activeFromApi.length > 0) {
-      return [
-        ...activeFromApi,
-        {
-          id: "inp-lesson-1",
-          type: "Lesson" as const,
-          subjectCode: "BIO",
-          title: "Cellular Respiration & ATP Cycle",
-          progress: 50,
-          completedItems: 5,
-          totalItems: 10,
-          href: ROUTES.STUDENT.MATERIALS,
-        },
-      ];
+    if (activeExams.length > 0) {
+      return activeExams.slice(0, 3).map((item) => {
+        const totalQ = item._count?.questions || item.questions?.length || 10;
+        return {
+          id: item.id,
+          type: item.timeLimitMinutes ? "Practice Exam" : "Practice Test",
+          subjectCode: item.examContext?.code || "EXAM",
+          title: item.title,
+          progress: 0,
+          completedItems: 0,
+          totalItems: totalQ,
+          href: ROUTES.ASSESSMENTS.ATTEMPT(item.id),
+        };
+      });
     }
 
+    // If no active exams scheduled yet, provide direct curriculum material link
     return [
       {
-        id: "inp-1",
-        type: "Practice Exam" as const,
-        subjectCode: "MATH",
-        title: "Mathematics Chapter 2: Quadratic Equations",
-        progress: 65,
-        completedItems: 13,
-        totalItems: 20,
-        href: ROUTES.ASSESSMENTS.BASE,
-      },
-      {
-        id: "inp-2",
-        type: "Unit Quiz" as const,
-        subjectCode: "PHYS",
-        title: "Physics Unit 1: Vectors and Kinematics",
-        progress: 40,
-        completedItems: 6,
-        totalItems: 15,
-        href: ROUTES.ASSESSMENTS.BASE,
-      },
-      {
-        id: "inp-3",
+        id: "mat-link-1",
         type: "Lesson" as const,
-        subjectCode: "ENG",
-        title: "Unit 3: Complex Sentence Clauses & Structure",
-        progress: 70,
-        completedItems: 14,
-        totalItems: 20,
+        subjectCode: "MATH",
+        title: "Curriculum Topic Practice & Materials",
+        progress: 0,
+        completedItems: 0,
+        totalItems: 10,
         href: ROUTES.STUDENT.MATERIALS,
       },
     ];
   }, [activeExams]);
 
-  // Real-aligned subject progress computation with 4 stages: Mastered, Doing Well, Learning, Not Started
+  // Real-aligned subject progress computation from database mastery + enrolled class metadata
   const subjectProgressList: readonly SubjectProgressItem[] = useMemo(() => {
-    if (subjectTeachers.length === 0) {
-      return [
-        { code: "MATH", name: "Mathematics", teacher: "Ato Abebe", progress: 85, status: "Mastered" },
-        { code: "BIO", name: "Biology", teacher: "W/ro Tigist", progress: 72, status: "Doing Well" },
-        { code: "PHYS", name: "Physics", teacher: "Ato Kebede", progress: 90, status: "Mastered" },
-        { code: "ENG", name: "English", teacher: "W/ro Aster", progress: 52, status: "Learning" },
-      ];
-    }
+    const masterySubjects = masteryData?.subjects ?? [];
 
-    const defaultProg = [85, 72, 92, 54, 76, 88, 0];
-    return subjectTeachers.map((st, idx) => {
-      const progress = defaultProg[idx % defaultProg.length];
-      let status: MasteryStage = "Learning";
-      if (progress >= 80) status = "Mastered";
-      else if (progress >= 65) status = "Doing Well";
-      else if (progress > 0) status = "Learning";
-      else status = "Not Started";
+    const mapped: SubjectProgressItem[] = masterySubjects.map((s) => {
+      const teacherMatch = subjectTeachers.find(
+        (st) =>
+          st.subjectCode.toLowerCase() === s.subjectCode.toLowerCase()
+      );
+      const progress = s.overallAccuracy !== null ? Math.round(s.overallAccuracy) : 0;
+      let status: MasteryStage = "Not Started";
+      if (s.overallAccuracy !== null) {
+        if (progress >= 80) status = "Mastered";
+        else if (progress >= 65) status = "Doing Well";
+        else if (progress > 0) status = "Learning";
+      } else if (s.totalTopics > 0 && s.masteredCount > 0) {
+        status = "Learning";
+      }
 
       return {
-        code: st.subjectCode,
-        name: st.subjectName,
-        teacher: st.teacherFullName,
+        code: s.subjectCode,
+        name: s.subjectName,
+        teacher: teacherMatch?.teacherFullName ?? "Assigned Teacher",
         progress,
         status,
       };
     });
-  }, [subjectTeachers]);
 
-  // Topic mastery stats: 72 total topics (18 Mastered, 24 Doing Well, 20 Learning, 10 Not Started)
+    // Merge in any class subjects not yet present in student mastery data
+    for (const st of subjectTeachers) {
+      if (
+        !mapped.some(
+          (m) => m.code.toLowerCase() === st.subjectCode.toLowerCase()
+        )
+      ) {
+        mapped.push({
+          code: st.subjectCode,
+          name: st.subjectName,
+          teacher: st.teacherFullName,
+          progress: 0,
+          status: "Not Started",
+        });
+      }
+    }
+
+    return mapped;
+  }, [masteryData, subjectTeachers]);
+
+  // Dynamic Topic mastery stats calculated 100% from live topic items
   const learningStats = useMemo(() => {
-    const totalTopics = 72;
-    const mastered = 18;
-    const doingWell = 24;
-    const learning = 20;
-    const notStarted = 10;
+    if (!masteryData?.subjects || masteryData.subjects.length === 0) {
+      return {
+        totalTopics: 0,
+        mastered: 0,
+        doingWell: 0,
+        learning: 0,
+        notStarted: 0,
+        masteredPct: 0,
+        doingWellPct: 0,
+        learningPct: 0,
+        notStartedPct: 0,
+      };
+    }
+
+    let mastered = 0;
+    let doingWell = 0;
+    let learning = 0;
+    let notStarted = 0;
+    let totalTopics = 0;
+
+    for (const s of masteryData.subjects) {
+      for (const u of s.units) {
+        for (const t of u.topics) {
+          totalTopics++;
+          if (t.level === "MASTERED" || (t.accuracy !== null && t.accuracy >= 80)) {
+            mastered++;
+          } else if (t.level === "PROFICIENT" || (t.accuracy !== null && t.accuracy >= 65)) {
+            doingWell++;
+          } else if (t.level === "DEVELOPING" || (t.accuracy !== null && t.accuracy > 0) || t.questionCount > 0) {
+            learning++;
+          } else {
+            notStarted++;
+          }
+        }
+      }
+    }
+
+    // If totalTopics computed is 0, fallback to subject level totals
+    if (totalTopics === 0) {
+      totalTopics = masteryData.subjects.reduce((sum, s) => sum + s.totalTopics, 0);
+      mastered = masteryData.subjects.reduce((sum, s) => sum + s.masteredCount, 0);
+      notStarted = Math.max(0, totalTopics - mastered);
+    }
+
+    const safeTotal = totalTopics > 0 ? totalTopics : 1;
 
     return {
       totalTopics,
@@ -187,12 +225,12 @@ export function StudentDashboardOverview() {
       doingWell,
       learning,
       notStarted,
-      masteredPct: Math.round((mastered / totalTopics) * 100),
-      doingWellPct: Math.round((doingWell / totalTopics) * 100),
-      learningPct: Math.round((learning / totalTopics) * 100),
-      notStartedPct: Math.round((notStarted / totalTopics) * 100),
+      masteredPct: Math.round((mastered / safeTotal) * 100),
+      doingWellPct: Math.round((doingWell / safeTotal) * 100),
+      learningPct: Math.round((learning / safeTotal) * 100),
+      notStartedPct: Math.round((notStarted / safeTotal) * 100),
     };
-  }, []);
+  }, [masteryData]);
 
   // SVG Donut Chart Slices Dimensions
   const donutSize = 120;
@@ -200,16 +238,33 @@ export function StudentDashboardOverview() {
   const radius = (donutSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Segment arc lengths for the 4 steps
-  const seg1Len = (learningStats.mastered / learningStats.totalTopics) * circumference;
-  const seg2Len = (learningStats.doingWell / learningStats.totalTopics) * circumference;
-  const seg3Len = (learningStats.learning / learningStats.totalTopics) * circumference;
-  const seg4Len = (learningStats.notStarted / learningStats.totalTopics) * circumference;
+  // Segment arc lengths for the 4 steps with safe division
+  const totalSafe = learningStats.totalTopics > 0 ? learningStats.totalTopics : 1;
+  const seg1Len = (learningStats.mastered / totalSafe) * circumference;
+  const seg2Len = (learningStats.doingWell / totalSafe) * circumference;
+  const seg3Len = (learningStats.learning / totalSafe) * circumference;
+  const seg4Len = (learningStats.notStarted / totalSafe) * circumference;
 
   const seg1Offset = 0;
   const seg2Offset = -seg1Len;
   const seg3Offset = -(seg1Len + seg2Len);
   const seg4Offset = -(seg1Len + seg2Len + seg3Len);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 w-full max-w-full min-w-0">
+        <div className="h-28 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="h-24 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
+          <div className="h-24 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="h-64 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
+          <div className="lg:col-span-2 h-64 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full max-w-full min-w-0">
@@ -295,7 +350,7 @@ export function StudentDashboardOverview() {
                     <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
                       <div
                         className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${item.progress}%` }}
+                        style={{ width: `${Math.max(item.progress, 0)}%` }}
                       />
                     </div>
                     <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
@@ -347,7 +402,7 @@ export function StudentDashboardOverview() {
               Overall Learning
             </span>
 
-            {/* Donut Chart with '72 topics' in Center */}
+            {/* Donut Chart with 'X topics' in Center */}
             <div className="relative inline-flex items-center justify-center my-1">
               <svg width={donutSize} height={donutSize} className="transform -rotate-90">
                 {/* Background track */}
@@ -360,7 +415,7 @@ export function StudentDashboardOverview() {
                   className="text-muted/30"
                   fill="transparent"
                 />
-                {/* 1. Mastered (18 topics) — Emerald */}
+                {/* 1. Mastered — Emerald */}
                 <circle
                   cx={donutSize / 2}
                   cy={donutSize / 2}
@@ -372,7 +427,7 @@ export function StudentDashboardOverview() {
                   className="text-emerald-500 transition-all duration-700"
                   fill="transparent"
                 />
-                {/* 2. Doing Well (24 topics) — Brand Primary */}
+                {/* 2. Doing Well — Brand Primary */}
                 <circle
                   cx={donutSize / 2}
                   cy={donutSize / 2}
@@ -384,7 +439,7 @@ export function StudentDashboardOverview() {
                   className="text-primary transition-all duration-700"
                   fill="transparent"
                 />
-                {/* 3. Learning (20 topics) — Amber */}
+                {/* 3. Learning — Amber */}
                 <circle
                   cx={donutSize / 2}
                   cy={donutSize / 2}
@@ -396,7 +451,7 @@ export function StudentDashboardOverview() {
                   className="text-amber-500 transition-all duration-700"
                   fill="transparent"
                 />
-                {/* 4. Not Started (10 topics) — Muted */}
+                {/* 4. Not Started — Muted */}
                 <circle
                   cx={donutSize / 2}
                   cy={donutSize / 2}
@@ -410,7 +465,7 @@ export function StudentDashboardOverview() {
                 />
               </svg>
 
-              {/* Inside center: 72 topics */}
+              {/* Inside center: Total topics */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-xl sm:text-2xl font-black text-foreground">
                   {learningStats.totalTopics}
@@ -473,56 +528,65 @@ export function StudentDashboardOverview() {
               </span>
             </div>
 
-            <div className="space-y-3.5">
-              {subjectProgressList.map((item) => {
-                const isMastered = item.status === "Mastered";
-                const isDoingWell = item.status === "Doing Well";
-                const isLearning = item.status === "Learning";
+            {subjectProgressList.length === 0 ? (
+              <div className="text-center py-8">
+                <BookOpen className="h-8 w-8 text-muted-foreground/60 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  No courses registered yet.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {subjectProgressList.map((item) => {
+                  const isMastered = item.status === "Mastered";
+                  const isDoingWell = item.status === "Doing Well";
+                  const isLearning = item.status === "Learning";
 
-                const barColor = isMastered
-                  ? "bg-emerald-500"
-                  : isDoingWell
-                  ? "bg-primary"
-                  : isLearning
-                  ? "bg-amber-500"
-                  : "bg-muted-foreground/30";
+                  const barColor = isMastered
+                    ? "bg-emerald-500"
+                    : isDoingWell
+                    ? "bg-primary"
+                    : isLearning
+                    ? "bg-amber-500"
+                    : "bg-muted-foreground/30";
 
-                const badgeStyle = isMastered
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : isDoingWell
-                  ? "bg-primary/10 text-primary"
-                  : isLearning
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  : "bg-muted text-muted-foreground";
+                  const badgeStyle = isMastered
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : isDoingWell
+                    ? "bg-primary/10 text-primary"
+                    : isLearning
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "bg-muted text-muted-foreground";
 
-                return (
-                  <div key={item.code} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-bold text-foreground truncate">{item.name}</span>
-                        <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
-                          ({item.teacher})
-                        </span>
+                  return (
+                    <div key={item.code} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-bold text-foreground truncate">{item.name}</span>
+                          <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
+                            ({item.teacher})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <span className="font-bold text-foreground">{item.progress}%</span>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${badgeStyle}`}>
+                            {item.status}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        <span className="font-bold text-foreground">{item.progress}%</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${badgeStyle}`}>
-                          {item.status}
-                        </span>
+                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                          style={{ width: `${Math.max(item.progress, 2)}%` }}
+                        />
                       </div>
                     </div>
-
-                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                        style={{ width: `${item.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

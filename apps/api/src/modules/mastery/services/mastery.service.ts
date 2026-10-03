@@ -3,6 +3,7 @@ import {
   SectionMasteryMatrixResponse,
   SingleStudentMasteryResponse,
   TopicMasteryHistoryItem,
+  RecordPracticeEvidenceDto,
 } from "../types/mastery.types.js";
 
 export class MasteryService {
@@ -47,5 +48,13 @@ export class MasteryService {
     tenantId: string
   ): Promise<void> {
     return this.masteryRepo.recordEvidenceForAttempt(attemptId, tenantId);
+  }
+
+  async recordPracticeEvidence(
+    tenantId: string,
+    studentId: string,
+    dto: RecordPracticeEvidenceDto
+  ): Promise<{ success: boolean; recordedCount: number }> {
+    return this.masteryRepo.recordPracticeEvidence(tenantId, studentId, dto);
   }
 }

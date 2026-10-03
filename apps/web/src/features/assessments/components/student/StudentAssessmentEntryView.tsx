@@ -102,10 +102,10 @@ export function StudentAssessmentEntryView({
               </ul>
             </div>
 
-            <div className="pt-2 flex items-center justify-end gap-3 border-t border-border">
+            <div className="pt-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 border-t border-border">
               <Link
                 href={ROUTES.ASSESSMENTS.BASE}
-                className="px-4 py-2.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-colors text-center shrink-0 cursor-pointer"
               >
                 Cancel
               </Link>
@@ -113,7 +113,7 @@ export function StudentAssessmentEntryView({
                 onClick={onStart}
                 isLoading={isLoading}
                 loadingText="Preparing Exam Session..."
-                className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs shrink-0 cursor-pointer"
               >
                 Start Exam Now
               </SubmitButton>

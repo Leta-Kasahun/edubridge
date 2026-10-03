@@ -198,7 +198,23 @@ export class StudentAssignmentService {
       throw new BadRequestError("Cannot promote students into a completed or archived academic year.");
     }
 
-    return studentAssignmentRepository.commitPromotion(tenantId, input, userId);
+    const count = await studentAssignmentRepository.commitPromotion(tenantId, input, userId);
+
+    for (const item of input.items) {
+      const grade = await prisma.grade.findFirst({
+        where: { id: item.targetGradeId, tenantId },
+        select: { level: true },
+      });
+      domainEventBus.emitEvent("student.promotion_committed", {
+        tenantId,
+        studentId: item.studentId,
+        targetAcademicYearName: targetYear.name,
+        targetGradeLevel: grade?.level ?? 0,
+        isPromoted: item.isPromoted,
+      });
+    }
+
+    return count;
   }
 
   async withdrawStudent(
@@ -215,6 +231,11 @@ export class StudentAssignmentService {
       input.reason,
       userId
     );
+
+    domainEventBus.emitEvent("student.withdrawn", {
+      tenantId,
+      studentId,
+    });
   }
 
   async getStudentEnrollmentHistory(

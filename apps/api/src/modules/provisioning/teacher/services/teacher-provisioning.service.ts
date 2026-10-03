@@ -26,6 +26,8 @@ import {
   PaginatedTeacherResult,
   ProvisionedTeacherRecord,
 } from "../types/teacher-provisioning.types.js";
+import { domainEventBus } from "../../../../shared/events/domain-events.js";
+import { prisma } from "../../../../lib/prisma.js";
 
 export class TeacherProvisioningService {
   constructor(
@@ -63,6 +65,19 @@ export class TeacherProvisioningService {
     if (!updated) {
       throw new NotFoundError("Teacher profile not found");
     }
+
+    const profile = await prisma.teacherProfile.findFirst({
+      where: { id: profileId, tenantId },
+      select: { userId: true },
+    });
+    if (profile?.userId) {
+      domainEventBus.emitEvent("teacher.status_changed", {
+        tenantId,
+        teacherUserId: profile.userId,
+        newStatus: "ACTIVE",
+      });
+    }
+
     return updated;
   }
 
@@ -81,6 +96,19 @@ export class TeacherProvisioningService {
     if (!updated) {
       throw new NotFoundError("Teacher profile not found");
     }
+
+    const profile = await prisma.teacherProfile.findFirst({
+      where: { id: profileId, tenantId },
+      select: { userId: true },
+    });
+    if (profile?.userId) {
+      domainEventBus.emitEvent("teacher.status_changed", {
+        tenantId,
+        teacherUserId: profile.userId,
+        newStatus: status === "SUSPENDED" ? "SUSPENDED" : "INACTIVE",
+      });
+    }
+
     return updated;
   }
 

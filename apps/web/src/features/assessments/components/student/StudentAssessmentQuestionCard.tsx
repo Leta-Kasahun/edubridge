@@ -1,11 +1,22 @@
 "use client";
 
-import { Flag, Check, Hash } from "lucide-react";
+import { useState } from "react";
+import { Flag, Check, Hash, MessageSquarePlus, X, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { StudentQuestionView } from "../../types/assessment.types";
 import { QuestionDifficultyBadge } from "@/features/question-bank/components/questions/QuestionBadges";
 import { buildOptionLabel } from "@/shared/utils/question.util";
+import { useSubmitQuestionFeedback } from "../../hooks/useAssessmentAttempt";
+import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+
+const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
+  { value: "CLARIFICATION", label: "Need Help" },
+  { value: "TYPO_REPORT", label: "Typo Error" },
+  { value: "CONTENT_ISSUE", label: "Incorrect Answer" },
+  { value: "GENERAL", label: "General" },
+];
 
 interface StudentAssessmentQuestionCardProps {
+  readonly assessmentId?: string;
   readonly question: StudentQuestionView;
   readonly questionIndex: number;
   readonly totalQuestions: number;
@@ -16,6 +27,7 @@ interface StudentAssessmentQuestionCardProps {
 }
 
 export function StudentAssessmentQuestionCard({
+  assessmentId,
   question,
   questionIndex,
   totalQuestions,
@@ -24,22 +36,68 @@ export function StudentAssessmentQuestionCard({
   onAnswerChange,
   onToggleFlag,
 }: StudentAssessmentQuestionCardProps) {
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackCategory, setFeedbackCategory] = useState<"CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL">("CLARIFICATION");
+  const [feedbackText, setFeedbackText] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const submitFeedbackMutation = useSubmitQuestionFeedback();
+
+  const handleSendFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assessmentId || !feedbackText.trim()) return;
+
+    try {
+      await submitFeedbackMutation.mutateAsync({
+        assessmentId,
+        payload: {
+          questionVersionId: question.questionVersionId,
+          message: feedbackText.trim(),
+          category: feedbackCategory,
+        },
+      });
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsFeedbackOpen(false);
+        setIsSubmitted(false);
+        setFeedbackText("");
+      }, 2000);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
 
   const renderQuestionInput = () => {
     switch (question.type) {
       case "MCQ": {
         const selectedKey = typeof currentAnswer === "string" ? currentAnswer : "";
+        const rawOptions = (Array.isArray(question.options) && question.options.length > 0)
+          ? question.options
+          : (question.configuration && typeof question.configuration === "object" && Array.isArray((question.configuration as Record<string, unknown>).options))
+          ? ((question.configuration as Record<string, unknown>).options as Array<{ id?: string; optionKey?: string; key?: string; optionText?: string; text?: string; label?: string }>)
+          : [];
+
+        if (rawOptions.length === 0) {
+          return (
+            <div className="p-4 rounded-xl border border-dashed border-border text-xs text-muted-foreground text-center">
+              No options available for this multiple choice question.
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-2.5 pt-2">
-            {question.options.map((opt, idx) => {
+            {rawOptions.map((rawOpt, idx) => {
+              const optKey = rawOpt.optionKey || (rawOpt as { key?: string }).key || buildOptionLabel(idx);
+              const optText = rawOpt.optionText || (rawOpt as { text?: string; label?: string }).text || (rawOpt as { label?: string }).label || "";
+              const optId = rawOpt.id || optKey || String(idx);
               const letter = buildOptionLabel(idx);
-              const isSelected = selectedKey === opt.optionKey;
+              const isSelected = selectedKey === optKey;
 
               return (
                 <button
-                  key={opt.id || opt.optionKey}
+                  key={optId}
                   type="button"
-                  onClick={() => onAnswerChange(opt.optionKey)}
+                  onClick={() => onAnswerChange(optKey)}
                   className={`w-full p-3.5 sm:p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all duration-150 cursor-pointer ${
                     isSelected
                       ? "bg-primary/10 border-primary text-foreground font-semibold shadow-xs ring-1 ring-primary/30"
@@ -56,7 +114,7 @@ export function StudentAssessmentQuestionCard({
                     >
                       {letter}
                     </span>
-                    <span className="text-xs sm:text-sm leading-relaxed">{opt.optionText}</span>
+                    <span className="text-xs sm:text-sm leading-relaxed">{optText}</span>
                   </div>
 
                   <div
@@ -228,18 +286,31 @@ export function StudentAssessmentQuestionCard({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleFlag}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-            isFlagged
-              ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-2xs"
-              : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          <Flag size={14} className={isFlagged ? "fill-amber-500 text-amber-500" : ""} />
-          <span>{isFlagged ? "Flagged for Review" : "Flag Question"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {assessmentId && (
+            <button
+              type="button"
+              onClick={() => setIsFeedbackOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+            >
+              <MessageSquarePlus size={14} />
+              <span>Feedback</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onToggleFlag}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+              isFlagged
+                ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-2xs"
+                : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Flag size={14} className={isFlagged ? "fill-amber-500 text-amber-500" : ""} />
+            <span>{isFlagged ? "Flagged" : "Flag"}</span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -249,6 +320,87 @@ export function StudentAssessmentQuestionCard({
       </div>
 
       <div>{renderQuestionInput()}</div>
+
+      {isFeedbackOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs"
+          onClick={() => setIsFeedbackOpen(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <MessageSquarePlus size={18} className="text-primary" />
+                <h3 className="text-sm font-bold text-foreground">Question Feedback</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFeedbackOpen(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {isSubmitted ? (
+              <div className="py-8 text-center space-y-2">
+                <CheckCircle2 size={36} className="text-emerald-500 mx-auto animate-bounce" />
+                <h4 className="text-sm font-bold text-foreground">Feedback Sent</h4>
+                <p className="text-xs text-muted-foreground">Your feedback was sent to your teacher.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSendFeedback} className="space-y-4">
+                {submitFeedbackMutation.isError && (
+                  <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>Failed to send feedback. Please try again.</span>
+                  </div>
+                )}
+
+                <SelectDropdown
+                  label="Category"
+                  value={feedbackCategory}
+                  onChange={(val) => setFeedbackCategory(val as typeof feedbackCategory)}
+                  options={FEEDBACK_CATEGORY_OPTIONS}
+                  placeholder="Select category"
+                />
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Comment</label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder="Write your message or question..."
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-primary/20 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsFeedbackOpen(false)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitFeedbackMutation.isPending || !feedbackText.trim()}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    <span>{submitFeedbackMutation.isPending ? "Sending..." : "Submit Feedback"}</span>
+                    <Send size={13} />
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

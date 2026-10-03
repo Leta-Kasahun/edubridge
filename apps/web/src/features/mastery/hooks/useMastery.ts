@@ -3,6 +3,7 @@ import { masteryService } from "../services/mastery.service";
 import {
   SectionMasteryQueryParams,
   RecalculateMasteryPayload,
+  RecordPracticeEvidencePayload,
 } from "../types/mastery.types";
 
 export const MASTERY_QUERY_KEYS = {
@@ -31,9 +32,9 @@ export function useSectionMastery(
 
 export function useStudentMastery(studentId: string, subjectId?: string) {
   return useQuery({
-    queryKey: MASTERY_QUERY_KEYS.student(studentId, subjectId),
-    queryFn: () => masteryService.getStudentMastery(studentId, subjectId),
-    enabled: Boolean(studentId),
+    queryKey: MASTERY_QUERY_KEYS.student(studentId || "me", subjectId),
+    queryFn: () => masteryService.getStudentMastery(studentId || "me", subjectId),
+    enabled: true,
     staleTime: 30_000,
   });
 }
@@ -57,6 +58,18 @@ export function useRecalculateMasteryMutation() {
   return useMutation({
     mutationFn: (payload: RecalculateMasteryPayload) =>
       masteryService.recalculateMastery(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MASTERY_QUERY_KEYS.all });
+    },
+  });
+}
+
+export function useRecordPracticeEvidenceMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: RecordPracticeEvidencePayload) =>
+      masteryService.recordPracticeEvidence(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MASTERY_QUERY_KEYS.all });
     },
