@@ -14,7 +14,7 @@ import {
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { QuestionListItem } from "../../types/question-bank.types";
 
-interface QuestionRowActionsProps {
+export interface QuestionRowActionsProps {
   readonly question: QuestionListItem;
   readonly onPreview: (q: QuestionListItem) => void;
   readonly onEdit: (q: QuestionListItem) => void;
@@ -36,39 +36,45 @@ export function QuestionRowActions({
   isBusy,
 }: QuestionRowActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
   const updatePosition = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 180;
-      const menuWidth = 140;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 180;
+    const menuHeight = 160;
 
-      const top = openUpwards ? rect.top - menuHeight - 4 : rect.bottom + 4;
-      const left = Math.max(8, rect.right - menuWidth);
-
-      setCoords({ top, left });
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
     }
-  };
 
-  const handleToggle = () => {
-    if (!isOpen) {
-      updatePosition();
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
     }
+
+    setCoords({ top, left });
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
 
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         menuRef.current &&
         !menuRef.current.contains(target) &&
@@ -79,19 +85,10 @@ export function QuestionRowActions({
       }
     };
 
-    const handleScrollOrResize = () => {
-      setIsOpen(false);
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
   }, [isOpen]);
 
   return (
@@ -99,10 +96,14 @@ export function QuestionRowActions({
       <button
         ref={buttonRef}
         type="button"
-        onClick={handleToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         disabled={isBusy}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50"
         aria-label="Actions"
+        aria-expanded={isOpen}
       >
         {isBusy ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
@@ -119,7 +120,7 @@ export function QuestionRowActions({
               left: `${coords.left}px`,
               zIndex: 9999,
             }}
-            className="w-36 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+            className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 animate-in fade-in-0 zoom-in-95 text-xs"
           >
             <button
               type="button"
@@ -127,9 +128,9 @@ export function QuestionRowActions({
                 setIsOpen(false);
                 onPreview(question);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Eye size={13} className="text-muted-foreground" />
+              <Eye size={13} className="text-muted-foreground shrink-0" />
               <span>Preview</span>
             </button>
 
@@ -139,9 +140,9 @@ export function QuestionRowActions({
                 setIsOpen(false);
                 onEdit(question);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Edit2 size={13} className="text-muted-foreground" />
+              <Edit2 size={13} className="text-muted-foreground shrink-0" />
               <span>Edit</span>
             </button>
 
@@ -152,9 +153,9 @@ export function QuestionRowActions({
                   setIsOpen(false);
                   onPublish(question.id);
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <CheckCircle size={13} className="text-muted-foreground" />
+                <CheckCircle size={13} className="shrink-0" />
                 <span>Publish</span>
               </button>
             )}
@@ -166,9 +167,9 @@ export function QuestionRowActions({
                   setIsOpen(false);
                   onArchive(question.id);
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <Archive size={13} className="text-muted-foreground" />
+                <Archive size={13} className="shrink-0" />
                 <span>Archive</span>
               </button>
             )}
@@ -180,9 +181,9 @@ export function QuestionRowActions({
                   setIsOpen(false);
                   onActivate(question.id);
                 }}
-                className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer text-foreground text-left"
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <RotateCcw size={13} className="text-muted-foreground" />
+                <RotateCcw size={13} className="shrink-0" />
                 <span>Activate</span>
               </button>
             )}
@@ -195,9 +196,9 @@ export function QuestionRowActions({
                 setIsOpen(false);
                 onDelete(question.id, question.code);
               }}
-              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Trash2 size={13} className="text-destructive" />
+              <Trash2 size={13} className="shrink-0" />
               <span>Delete</span>
             </button>
           </div>,
@@ -206,3 +207,6 @@ export function QuestionRowActions({
     </>
   );
 }
+
+
+

@@ -9,6 +9,8 @@ import {
   GoogleAuthPayload,
   ChangePasswordPayload,
   AuthResponseData,
+  AdminResetPasswordPayload,
+  AdminResetPasswordResult,
 } from "../types";
 
 export const authService = {
@@ -75,6 +77,16 @@ export const authService = {
   changePassword: async (payload: ChangePasswordPayload): Promise<AuthResponseData> => {
     const response = await apiClient.post<ApiResponse<AuthResponseData>>(
       API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+      payload
+    );
+    return response.data.data;
+  },
+
+  adminResetPassword: async (
+    payload: AdminResetPasswordPayload
+  ): Promise<AdminResetPasswordResult> => {
+    const response = await apiClient.post<ApiResponse<AdminResetPasswordResult>>(
+      API_ENDPOINTS.AUTH.ADMIN_RESET_PASSWORD,
       payload
     );
     return response.data.data;

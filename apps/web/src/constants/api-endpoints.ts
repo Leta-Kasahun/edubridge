@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     LOGOUT: "/auth/logout",
     LOGOUT_ALL: "/auth/logout-all",
     CHANGE_PASSWORD: "/auth/change-password",
+    ADMIN_RESET_PASSWORD: "/auth/admin-reset-password",
   },
   ROLES: {
     BASE: "/roles",
@@ -181,6 +182,8 @@ export const API_ENDPOINTS = {
     QUESTIONS_BATCH: (bankId: string) => `/question-banks/${bankId}/questions/batch`,
     QUESTION_BY_ID: (id: string) => `/question-banks/questions/${id}`,
     QUESTION_PUBLISH: (id: string) => `/question-banks/questions/${id}/publish`,
+    RESOLVE_REPORT: (questionId: string, reportId: string) =>
+      `/question-banks/questions/${questionId}/reports/${reportId}/resolve`,
     UPLOAD: (bankId: string) => `/question-banks/${bankId}/upload`,
     UPLOAD_PREVIEW: (uploadId: string) => `/question-banks/upload/${uploadId}/preview`,
     UPLOAD_CONFIRM: (bankId: string, uploadId: string) =>

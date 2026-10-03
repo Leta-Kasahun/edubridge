@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { ChevronDown, MoreVertical, Eye, UserX, UserCheck } from "lucide-react";
-import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { ChevronDown, MoreVertical, Eye, UserX, UserCheck, KeyRound } from "lucide-react";
 import { formatStudentAccountStatus } from "@/shared/utils";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +18,161 @@ export interface StudentSectionAccordionProps {
   readonly onViewDetails: (student: StudentRecord) => void;
   readonly onActivate: (student: StudentRecord) => void;
   readonly onDeactivate: (student: StudentRecord) => void;
+  readonly onResetPassword?: (student: StudentRecord) => void;
+}
+
+function StudentRowActionDropdown({
+  student,
+  onViewDetails,
+  onResetPassword,
+  onActivate,
+  onDeactivate,
+}: {
+  readonly student: StudentRecord;
+  readonly onViewDetails: (student: StudentRecord) => void;
+  readonly onResetPassword?: (student: StudentRecord) => void;
+  readonly onActivate: (student: StudentRecord) => void;
+  readonly onDeactivate: (student: StudentRecord) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 168;
+    const menuHeight = 120;
+
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - menuHeight - 4);
+    }
+
+    let left = rect.right - menuWidth;
+    if (left < 10) {
+      left = 10;
+    }
+
+    setCoords({ top, left });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+        aria-label="Student options"
+        aria-expanded={isOpen}
+      >
+        <MoreVertical size={15} />
+      </button>
+
+      {isOpen &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 9999,
+            }}
+            className="w-44 bg-card text-foreground border border-border rounded-xl shadow-xl p-1 animate-in fade-in-0 zoom-in-95 text-xs"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onViewDetails(student);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+            >
+              <Eye size={13} className="text-muted-foreground shrink-0" />
+              <span>View Details</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onResetPassword?.(student);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+            >
+              <KeyRound size={13} className="text-amber-500 shrink-0" />
+              <span>Reset Password</span>
+            </button>
+
+            {student.status === "ACTIVE" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onDeactivate(student);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+              >
+                <UserX size={13} className="text-destructive shrink-0" />
+                <span className="text-destructive">Deactivate</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onActivate(student);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <UserCheck size={13} className="text-primary shrink-0" />
+                <span className="text-primary font-medium">Activate</span>
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
+    </>
+  );
 }
 
 export function StudentSectionAccordion({
@@ -28,12 +183,8 @@ export function StudentSectionAccordion({
   onViewDetails,
   onActivate,
   onDeactivate,
+  onResetPassword,
 }: StudentSectionAccordionProps) {
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const actionMenuRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(actionMenuRef, () => setActiveMenuId(null));
-
   const sectionStudents = students.filter(
     (s) => s.enrollment?.sectionId === section.id
   );
@@ -95,7 +246,6 @@ export function StudentSectionAccordion({
                       .join(" ");
 
                     const formattedStatus = formatStudentAccountStatus(student.status);
-                    const isMenuOpen = activeMenuId === student.id;
 
                     return (
                       <tr
@@ -118,61 +268,13 @@ export function StudentSectionAccordion({
                           {formattedStatus}
                         </td>
                         <td className="px-4 py-3.5 text-right relative">
-                          <div className="inline-block text-left" ref={isMenuOpen ? actionMenuRef : undefined}>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(isMenuOpen ? null : student.id);
-                              }}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                              aria-label="Student options"
-                            >
-                              <MoreVertical size={15} />
-                            </button>
-
-                            {isMenuOpen && (
-                              <div className="absolute right-4 top-10 w-36 bg-card border border-border rounded-xl shadow-xl p-1 z-30 animate-in fade-in-0 zoom-in-95">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    onViewDetails(student);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted/70 rounded-lg transition-colors cursor-pointer text-left font-medium"
-                                >
-                                  <Eye size={13} className="text-muted-foreground" />
-                                  <span>View details</span>
-                                </button>
-
-                                {student.status === "ACTIVE" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      onDeactivate(student);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer text-left font-medium"
-                                  >
-                                    <UserX size={13} />
-                                    <span>Deactivate</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      onActivate(student);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer text-left font-medium"
-                                  >
-                                    <UserCheck size={13} />
-                                    <span>Activate</span>
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          <StudentRowActionDropdown
+                            student={student}
+                            onViewDetails={onViewDetails}
+                            onResetPassword={onResetPassword}
+                            onActivate={onActivate}
+                            onDeactivate={onDeactivate}
+                          />
                         </td>
                       </tr>
                     );

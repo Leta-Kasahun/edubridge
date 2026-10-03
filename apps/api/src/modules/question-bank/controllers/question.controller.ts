@@ -140,6 +140,20 @@ export class QuestionController {
     });
   });
 
+  resolveReport = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const id = req.params.id as string;
+    const reportId = req.params.reportId as string;
+
+    const result = await service.resolveReport(tenantId, id, reportId, userId);
+    res.status(200).json({
+      success: true,
+      message: "Question report resolved successfully",
+      data: result,
+    });
+  });
+
   delete = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
     const id = req.params.id as string;

@@ -88,6 +88,12 @@ router.post(
   questionController.publish
 );
 
+router.post(
+  "/questions/:id/reports/:reportId/resolve",
+  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  questionController.resolveReport
+);
+
 router.delete(
   "/questions/:id",
   requireRoles("SCHOOL_ADMIN", "TEACHER"),

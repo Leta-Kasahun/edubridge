@@ -182,6 +182,24 @@ export class AuthController {
       data: result,
     });
   });
+
+  adminResetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = this.extractTenantId(req) || req.user?.tenantId;
+    const { userId, newPassword } = req.body;
+    const result = await this.authSvc.adminResetPassword(
+      tenantId,
+      userId,
+      newPassword,
+      req.user?.userId
+    );
+    res.status(200).json({
+      success: true,
+      data: {
+        ...result,
+        message: "Password reset successfully",
+      },
+    });
+  });
 }
 
 export const authController = new AuthController();

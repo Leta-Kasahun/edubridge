@@ -24,6 +24,17 @@ export type ExamScope = "GENERAL" | "SCHOOL" | "REGIONAL" | "NATIONAL";
 
 export type ExamContextStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 
+export interface QuestionReportItem {
+  readonly id: string;
+  readonly studentName?: string;
+  readonly reason: string;
+  readonly comment?: string;
+  readonly status: "PENDING" | "RESOLVED";
+  readonly createdAt: string;
+  readonly resolvedAt?: string;
+  readonly resolvedById?: string;
+}
+
 export interface QuestionOptionItem {
   readonly id?: string;
   readonly text: string;
@@ -38,6 +49,8 @@ export interface QuestionVersionItem {
   readonly prompt: string;
   readonly explanation?: string | null;
   readonly hint?: string | null;
+  readonly imageUrl?: string | null;
+  readonly configuration?: Record<string, unknown> | null;
   readonly metadata?: Record<string, unknown> | null;
   readonly changeLog?: string | null;
   readonly options: readonly QuestionOptionItem[];
@@ -48,6 +61,7 @@ export interface QuestionListItem {
   readonly id: string;
   readonly code: string;
   readonly questionBankId: string;
+  readonly source?: QuestionSourceType | string;
   readonly type: QuestionType;
   readonly difficulty: DifficultyLevel;
   readonly status: QuestionStatus;
@@ -55,14 +69,33 @@ export interface QuestionListItem {
   readonly prompt: string;
   readonly explanation?: string | null;
   readonly hint?: string | null;
+  readonly imageUrl?: string | null;
+  readonly configuration?: Record<string, unknown> | null;
+  readonly reports?: readonly QuestionReportItem[];
   readonly currentVersionNumber: number;
   readonly options: readonly QuestionOptionItem[];
   readonly topicId?: string | null;
+  readonly topic?: {
+    readonly id: string;
+    readonly title: string;
+    readonly code: string;
+  } | null;
   readonly unitId?: string | null;
+  readonly unit?: {
+    readonly id: string;
+    readonly title: string;
+    readonly code: string;
+  } | null;
   readonly gradeId?: string | null;
   readonly subjectId?: string | null;
   readonly objectiveId?: string | null;
   readonly examContextId?: string | null;
+  readonly examContext?: {
+    readonly id: string;
+    readonly name: string;
+    readonly code: string;
+    readonly scope: ExamScope;
+  } | null;
   readonly examYear?: number | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -96,6 +129,8 @@ export interface CreateQuestionDto {
   readonly prompt: string;
   readonly explanation?: string | null;
   readonly hint?: string | null;
+  readonly imageUrl?: string | null;
+  readonly configuration?: Record<string, unknown> | null;
   readonly options?: readonly QuestionOptionItem[];
   readonly subjectId?: string | null;
   readonly gradeId?: string | null;
@@ -115,6 +150,8 @@ export interface UpdateQuestionDto {
   readonly prompt?: string;
   readonly explanation?: string | null;
   readonly hint?: string | null;
+  readonly imageUrl?: string | null;
+  readonly configuration?: Record<string, unknown> | null;
   readonly options?: readonly QuestionOptionItem[];
   readonly subjectId?: string | null;
   readonly gradeId?: string | null;

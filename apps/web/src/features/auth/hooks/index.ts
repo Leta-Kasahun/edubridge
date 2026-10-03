@@ -5,3 +5,4 @@ export * from "./useFirstLoginSetup";
 export * from "./useGoogleAuth";
 export * from "./useLogout";
 export * from "./useChangePassword";
+export * from "./useAdminResetPassword";

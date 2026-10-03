@@ -106,7 +106,7 @@ export function QuestionBankSubjectAccordion({
                       <th className="py-2.5 px-3 text-center">Questions</th>
                       <th className="py-2.5 px-4">Status</th>
                       <th className="py-2.5 px-4">Created Date</th>
-                      <th className="py-2.5 px-4 text-right w-24">Actions</th>
+                      <th className="py-2.5 px-4 text-right w-28">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -169,7 +169,7 @@ export function QuestionBankSubjectAccordion({
                             {formattedDate}
                           </td>
 
-                          <td className="py-3 px-4 text-right w-24">
+                          <td className="py-3 px-4 text-right w-28">
                             {renderRowActions(bank)}
                           </td>
                         </tr>

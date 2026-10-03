@@ -110,6 +110,15 @@ export class AuthService {
   ) {
     return this.passwordSvc.changePassword(userId, currentPass, newPass, tenantId);
   }
+
+  async adminResetPassword(
+    tenantId: string | undefined,
+    targetUserId: string,
+    newPassword?: string,
+    adminUserId?: string
+  ): Promise<{ username: string; tempPassword: string; fullName: string }> {
+    return this.passwordSvc.adminResetPassword(tenantId, targetUserId, newPassword, adminUserId);
+  }
 }
 
 export const authService = new AuthService();

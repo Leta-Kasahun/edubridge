@@ -103,8 +103,8 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
     children: [
-      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
-      { label: "Exam Contexts", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
+      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
   {
@@ -122,8 +122,8 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.PROVISIONING.BASE,
     icon: UserPlus,
     children: [
-      { label: "Teacher Onboarding", href: ROUTES.PROVISIONING.TEACHERS },
-      { label: "Student Onboarding", href: ROUTES.PROVISIONING.STUDENTS },
+      { label: "Teachers", href: ROUTES.PROVISIONING.TEACHERS },
+      { label: "Students", href: ROUTES.PROVISIONING.STUDENTS },
     ],
   },
   {
@@ -161,8 +161,12 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
   },
   {
     label: "Question Banks",
-    href: ROUTES.QUESTION_BANK.BANKS,
+    href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
+    children: [
+      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
+    ],
   },
   {
     label: "Assessments",

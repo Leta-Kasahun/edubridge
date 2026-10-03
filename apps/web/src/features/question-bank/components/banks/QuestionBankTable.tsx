@@ -12,6 +12,8 @@ import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { getErrorMessage } from "@/shared/utils";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
 import {
   QuestionBankItem,
   QuestionBankStatus,
@@ -37,6 +39,14 @@ import { QuestionUploadModal } from "../upload/QuestionUploadModal";
 import { ConfirmDeleteModal } from "@/shared/components";
 
 export function QuestionBankTable() {
+  const user = useAuthStore((s) => s.user);
+  const isTeacher = Boolean(
+    user?.roles?.includes("TEACHER") &&
+      !user?.roles?.includes("SYSTEM_ADMIN") &&
+      !user?.roles?.includes("SCHOOL_ADMIN")
+  );
+  const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [academicYearFilter, setAcademicYearFilter] = useState<string>("ALL");
@@ -51,12 +61,22 @@ export function QuestionBankTable() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
-  const { data: subjectsList = [] } = useSubjects();
-  const { data: gradesList = [] } = useGrades();
+  const { data: rawSubjectsList = [] } = useSubjects();
+  const { data: rawGradesList = [] } = useGrades();
   const { data: yearsResponse } = useAcademicYears();
   const academicYears = yearsResponse?.data ?? [];
   const { data: examContextsData } = useExamContexts({ limit: 100 });
   const examContexts = examContextsData?.items ?? [];
+
+  const effectiveGradesList = useMemo(() => {
+    if (!isTeacher || allowedGradeIds.length === 0) return rawGradesList;
+    return rawGradesList.filter((g) => allowedGradeIds.includes(g.id));
+  }, [rawGradesList, isTeacher, allowedGradeIds]);
+
+  const effectiveSubjectsList = useMemo(() => {
+    if (!isTeacher || allowedSubjectIds.length === 0) return rawSubjectsList;
+    return rawSubjectsList.filter((s) => allowedSubjectIds.includes(s.id));
+  }, [rawSubjectsList, isTeacher, allowedSubjectIds]);
 
   const { data, isLoading, error } = useQuestionBanks({
     search: search.trim() || undefined,
@@ -105,12 +125,28 @@ export function QuestionBankTable() {
 
   const rawItems = data?.items ?? [];
 
+  const scopedItems = useMemo(() => {
+    if (!isTeacher) return rawItems;
+    if (allowedSubjectIds.length === 0 && allowedGradeIds.length === 0) return rawItems;
+    return rawItems.filter((item) => {
+      const matchSubject =
+        !item.subjectId ||
+        allowedSubjectIds.length === 0 ||
+        allowedSubjectIds.includes(item.subjectId);
+      const matchGrade =
+        !item.gradeId ||
+        allowedGradeIds.length === 0 ||
+        allowedGradeIds.includes(item.gradeId);
+      return matchSubject && matchGrade;
+    });
+  }, [rawItems, isTeacher, allowedSubjectIds, allowedGradeIds]);
+
   const gradeTabs: readonly QuestionGradeTabItem[] = useMemo(() => {
-    return gradesList
+    return effectiveGradesList
       .slice()
       .sort((a, b) => a.level - b.level)
       .map((g) => {
-        const count = rawItems.filter(
+        const count = scopedItems.filter(
           (item) => item.gradeId === g.id || item.grade?.level === g.level
         ).length;
         return {
@@ -119,26 +155,26 @@ export function QuestionBankTable() {
           count,
         };
       });
-  }, [gradesList, rawItems]);
+  }, [effectiveGradesList, scopedItems]);
 
   const activeGrade = useMemo(() => {
     if (selectedGradeId === "ALL") return null;
-    return gradesList.find((g) => g.id === selectedGradeId) || null;
-  }, [gradesList, selectedGradeId]);
+    return effectiveGradesList.find((g) => g.id === selectedGradeId) || null;
+  }, [effectiveGradesList, selectedGradeId]);
 
   const filteredByGradeItems = useMemo(() => {
-    if (!activeGrade) return rawItems;
-    return rawItems.filter(
+    if (!activeGrade) return scopedItems;
+    return scopedItems.filter(
       (item) =>
         item.gradeId === activeGrade.id || item.grade?.level === activeGrade.level
     );
-  }, [rawItems, activeGrade]);
+  }, [scopedItems, activeGrade]);
 
   const subjectGroups: readonly BankSubjectAccordionGroup[] = useMemo(() => {
     const map = new Map<string, QuestionBankItem[]>();
     const knownSubjects = new Map<string, { name: string; code?: string }>();
 
-    for (const sub of subjectsList) {
+    for (const sub of effectiveSubjectsList) {
       knownSubjects.set(sub.id, { name: sub.name, code: sub.code });
       map.set(sub.id, []);
     }
@@ -149,21 +185,23 @@ export function QuestionBankTable() {
       if (item.subjectId && map.has(item.subjectId)) {
         map.get(item.subjectId)!.push(item);
       } else if (item.subjectId && !map.has(item.subjectId)) {
-        map.set(item.subjectId, [item]);
-        knownSubjects.set(item.subjectId, {
-          name: item.subject?.name || "Subject",
-          code: item.subject?.code,
-        });
+        if (!isTeacher || allowedSubjectIds.length === 0 || allowedSubjectIds.includes(item.subjectId)) {
+          map.set(item.subjectId, [item]);
+          knownSubjects.set(item.subjectId, {
+            name: item.subject?.name || "Subject",
+            code: item.subject?.code,
+          });
+        }
       } else if (item.subject?.name) {
         const found = Array.from(knownSubjects.entries()).find(
           ([, val]) => val.name.toLowerCase() === item.subject!.name.toLowerCase()
         );
         if (found) {
           map.get(found[0])!.push(item);
-        } else {
+        } else if (!isTeacher) {
           unassigned.push(item);
         }
-      } else {
+      } else if (!isTeacher) {
         unassigned.push(item);
       }
     }
@@ -194,7 +232,7 @@ export function QuestionBankTable() {
     }
 
     return result;
-  }, [filteredByGradeItems, subjectsList, selectedGradeId]);
+  }, [filteredByGradeItems, effectiveSubjectsList, selectedGradeId, isTeacher, allowedSubjectIds]);
 
   useEffect(() => {
     if (subjectGroups.length > 0 && openSubjectIds.size === 0) {
@@ -313,10 +351,10 @@ export function QuestionBankTable() {
         grades={gradeTabs}
         selectedGradeId={selectedGradeId}
         onSelectGrade={(id) => setSelectedGradeId(id)}
-        totalCount={rawItems.length}
+        totalCount={scopedItems.length}
       />
 
-      {rawItems.length === 0 ? (
+      {scopedItems.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <BookOpen size={20} />
@@ -325,7 +363,9 @@ export function QuestionBankTable() {
             No Question Banks Found
           </h3>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
-            No question banks match the selected filters. Add a new question bank or adjust your search filters.
+            {isTeacher
+              ? "No question banks found for your assigned subjects and grades. Create a new question bank or adjust your filters."
+              : "No question banks match the selected filters. Add a new question bank or adjust your search filters."}
           </p>
           <button
             type="button"
@@ -370,6 +410,8 @@ export function QuestionBankTable() {
           setEditingBank(null);
         }}
         initialData={editingBank}
+        allowedSubjectIds={isTeacher ? allowedSubjectIds : undefined}
+        allowedGradeIds={isTeacher ? allowedGradeIds : undefined}
       />
 
       {uploadBankId && (

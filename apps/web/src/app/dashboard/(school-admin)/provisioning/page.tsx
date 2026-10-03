@@ -14,7 +14,7 @@ interface OnboardingSectionItem {
 
 const ONBOARDING_SECTIONS: readonly OnboardingSectionItem[] = [
   {
-    title: "Teacher Onboarding",
+    title: "Teachers",
     description:
       "Onboard teaching faculty, manage employee codes, and distribute credentials.",
     href: ROUTES.PROVISIONING.TEACHERS,
@@ -22,7 +22,7 @@ const ONBOARDING_SECTIONS: readonly OnboardingSectionItem[] = [
     badge: "Faculty",
   },
   {
-    title: "Student Onboarding",
+    title: "Students",
     description:
       "Enroll students across grades and sections with bulk CSV import and credentials.",
     href: ROUTES.PROVISIONING.STUDENTS,
