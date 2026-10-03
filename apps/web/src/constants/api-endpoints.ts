@@ -212,6 +212,7 @@ export const API_ENDPOINTS = {
     STUDENT: (studentId: string) => `/mastery/students/${studentId}`,
     TOPIC_HISTORY: (studentId: string, topicId: string) => `/mastery/students/${studentId}/topics/${topicId}/history`,
     RECALCULATE: "/mastery/recalculate",
+    PRACTICE: "/mastery/practice",
   },
   HEALTH: "/health",
   NOTIFICATIONS: {
