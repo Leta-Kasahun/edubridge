@@ -6,12 +6,20 @@ import { validate } from "../../middleware/validate.js";
 import {
   sectionMasteryQuerySchema,
   studentMasteryQuerySchema,
+  recordPracticeEvidenceSchema,
 } from "./schemas/mastery.schema.js";
 
 const router: Router = Router();
 const controller = new MasteryController();
 
 router.use(authenticate);
+
+router.post(
+  "/practice",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  validate(recordPracticeEvidenceSchema),
+  controller.recordPracticeEvidence
+);
 
 router.get(
   "/sections/:sectionId",
