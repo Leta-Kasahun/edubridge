@@ -34,13 +34,13 @@ export const SubmitAttemptSchema = z.object({
 
 export const ManualGradeAnswerItemSchema = z.object({
   questionVersionId: z.string().uuid("Invalid questionVersionId format"),
-  awardedPoints: z.number().min(0, "Awarded points must be 0 or positive"),
-  feedback: z.string().trim().max(1000).optional(),
+  awardedPoints: z.coerce.number().min(0, "Awarded points must be 0 or positive"),
+  feedback: z.string().trim().max(1000).nullish(),
 });
 
 export const ManualGradeAttemptSchema = z.object({
-  grades: z.array(ManualGradeAnswerItemSchema).min(1, "At least one grade item is required"),
-  generalFeedback: z.string().trim().max(2000).optional(),
+  grades: z.array(ManualGradeAnswerItemSchema).default([]),
+  generalFeedback: z.string().trim().max(2000).nullish(),
 });
 
 export const AttemptQuerySchema = z.object({

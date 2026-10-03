@@ -533,20 +533,30 @@ export class AttemptRepository {
       });
 
       for (const gradeItem of dto.grades) {
-        await tx.studentAnswer.update({
+        await tx.studentAnswer.upsert({
           where: {
             attemptId_questionVersionId: {
               attemptId,
               questionVersionId: gradeItem.questionVersionId,
             },
           },
-          data: {
+          create: {
+            attemptId,
+            questionVersionId: gradeItem.questionVersionId,
             awardedPoints: new Prisma.Decimal(gradeItem.awardedPoints),
             feedback: gradeItem.feedback ?? null,
             gradedById,
             gradedAt: new Date(),
             status: "GRADED",
-            isCorrect: gradeItem.awardedPoints > 0,
+            isCorrect: Number(gradeItem.awardedPoints) > 0,
+          },
+          update: {
+            awardedPoints: new Prisma.Decimal(gradeItem.awardedPoints),
+            feedback: gradeItem.feedback ?? null,
+            gradedById,
+            gradedAt: new Date(),
+            status: "GRADED",
+            isCorrect: Number(gradeItem.awardedPoints) > 0,
           },
         });
       }
