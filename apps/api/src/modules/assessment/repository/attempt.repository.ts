@@ -481,8 +481,34 @@ export class AttemptRepository {
           percentage: new Prisma.Decimal(data.percentage),
         },
         include: {
-          answers: true,
-          assessment: true,
+          answers: {
+            include: {
+              questionVersion: {
+                include: {
+                  options: {
+                    orderBy: { orderIndex: "asc" },
+                  },
+                  question: true,
+                },
+              },
+            },
+          },
+          assessment: {
+            include: {
+              questions: {
+                include: {
+                  questionVersion: {
+                    include: {
+                      options: {
+                        orderBy: { orderIndex: "asc" },
+                      },
+                    },
+                  },
+                },
+                orderBy: { orderIndex: "asc" },
+              },
+            },
+          },
         },
       });
     });
