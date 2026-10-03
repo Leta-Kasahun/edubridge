@@ -9,6 +9,7 @@ import {
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
 import { prisma } from "../../../lib/prisma.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
 
 export class AssessmentService {
   constructor(private readonly assessmentRepo: AssessmentRepository = new AssessmentRepository()) {}
@@ -97,7 +98,17 @@ export class AssessmentService {
       await this.assessmentRepo.update(tenantId, id, { status: "PUBLISHED" });
     }
 
-    return this.assessmentRepo.assignToSections(tenantId, id, createdById, dto);
+    const result = await this.assessmentRepo.assignToSections(tenantId, id, createdById, dto);
+
+    domainEventBus.emitEvent("assessment.assigned", {
+      tenantId,
+      assessmentId: id,
+      assessmentTitle: assessment.title,
+      sectionIds: dto.sectionIds,
+      availableUntil: assessment.availableUntil ? assessment.availableUntil.toISOString() : null,
+    });
+
+    return result;
   }
 
   async publish(tenantId: string, id: string) {
