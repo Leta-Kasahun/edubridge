@@ -14,6 +14,7 @@ import {
   TeacherStatusChangedEvent,
   StudentPromotionCommittedEvent,
   StudentWithdrawnEvent,
+  QuestionFeedbackSubmittedEvent,
 } from "../../../shared/events/domain-events.js";
 import { prisma, runWithoutTenant } from "../../../lib/prisma.js";
 import { notificationService } from "../services/notification.service.js";
@@ -526,6 +527,31 @@ async function handleStudentWithdrawn(
   });
 }
 
+async function handleQuestionFeedbackSubmitted(
+  event: QuestionFeedbackSubmittedEvent
+): Promise<void> {
+  const targetUserId = event.teacherUserId;
+  if (!targetUserId) return;
+
+  await notificationService.sendToUser({
+    tenantId: event.tenantId,
+    userId: targetUserId,
+    category: "ASSESSMENT",
+    priority: "NORMAL",
+    title: `Question Feedback from ${event.studentName}`,
+    body: `${event.studentName} sent feedback on "${event.assessmentTitle}": "${event.feedbackText}"`,
+    actionUrl: `/dashboard/assessments/${event.assessmentId}`,
+    sourceType: "ASSESSMENT_QUESTION_FEEDBACK",
+    sourceId: event.assessmentId,
+    metadata: {
+      questionVersionId: event.questionVersionId,
+      category: event.category,
+      studentUserId: event.studentUserId,
+      feedbackText: event.feedbackText,
+    },
+  });
+}
+
 export function registerNotificationListeners(): void {
   domainEventBus.onEvent("teacher.assigned", handleTeacherAssigned);
   domainEventBus.onEvent("teacher.reassigned", handleTeacherReassigned);
@@ -541,4 +567,5 @@ export function registerNotificationListeners(): void {
   domainEventBus.onEvent("teacher.status_changed", handleTeacherStatusChanged);
   domainEventBus.onEvent("student.promotion_committed", handleStudentPromotionCommitted);
   domainEventBus.onEvent("student.withdrawn", handleStudentWithdrawn);
+  domainEventBus.onEvent("assessment.question-feedback", handleQuestionFeedbackSubmitted);
 }
