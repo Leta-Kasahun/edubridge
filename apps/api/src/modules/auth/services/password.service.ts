@@ -12,6 +12,7 @@ import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
 
 export class PasswordService {
   constructor(
@@ -152,6 +153,13 @@ export class PasswordService {
       description: "User password changed successfully.",
     });
 
+    if (activeTenantId) {
+      domainEventBus.emitEvent("auth.password_changed_self", {
+        tenantId: activeTenantId,
+        userId,
+      });
+    }
+
     return { message: "Password updated successfully" };
   }
 
@@ -192,6 +200,13 @@ export class PasswordService {
       riskLevel: "LOW",
       description: `Password reset by administrator (${adminUserId || "System"}).`,
     });
+
+    if (activeTenantId) {
+      domainEventBus.emitEvent("auth.password_reset_by_admin", {
+        tenantId: activeTenantId,
+        targetUserId: user.id,
+      });
+    }
 
     const fullName = user.teacherProfile
       ? `${user.teacherProfile.firstName} ${user.teacherProfile.lastName || ""}`.trim()
