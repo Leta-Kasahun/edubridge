@@ -237,6 +237,32 @@ export function StudentAssessmentCompletedView({
                     </p>
                   </div>
 
+                  {/* Teacher Feedback / Grading Remarks Banner */}
+                  {ans.feedback && (
+                    <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs space-y-1">
+                      <span className="text-[10px] font-bold text-primary uppercase flex items-center gap-1.5">
+                        <MessageSquare size={13} />
+                        Instructor Feedback:
+                      </span>
+                      <p className="text-foreground font-medium leading-relaxed">
+                        {ans.feedback}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Correct Option preview for incorrect MCQ/TF */}
+                  {isWrong && qv?.options && qv.options.some((o) => o.isCorrect) && (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                        Correct Option:
+                      </span>
+                      <p className="text-emerald-700 dark:text-emerald-300 font-medium">
+                        {qv.options.find((o) => o.isCorrect)?.optionText ||
+                          qv.options.find((o) => o.isCorrect)?.optionKey}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="pt-2 border-t border-border/70 flex items-center justify-between gap-2 flex-wrap">
                     <button
                       type="button"
@@ -244,7 +270,7 @@ export function StudentAssessmentCompletedView({
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                       <Lightbulb size={14} className="text-amber-500" />
-                      <span>{isExplanationOpen ? "Hide Explanation" : "View Explanation"}</span>
+                      <span>{isExplanationOpen ? "Hide Solution & Explanation" : "View Solution & Explanation"}</span>
                     </button>
 
                     <button
@@ -253,14 +279,14 @@ export function StudentAssessmentCompletedView({
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                       <MessageSquare size={13} />
-                      <span>{isFeedbackSubmitted ? "Comment Submitted" : "Submit Feedback"}</span>
+                      <span>{isFeedbackSubmitted ? "Comment Submitted" : "Submit Question Feedback"}</span>
                     </button>
                   </div>
 
                   {isExplanationOpen && (
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border text-xs sm:text-sm text-muted-foreground leading-relaxed animate-in fade-in-0">
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       <strong className="text-foreground block mb-1">
-                        Solution Note:
+                        Step-by-Step Solution & Rationale:
                       </strong>
                       <p>
                         {qv?.explanation || "No additional solution note provided for this question."}
