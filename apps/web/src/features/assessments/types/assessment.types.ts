@@ -91,7 +91,7 @@ export interface AssessmentItem {
 
 export interface CreateAssessmentPayload {
   title: string;
-  description?: string;
+  description?: string | null;
   type: AssessmentType;
   gradingMode?: GradingMode;
   timeLimitMinutes?: number | null;
@@ -232,10 +232,10 @@ export interface AssessmentAttemptResult {
 export interface ManualGradeItemPayload {
   questionVersionId: string;
   awardedPoints: number;
-  feedback?: string;
+  feedback?: string | null;
 }
 
 export interface ManualGradeAttemptPayload {
   grades: ManualGradeItemPayload[];
-  generalFeedback?: string;
+  generalFeedback?: string | null;
 }

@@ -18,7 +18,11 @@ import {
   useArchiveAssessment,
 } from "../hooks/useAssessments";
 import { useAssessmentAttempts, useManualGradeAttempt } from "../hooks/useAssessmentAttempt";
-import { AssessmentItem, AssessmentAttemptResult } from "../types/assessment.types";
+import {
+  AssessmentItem,
+  AssessmentAttemptResult,
+  ManualGradeAttemptPayload,
+} from "../types/assessment.types";
 import { AssessmentGradeTabs } from "./AssessmentGradeTabs";
 import {
   AssessmentSubjectAccordion,
@@ -209,10 +213,7 @@ export function AssessmentListView() {
     setDeletingAssessment(null);
   };
 
-  const handleManualGradeSubmit = async (payload: {
-    grades: Array<{ questionVersionId: string; awardedPoints: number; feedback?: string }>;
-    generalFeedback?: string;
-  }) => {
+  const handleManualGradeSubmit = async (payload: ManualGradeAttemptPayload) => {
     if (!viewingResultsFor || !manualGradingAttempt) return;
     await manualGradeMutation.mutateAsync({
       assessmentId: viewingResultsFor.id,
@@ -287,7 +288,9 @@ export function AssessmentListView() {
             isOpen={Boolean(manualGradingAttempt)}
             onClose={() => setManualGradingAttempt(null)}
             onSubmit={handleManualGradeSubmit}
-            attempt={manualGradingAttempt}
+            assessmentId={viewingResultsFor.id}
+            attemptId={manualGradingAttempt.id}
+            initialAttempt={manualGradingAttempt}
             isLoading={manualGradeMutation.isPending}
           />
         )}
