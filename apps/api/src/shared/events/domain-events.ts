@@ -53,6 +53,60 @@ export interface StudentEnrolledEvent {
   actorUserId?: string;
 }
 
+export interface AssessmentGradedEvent {
+  tenantId: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  attemptId: string;
+  studentUserId: string;
+  teacherName?: string | null;
+  percentage: number;
+  isManual: boolean;
+}
+
+export interface AssessmentAssignedEvent {
+  tenantId: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  sectionIds: string[];
+  availableUntil?: string | null;
+}
+
+export interface PasswordResetByAdminEvent {
+  tenantId: string;
+  targetUserId: string;
+}
+
+export interface PasswordChangedSelfEvent {
+  tenantId: string;
+  userId: string;
+}
+
+export interface StudentStatusChangedEvent {
+  tenantId: string;
+  studentUserId: string;
+  newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+}
+
+export interface TeacherStatusChangedEvent {
+  tenantId: string;
+  teacherUserId: string;
+  newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+}
+
+export interface StudentPromotionCommittedEvent {
+  tenantId: string;
+  studentId: string;
+  targetAcademicYearName: string;
+  targetGradeLevel: number;
+  isPromoted: boolean;
+}
+
+export interface StudentWithdrawnEvent {
+  tenantId: string;
+  studentId: string;
+}
+
 export interface DomainEventMap {
   "teacher.assigned": TeacherAssignedEvent;
   "teacher.reassigned": TeacherReassignedEvent;
@@ -60,6 +114,14 @@ export interface DomainEventMap {
   "question_bank.published": QuestionBankPublishedEvent;
   "learning_content.published": LearningContentPublishedEvent;
   "student.enrolled": StudentEnrolledEvent;
+  "assessment.graded": AssessmentGradedEvent;
+  "assessment.assigned": AssessmentAssignedEvent;
+  "auth.password_reset_by_admin": PasswordResetByAdminEvent;
+  "auth.password_changed_self": PasswordChangedSelfEvent;
+  "student.status_changed": StudentStatusChangedEvent;
+  "teacher.status_changed": TeacherStatusChangedEvent;
+  "student.promotion_committed": StudentPromotionCommittedEvent;
+  "student.withdrawn": StudentWithdrawnEvent;
 }
 
 export class DomainEventBus extends EventEmitter {
