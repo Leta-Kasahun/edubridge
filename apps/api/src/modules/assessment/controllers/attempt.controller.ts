@@ -186,4 +186,21 @@ export class AttemptController {
       data: items,
     });
   });
+
+  listStudentResults = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.tenantId || !req.user?.userId) {
+      throw new UnauthorizedError();
+    }
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const result = await this.attemptService.listStudentResults(
+      req.user.tenantId,
+      req.user.userId,
+      { page, limit }
+    );
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
