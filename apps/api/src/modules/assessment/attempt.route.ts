@@ -24,6 +24,12 @@ router.get(
   attemptController.listStudentInProgress
 );
 
+router.get(
+  "/student/results",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
+  attemptController.listStudentResults
+);
+
 router.post(
   "/:id/attempts/start",
   requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
