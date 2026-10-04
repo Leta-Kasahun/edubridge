@@ -23,19 +23,6 @@ export class QuestionBankRepository {
       });
       if (existing) {
         contextIdToConnect = existing.id;
-      } else if (data.subjectId || data.gradeId) {
-        const createdContext = await prisma.examContext.create({
-          data: {
-            tenantId,
-            name: `${data.name} Framework`,
-            code: `EC-${Date.now().toString(36).toUpperCase()}`,
-            scope: "GENERAL",
-            status: "ACTIVE",
-            ...(data.subjectId && isValidUuid(data.subjectId) && { subjectId: data.subjectId }),
-            ...(data.gradeId && isValidUuid(data.gradeId) && { gradeId: data.gradeId }),
-          },
-        });
-        contextIdToConnect = createdContext.id;
       }
     }
 
