@@ -22,6 +22,7 @@ export const ROUTES = {
     DASHBOARD: "/dashboard",
     MY_CLASS: "/dashboard/my-class",
     EXAMS: "/dashboard/assessments",
+    RESULTS: "/dashboard/results",
     PRACTICE: "/dashboard/assessments",
     PROGRESS: "/dashboard/progress",
     MATERIALS: "/dashboard/learning-content/materials",
