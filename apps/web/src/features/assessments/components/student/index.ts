@@ -5,3 +5,4 @@ export * from "./StudentAssessmentEntryView";
 export * from "./StudentAssessmentRunnerView";
 export * from "./StudentAssessmentsView";
 export * from "./StudentProgressView";
+export * from "./StudentResultsListView";
