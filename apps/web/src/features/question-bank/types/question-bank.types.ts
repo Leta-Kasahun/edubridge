@@ -59,6 +59,8 @@ export interface QuestionVersionItem {
 
 export interface QuestionListItem {
   readonly id: string;
+  readonly versionId?: string;
+  readonly latestVersionId?: string;
   readonly code: string;
   readonly questionBankId: string;
   readonly source?: QuestionSourceType | string;
