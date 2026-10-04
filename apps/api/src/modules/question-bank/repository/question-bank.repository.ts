@@ -245,4 +245,147 @@ export class QuestionBankRepository {
       where: { id },
     });
   }
+
+  async upsertStudentPracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string,
+    data: {
+      currentIndex: number;
+      totalQuestions: number;
+      answeredCount: number;
+      secondsElapsed: number;
+      isFinished: boolean;
+      selectedAnswers?: Record<string, string>;
+      flaggedQuestionIds?: string[];
+      eliminatedOptions?: Record<string, string[]>;
+      revealedExplanations?: Record<string, boolean>;
+    }
+  ) {
+    return prisma.studentPracticeSession.upsert({
+      where: {
+        studentId_bankId: {
+          studentId,
+          bankId,
+        },
+      },
+      create: {
+        tenantId,
+        studentId,
+        bankId,
+        currentIndex: data.currentIndex,
+        totalQuestions: data.totalQuestions,
+        answeredCount: data.answeredCount,
+        secondsElapsed: data.secondsElapsed,
+        isFinished: data.isFinished,
+        selectedAnswers: data.selectedAnswers || {},
+        flaggedQuestionIds: data.flaggedQuestionIds || [],
+        eliminatedOptions: data.eliminatedOptions || {},
+        revealedExplanations: data.revealedExplanations || {},
+        lastAccessedAt: new Date(),
+      },
+      update: {
+        currentIndex: data.currentIndex,
+        totalQuestions: data.totalQuestions,
+        answeredCount: data.answeredCount,
+        secondsElapsed: data.secondsElapsed,
+        isFinished: data.isFinished,
+        selectedAnswers: data.selectedAnswers || {},
+        flaggedQuestionIds: data.flaggedQuestionIds || [],
+        eliminatedOptions: data.eliminatedOptions || {},
+        revealedExplanations: data.revealedExplanations || {},
+        lastAccessedAt: new Date(),
+      },
+    });
+  }
+
+  async getStudentPracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string
+  ) {
+    return prisma.studentPracticeSession.findUnique({
+      where: {
+        studentId_bankId: {
+          studentId,
+          bankId,
+        },
+      },
+    });
+  }
+
+  async deleteStudentPracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string
+  ) {
+    return prisma.studentPracticeSession.deleteMany({
+      where: {
+        tenantId,
+        studentId,
+        bankId,
+      },
+    });
+  }
+
+  async listStudentInProgressPractices(
+    tenantId: string,
+    studentId: string
+  ) {
+    const sessions = await prisma.studentPracticeSession.findMany({
+      where: {
+        tenantId,
+        studentId,
+        isFinished: false,
+        answeredCount: { gt: 0 },
+      },
+      include: {
+        bank: {
+          include: {
+            examContexts: {
+              include: {
+                subject: true,
+                grade: true,
+              },
+            },
+            _count: {
+              select: {
+                questions: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        lastAccessedAt: "desc",
+      },
+      take: 20,
+    });
+
+    return sessions
+      .filter((s) => s.bank && s.totalQuestions > 0 && s.answeredCount < s.totalQuestions)
+      .map((s) => {
+        const subject = s.bank.examContexts[0]?.subject;
+        const grade = s.bank.examContexts[0]?.grade;
+        const total = s.totalQuestions || s.bank._count.questions || 1;
+        const answered = s.answeredCount;
+        const progressPercent = Math.min(100, Math.round((answered / total) * 100));
+
+        return {
+          id: s.id,
+          bankId: s.bankId,
+          bankName: s.bank.name,
+          subjectName: subject?.name ?? "General Practice",
+          subjectCode: subject?.code,
+          gradeLevel: grade?.level,
+          currentIndex: s.currentIndex,
+          answeredCount: answered,
+          totalQuestions: total,
+          secondsElapsed: s.secondsElapsed,
+          progressPercent,
+          lastAccessedAt: s.lastAccessedAt,
+        };
+      });
+  }
 }
+
