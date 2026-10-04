@@ -78,3 +78,10 @@ export const SubmitQuestionReportSchema = z.object({
 
 export type SubmitQuestionReportInput = z.infer<typeof SubmitQuestionReportSchema>;
 
+export const ResolveQuestionReportSchema = z.object({
+  resolutionNote: z.string().trim().max(1000).optional().nullable(),
+});
+
+export type ResolveQuestionReportInput = z.infer<typeof ResolveQuestionReportSchema>;
+
+
