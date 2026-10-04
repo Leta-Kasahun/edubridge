@@ -111,6 +111,10 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Assessments",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: CheckSquare,
+    children: [
+      { label: "Assessments", href: ROUTES.ASSESSMENTS.LIST },
+      { label: "Results & Grading", href: ROUTES.ASSESSMENTS.RESULTS },
+    ],
   },
   {
     label: "Learning Progress",
@@ -172,6 +176,10 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Assessments",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: CheckSquare,
+    children: [
+      { label: "Assessments", href: ROUTES.ASSESSMENTS.LIST },
+      { label: "Results & Grading", href: ROUTES.ASSESSMENTS.RESULTS },
+    ],
   },
   {
     label: "Learning Progress",
