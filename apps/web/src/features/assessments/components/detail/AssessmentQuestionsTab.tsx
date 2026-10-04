@@ -13,9 +13,11 @@ import {
   Binary,
   Lightbulb,
   Image as ImageIcon,
+  AlertTriangle,
+  Check,
 } from "lucide-react";
 import { AssessmentQuestionItem } from "../../types/assessment.types";
-import { QuestionListItem } from "@/features/question-bank/types/question-bank.types";
+import { QuestionListItem, QuestionReportItem } from "@/features/question-bank/types/question-bank.types";
 import {
   QuestionTypeBadge,
   QuestionDifficultyBadge,
@@ -138,6 +140,8 @@ export function AssessmentQuestionsTab({
     if (target?.questionVersion) {
       const v = target.questionVersion;
       const actualIdx = questions.findIndex((q) => q.questionVersionId === target.questionVersionId);
+      const vConfig = v.configuration && typeof v.configuration === "object" ? (v.configuration as Record<string, unknown>) : null;
+      const vReports = (vConfig && Array.isArray(vConfig.reports) ? vConfig.reports : []) as unknown as readonly QuestionReportItem[];
       onPreviewQuestion({
         id: v.questionId,
         prompt: v.questionText,
@@ -149,6 +153,8 @@ export function AssessmentQuestionsTab({
         currentVersionNumber: v.version,
         questionBankId: "",
         imageUrl: v.imageUrl || null,
+        configuration: vConfig || undefined,
+        reports: vReports,
         options: (v.options || []).map((o, oIdx) => ({
           id: o.id || String(oIdx),
           text: o.optionText,
@@ -336,6 +342,27 @@ export function AssessmentQuestionsTab({
                       {version?.difficulty && (
                         <QuestionDifficultyBadge difficulty={version.difficulty} />
                       )}
+                      {(() => {
+                        const vConfig = version?.configuration && typeof version.configuration === "object" ? (version.configuration as Record<string, unknown>) : null;
+                        const vReports = (vConfig && Array.isArray(vConfig.reports) ? vConfig.reports : []) as Array<Record<string, unknown>>;
+                        const pendingCount = vReports.filter((r) => r.status === "PENDING").length;
+                        const resolvedCount = vReports.filter((r) => r.status === "RESOLVED").length;
+                        if (pendingCount > 0) {
+                          return (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/30">
+                              <AlertTriangle size={11} /> {pendingCount} Feedback Pending
+                            </span>
+                          );
+                        }
+                        if (resolvedCount > 0) {
+                          return (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                              <Check size={11} /> Feedback Resolved ({resolvedCount})
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
 
                     <p className="text-xs sm:text-sm font-semibold text-foreground break-words leading-relaxed pt-1">
@@ -390,7 +417,9 @@ export function AssessmentQuestionsTab({
                     {version && (
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          const vConfig = version.configuration && typeof version.configuration === "object" ? (version.configuration as Record<string, unknown>) : null;
+                          const vReports = (vConfig && Array.isArray(vConfig.reports) ? vConfig.reports : []) as unknown as readonly QuestionReportItem[];
                           onPreviewQuestion({
                             id: version.questionId,
                             prompt: version.questionText,
@@ -402,6 +431,8 @@ export function AssessmentQuestionsTab({
                             currentVersionNumber: version.version,
                             questionBankId: "",
                             imageUrl: version.imageUrl || null,
+                            configuration: vConfig || undefined,
+                            reports: vReports,
                             options: (version.options || []).map((o, oIdx) => ({
                               id: o.id || String(oIdx),
                               text: o.optionText,
@@ -411,8 +442,8 @@ export function AssessmentQuestionsTab({
                             explanation: version.explanation || null,
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
-                          })
-                        }
+                          });
+                        }}
                         className="h-8 w-8 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
                         title="Preview question and solution"
                         aria-label="Preview question"
