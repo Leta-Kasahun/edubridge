@@ -141,7 +141,7 @@ export function StudentDashboardOverview() {
         progress: p.progressPercent,
         completedItems: p.answeredCount,
         totalItems: p.totalQuestions,
-        href: `/dashboard/question-banks/${p.bankId}/practice`,
+        href: ROUTES.STUDENT.EXAMS,
       });
     }
 
@@ -156,7 +156,7 @@ export function StudentDashboardOverview() {
           progress: Math.round((p.answeredCount / p.totalQuestions) * 100),
           completedItems: p.answeredCount,
           totalItems: p.totalQuestions,
-          href: `/dashboard/question-banks/${p.bankId}/practice`,
+          href: ROUTES.STUDENT.EXAMS,
         });
       }
     }

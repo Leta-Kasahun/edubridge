@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
 import { QuestionListView } from "@/features/question-bank";
 import { useAuthStore } from "@/stores/auth.store";
+import { ROUTES } from "@/constants/routes";
 
 interface BankQuestionsPageProps {
   readonly params: Promise<{ bankId: string }>;
@@ -24,9 +25,9 @@ export default function BankQuestionsPage({ params }: BankQuestionsPageProps) {
 
   useEffect(() => {
     if (isStudent) {
-      router.replace(`/practice/${resolvedParams.bankId}`);
+      router.replace(ROUTES.STUDENT.EXAMS);
     }
-  }, [isStudent, resolvedParams.bankId, router]);
+  }, [isStudent, router]);
 
   return (
     <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "SYSTEM_ADMIN"]}>
