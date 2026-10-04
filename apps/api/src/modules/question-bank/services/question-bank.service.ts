@@ -160,4 +160,63 @@ export class QuestionBankService {
     }
     return this.repository.delete(tenantId, id);
   }
+
+  async savePracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string,
+    input: {
+      currentIndex: number;
+      totalQuestions: number;
+      answeredCount: number;
+      secondsElapsed: number;
+      isFinished: boolean;
+      selectedAnswers?: Record<string, string>;
+      flaggedQuestionIds?: string[];
+      eliminatedOptions?: Record<string, string[]>;
+      revealedExplanations?: Record<string, boolean>;
+    }
+  ) {
+    return this.repository.upsertStudentPracticeSession(
+      tenantId,
+      studentId,
+      bankId,
+      input
+    );
+  }
+
+  async getPracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string
+  ) {
+    return this.repository.getStudentPracticeSession(
+      tenantId,
+      studentId,
+      bankId
+    );
+  }
+
+  async deletePracticeSession(
+    tenantId: string,
+    studentId: string,
+    bankId: string
+  ) {
+    return this.repository.deleteStudentPracticeSession(
+      tenantId,
+      studentId,
+      bankId
+    );
+  }
+
+  async listStudentInProgressPractices(
+    tenantId: string,
+    studentId: string
+  ) {
+    return this.repository.listStudentInProgressPractices(
+      tenantId,
+      studentId
+    );
+  }
 }
+
