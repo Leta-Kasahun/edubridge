@@ -56,3 +56,25 @@ export const QuestionBankQuerySchema = z.object({
   gradeId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
   createdById: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
 });
+
+export const SavePracticeSessionSchema = z.object({
+  currentIndex: z.coerce.number().int().min(0).default(0),
+  totalQuestions: z.coerce.number().int().min(0).default(0),
+  answeredCount: z.coerce.number().int().min(0).default(0),
+  secondsElapsed: z.coerce.number().int().min(0).default(0),
+  isFinished: z.boolean().default(false),
+  selectedAnswers: z.record(z.string(), z.string()).optional().default({}),
+  flaggedQuestionIds: z.array(z.string()).optional().default([]),
+  eliminatedOptions: z.record(z.string(), z.array(z.string())).optional().default({}),
+  revealedExplanations: z.record(z.string(), z.boolean()).optional().default({}),
+});
+
+export type SavePracticeSessionInput = z.infer<typeof SavePracticeSessionSchema>;
+
+export const SubmitQuestionReportSchema = z.object({
+  reason: z.string().trim().min(2, "Reason is required").max(200),
+  comment: z.string().trim().max(1000).optional().nullable(),
+});
+
+export type SubmitQuestionReportInput = z.infer<typeof SubmitQuestionReportSchema>;
+
