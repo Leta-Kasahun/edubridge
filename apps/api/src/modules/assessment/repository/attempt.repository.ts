@@ -590,6 +590,23 @@ export class AttemptRepository {
         totalMax > 0 ? Math.round((totalAwarded / totalMax) * 10000) / 100 : 0;
       const finalStatus: AttemptStatus = hasUngraded ? "GRADING" : "GRADED";
 
+      let gradingVersionPayload = attempt.gradingVersion;
+      if (dto.generalFeedback && dto.generalFeedback.trim()) {
+        try {
+          const current = attempt.gradingVersion ? JSON.parse(attempt.gradingVersion) : {};
+          gradingVersionPayload = JSON.stringify({
+            ...(typeof current === "object" && current !== null ? current : {}),
+            generalFeedback: dto.generalFeedback.trim(),
+            gradedAt: new Date().toISOString(),
+          });
+        } catch {
+          gradingVersionPayload = JSON.stringify({
+            generalFeedback: dto.generalFeedback.trim(),
+            gradedAt: new Date().toISOString(),
+          });
+        }
+      }
+
       return tx.assessmentAttempt.update({
         where: { id: attemptId },
         data: {
@@ -597,6 +614,7 @@ export class AttemptRepository {
           score: new Prisma.Decimal(totalAwarded),
           maxScore: new Prisma.Decimal(totalMax),
           percentage: new Prisma.Decimal(percentage),
+          gradingVersion: gradingVersionPayload,
           gradedAt: finalStatus === "GRADED" ? new Date() : attempt.gradedAt,
         },
         include: {
@@ -726,5 +744,71 @@ export class AttemptRepository {
       },
       take: limit,
     });
+  }
+
+  async listStudentResults(
+    tenantId: string,
+    studentId: string,
+    filters: { page?: number; limit?: number } = {}
+  ) {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.AssessmentAttemptWhereInput = {
+      assessment: { tenantId },
+      studentId,
+      status: { in: ["GRADED", "GRADING", "SUBMITTED"] },
+    };
+
+    const [total, items] = await Promise.all([
+      prisma.assessmentAttempt.count({ where }),
+      prisma.assessmentAttempt.findMany({
+        where,
+        include: {
+          assessment: {
+            select: {
+              id: true,
+              title: true,
+              type: true,
+              timeLimitMinutes: true,
+              examContext: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+              _count: {
+                select: {
+                  questions: true,
+                },
+              },
+            },
+          },
+          answers: {
+            select: {
+              id: true,
+              isCorrect: true,
+              awardedPoints: true,
+              feedback: true,
+            },
+          },
+        },
+        orderBy: {
+          submittedAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }
