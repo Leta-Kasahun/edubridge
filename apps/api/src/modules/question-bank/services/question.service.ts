@@ -107,6 +107,8 @@ function formatQuestion(q: RawQuestion) {
 
   return {
     id: q.id,
+    versionId: latestVersion?.id || q.id,
+    latestVersionId: latestVersion?.id || q.id,
     code: `Q-${q.id.slice(0, 6).toUpperCase()}`,
     questionBankId: q.questionBankId,
     source: q.source,
