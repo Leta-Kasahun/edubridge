@@ -212,3 +212,37 @@ export interface PaginatedContentResponse {
     readonly totalPages: number;
   };
 }
+
+export interface SaveContentProgressDto {
+  readonly lastPositionSeconds: number;
+  readonly durationSeconds: number;
+  readonly progressPercent: number;
+  readonly isCompleted?: boolean;
+}
+
+export interface StudentContentProgressItem {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly studentId?: string;
+  readonly contentId: string;
+  readonly lastPositionSeconds: number;
+  readonly durationSeconds: number;
+  readonly progressPercent: number;
+  readonly isCompleted: boolean;
+  readonly lastAccessedAt: string;
+}
+
+export interface StudentInProgressContentItem {
+  readonly id: string;
+  readonly contentId: string;
+  readonly title: string;
+  readonly type: ContentType;
+  readonly scope: ContentScope;
+  readonly subjectCode: string;
+  readonly subjectName: string;
+  readonly unitTitle?: string | null;
+  readonly lastPositionSeconds: number;
+  readonly durationSeconds: number;
+  readonly progressPercent: number;
+  readonly lastAccessedAt: string;
+}

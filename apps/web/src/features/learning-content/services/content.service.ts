@@ -12,6 +12,9 @@ import {
   UpdateContentMappingsDto,
   CreateContentVersionDto,
   PaginatedContentResponse,
+  SaveContentProgressDto,
+  StudentContentProgressItem,
+  StudentInProgressContentItem,
 } from "../types/content.types";
 
 export const contentService = {
@@ -207,5 +210,32 @@ export const contentService = {
       API_ENDPOINTS.LEARNING_CONTENT.ATTACHMENT_BY_ID(id, attachmentId)
     );
     return response.data;
+  },
+
+  async saveProgress(
+    id: string,
+    payload: SaveContentProgressDto
+  ): Promise<StudentContentProgressItem> {
+    const response = await apiClient.put<ApiResponse<StudentContentProgressItem>>(
+      API_ENDPOINTS.LEARNING_CONTENT.PROGRESS(id),
+      payload
+    );
+    return response.data.data;
+  },
+
+  async getProgress(id: string): Promise<StudentContentProgressItem | null> {
+    const response = await apiClient.get<ApiResponse<StudentContentProgressItem | null>>(
+      API_ENDPOINTS.LEARNING_CONTENT.PROGRESS(id)
+    );
+    return response.data.data;
+  },
+
+  async getStudentInProgressContent(
+    limit: number = 6
+  ): Promise<StudentInProgressContentItem[]> {
+    const response = await apiClient.get<ApiResponse<StudentInProgressContentItem[]>>(
+      `${API_ENDPOINTS.LEARNING_CONTENT.STUDENT_IN_PROGRESS}?limit=${limit}`
+    );
+    return response.data.data ?? [];
   },
 };
