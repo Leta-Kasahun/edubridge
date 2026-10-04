@@ -10,6 +10,8 @@ import {
   CreateQuestionBankSchema,
   UpdateQuestionBankSchema,
   QuestionBankQuerySchema,
+  SavePracticeSessionSchema,
+  SubmitQuestionReportSchema,
 } from "./schemas/question-bank.schema.js";
 import {
   CreateQuestionSchema,
@@ -49,6 +51,12 @@ router.get(
   bankController.list
 );
 
+router.get(
+  "/student/in-progress",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  bankController.listStudentInProgress
+);
+
 router.post(
   "/",
   requireRoles("SCHOOL_ADMIN", "TEACHER"),
@@ -86,6 +94,13 @@ router.post(
   "/questions/:id/publish",
   requireRoles("SCHOOL_ADMIN", "TEACHER"),
   questionController.publish
+);
+
+router.post(
+  "/questions/:id/report",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  validate(SubmitQuestionReportSchema),
+  questionController.submitReport
 );
 
 router.post(
@@ -136,6 +151,25 @@ router.post(
 );
 
 router.get(
+  "/:id/practice-session",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  bankController.getPracticeSession
+);
+
+router.put(
+  "/:id/practice-session",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  validate(SavePracticeSessionSchema),
+  bankController.savePracticeSession
+);
+
+router.delete(
+  "/:id/practice-session",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),
+  bankController.deletePracticeSession
+);
+
+router.get(
   "/:id",
   requireRoles("SCHOOL_ADMIN", "TEACHER", "STUDENT"),
   bankController.getById
@@ -162,3 +196,4 @@ router.delete(
 );
 
 export const questionBankRouter = router;
+
