@@ -8,7 +8,7 @@ import {
   EyeOff,
   CheckCircle2,
   X,
-  Sparkles,
+  Lightbulb,
   Edit2,
   Send,
   Archive,
@@ -26,7 +26,6 @@ interface QuestionPreviewModalProps {
   readonly onEdit?: (question: QuestionListItem | QuestionDetailItem) => void;
   readonly onPublish?: (id: string) => void;
   readonly onArchive?: (id: string) => void;
-  readonly isStudent?: boolean;
 }
 
 export function QuestionPreviewModal({
@@ -36,7 +35,6 @@ export function QuestionPreviewModal({
   onEdit,
   onPublish,
   onArchive,
-  isStudent = false,
 }: QuestionPreviewModalProps) {
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [revealSolution, setRevealSolution] = useState(false);
@@ -202,7 +200,7 @@ export function QuestionPreviewModal({
           {revealSolution && question.explanation && (
             <div className="p-3.5 rounded-xl border border-border bg-card space-y-1 animate-in fade-in-0">
               <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                <Sparkles size={14} className="text-primary" />
+                <Lightbulb size={14} className="text-amber-500" />
                 <span>Answer Explanation</span>
               </div>
               <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -223,7 +221,7 @@ export function QuestionPreviewModal({
           </button>
 
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            {!isStudent && onEdit && (
+            {onEdit && (
               <button
                 type="button"
                 onClick={handleEditClick}
@@ -234,7 +232,7 @@ export function QuestionPreviewModal({
               </button>
             )}
 
-            {!isStudent && onPublish && question.status !== "PUBLISHED" && (
+            {onPublish && question.status !== "PUBLISHED" && (
               <button
                 type="button"
                 onClick={handlePublishClick}
@@ -245,7 +243,7 @@ export function QuestionPreviewModal({
               </button>
             )}
 
-            {!isStudent && onArchive && question.status === "PUBLISHED" && (
+            {onArchive && question.status === "PUBLISHED" && (
               <button
                 type="button"
                 onClick={handleArchiveClick}

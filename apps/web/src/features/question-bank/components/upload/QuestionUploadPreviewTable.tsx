@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   CheckSquare,
   Square,
-  Sparkles,
+  Lightbulb,
   ArrowRight,
   Edit2,
   Trash2,
@@ -63,37 +63,7 @@ export function QuestionUploadPreviewTable({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const initialQuestions: readonly ExtractedQuestionDraft[] = useMemo(() => {
-    if (uploadData.extractedQuestions && uploadData.extractedQuestions.length > 0) {
-      return uploadData.extractedQuestions;
-    }
-    const legacyCandidates = (
-      uploadData as unknown as {
-        candidates?: Array<{
-          questionText: string;
-          type: ExtractedQuestionDraft["type"];
-          difficulty: ExtractedQuestionDraft["difficulty"];
-          points: number;
-          explanation?: string;
-          options?: Array<{ optionText: string; isCorrect: boolean; orderIndex: number }>;
-        }>;
-      }
-    ).candidates;
-
-    if (legacyCandidates) {
-      return legacyCandidates.map((c) => ({
-        type: c.type,
-        prompt: c.questionText,
-        difficulty: c.difficulty,
-        defaultPoints: c.points,
-        explanation: c.explanation,
-        options: c.options?.map((o, idx) => ({
-          text: o.optionText,
-          isCorrect: o.isCorrect,
-          orderIndex: o.orderIndex ?? idx,
-        })),
-      }));
-    }
-    return [];
+    return uploadData.extractedQuestions || [];
   }, [uploadData]);
 
   const [questions, setQuestions] = useState<readonly ExtractedQuestionDraft[]>(initialQuestions);
@@ -565,7 +535,7 @@ export function QuestionUploadPreviewTable({
 
                     {q.explanation && (
                       <div className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/40 border border-border text-xs text-foreground min-w-0">
-                        <Sparkles size={14} className="text-primary shrink-0 mt-0.5" />
+                        <Lightbulb size={14} className="text-amber-500 shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <span className="font-bold text-foreground">Answer Explanation: </span>
                           <span className="text-muted-foreground whitespace-pre-wrap break-words">
@@ -731,7 +701,7 @@ export function QuestionUploadPreviewTable({
                           className="text-xs font-semibold text-foreground flex items-center gap-1.5"
                           htmlFor={`explanation-input-${idx}`}
                         >
-                          <Sparkles size={12} className="text-primary" />
+                          <Lightbulb size={13} className="text-amber-500" />
                           <span>Answer Explanation</span>
                         </label>
                         <input
