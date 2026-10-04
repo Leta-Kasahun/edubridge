@@ -10,6 +10,8 @@ export const ATTEMPT_QUERY_KEYS = {
   lists: () => [...ATTEMPT_QUERY_KEYS.all, "list"] as const,
   list: (assessmentId: string, params: Record<string, unknown>) =>
     [...ATTEMPT_QUERY_KEYS.lists(), assessmentId, params] as const,
+  studentResults: (params: { page?: number; limit?: number } = {}) =>
+    [...ATTEMPT_QUERY_KEYS.all, "student-results", params] as const,
 };
 
 export function useStartAttempt() {
@@ -149,6 +151,13 @@ export function useSubmitQuestionFeedback() {
         category?: "CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL";
       };
     }) => attemptService.submitQuestionFeedback(assessmentId, payload),
+  });
+}
+
+export function useStudentResults(params: { page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ATTEMPT_QUERY_KEYS.studentResults(params),
+    queryFn: () => attemptService.listStudentResults(params),
   });
 }
 
