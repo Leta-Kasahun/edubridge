@@ -170,4 +170,20 @@ export class AttemptController {
       data: result,
     });
   });
+
+  listStudentInProgress = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.tenantId || !req.user?.userId) {
+      throw new UnauthorizedError();
+    }
+    const limit = req.query.limit ? Number(req.query.limit) : 6;
+    const items = await this.attemptService.listStudentInProgressAttempts(
+      req.user.tenantId,
+      req.user.userId,
+      limit
+    );
+    res.status(200).json({
+      success: true,
+      data: items,
+    });
+  });
 }

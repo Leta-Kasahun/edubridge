@@ -677,4 +677,42 @@ export class AttemptService {
 
     return { success: true, message: "Feedback submitted successfully" };
   }
+
+  async listStudentInProgressAttempts(
+    tenantId: string,
+    userId: string,
+    limit: number = 6
+  ) {
+    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      return [];
+    }
+
+    const attempts = await this.attemptRepo.listStudentInProgressAttempts(
+      tenantId,
+      student.id,
+      limit
+    );
+
+    return attempts.map((a) => {
+      const totalQuestions = a.assessment._count?.questions ?? 0;
+      const answeredCount = a._count?.answers ?? 0;
+      const progressPercent =
+        totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+
+      return {
+        id: a.id,
+        assessmentId: a.assessment.id,
+        title: a.assessment.title,
+        type: a.assessment.type,
+        timeLimitMinutes: a.assessment.timeLimitMinutes,
+        subjectCode: a.assessment.examContext?.code || "EXAM",
+        subjectName: a.assessment.examContext?.name || a.assessment.title,
+        startedAt: a.startedAt.toISOString(),
+        totalQuestions,
+        answeredCount,
+        progressPercent,
+      };
+    });
+  }
 }
