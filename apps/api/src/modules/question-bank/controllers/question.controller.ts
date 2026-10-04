@@ -3,6 +3,7 @@ import { QuestionService } from "../services/question.service.js";
 import { QuestionQueryDto, CreateQuestionInput } from "../types/question-bank.types.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { UnauthorizedError } from "../../../shared/exceptions/index.js";
+import { prisma } from "../../../lib/prisma.js";
 
 const service = new QuestionService();
 
@@ -154,6 +155,34 @@ export class QuestionController {
     });
   });
 
+  submitReport = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const id = req.params.id as string;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    });
+    const userFullName = user
+      ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Student"
+      : "Student";
+
+    const result = await service.submitReport(
+      tenantId,
+      id,
+      userId,
+      userFullName,
+      req.body
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Report submitted successfully",
+      data: result,
+    });
+  });
+
   delete = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
     const id = req.params.id as string;
@@ -165,3 +194,4 @@ export class QuestionController {
     });
   });
 }
+
