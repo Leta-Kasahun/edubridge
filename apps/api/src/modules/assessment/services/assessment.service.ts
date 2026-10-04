@@ -44,13 +44,12 @@ export class AssessmentService {
       throw new NotFoundError("Assessment not found");
     }
 
-    if (existing.status === "ARCHIVED" && dto.status !== "DRAFT" && dto.status !== "ACTIVE") {
-      throw new BadRequestError("Cannot modify an archived assessment");
-    }
+    const resolvedFrom = dto.availableFrom !== undefined ? dto.availableFrom : existing.availableFrom;
+    const resolvedUntil = dto.availableUntil !== undefined ? dto.availableUntil : existing.availableUntil;
 
-    if (dto.availableFrom || dto.availableUntil) {
-      const from = new Date(dto.availableFrom ?? existing.availableFrom ?? "").getTime();
-      const until = new Date(dto.availableUntil ?? existing.availableUntil ?? "").getTime();
+    if (resolvedFrom && resolvedUntil) {
+      const from = new Date(resolvedFrom).getTime();
+      const until = new Date(resolvedUntil).getTime();
       if (!Number.isNaN(from) && !Number.isNaN(until) && from > until) {
         throw new BadRequestError("availableFrom cannot be later than availableUntil");
       }
