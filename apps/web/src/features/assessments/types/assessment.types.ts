@@ -21,6 +21,7 @@ export interface AssessmentQuestionItem {
     explanation?: string | null;
     imageUrl?: string | null;
     points: number | string;
+    configuration?: unknown;
     options?: Array<{
       id: string;
       optionKey: string;
