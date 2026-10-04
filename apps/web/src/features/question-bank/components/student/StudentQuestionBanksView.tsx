@@ -237,18 +237,13 @@ export function StudentQuestionBanksView(): React.JSX.Element {
   return (
     <div className="space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Question Banks
-            </h1>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              Grade {studentGradeLevel}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Browse question banks and practice curriculum exercises and exam questions by subject.
-          </p>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Question Banks
+          </h1>
+          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            Grade {studentGradeLevel}
+          </span>
         </div>
       </div>
 

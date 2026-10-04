@@ -103,7 +103,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
     children: [
-      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
       { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
@@ -164,7 +164,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
     children: [
-      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
       { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
