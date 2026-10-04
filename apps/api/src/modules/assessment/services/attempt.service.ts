@@ -658,21 +658,71 @@ export class AttemptService {
       throw new NotFoundError("Assessment not found");
     }
 
-    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
-    const studentName = student
-      ? `${student.firstName} ${student.lastName ?? ""}`.trim()
+    const studentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    });
+    const studentName = studentUser
+      ? `${studentUser.firstName || ""} ${studentUser.lastName || ""}`.trim() || "Student"
       : "Student";
 
-    domainEventBus.emitEvent("assessment.question-feedback", {
-      tenantId,
+    const questionVersion = await prisma.questionVersion.findUnique({
+      where: { id: dto.questionVersionId },
+      include: {
+        question: {
+          include: {
+            questionBank: true,
+            createdBy: true,
+          },
+        },
+      },
+    });
+
+    const currentConfig =
+      typeof questionVersion?.configuration === "object" && questionVersion.configuration !== null
+        ? { ...(questionVersion.configuration as Record<string, unknown>) }
+        : {};
+
+    const rawReports = Array.isArray(currentConfig.reports) ? [...currentConfig.reports] : [];
+
+    const newReport = {
+      id: crypto.randomUUID(),
+      studentId: userId,
+      studentName,
+      reason: dto.category.replace(/_/g, " "),
+      comment: dto.message,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
       assessmentId,
       assessmentTitle: assessment.title,
-      questionVersionId: dto.questionVersionId,
+    };
+
+    rawReports.push(newReport);
+    currentConfig.reports = rawReports;
+
+    if (questionVersion) {
+      await prisma.questionVersion.update({
+        where: { id: questionVersion.id },
+        data: {
+          configuration: JSON.parse(JSON.stringify(currentConfig)),
+        },
+      });
+    }
+
+    const bankId = questionVersion?.question?.questionBankId || "";
+    const bankTitle = questionVersion?.question?.questionBank?.name || assessment.title || "Assessment";
+    const authorUserId = assessment.createdById || questionVersion?.question?.createdBy?.id || "";
+
+    domainEventBus.emitEvent("question.report_submitted", {
+      tenantId,
+      questionId: questionVersion?.questionId || dto.questionVersionId,
+      bankId,
+      bankTitle,
       studentUserId: userId,
       studentName,
-      feedbackText: dto.message,
-      category: dto.category,
-      teacherUserId: assessment.createdById,
+      authorUserId,
+      reason: dto.category.replace(/_/g, " "),
+      comment: dto.message,
     });
 
     return { success: true, message: "Feedback submitted successfully" };
