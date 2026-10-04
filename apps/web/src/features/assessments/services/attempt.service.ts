@@ -5,6 +5,7 @@ import {
   StudentActiveAttemptSession,
   AssessmentAttemptResult,
   ManualGradeAttemptPayload,
+  StudentResultsResponse,
 } from "../types/assessment.types";
 
 export interface PaginatedAttemptsResponse {
@@ -145,6 +146,23 @@ export const attemptService = {
       API_ENDPOINTS.ASSESSMENTS.QUESTION_FEEDBACK(assessmentId),
       payload
     );
+    return response.data.data;
+  },
+
+  async listStudentResults(params: {
+    page?: number;
+    limit?: number;
+  } = {}): Promise<StudentResultsResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append("page", String(params.page));
+    if (params.limit) searchParams.append("limit", String(params.limit));
+
+    const qs = searchParams.toString();
+    const endpoint = qs
+      ? `${API_ENDPOINTS.ASSESSMENTS.STUDENT_RESULTS}?${qs}`
+      : API_ENDPOINTS.ASSESSMENTS.STUDENT_RESULTS;
+
+    const response = await apiClient.get<ApiResponse<StudentResultsResponse>>(endpoint);
     return response.data.data;
   },
 };
