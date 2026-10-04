@@ -120,10 +120,10 @@ export function useResolveQuestionReport(bankId: string) {
   return useMutation<
     QuestionDetailItem,
     Error,
-    { questionId: string; reportId: string }
+    { questionId: string; reportId: string; resolutionNote?: string }
   >({
-    mutationFn: ({ questionId, reportId }) =>
-      questionBankService.resolveQuestionReport(questionId, reportId),
+    mutationFn: ({ questionId, reportId, resolutionNote }) =>
+      questionBankService.resolveQuestionReport(questionId, reportId, resolutionNote),
     onSuccess: (_, { questionId }) => {
       queryClient.invalidateQueries({
         queryKey: [...QUESTIONS_QUERY_KEY, bankId],
