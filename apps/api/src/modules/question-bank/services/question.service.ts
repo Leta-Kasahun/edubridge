@@ -346,8 +346,47 @@ export class QuestionService {
     });
   }
 
+  async submitReport(
+    tenantId: string | null,
+    questionId: string,
+    userId: string,
+    userFullName: string,
+    data: { reason: string; comment?: string | null }
+  ) {
+    const question = await this.findById(tenantId, questionId);
+    const latestVersion = question.versions[0];
+    if (!latestVersion) {
+      throw new NotFoundError("Question version not found");
+    }
+
+    const currentConfig =
+      typeof latestVersion.configuration === "object" && latestVersion.configuration !== null
+        ? { ...(latestVersion.configuration as Record<string, unknown>) }
+        : {};
+
+    const rawReports = Array.isArray(currentConfig.reports) ? [...currentConfig.reports] : [];
+
+    const newReport = {
+      id: crypto.randomUUID(),
+      studentId: userId,
+      studentName: userFullName,
+      reason: data.reason,
+      comment: data.comment || undefined,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
+    };
+
+    rawReports.push(newReport);
+    currentConfig.reports = rawReports;
+
+    return this.update(tenantId, questionId, userId, {
+      configuration: currentConfig,
+    });
+  }
+
   async delete(tenantId: string | null, questionId: string) {
     await this.findById(tenantId, questionId);
     return this.repository.delete(questionId);
   }
 }
+
