@@ -218,6 +218,7 @@ export interface AssessmentAttemptResult {
   score?: number | string | null;
   maxScore?: number | string | null;
   percentage?: number | string | null;
+  generalFeedback?: string | null;
   assessment?: AssessmentItem;
   answers?: StudentAnswerItem[];
   isStaffPreview?: boolean;
@@ -256,4 +257,31 @@ export interface StudentInProgressAssessmentItem {
   totalQuestions: number;
   answeredCount: number;
   progressPercent: number;
+}
+
+export interface StudentResultItem {
+  id: string;
+  assessmentId: string;
+  title: string;
+  type: AssessmentType;
+  timeLimitMinutes?: number | null;
+  subjectCode: string;
+  subjectName: string;
+  submittedAt?: string | null;
+  gradedAt?: string | null;
+  status: AttemptStatus;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  hasTeacherFeedback: boolean;
+  generalFeedback?: string | null;
+  feedbackCount: number;
+}
+
+export interface StudentResultsResponse {
+  items: StudentResultItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
