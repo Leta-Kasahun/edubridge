@@ -9,7 +9,12 @@ import {
   Check,
   Award,
 } from "lucide-react";
-import { useQuestionBank } from "../../hooks/useQuestionBanks";
+import {
+  useQuestionBank,
+  usePracticeSession,
+  useSavePracticeSession,
+  useDeletePracticeSession,
+} from "../../hooks/useQuestionBanks";
 import { useQuestions } from "../../hooks/useQuestions";
 import { ROUTES } from "@/constants/routes";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -41,6 +46,9 @@ export function StudentQuestionPracticeView({
   const [isTimerRunning, setIsTimerRunning] = useState(true);
 
   const recordEvidenceMutation = useRecordPracticeEvidenceMutation();
+  const { data: remoteSession } = usePracticeSession(bankId);
+  const savePracticeMutation = useSavePracticeSession(bankId);
+  const deletePracticeMutation = useDeletePracticeSession(bankId);
 
   const { data: bank, isLoading: isBankLoading } = useQuestionBank(bankId);
   const {
@@ -56,8 +64,35 @@ export function StudentQuestionPracticeView({
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIndex] || null;
 
-  // Hydrate saved practice session from localStorage if available
+  // Hydrate saved practice session from database or localStorage if available
   useEffect(() => {
+    if (remoteSession && !(remoteSession as Record<string, unknown>).isFinished) {
+      const answers = ((remoteSession as Record<string, unknown>).selectedAnswers as Record<string, string>) || {};
+      if (Object.keys(answers).length > 0) {
+        setSelectedAnswers(answers);
+        if (Array.isArray((remoteSession as Record<string, unknown>).flaggedQuestionIds)) {
+          setFlaggedQuestionIds(new Set((remoteSession as Record<string, unknown>).flaggedQuestionIds as string[]));
+        }
+        if ((remoteSession as Record<string, unknown>).revealedExplanations) {
+          setRevealedExplanations((remoteSession as Record<string, unknown>).revealedExplanations as Record<string, boolean>);
+        }
+        if ((remoteSession as Record<string, unknown>).eliminatedOptions) {
+          const mapped: Record<string, Set<string>> = {};
+          for (const [k, v] of Object.entries((remoteSession as Record<string, unknown>).eliminatedOptions as Record<string, string[]>)) {
+            mapped[k] = new Set(v);
+          }
+          setEliminatedOptions(mapped);
+        }
+        if (typeof (remoteSession as Record<string, unknown>).secondsElapsed === "number") {
+          setSecondsElapsed(Number((remoteSession as Record<string, unknown>).secondsElapsed));
+        }
+        if (typeof (remoteSession as Record<string, unknown>).currentIndex === "number") {
+          setCurrentIndex(Number((remoteSession as Record<string, unknown>).currentIndex));
+        }
+        return;
+      }
+    }
+
     const saved = practiceSessionStorage.getSession(bankId);
     if (saved && Object.keys(saved.selectedAnswers || {}).length > 0) {
       if (saved.selectedAnswers) setSelectedAnswers(saved.selectedAnswers);
@@ -73,12 +108,13 @@ export function StudentQuestionPracticeView({
       if (typeof saved.secondsElapsed === "number") setSecondsElapsed(saved.secondsElapsed);
       if (typeof saved.currentIndex === "number") setCurrentIndex(saved.currentIndex);
     }
-  }, [bankId]);
+  }, [bankId, remoteSession]);
 
-  // Persist current practice state to localStorage
+  // Persist current practice state to localStorage & PostgreSQL database
   useEffect(() => {
     if (isFinished || totalQuestions === 0) return;
-    if (Object.keys(selectedAnswers).length === 0 && secondsElapsed === 0) return;
+    const answeredCount = Object.keys(selectedAnswers).length;
+    if (answeredCount === 0 && secondsElapsed === 0) return;
 
     const elimMap: Record<string, string[]> = {};
     for (const [k, v] of Object.entries(eliminatedOptions)) {
@@ -99,6 +135,22 @@ export function StudentQuestionPracticeView({
       lastUpdated: Date.now(),
       totalQuestions,
     });
+
+    const timer = setTimeout(() => {
+      savePracticeMutation.mutate({
+        currentIndex,
+        totalQuestions,
+        answeredCount,
+        secondsElapsed,
+        isFinished: false,
+        selectedAnswers,
+        flaggedQuestionIds: Array.from(flaggedQuestionIds),
+        eliminatedOptions: elimMap,
+        revealedExplanations,
+      });
+    }, 2500);
+
+    return () => clearTimeout(timer);
   }, [
     bankId,
     bank?.name,
@@ -187,6 +239,7 @@ export function StudentQuestionPracticeView({
 
   const handleConfirmFinish = useCallback(() => {
     practiceSessionStorage.clearSession(bankId);
+    deletePracticeMutation.mutate();
     setIsFinishConfirmOpen(false);
     setIsFinished(true);
 
@@ -230,10 +283,11 @@ export function StudentQuestionPracticeView({
         results,
       });
     }
-  }, [bankId, questions, recordEvidenceMutation, selectedAnswers]);
+  }, [bankId, deletePracticeMutation, questions, recordEvidenceMutation, selectedAnswers]);
 
   const handleRetake = () => {
     practiceSessionStorage.clearSession(bankId);
+    deletePracticeMutation.mutate();
     setSelectedAnswers({});
     setFlaggedQuestionIds(new Set());
     setEliminatedOptions({});
@@ -243,6 +297,7 @@ export function StudentQuestionPracticeView({
     setIsTimerRunning(true);
     setIsFinished(false);
   };
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

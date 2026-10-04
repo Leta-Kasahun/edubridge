@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { QuestionListItem } from "../../../types/question-bank.types";
+import { useSubmitQuestionReport } from "../../../hooks/useQuestions";
 
 interface PracticeQuestionCanvasProps {
   readonly question: QuestionListItem;
@@ -72,15 +73,32 @@ export function PracticeQuestionCanvas({
     }
   };
 
+  const submitReportMutation = useSubmitQuestionReport(question.questionBankId);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
 
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  const hasResolvedReport = question.reports?.some((r) => r.status === "RESOLVED");
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackText.trim()) return;
-    setIsFeedbackSubmitted(true);
-    setIsFeedbackOpen(false);
+    try {
+      await submitReportMutation.mutateAsync({
+        questionId: question.id,
+        payload: {
+          reason: "Question Feedback",
+          comment: feedbackText.trim(),
+        },
+      });
+      setIsFeedbackSubmitted(true);
+      setIsFeedbackOpen(false);
+      setFeedbackText("");
+    } catch {
+      // Fallback local acknowledgment
+      setIsFeedbackSubmitted(true);
+      setIsFeedbackOpen(false);
+    }
   };
 
   return (
@@ -107,6 +125,12 @@ export function PracticeQuestionCanvas({
           >
             {question.difficulty || "MEDIUM"}
           </span>
+
+          {hasResolvedReport && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <Check size={11} /> Verified by Teacher
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -129,13 +153,13 @@ export function PracticeQuestionCanvas({
       {isFeedbackOpen && !isFeedbackSubmitted && (
         <form onSubmit={handleFeedbackSubmit} className="p-4 rounded-2xl bg-muted/40 border border-border space-y-2.5 text-xs">
           <span className="font-bold text-foreground block">
-            Question Feedback & Study Notes
+            Question Feedback & Issue Report
           </span>
           <textarea
             rows={2}
             value={feedbackText}
             onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder="Report confusing wording, ask for clarification, or leave a private study note..."
+            placeholder="Report a typo, incorrect answer key, or ask for clarification from teaching staff..."
             className="w-full p-2.5 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
           />
           <div className="flex justify-end gap-2">
@@ -148,11 +172,11 @@ export function PracticeQuestionCanvas({
             </button>
             <button
               type="submit"
-              disabled={!feedbackText.trim()}
+              disabled={!feedbackText.trim() || submitReportMutation.isPending}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer"
             >
               <Send size={12} />
-              <span>Submit Note</span>
+              <span>{submitReportMutation.isPending ? "Sending..." : "Submit Report"}</span>
             </button>
           </div>
         </form>
