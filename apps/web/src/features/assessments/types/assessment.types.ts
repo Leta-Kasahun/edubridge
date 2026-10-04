@@ -242,3 +242,17 @@ export interface ManualGradeAttemptPayload {
   grades: ManualGradeItemPayload[];
   generalFeedback?: string | null;
 }
+
+export interface StudentInProgressAssessmentItem {
+  id: string;
+  assessmentId: string;
+  title: string;
+  type: AssessmentType;
+  timeLimitMinutes?: number | null;
+  subjectCode: string;
+  subjectName: string;
+  startedAt: string;
+  totalQuestions: number;
+  answeredCount: number;
+  progressPercent: number;
+}
