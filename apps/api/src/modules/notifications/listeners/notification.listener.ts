@@ -331,9 +331,16 @@ async function handleStudentEnrolled(
 async function handleAssessmentGraded(
   event: AssessmentGradedEvent
 ): Promise<void> {
-  const title = event.isManual ? "Exam Results Published" : "Exam Graded";
-  const body = event.isManual
-    ? `${event.teacherName ?? "Your teacher"} has reviewed your ${event.assessmentTitle} submission. Score: ${event.percentage}%.`
+  const title = event.hasFeedback
+    ? "Exam Results & Teacher Feedback"
+    : event.isManual
+    ? "Exam Results Published"
+    : "Exam Graded";
+
+  const body = event.hasFeedback
+    ? `${event.teacherName ?? "Your instructor"} has reviewed your ${event.assessmentTitle} submission and provided feedback. Score: ${event.percentage}%.`
+    : event.isManual
+    ? `${event.teacherName ?? "Your instructor"} has reviewed your ${event.assessmentTitle} submission. Score: ${event.percentage}%.`
     : `Your results for ${event.assessmentTitle} are now available. Score: ${event.percentage}%.`;
 
   await notificationService.sendToUser({
@@ -343,7 +350,7 @@ async function handleAssessmentGraded(
     priority: "HIGH",
     title,
     body,
-    actionUrl: `/dashboard/assessments/${event.assessmentId}`,
+    actionUrl: `/dashboard/assessments/${event.assessmentId}/attempts/${event.attemptId}/result`,
     sourceType: "ASSESSMENT_ATTEMPT",
     sourceId: event.attemptId,
   });
