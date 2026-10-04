@@ -964,6 +964,118 @@ export class ContentRepository {
       };
     });
   }
+
+  async findStudentProfileByUserId(tenantId: string, userId: string) {
+    return prisma.studentProfile.findFirst({
+      where: { tenantId, userId, status: "ACTIVE" },
+    });
+  }
+
+  async upsertStudentContentProgress(
+    tenantId: string,
+    studentId: string,
+    contentId: string,
+    data: {
+      lastPositionSeconds: number;
+      durationSeconds: number;
+      progressPercent: number;
+      isCompleted?: boolean;
+    }
+  ) {
+    return runWithTenant({ tenantId }, async () => {
+      const isCompleted = data.isCompleted ?? (data.progressPercent >= 90);
+      const completedAt = isCompleted ? new Date() : null;
+
+      return prisma.studentContentProgress.upsert({
+        where: {
+          studentId_contentId: {
+            studentId,
+            contentId,
+          },
+        },
+        create: {
+          tenantId,
+          studentId,
+          contentId,
+          lastPositionSeconds: data.lastPositionSeconds,
+          durationSeconds: data.durationSeconds,
+          progressPercent: new Prisma.Decimal(data.progressPercent),
+          isCompleted,
+          completedAt,
+          lastAccessedAt: new Date(),
+        },
+        update: {
+          lastPositionSeconds: data.lastPositionSeconds,
+          durationSeconds: data.durationSeconds,
+          progressPercent: new Prisma.Decimal(data.progressPercent),
+          isCompleted,
+          ...(isCompleted ? { completedAt: new Date() } : {}),
+          lastAccessedAt: new Date(),
+        },
+      });
+    });
+  }
+
+  async getStudentContentProgress(
+    tenantId: string,
+    studentId: string,
+    contentId: string
+  ) {
+    return runWithTenant({ tenantId }, async () => {
+      return prisma.studentContentProgress.findUnique({
+        where: {
+          studentId_contentId: {
+            studentId,
+            contentId,
+          },
+        },
+      });
+    });
+  }
+
+  async listStudentInProgressContent(
+    tenantId: string,
+    studentId: string,
+    limit: number = 6
+  ) {
+    return runWithTenant({ tenantId }, async () => {
+      return prisma.studentContentProgress.findMany({
+        where: {
+          tenantId,
+          studentId,
+          isCompleted: false,
+          progressPercent: { gt: 0 },
+        },
+        include: {
+          content: {
+            select: {
+              id: true,
+              title: true,
+              type: true,
+              scope: true,
+              subject: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                },
+              },
+              unit: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          lastAccessedAt: "desc",
+        },
+        take: limit,
+      });
+    });
+  }
 }
 
 export const contentRepository = new ContentRepository();
