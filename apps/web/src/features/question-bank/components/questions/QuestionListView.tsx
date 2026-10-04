@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -16,9 +16,15 @@ import {
   Trash2,
   CheckCheck,
   Tag,
+  MessageSquare,
+  ChevronDown,
+  Check,
+  X,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
-import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { FilterGroup } from "@/shared/components/TableToolbar";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import {
@@ -45,16 +51,141 @@ import { QuestionUploadModal } from "../upload/QuestionUploadModal";
 import { ConfirmDeleteModal } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
+interface QuestionFiltersToolbarProps {
+  readonly filters: readonly FilterGroup[];
+  readonly hasActiveFilters: boolean;
+  readonly onResetAll: () => void;
+  readonly resultCount?: number;
+}
+
+function QuestionFiltersToolbar({
+  filters,
+  hasActiveFilters,
+  onResetAll,
+  resultCount,
+}: QuestionFiltersToolbarProps) {
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(containerRef, () => setOpenFilterId(null));
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex items-center justify-between gap-2.5 flex-wrap w-full"
+    >
+      <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+        {filters.map((group, index) => {
+          const isOpen = openFilterId === group.id;
+          const selectedOption = group.options.find(
+            (o) => o.value === group.selectedValue
+          );
+          const GroupIcon = group.icon || Filter;
+          const isActive = Boolean(group.selectedValue && group.selectedValue !== "ALL");
+          const isTrailing = index >= Math.max(1, filters.length - 2);
+
+          return (
+            <div key={group.id} className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setOpenFilterId(isOpen ? null : group.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
+                  isActive
+                    ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15"
+                    : "bg-card text-foreground border-border hover:bg-muted"
+                )}
+              >
+                <GroupIcon size={13} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                <span className={cn("font-medium", isActive ? "text-primary/80" : "text-muted-foreground")}>
+                  {group.label}:
+                </span>
+                <span className={cn("font-semibold", isActive ? "text-primary" : "text-foreground")}>
+                  {selectedOption ? selectedOption.label : "All"}
+                </span>
+                <ChevronDown
+                  size={13}
+                  className={cn(
+                    "ml-0.5 transition-transform duration-150",
+                    isOpen && "rotate-180",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                />
+              </button>
+
+              {isOpen && (
+                <div
+                  className={cn(
+                    "absolute top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95",
+                    isTrailing ? "right-0" : "left-0"
+                  )}
+                >
+                  {group.options.map((opt) => {
+                    const isSelected = group.selectedValue === opt.value;
+
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          group.onSelect(opt.value);
+                          setOpenFilterId(null);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left",
+                          isSelected
+                            ? "bg-muted font-bold text-foreground"
+                            : "text-foreground hover:bg-muted/60 font-medium"
+                        )}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {isSelected && <Check size={13} className="text-foreground shrink-0 ml-1" />}
+                        {!isSelected && opt.count !== undefined && (
+                          <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                            {opt.count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onResetAll}
+            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            title="Reset all filters"
+          >
+            <X size={13} />
+            <span>Reset</span>
+          </button>
+        )}
+      </div>
+
+      {resultCount !== undefined && (
+        <div className="text-[11px] font-medium text-muted-foreground shrink-0 hidden sm:block">
+          Showing {resultCount} {resultCount === 1 ? "question" : "questions"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface QuestionListViewProps {
   readonly bankId: string;
 }
 
 export function QuestionListView({ bankId }: QuestionListViewProps) {
-  const [search, setSearch] = useState("");
   const [topicFilter, setTopicFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [feedbackFilter, setFeedbackFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
 
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
@@ -71,7 +202,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const { data: questionsData, isLoading: isQuestionsLoading, error } = useQuestions(
     bankId,
     {
-      search: search.trim() || undefined,
       topicId: topicFilter === "ALL" ? undefined : topicFilter,
       type: typeFilter === "ALL" ? undefined : (typeFilter as QuestionType),
       difficulty:
@@ -84,6 +214,22 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   );
 
+  const hasActiveFilters =
+    topicFilter !== "ALL" ||
+    typeFilter !== "ALL" ||
+    difficultyFilter !== "ALL" ||
+    statusFilter !== "ALL" ||
+    feedbackFilter !== "ALL";
+
+  const handleResetFilters = () => {
+    setTopicFilter("ALL");
+    setTypeFilter("ALL");
+    setDifficultyFilter("ALL");
+    setStatusFilter("ALL");
+    setFeedbackFilter("ALL");
+    setPage(1);
+  };
+
   const statusMutation = useUpdateQuestionStatus(bankId);
   const publishMutation = usePublishQuestion(bankId);
   const deleteMutation = useDeleteQuestion(bankId);
@@ -93,6 +239,22 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const bulkDeleteMutation = useBulkDeleteQuestions(bankId);
 
   const items = questionsData?.items ?? [];
+
+  const questionsWithPendingReports = useMemo(
+    () => items.filter((q) => (q.reports || []).some((r) => r.status === "PENDING")),
+    [items]
+  );
+  const pendingReportsCount = questionsWithPendingReports.length;
+
+  const displayedItems = useMemo(() => {
+    if (feedbackFilter === "PENDING") {
+      return items.filter((q) => (q.reports || []).some((r) => r.status === "PENDING"));
+    }
+    if (feedbackFilter === "RESOLVED") {
+      return items.filter((q) => (q.reports || []).some((r) => r.status === "RESOLVED"));
+    }
+    return items;
+  }, [items, feedbackFilter]);
 
   const draftQuestions = useMemo(
     () => items.filter((q) => q.status === "DRAFT" || q.status === "REVIEW"),
@@ -168,8 +330,12 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   };
 
-  const handleResolveReport = async (questionId: string, reportId: string) => {
-    await resolveReportMutation.mutateAsync({ questionId, reportId });
+  const handleResolveReport = async (
+    questionId: string,
+    reportId: string,
+    resolutionNote?: string
+  ) => {
+    await resolveReportMutation.mutateAsync({ questionId, reportId, resolutionNote });
   };
 
   const handleCreate = () => {
@@ -242,7 +408,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All Topics", value: "ALL" },
+          { label: "All", value: "ALL" },
           ...availableTopics,
         ],
       });
@@ -301,11 +467,26 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Published", value: "PUBLISHED" },
           { label: "Archived", value: "ARCHIVED" },
         ],
+      },
+      {
+        id: "feedback",
+        label: "Feedback",
+        icon: MessageSquare,
+        selectedValue: feedbackFilter,
+        onSelect: (val) => {
+          setFeedbackFilter(val);
+          setPage(1);
+        },
+        options: [
+          { label: "All", value: "ALL" },
+          { label: `Needs Review (${pendingReportsCount})`, value: "PENDING" },
+          { label: "Resolved", value: "RESOLVED" },
+        ],
       }
     );
 
     return filters;
-  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter]);
+  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter, feedbackFilter, pendingReportsCount]);
 
   const isAnyBulkPending =
     bulkPublishMutation.isPending ||
@@ -337,6 +518,20 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
               <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
                 {items.length} {items.length === 1 ? "Question" : "Questions"}
               </span>
+              {pendingReportsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFeedbackFilter((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
+                  className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors cursor-pointer whitespace-nowrap ${
+                    feedbackFilter === "PENDING"
+                      ? "bg-amber-500 text-white border-amber-600 dark:bg-amber-600"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20"
+                  }`}
+                  title="Filter questions with pending feedback"
+                >
+                  {pendingReportsCount} Feedback Pending
+                </button>
+              )}
               {bank?.subject?.name && (
                 <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
                   {bank.subject.name}
@@ -377,15 +572,12 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         <ErrorAlert message={error.message || "Failed to load questions."} />
       )}
 
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
-        <TableToolbar
-          searchValue={search}
-          onSearchChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
-          searchPlaceholder="Search questions by text or topic..."
+      <div className="bg-card rounded-2xl border border-border p-3 sm:p-3.5 shadow-xs">
+        <QuestionFiltersToolbar
           filters={toolbarFilters}
+          hasActiveFilters={hasActiveFilters}
+          onResetAll={handleResetFilters}
+          resultCount={displayedItems.length}
         />
       </div>
 
@@ -538,9 +730,22 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
             </button>
           </div>
         </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 sm:p-12 text-center bg-card flex flex-col items-center justify-center">
+          <p className="text-xs text-muted-foreground mb-3">
+            No questions match the current feedback filter.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFeedbackFilter("ALL")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+          >
+            Show All Questions
+          </button>
+        </div>
       ) : (
         <div className="space-y-3">
-          {items.map((q, idx) => (
+          {displayedItems.map((q, idx) => (
             <QuestionCardItem
               key={q.id}
               question={q}
@@ -588,6 +793,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         }}
         onPublish={handlePublish}
         onArchive={handleArchive}
+        onResolveReport={handleResolveReport}
       />
 
       <QuestionUploadModal
