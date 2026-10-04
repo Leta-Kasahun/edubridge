@@ -340,7 +340,7 @@ export function StudentProgressView(): React.JSX.Element {
         progress: p.progressPercent,
         completedItems: p.answeredCount,
         totalItems: p.totalQuestions,
-        href: `/dashboard/question-banks/${p.bankId}/practice`,
+        href: ROUTES.STUDENT.EXAMS,
       });
     }
 
@@ -355,7 +355,7 @@ export function StudentProgressView(): React.JSX.Element {
           progress: Math.round((s.answeredCount / s.totalQuestions) * 100),
           completedItems: s.answeredCount,
           totalItems: s.totalQuestions,
-          href: `/dashboard/question-banks/${s.bankId}/practice`,
+          href: ROUTES.STUDENT.EXAMS,
         });
       }
     }
