@@ -1,5 +1,6 @@
 import { QuestionRepository } from "../repository/question.repository.js";
 import { QuestionBankRepository } from "../repository/question-bank.repository.js";
+import { prisma } from "../../../lib/prisma.js";
 import {
   CreateQuestionInput,
   UpdateQuestionInput,
@@ -14,6 +15,7 @@ import {
   DifficultyLevelEnum,
 } from "../../../shared/constants/question-bank.constants.js";
 import { validateQuestionConfig } from "../../../shared/utils/question-config.util.js";
+import { domainEventBus } from "../../../shared/events/domain-events.js";
 
 interface RawCurriculumTopic {
   id: string;
@@ -312,7 +314,8 @@ export class QuestionService {
     tenantId: string | null,
     questionId: string,
     reportId: string,
-    userId: string
+    userId: string,
+    resolutionNote?: string | null
   ) {
     const question = await this.findById(tenantId, questionId);
     const latestVersion = question.versions[0];
@@ -327,6 +330,8 @@ export class QuestionService {
 
     const rawReports = Array.isArray(currentConfig.reports) ? currentConfig.reports : [];
 
+    const trimmedNote = resolutionNote?.trim() || undefined;
+
     const updatedReports = rawReports.map((rep) => {
       if (typeof rep === "object" && rep !== null && (rep as Record<string, unknown>).id === reportId) {
         return {
@@ -334,6 +339,7 @@ export class QuestionService {
           status: "RESOLVED",
           resolvedAt: new Date().toISOString(),
           resolvedById: userId,
+          ...(trimmedNote ? { resolutionNote: trimmedNote } : {}),
         };
       }
       return rep;
@@ -341,9 +347,41 @@ export class QuestionService {
 
     currentConfig.reports = updatedReports;
 
-    return this.update(tenantId, questionId, userId, {
-      configuration: currentConfig,
+    await prisma.questionVersion.update({
+      where: { id: latestVersion.id },
+      data: {
+        configuration: JSON.parse(JSON.stringify(currentConfig)),
+      },
     });
+
+    const result = await this.findById(tenantId, questionId);
+
+    const resolvedReport = updatedReports.find(
+      (rep) =>
+        typeof rep === "object" &&
+        rep !== null &&
+        (rep as Record<string, unknown>).id === reportId
+    ) as Record<string, unknown> | undefined;
+
+    if (resolvedReport) {
+      const bank =
+        (await this.bankRepository.findById(tenantId, question.questionBankId)) ||
+        (await this.bankRepository.findById(null, question.questionBankId));
+      const bankId = question.questionBankId;
+      const bankTitle = bank?.name || "Question Bank";
+      const effectiveTenantId = bank?.tenantId || tenantId || "";
+      domainEventBus.emitEvent("question.report_resolved", {
+        tenantId: effectiveTenantId,
+        questionId,
+        bankId,
+        bankTitle,
+        studentUserId: (resolvedReport.studentId as string) || "",
+        resolvedByUserId: userId,
+        resolutionNote: trimmedNote,
+      });
+    }
+
+    return result;
   }
 
   async submitReport(
@@ -379,9 +417,36 @@ export class QuestionService {
     rawReports.push(newReport);
     currentConfig.reports = rawReports;
 
-    return this.update(tenantId, questionId, userId, {
-      configuration: currentConfig,
+    await prisma.questionVersion.update({
+      where: { id: latestVersion.id },
+      data: {
+        configuration: JSON.parse(JSON.stringify(currentConfig)),
+      },
     });
+
+    const result = await this.findById(tenantId, questionId);
+
+    const bank =
+      (await this.bankRepository.findById(tenantId, question.questionBankId)) ||
+      (await this.bankRepository.findById(null, question.questionBankId));
+    const bankId = question.questionBankId;
+    const bankTitle = bank?.name || "Question Bank";
+    const authorUserId = question.createdBy?.id || bank?.createdById || "";
+    const effectiveTenantId = bank?.tenantId || tenantId || "";
+
+    domainEventBus.emitEvent("question.report_submitted", {
+      tenantId: effectiveTenantId,
+      questionId,
+      bankId,
+      bankTitle,
+      studentUserId: userId,
+      studentName: userFullName,
+      authorUserId,
+      reason: data.reason,
+      comment: data.comment || undefined,
+    });
+
+    return result;
   }
 
   async delete(tenantId: string | null, questionId: string) {
