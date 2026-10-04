@@ -73,8 +73,12 @@ export function AssessmentQuestionSelectorModal({
     return !search.trim() || q.prompt.toLowerCase().includes(search.toLowerCase());
   });
 
+  const getQuestionVersionId = (q: QuestionListItem): string => {
+    return q.latestVersionId || q.versionId || q.id;
+  };
+
   const toggleQuestion = (q: QuestionListItem) => {
-    const versionId = q.id;
+    const versionId = getQuestionVersionId(q);
     if (!versionId) return;
 
     setAllocations((prev) => {
@@ -220,7 +224,7 @@ export function AssessmentQuestionSelectorModal({
               </div>
             ) : (
               filteredQuestions.map((q, idx) => {
-                const versionId = q.id;
+                const versionId = getQuestionVersionId(q);
                 const isChecked = Boolean(versionId && allocations.has(versionId));
                 const currentAlloc = versionId ? allocations.get(versionId) : undefined;
 
