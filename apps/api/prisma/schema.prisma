@@ -423,6 +423,7 @@ masteryHistory         MasteryHistory[]
   notifications          Notification[]
   studentBookmarks       StudentBookmark[]
   studentContentProgress StudentContentProgress[]
+  studentPracticeSessions StudentPracticeSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -920,6 +921,7 @@ model StudentProfile {
   masteryHistory    MasteryHistory[]
   bookmarks         StudentBookmark[]
   contentProgress   StudentContentProgress[]
+  practiceSessions  StudentPracticeSession[]
 
   @@unique([tenantId, studentCode])
   @@index([tenantId, status])
@@ -1551,6 +1553,7 @@ model QuestionBank {
   questions Question[]
 
   examContexts ExamContext[]
+  practiceSessions StudentPracticeSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2169,4 +2172,41 @@ model StudentContentProgress {
   @@index([contentId])
   @@index([studentId, lastAccessedAt])
 }
+
+// ============================================================
+// STUDENT QUESTION BANK PRACTICE SESSIONS
+// ============================================================
+
+model StudentPracticeSession {
+  id                   String         @id @default(uuid()) @db.Uuid
+  tenantId             String         @db.Uuid
+  studentId            String         @db.Uuid
+  bankId               String         @db.Uuid
+
+  currentIndex         Int            @default(0)
+  totalQuestions       Int            @default(0)
+  answeredCount        Int            @default(0)
+  secondsElapsed       Int            @default(0)
+  isFinished           Boolean        @default(false)
+
+  selectedAnswers      Json           @default("{}")
+  flaggedQuestionIds   Json           @default("[]")
+  eliminatedOptions    Json           @default("{}")
+  revealedExplanations Json           @default("{}")
+
+  lastAccessedAt       DateTime       @default(now())
+
+  tenant               Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student              StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  bank                 QuestionBank   @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@unique([studentId, bankId])
+  @@index([tenantId, studentId, isFinished])
+  @@index([bankId])
+  @@index([studentId, lastAccessedAt])
+}
+
 
