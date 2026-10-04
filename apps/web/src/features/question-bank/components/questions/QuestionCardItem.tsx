@@ -36,7 +36,11 @@ interface QuestionCardItemProps {
   readonly onArchive: (id: string) => void;
   readonly onActivate: (id: string) => void;
   readonly onDelete: (id: string, code: string) => void;
-  readonly onResolveReport?: (questionId: string, reportId: string) => void;
+  readonly onResolveReport?: (
+    questionId: string,
+    reportId: string,
+    resolutionNote?: string
+  ) => Promise<void> | void;
   readonly isBusy: boolean;
 }
 
@@ -57,6 +61,8 @@ export function QuestionCardItem({
   const [showExplanation, setShowExplanation] = useState(false);
   const [showReportsPanel, setShowReportsPanel] = useState(false);
   const [resolvingReportId, setResolvingReportId] = useState<string | null>(null);
+  const [activeResolvingId, setActiveResolvingId] = useState<string | null>(null);
+  const [resolutionNoteInput, setResolutionNoteInput] = useState<string>("");
 
   const formattedDate = question.createdAt
     ? new Date(question.createdAt).toLocaleDateString("en-US", {
@@ -75,12 +81,17 @@ export function QuestionCardItem({
   const pendingReports = (question.reports || []).filter(
     (r) => r.status === "PENDING"
   );
+  const resolvedReports = (question.reports || []).filter(
+    (r) => r.status === "RESOLVED"
+  );
 
-  const handleResolve = async (reportId: string) => {
+  const handleResolve = async (reportId: string, note?: string) => {
     if (!onResolveReport) return;
     setResolvingReportId(reportId);
     try {
-      await onResolveReport(question.id, reportId);
+      await onResolveReport(question.id, reportId, note);
+      setActiveResolvingId(null);
+      setResolutionNoteInput("");
     } finally {
       setResolvingReportId(null);
     }
@@ -131,6 +142,16 @@ export function QuestionCardItem({
                 count={pendingReports.length}
                 onClick={() => setShowReportsPanel((prev) => !prev)}
               />
+            )}
+            {pendingReports.length === 0 && resolvedReports.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowReportsPanel((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                title="View resolved feedback"
+              >
+                <Check size={11} /> Feedback Resolved ({resolvedReports.length})
+              </button>
             )}
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground ml-auto">
               <Calendar size={12} />
@@ -255,64 +276,136 @@ export function QuestionCardItem({
         </div>
       )}
 
-      {showReportsPanel && pendingReports.length > 0 && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2.5 animate-in fade-in-0">
+      {showReportsPanel && (pendingReports.length > 0 || resolvedReports.length > 0) && (
+        <div className="p-3.5 rounded-xl bg-muted/40 border border-border space-y-3 animate-in fade-in-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
-              <AlertTriangle size={13} />
-              <span>Student Issue Reports ({pendingReports.length})</span>
+            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <AlertTriangle size={13} className="text-amber-500" />
+              <span>Student Feedback & Issue Reports</span>
             </span>
             <button
               type="button"
               onClick={() => setShowReportsPanel(false)}
-              className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+              className="text-[11px] text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
             >
               Hide
             </button>
           </div>
 
-          <div className="space-y-2">
-            {pendingReports.map((report) => (
-              <div
-                key={report.id}
-                className="p-2.5 rounded-lg bg-card border border-border flex items-center justify-between gap-3 text-xs"
-              >
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">
-                      {report.reason}
-                    </span>
-                    {report.studentName && (
-                      <span className="text-[10px] text-muted-foreground">
-                        by {report.studentName}
-                      </span>
+          {pendingReports.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 block">
+                Pending Feedback ({pendingReports.length})
+              </span>
+              {pendingReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="p-3 rounded-xl bg-card border border-border space-y-2 text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-foreground">
+                          {report.reason}
+                        </span>
+                        {report.studentName && (
+                          <span className="text-[10px] text-muted-foreground">
+                            by {report.studentName}
+                          </span>
+                        )}
+                      </div>
+                      {report.comment && (
+                        <p className="text-muted-foreground text-[11px] leading-relaxed">
+                          &ldquo;{report.comment}&rdquo;
+                        </p>
+                      )}
+                    </div>
+
+                    {onResolveReport && activeResolvingId !== report.id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveResolvingId(report.id);
+                          setResolutionNoteInput("");
+                        }}
+                        disabled={resolvingReportId === report.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shrink-0 disabled:opacity-60"
+                      >
+                        <Check size={12} />
+                        <span>Resolve</span>
+                      </button>
                     )}
                   </div>
+
+                  {activeResolvingId === report.id && (
+                    <div className="pt-2 border-t border-border space-y-2">
+                      <label className="text-[11px] font-medium text-foreground block">
+                        Resolution Note (Optional reply to student):
+                      </label>
+                      <input
+                        type="text"
+                        value={resolutionNoteInput}
+                        onChange={(e) => setResolutionNoteInput(e.target.value)}
+                        placeholder="e.g. Corrected typo in option B, verified answer key..."
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                      />
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setActiveResolvingId(null)}
+                          className="px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleResolve(report.id, resolutionNoteInput)}
+                          disabled={resolvingReportId === report.id}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          <Check size={12} />
+                          <span>{resolvingReportId === report.id ? "Resolving..." : "Confirm Resolve"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {resolvedReports.length > 0 && (
+            <div className="pt-2 border-t border-border/50 space-y-1.5">
+              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 block">
+                Resolved Feedback ({resolvedReports.length})
+              </span>
+              {resolvedReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="p-2.5 rounded-lg bg-card/60 border border-border/60 text-xs space-y-1"
+                >
+                  <div className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="font-medium text-foreground">
+                      {report.reason} {report.studentName ? `by ${report.studentName}` : ""}
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      Resolved
+                    </span>
+                  </div>
                   {report.comment && (
-                    <p className="text-muted-foreground text-[11px]">
+                    <p className="text-muted-foreground text-[11px] italic">
                       &ldquo;{report.comment}&rdquo;
                     </p>
                   )}
+                  {report.resolutionNote && (
+                    <p className="text-foreground text-[11px] font-medium bg-muted/50 p-1.5 rounded-md">
+                      Teacher response: {report.resolutionNote}
+                    </p>
+                  )}
                 </div>
-
-                {onResolveReport && (
-                  <button
-                    type="button"
-                    onClick={() => handleResolve(report.id)}
-                    disabled={resolvingReportId === report.id}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shrink-0 disabled:opacity-60"
-                  >
-                    <Check size={12} />
-                    <span>
-                      {resolvingReportId === report.id
-                        ? "Resolving..."
-                        : "Mark Resolved"}
-                    </span>
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
