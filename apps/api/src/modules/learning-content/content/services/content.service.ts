@@ -21,6 +21,7 @@ import {
   ContentObjectiveMappingResponse,
   ContentVersionBody,
 } from "../types/content.types.js";
+import { SaveContentProgressInput } from "../schemas/content.schema.js";
 import {
   NotFoundError,
   BadRequestError,
@@ -1118,6 +1119,132 @@ export class ContentService {
       deleted: true,
       message: "Published content archived successfully",
     };
+  }
+
+  async saveProgress(
+    tenantId: string,
+    userId: string,
+    roles: readonly string[],
+    contentId: string,
+    input: SaveContentProgressInput
+  ) {
+    const isStaff = roles.some((role) =>
+      ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(role)
+    );
+    const isStudent = roles.includes("STUDENT");
+
+    // Staff preview: acknowledge without modifying student database rows
+    if (isStaff && !isStudent) {
+      return {
+        id: `preview-${contentId}`,
+        tenantId,
+        contentId,
+        lastPositionSeconds: input.lastPositionSeconds,
+        durationSeconds: input.durationSeconds,
+        progressPercent: input.progressPercent,
+        isCompleted: input.isCompleted ?? false,
+        lastAccessedAt: new Date().toISOString(),
+      };
+    }
+
+    const student = await this.repository.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      throw new NotFoundError("Student profile not found for the active user");
+    }
+
+    const record = await this.repository.upsertStudentContentProgress(
+      tenantId,
+      student.id,
+      contentId,
+      input
+    );
+
+    return {
+      id: record.id,
+      tenantId: record.tenantId,
+      studentId: record.studentId,
+      contentId: record.contentId,
+      lastPositionSeconds: record.lastPositionSeconds,
+      durationSeconds: record.durationSeconds,
+      progressPercent: Number(record.progressPercent),
+      isCompleted: record.isCompleted,
+      lastAccessedAt: record.lastAccessedAt.toISOString(),
+    };
+  }
+
+  async getProgress(
+    tenantId: string,
+    userId: string,
+    roles: readonly string[],
+    contentId: string
+  ) {
+    const isStaff = roles.some((role) =>
+      ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(role)
+    );
+    const isStudent = roles.includes("STUDENT");
+
+    if (isStaff && !isStudent) {
+      return null;
+    }
+
+    const student = await this.repository.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      return null;
+    }
+
+    const record = await this.repository.getStudentContentProgress(
+      tenantId,
+      student.id,
+      contentId
+    );
+
+    if (!record) {
+      return null;
+    }
+
+    return {
+      id: record.id,
+      tenantId: record.tenantId,
+      studentId: record.studentId,
+      contentId: record.contentId,
+      lastPositionSeconds: record.lastPositionSeconds,
+      durationSeconds: record.durationSeconds,
+      progressPercent: Number(record.progressPercent),
+      isCompleted: record.isCompleted,
+      lastAccessedAt: record.lastAccessedAt.toISOString(),
+    };
+  }
+
+  async listStudentInProgress(
+    tenantId: string,
+    userId: string,
+    limit: number = 6
+  ) {
+    const student = await this.repository.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      return [];
+    }
+
+    const items = await this.repository.listStudentInProgressContent(
+      tenantId,
+      student.id,
+      limit
+    );
+
+    return items.map((item) => ({
+      id: item.id,
+      contentId: item.contentId,
+      title: item.content.title,
+      type: item.content.type,
+      scope: item.content.scope,
+      subjectCode: item.content.subject?.code || "CONTENT",
+      subjectName: item.content.subject?.name || "Curriculum Material",
+      unitTitle: item.content.unit?.title || null,
+      lastPositionSeconds: item.lastPositionSeconds,
+      durationSeconds: item.durationSeconds,
+      progressPercent: Number(item.progressPercent),
+      lastAccessedAt: item.lastAccessedAt.toISOString(),
+    }));
   }
 }
 
