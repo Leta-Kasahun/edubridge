@@ -10,7 +10,10 @@ import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import {
   useAssessment,
   useSetAssessmentQuestions,
+  ASSESSMENT_QUERY_KEYS,
 } from "../hooks/useAssessments";
+import { useQueryClient } from "@tanstack/react-query";
+import { questionBankService } from "@/features/question-bank/services/question-bank.service";
 import { QuestionListItem } from "@/features/question-bank/types/question-bank.types";
 import { QuestionPreviewModal } from "@/features/question-bank/components/questions/QuestionPreviewModal";
 import { QuestionFormModal } from "@/features/question-bank/components/questions/QuestionFormModal";
@@ -41,6 +44,16 @@ export function AssessmentDetailView({ id }: AssessmentDetailViewProps) {
 
   // Mutations
   const setQuestionsMutation = useSetAssessmentQuestions();
+  const queryClient = useQueryClient();
+
+  const handleResolveReportInPreview = async (
+    questionId: string,
+    reportId: string,
+    resolutionNote?: string
+  ) => {
+    await questionBankService.resolveQuestionReport(questionId, reportId, resolutionNote);
+    queryClient.invalidateQueries({ queryKey: ASSESSMENT_QUERY_KEYS.detail(id) });
+  };
 
   const questionsList = useMemo(() => {
     return [...(assessment?.questions || [])].sort(
@@ -201,6 +214,7 @@ export function AssessmentDetailView({ id }: AssessmentDetailViewProps) {
           isOpen={Boolean(previewingQuestion)}
           onClose={() => setPreviewingQuestion(null)}
           question={previewingQuestion}
+          onResolveReport={handleResolveReportInPreview}
         />
       )}
 
