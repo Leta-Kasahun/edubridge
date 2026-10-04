@@ -215,6 +215,10 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "My Exams",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: GraduationCap,
+    children: [
+      { label: "All Exams", href: ROUTES.ASSESSMENTS.BASE },
+      { label: "Bookmarks", href: ROUTES.ASSESSMENTS.BOOKMARKS },
+    ],
   },
   {
     label: "My Progress",

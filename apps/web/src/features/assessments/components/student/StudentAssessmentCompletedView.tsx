@@ -13,10 +13,13 @@ import {
   Lightbulb,
   MessageSquare,
   Send,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 import { AssessmentAttemptResult } from "../../types/assessment.types";
 import { ROUTES } from "@/constants/routes";
 import { formatPercentage, getAttemptStatusBadge } from "@/shared/utils/assessment.util";
+import { useBookmarkStore } from "@/stores/bookmark.store";
 
 interface StudentAssessmentCompletedViewProps {
   readonly attempt: AssessmentAttemptResult;
@@ -238,14 +241,57 @@ export function StudentAssessmentCompletedView({
                   </div>
 
                   <div className="pt-2 border-t border-border/70 flex items-center justify-between gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => toggleExplanation(qKey)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      <Lightbulb size={14} className="text-amber-500" />
-                      <span>{isExplanationOpen ? "Hide Explanation" : "View Explanation"}</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleExplanation(qKey)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <Lightbulb size={14} className="text-amber-500" />
+                        <span>{isExplanationOpen ? "Hide Explanation" : "View Explanation"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          useBookmarkStore.getState().toggleBookmark({
+                            questionVersionId: qKey,
+                            assessmentId: attempt.assessmentId,
+                            assessmentTitle: attempt.assessment?.title,
+                            type: qv?.type || "MCQ",
+                            difficulty: "MEDIUM",
+                            points: Number(maxPts) || 1,
+                            questionText: qv?.questionText || "Question prompt",
+                            options: (qv?.options || []).map((o) => ({
+                              id: o.id,
+                              optionKey: o.optionKey,
+                              optionText: o.optionText,
+                              isCorrect: o.isCorrect,
+                            })),
+                            explanation: qv?.explanation,
+                            userAnswer: ans.answer,
+                            isCorrect: ans.isCorrect,
+                          });
+                        }}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          useBookmarkStore.getState().isBookmarked(qKey)
+                            ? "bg-primary/10 border-primary/40 text-primary"
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                        title="Save to My Bookmarks"
+                      >
+                        {useBookmarkStore.getState().isBookmarked(qKey) ? (
+                          <BookmarkCheck size={13} className="fill-primary text-primary" />
+                        ) : (
+                          <Bookmark size={13} />
+                        )}
+                        <span>
+                          {useBookmarkStore.getState().isBookmarked(qKey)
+                            ? "Saved"
+                            : "Save Question"}
+                        </span>
+                      </button>
+                    </div>
 
                     <button
                       type="button"

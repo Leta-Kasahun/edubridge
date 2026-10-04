@@ -258,6 +258,7 @@ export function StudentAssessmentRunnerView({
                 handleAnswerChange(currentQuestion.questionVersionId, val)
               }
               onToggleFlag={() => toggleFlag(currentQuestion.questionVersionId)}
+              assessmentId={session.assessmentId}
             />
           ) : (
             <div className="bg-card rounded-2xl border border-border p-12 text-center text-muted-foreground">

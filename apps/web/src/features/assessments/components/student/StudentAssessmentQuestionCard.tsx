@@ -1,9 +1,10 @@
 "use client";
 
-import { Flag, Check, Hash } from "lucide-react";
+import { Flag, Check, Hash, Bookmark, BookmarkCheck } from "lucide-react";
 import { StudentQuestionView } from "../../types/assessment.types";
 import { QuestionDifficultyBadge } from "@/features/question-bank/components/questions/QuestionBadges";
 import { buildOptionLabel } from "@/shared/utils/question.util";
+import { useBookmarkStore } from "@/stores/bookmark.store";
 
 interface StudentAssessmentQuestionCardProps {
   readonly question: StudentQuestionView;
@@ -13,6 +14,8 @@ interface StudentAssessmentQuestionCardProps {
   readonly isFlagged: boolean;
   readonly onAnswerChange: (answer: unknown) => void;
   readonly onToggleFlag: () => void;
+  readonly assessmentTitle?: string;
+  readonly assessmentId?: string;
 }
 
 export function StudentAssessmentQuestionCard({
@@ -23,7 +26,30 @@ export function StudentAssessmentQuestionCard({
   isFlagged,
   onAnswerChange,
   onToggleFlag,
+  assessmentTitle,
+  assessmentId,
 }: StudentAssessmentQuestionCardProps) {
+  const isBookmarked = useBookmarkStore((s) => s.isBookmarked(question.questionVersionId));
+  const toggleBookmark = useBookmarkStore((s) => s.toggleBookmark);
+
+  const handleToggleBookmark = () => {
+    toggleBookmark({
+      questionVersionId: question.questionVersionId,
+      questionId: question.questionId,
+      assessmentId,
+      assessmentTitle,
+      type: question.type,
+      difficulty: question.difficulty,
+      points: Number(question.points) || 1,
+      questionText: question.questionText,
+      options: (question.options || []).map((opt) => ({
+        id: opt.id,
+        optionKey: opt.optionKey,
+        optionText: opt.optionText,
+      })),
+      userAnswer: currentAnswer,
+    });
+  };
 
   const renderQuestionInput = () => {
     switch (question.type) {
@@ -228,18 +254,38 @@ export function StudentAssessmentQuestionCard({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleFlag}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-            isFlagged
-              ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-2xs"
-              : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          <Flag size={14} className={isFlagged ? "fill-amber-500 text-amber-500" : ""} />
-          <span>{isFlagged ? "Flagged for Review" : "Flag Question"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleToggleBookmark}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+              isBookmarked
+                ? "bg-primary/10 border-primary/40 text-primary shadow-2xs font-semibold"
+                : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+            title={isBookmarked ? "Remove from saved questions" : "Save question to bookmarks"}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck size={14} className="fill-primary text-primary" />
+            ) : (
+              <Bookmark size={14} />
+            )}
+            <span>{isBookmarked ? "Saved" : "Save Question"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleFlag}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+              isFlagged
+                ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-2xs"
+                : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Flag size={14} className={isFlagged ? "fill-amber-500 text-amber-500" : ""} />
+            <span>{isFlagged ? "Flagged for Review" : "Flag Question"}</span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">

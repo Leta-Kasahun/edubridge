@@ -22,6 +22,7 @@ export const ROUTES = {
     DASHBOARD: "/dashboard",
     MY_CLASS: "/dashboard/my-class",
     EXAMS: "/dashboard/assessments",
+    BOOKMARKS: "/dashboard/assessments/bookmarks",
     PROGRESS: "/dashboard/progress",
     MATERIALS: "/dashboard/learning-content/materials",
     PROFILE: "/dashboard/profile",
@@ -64,6 +65,7 @@ export const ROUTES = {
   },
   ASSESSMENTS: {
     BASE: "/dashboard/assessments",
+    BOOKMARKS: "/dashboard/assessments/bookmarks",
     LIST: "/dashboard/assessments/list",
     BUILDER: "/dashboard/assessments/builder",
     RESULTS: "/dashboard/assessments/results",
