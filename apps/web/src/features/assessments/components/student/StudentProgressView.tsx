@@ -18,7 +18,9 @@ import {
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
 import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
-import { useAssessments } from "../../hooks/useAssessments";
+import { useAssessments, useStudentInProgressAssessments } from "../../hooks/useAssessments";
+import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
+import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
 import { ASSESSMENT_TYPE_LABELS } from "@/shared/constants/assessment.constants";
 import { ROUTES } from "@/constants/routes";
 import { formatMinutes } from "@/shared/utils/assessment.util";
@@ -47,13 +49,15 @@ interface RecommendedTopicItem {
   readonly reason: string;
 }
 
-interface InProgressAssessmentItem {
+interface InProgressActivityItem {
   readonly id: string;
-  readonly type: string;
+  readonly type: "Practice Exam" | "Practice Test" | "Lesson" | "Topic";
   readonly subjectCode: string;
   readonly title: string;
-  readonly timeLimitMinutes?: number | null;
-  readonly totalQuestions: number;
+  readonly progress: number;
+  readonly completedItems: number;
+  readonly totalItems: number;
+  readonly href: string;
 }
 
 interface RecentActivityItem {
@@ -129,13 +133,19 @@ export function StudentProgressView(): React.JSX.Element {
   
   const studentId = profile?.id ?? "";
   const { data: masteryData, isLoading: isMasteryLoading } = useStudentMastery(studentId);
-  const { data: assessmentsResponse, isLoading: isAssessmentsLoading } = useAssessments({
-    limit: 6,
-  });
+  const { data: inProgressAssessments = [], isLoading: isInProgressAssessmentsLoading } =
+    useStudentInProgressAssessments(50);
+  const { data: inProgressContent = [], isLoading: isInProgressContentLoading } =
+    useStudentInProgressContent(50);
 
   const [selectedSubjectCode, setSelectedSubjectCode] = React.useState<string>("");
 
-  const isLoading = isProfileLoading || isMasteryLoading || isClassLoading;
+  const isLoading =
+    isProfileLoading ||
+    isMasteryLoading ||
+    isClassLoading ||
+    isInProgressAssessmentsLoading ||
+    isInProgressContentLoading;
 
   const studentGradeLevel =
     profile?.enrollment?.gradeLevel ??
@@ -282,25 +292,57 @@ export function StudentProgressView(): React.JSX.Element {
       .slice(0, 6);
   }, [uniqueSubjects]);
 
-  // Active / Published In-Progress Assessment items
-  const inProgressAssessments: readonly InProgressAssessmentItem[] = useMemo(() => {
-    const items = assessmentsResponse?.items ?? [];
-    return items.slice(0, 3).map((assessment) => {
-      const questionCount =
-        assessment._count?.questions || assessment.questions?.length || 0;
-      const typeLabel =
-        ASSESSMENT_TYPE_LABELS[assessment.type] || assessment.type;
+  // Active / Real In-Progress Activities (Exams, Lessons, Practices) from PostgreSQL
+  const inProgressActivities: readonly InProgressActivityItem[] = useMemo(() => {
+    const list: InProgressActivityItem[] = [];
 
-      return {
-        id: assessment.id,
-        type: typeLabel,
-        subjectCode: assessment.examContext?.code || "EXAM",
-        title: assessment.title,
-        timeLimitMinutes: assessment.timeLimitMinutes,
-        totalQuestions: questionCount,
-      };
-    });
-  }, [assessmentsResponse]);
+    // 1. Real active assessment attempts from PostgreSQL
+    for (const a of inProgressAssessments) {
+      list.push({
+        id: a.id,
+        type: a.timeLimitMinutes ? "Practice Exam" : "Practice Test",
+        subjectCode: a.subjectCode,
+        title: a.title,
+        progress: a.progressPercent,
+        completedItems: a.answeredCount,
+        totalItems: a.totalQuestions,
+        href: ROUTES.ASSESSMENTS.ATTEMPT(a.assessmentId),
+      });
+    }
+
+    // 2. Real active learning content / videos from PostgreSQL
+    for (const c of inProgressContent) {
+      list.push({
+        id: c.id,
+        type: c.type === "VIDEO" ? "Lesson" : "Topic",
+        subjectCode: c.subjectCode,
+        title: c.title,
+        progress: Math.round(c.progressPercent),
+        completedItems: Math.round(c.progressPercent),
+        totalItems: 100,
+        href: `/learn/${c.contentId}`,
+      });
+    }
+
+    // 3. Real active question bank practice sessions (where 0 < answered < total)
+    const activeSessions = getAllActiveSessions();
+    for (const s of activeSessions) {
+      if (s.answeredCount > 0 && s.answeredCount < s.totalQuestions) {
+        list.push({
+          id: s.sessionId,
+          type: "Practice Test",
+          subjectCode: s.bankId.slice(0, 4).toUpperCase(),
+          title: s.bankName,
+          progress: Math.round((s.answeredCount / s.totalQuestions) * 100),
+          completedItems: s.answeredCount,
+          totalItems: s.totalQuestions,
+          href: ROUTES.STUDENT.PRACTICE,
+        });
+      }
+    }
+
+    return list;
+  }, [inProgressAssessments, inProgressContent]);
 
   // Recent Completed Activity derived from recorded topic practice and assessment evidence
   const recentActivities: readonly RecentActivityItem[] = useMemo(() => {
@@ -407,81 +449,94 @@ export function StudentProgressView(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Section 1: In Progress */}
+      {/* Section 1: In Progress Activities */}
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <PlayCircle size={18} className="text-primary" />
-            <span>In Progress</span>
-          </h2>
-          <Link
-            href={ROUTES.ASSESSMENTS.BASE}
-            className="text-xs font-semibold text-primary hover:underline shrink-0"
-          >
-            All exams
-          </Link>
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <PlayCircle size={18} className="text-primary" />
+              <span>In Progress</span>
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Continue your active practice exams, quizzes, and curriculum lessons
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground font-medium">
+            {inProgressActivities.length} active
+          </span>
         </div>
 
-        {inProgressAssessments.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
-            <PlayCircle className="h-8 w-8 text-muted-foreground/60 mb-2" />
-            <h3 className="text-sm font-semibold text-foreground">
-              No active exams right now
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
-              All assigned exams are completed or not yet scheduled.
-            </p>
-            <Link
-              href={ROUTES.ASSESSMENTS.BASE}
-              className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs"
-            >
-              <span>Explore Practice Tests</span>
-              <ChevronRight size={13} />
-            </Link>
+        {inProgressActivities.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 sm:p-8 text-center space-y-3 shadow-xs">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <PlayCircle className="h-6 w-6" />
+            </div>
+            <div className="space-y-1 max-w-sm mx-auto">
+              <h3 className="text-sm font-bold text-foreground">
+                No activities currently in progress
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                You do not have any unfinished exams or lessons. Start a new assessment or practice topic to build your mastery.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <Link
+                href={ROUTES.ASSESSMENTS.LIST}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-xs"
+              >
+                <span>Browse Assessments</span>
+                <ChevronRight size={13} />
+              </Link>
+              <Link
+                href={ROUTES.STUDENT.MATERIALS}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition shadow-xs"
+              >
+                <span>Curriculum Materials</span>
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {inProgressAssessments.map((item, idx) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            {inProgressActivities.map((item) => (
               <div
-                key={`in-prog-${item.id}-${idx}`}
-                className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
+                key={item.id}
+                className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
               >
-                <div className="space-y-2.5 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                        {item.subjectCode}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                        {item.type}
-                      </span>
-                    </div>
-                    {item.timeLimitMinutes ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                        <Clock size={12} />
-                        <span>{formatMinutes(item.timeLimitMinutes)}</span>
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-muted text-muted-foreground shrink-0">
+                      {item.subjectCode}
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
+                      {item.type}
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                       {item.title}
                     </h3>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <HelpCircle size={13} className="text-primary/70" />
-                    <span>{item.totalQuestions} questions</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${Math.max(item.progress, 0)}%` }}
+                        />
+                      </div>
+                      <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
+                    </div>
+                    <span className="shrink-0 text-[11px] sm:text-xs">
+                      {item.completedItems} of {item.totalItems} completed
+                    </span>
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-border/60 flex items-center justify-end">
+                <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
                   <Link
-                    href={ROUTES.ASSESSMENTS.ATTEMPT(item.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
                   >
-                    <span>Start Exam</span>
+                    <span>Continue</span>
                     <ChevronRight size={13} />
                   </Link>
                 </div>

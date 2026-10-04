@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
-import { useAssessments } from "@/features/assessments/hooks/useAssessments";
+import { useStudentInProgressAssessments } from "@/features/assessments/hooks/useAssessments";
+import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
+import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from "@/shared/utils";
@@ -58,9 +60,17 @@ export function StudentDashboardOverview() {
   
   const studentId = profile?.id ?? "";
   const { data: masteryData, isLoading: isMasteryLoading } = useStudentMastery(studentId);
-  const { data: assessmentsData, isLoading: isAssessmentsLoading } = useAssessments();
+  const { data: inProgressAssessments = [], isLoading: isInProgressAssessmentsLoading } =
+    useStudentInProgressAssessments();
+  const { data: inProgressContent = [], isLoading: isInProgressContentLoading } =
+    useStudentInProgressContent();
 
-  const isLoading = isClassLoading || isProfileLoading || isMasteryLoading || isAssessmentsLoading;
+  const isLoading =
+    isClassLoading ||
+    isProfileLoading ||
+    isMasteryLoading ||
+    isInProgressAssessmentsLoading ||
+    isInProgressContentLoading;
 
   const section = classData?.section;
   const homeroomTeacher = classData?.homeroomTeacher;
@@ -68,13 +78,6 @@ export function StudentDashboardOverview() {
     () => classData?.subjectTeachers ?? [],
     [classData?.subjectTeachers]
   );
-  const assessments = assessmentsData?.items ?? [];
-
-  const activeExams = useMemo(() => {
-    return assessments.filter(
-      (a) => a.status === "ACTIVE" || a.status === "PUBLISHED"
-    );
-  }, [assessments]);
 
   const studentName = profile?.firstName || profile?.fullName || "Student";
   const greeting = getEthiopianGreeting();
@@ -90,38 +93,57 @@ export function StudentDashboardOverview() {
 
   const identityLine = [gradeLabel, sectionLabel, academicYear].filter(Boolean).join(" • ");
 
-  // Real In-Progress Activities from live published assessments & curriculum materials
+  // Real In-Progress Activities strictly from PostgreSQL attempts, real content progress, and genuine practice sessions
   const inProgressActivities: readonly InProgressActivityItem[] = useMemo(() => {
-    if (activeExams.length > 0) {
-      return activeExams.slice(0, 3).map((item) => {
-        const totalQ = item._count?.questions || item.questions?.length || 10;
-        return {
-          id: item.id,
-          type: item.timeLimitMinutes ? "Practice Exam" : "Practice Test",
-          subjectCode: item.examContext?.code || "EXAM",
-          title: item.title,
-          progress: 0,
-          completedItems: 0,
-          totalItems: totalQ,
-          href: ROUTES.ASSESSMENTS.ATTEMPT(item.id),
-        };
+    const list: InProgressActivityItem[] = [];
+
+    // 1. Genuine in-progress assessment attempts from PostgreSQL
+    for (const a of inProgressAssessments) {
+      list.push({
+        id: a.id,
+        type: a.timeLimitMinutes ? "Practice Exam" : "Practice Test",
+        subjectCode: a.subjectCode,
+        title: a.title,
+        progress: a.progressPercent,
+        completedItems: a.answeredCount,
+        totalItems: a.totalQuestions,
+        href: ROUTES.ASSESSMENTS.ATTEMPT(a.assessmentId),
       });
     }
 
-    // If no active exams scheduled yet, provide direct curriculum material link
-    return [
-      {
-        id: "mat-link-1",
-        type: "Lesson" as const,
-        subjectCode: "MATH",
-        title: "Curriculum Topic Practice & Materials",
-        progress: 0,
-        completedItems: 0,
-        totalItems: 10,
-        href: ROUTES.STUDENT.MATERIALS,
-      },
-    ];
-  }, [activeExams]);
+    // 2. Genuine in-progress learning content / videos from PostgreSQL
+    for (const c of inProgressContent) {
+      list.push({
+        id: c.id,
+        type: c.type === "VIDEO" ? "Lesson" : "Topic",
+        subjectCode: c.subjectCode,
+        title: c.title,
+        progress: Math.round(c.progressPercent),
+        completedItems: Math.round(c.progressPercent),
+        totalItems: 100,
+        href: `/learn/${c.contentId}`,
+      });
+    }
+
+    // 3. Genuine question bank practice sessions (where 0 < answered < total)
+    const activePractice = getAllActiveSessions();
+    for (const p of activePractice) {
+      if (p.answeredCount > 0 && p.answeredCount < p.totalQuestions) {
+        list.push({
+          id: p.sessionId,
+          type: "Practice Test",
+          subjectCode: p.bankId.slice(0, 4).toUpperCase(),
+          title: p.bankName,
+          progress: Math.round((p.answeredCount / p.totalQuestions) * 100),
+          completedItems: p.answeredCount,
+          totalItems: p.totalQuestions,
+          href: ROUTES.STUDENT.PRACTICE,
+        });
+      }
+    }
+
+    return list;
+  }, [inProgressAssessments, inProgressContent]);
 
   // Real-aligned subject progress computation from database mastery + enrolled class metadata
   const subjectProgressList: readonly SubjectProgressItem[] = useMemo(() => {
@@ -326,53 +348,82 @@ export function StudentDashboardOverview() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          {inProgressActivities.map((item) => (
-            <div
-              key={item.id}
-              className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
-            >
-              <div className="space-y-2 min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-muted text-muted-foreground shrink-0">
-                    {item.subjectCode}
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
-                    {item.type}
-                  </span>
-                  <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${Math.max(item.progress, 0)}%` }}
-                      />
-                    </div>
-                    <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
-                  </div>
-                  <span className="shrink-0 text-[11px] sm:text-xs">
-                    {item.completedItems} of {item.totalItems} completed
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
-                <Link
-                  href={item.href}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
-                >
-                  <span>Continue</span>
-                  <ChevronRight size={13} />
-                </Link>
-              </div>
+        {inProgressActivities.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 sm:p-8 text-center space-y-3">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <PlayCircle className="h-6 w-6" />
             </div>
-          ))}
-        </div>
+            <div className="space-y-1 max-w-sm mx-auto">
+              <h3 className="text-sm font-bold text-foreground">No activities currently in progress</h3>
+              <p className="text-xs text-muted-foreground">
+                You do not have any unfinished exams or lessons. Start a new assessment or practice topic to build your mastery.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <Link
+                href={ROUTES.ASSESSMENTS.LIST}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition shadow-xs"
+              >
+                <span>Browse Assessments</span>
+                <ChevronRight size={13} />
+              </Link>
+              <Link
+                href={ROUTES.STUDENT.MATERIALS}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition shadow-xs"
+              >
+                <span>Curriculum Materials</span>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            {inProgressActivities.map((item) => (
+              <div
+                key={item.id}
+                className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
+              >
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-muted text-muted-foreground shrink-0">
+                      {item.subjectCode}
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
+                      {item.type}
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${Math.max(item.progress, 0)}%` }}
+                        />
+                      </div>
+                      <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
+                    </div>
+                    <span className="shrink-0 text-[11px] sm:text-xs">
+                      {item.completedItems} of {item.totalItems} completed
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
+                  <Link
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                  >
+                    <span>Continue</span>
+                    <ChevronRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Zone 3: My Progress Section (Donut Chart & Topics Breakdown) */}
