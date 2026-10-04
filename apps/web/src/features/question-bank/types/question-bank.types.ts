@@ -342,3 +342,36 @@ export interface PaginatedResponse<T> {
     readonly hasPreviousPage: boolean;
   };
 }
+
+export interface StudentInProgressPracticeItem {
+  readonly id: string;
+  readonly bankId: string;
+  readonly bankName: string;
+  readonly subjectName: string;
+  readonly subjectCode?: string;
+  readonly gradeLevel?: number;
+  readonly currentIndex: number;
+  readonly answeredCount: number;
+  readonly totalQuestions: number;
+  readonly secondsElapsed: number;
+  readonly progressPercent: number;
+  readonly lastAccessedAt: string;
+}
+
+export interface SavePracticeSessionDto {
+  readonly currentIndex: number;
+  readonly totalQuestions: number;
+  readonly answeredCount: number;
+  readonly secondsElapsed: number;
+  readonly isFinished?: boolean;
+  readonly selectedAnswers?: Record<string, string>;
+  readonly flaggedQuestionIds?: readonly string[];
+  readonly eliminatedOptions?: Record<string, readonly string[]>;
+  readonly revealedExplanations?: Record<string, boolean>;
+}
+
+export interface SubmitQuestionReportDto {
+  readonly reason: string;
+  readonly comment?: string | null;
+}
+
