@@ -265,8 +265,14 @@ export function AssessmentGlobalResultsView() {
     }
   };
 
+  const validStudentAttempts = useMemo(() => {
+    return attempts.filter(
+      (att) => !att.isStaffPreview && !att.id.startsWith("preview-")
+    );
+  }, [attempts]);
+
   const sortedAndFilteredAttempts = useMemo(() => {
-    const list = attempts.filter((att) => {
+    const list = validStudentAttempts.filter((att) => {
       if (statusFilter !== "ALL" && att.status !== statusFilter) return false;
       const studentName = `${att.student?.user?.firstName || ""} ${
         att.student?.user?.lastName || ""
@@ -303,9 +309,12 @@ export function AssessmentGlobalResultsView() {
       }
       return sortDirection === "asc" ? cmp : -cmp;
     });
-  }, [attempts, search, statusFilter, sortField, sortDirection]);
+  }, [validStudentAttempts, search, statusFilter, sortField, sortDirection]);
 
-  const gradedAttempts = attempts.filter((a) => a.status === "GRADED");
+  const gradedAttempts = useMemo(() => {
+    return validStudentAttempts.filter((a) => a.status === "GRADED");
+  }, [validStudentAttempts]);
+
   const averagePercentage =
     gradedAttempts.length > 0
       ? Math.round(
