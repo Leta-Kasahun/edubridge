@@ -20,6 +20,7 @@ import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
 import { useAssessments, useStudentInProgressAssessments } from "../../hooks/useAssessments";
 import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
+import { useStudentInProgressPractices } from "@/features/question-bank/hooks/useQuestionBanks";
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
 import { ASSESSMENT_TYPE_LABELS } from "@/shared/constants/assessment.constants";
 import { ROUTES } from "@/constants/routes";
@@ -137,6 +138,8 @@ export function StudentProgressView(): React.JSX.Element {
     useStudentInProgressAssessments(50);
   const { data: inProgressContent = [], isLoading: isInProgressContentLoading } =
     useStudentInProgressContent(50);
+  const { data: inProgressPractices = [], isLoading: isInProgressPracticesLoading } =
+    useStudentInProgressPractices();
 
   const [selectedSubjectCode, setSelectedSubjectCode] = React.useState<string>("");
 
@@ -145,7 +148,8 @@ export function StudentProgressView(): React.JSX.Element {
     isMasteryLoading ||
     isClassLoading ||
     isInProgressAssessmentsLoading ||
-    isInProgressContentLoading;
+    isInProgressContentLoading ||
+    isInProgressPracticesLoading;
 
   const studentGradeLevel =
     profile?.enrollment?.gradeLevel ??
@@ -324,10 +328,25 @@ export function StudentProgressView(): React.JSX.Element {
       });
     }
 
-    // 3. Real active question bank practice sessions (where 0 < answered < total)
+    // 3. Real active question bank practice sessions (from PostgreSQL + local fallback)
+    const seenBankIds = new Set<string>();
+    for (const p of inProgressPractices) {
+      seenBankIds.add(p.bankId);
+      list.push({
+        id: p.id,
+        type: "Practice Test",
+        subjectCode: p.subjectCode || p.bankId.slice(0, 4).toUpperCase(),
+        title: p.bankName,
+        progress: p.progressPercent,
+        completedItems: p.answeredCount,
+        totalItems: p.totalQuestions,
+        href: `/dashboard/question-banks/${p.bankId}/practice`,
+      });
+    }
+
     const activeSessions = getAllActiveSessions();
     for (const s of activeSessions) {
-      if (s.answeredCount > 0 && s.answeredCount < s.totalQuestions) {
+      if (!seenBankIds.has(s.bankId) && s.answeredCount > 0 && s.answeredCount < s.totalQuestions) {
         list.push({
           id: s.sessionId,
           type: "Practice Test",
@@ -336,13 +355,13 @@ export function StudentProgressView(): React.JSX.Element {
           progress: Math.round((s.answeredCount / s.totalQuestions) * 100),
           completedItems: s.answeredCount,
           totalItems: s.totalQuestions,
-          href: ROUTES.STUDENT.PRACTICE,
+          href: `/dashboard/question-banks/${s.bankId}/practice`,
         });
       }
     }
 
     return list;
-  }, [inProgressAssessments, inProgressContent]);
+  }, [inProgressAssessments, inProgressContent, inProgressPractices]);
 
   // Recent Completed Activity derived from recorded topic practice and assessment evidence
   const recentActivities: readonly RecentActivityItem[] = useMemo(() => {

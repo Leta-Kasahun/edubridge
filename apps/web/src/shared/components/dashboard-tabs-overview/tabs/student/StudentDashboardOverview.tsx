@@ -13,6 +13,7 @@ import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
 import { useStudentInProgressAssessments } from "@/features/assessments/hooks/useAssessments";
 import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
+import { useStudentInProgressPractices } from "@/features/question-bank/hooks/useQuestionBanks";
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -64,13 +65,16 @@ export function StudentDashboardOverview() {
     useStudentInProgressAssessments();
   const { data: inProgressContent = [], isLoading: isInProgressContentLoading } =
     useStudentInProgressContent();
+  const { data: inProgressPractices = [], isLoading: isInProgressPracticesLoading } =
+    useStudentInProgressPractices();
 
   const isLoading =
     isClassLoading ||
     isProfileLoading ||
     isMasteryLoading ||
     isInProgressAssessmentsLoading ||
-    isInProgressContentLoading;
+    isInProgressContentLoading ||
+    isInProgressPracticesLoading;
 
   const section = classData?.section;
   const homeroomTeacher = classData?.homeroomTeacher;
@@ -125,10 +129,25 @@ export function StudentDashboardOverview() {
       });
     }
 
-    // 3. Genuine question bank practice sessions (where 0 < answered < total)
+    // 3. Genuine question bank practice sessions (from PostgreSQL + local fallback)
+    const seenBankIds = new Set<string>();
+    for (const p of inProgressPractices) {
+      seenBankIds.add(p.bankId);
+      list.push({
+        id: p.id,
+        type: "Practice Test",
+        subjectCode: p.subjectCode || p.bankId.slice(0, 4).toUpperCase(),
+        title: p.bankName,
+        progress: p.progressPercent,
+        completedItems: p.answeredCount,
+        totalItems: p.totalQuestions,
+        href: `/dashboard/question-banks/${p.bankId}/practice`,
+      });
+    }
+
     const activePractice = getAllActiveSessions();
     for (const p of activePractice) {
-      if (p.answeredCount > 0 && p.answeredCount < p.totalQuestions) {
+      if (!seenBankIds.has(p.bankId) && p.answeredCount > 0 && p.answeredCount < p.totalQuestions) {
         list.push({
           id: p.sessionId,
           type: "Practice Test",
@@ -137,13 +156,13 @@ export function StudentDashboardOverview() {
           progress: Math.round((p.answeredCount / p.totalQuestions) * 100),
           completedItems: p.answeredCount,
           totalItems: p.totalQuestions,
-          href: ROUTES.STUDENT.PRACTICE,
+          href: `/dashboard/question-banks/${p.bankId}/practice`,
         });
       }
     }
 
     return list;
-  }, [inProgressAssessments, inProgressContent]);
+  }, [inProgressAssessments, inProgressContent, inProgressPractices]);
 
   // Real-aligned subject progress computation from database mastery + enrolled class metadata
   const subjectProgressList: readonly SubjectProgressItem[] = useMemo(() => {
