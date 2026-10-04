@@ -174,6 +174,8 @@ export const API_ENDPOINTS = {
     ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,
+    STUDENT_IN_PROGRESS: "/learning-content/content/student/in-progress",
+    PROGRESS: (id: string) => `/learning-content/content/${id}/progress`,
   },
   QUESTION_BANKS: {
     BASE: "/question-banks",
@@ -195,6 +197,7 @@ export const API_ENDPOINTS = {
   },
   ASSESSMENTS: {
     BASE: "/assessments",
+    STUDENT_IN_PROGRESS: "/assessments/student/in-progress",
     BY_ID: (id: string) => `/assessments/${id}`,
     QUESTIONS: (id: string) => `/assessments/${id}/questions`,
     ASSIGN: (id: string) => `/assessments/${id}/assign`,
