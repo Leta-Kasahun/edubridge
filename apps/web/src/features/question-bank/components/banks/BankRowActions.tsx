@@ -12,6 +12,7 @@ import {
   Archive,
   Upload,
   Plus,
+  SlidersHorizontal,
 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { QuestionBankItem, QuestionBankStatus } from "../../types/question-bank.types";
@@ -127,8 +128,8 @@ export function BankRowActions({
               onClick={() => setIsOpen(false)}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
             >
-              <Eye size={13} className="text-muted-foreground shrink-0" />
-              <span>View Questions</span>
+              <SlidersHorizontal size={13} className="text-primary shrink-0" />
+              <span>Manage Questions</span>
             </Link>
 
             {onAddQuestion && (
