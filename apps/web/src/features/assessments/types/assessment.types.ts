@@ -19,6 +19,7 @@ export interface AssessmentQuestionItem {
     difficulty: DifficultyLevel;
     questionText: string;
     explanation?: string | null;
+    imageUrl?: string | null;
     points: number | string;
     options?: Array<{
       id: string;
