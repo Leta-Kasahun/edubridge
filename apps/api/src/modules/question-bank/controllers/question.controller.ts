@@ -146,8 +146,9 @@ export class QuestionController {
     const userId = getUserId(req);
     const id = req.params.id as string;
     const reportId = req.params.reportId as string;
+    const resolutionNote = (req.body as { resolutionNote?: string })?.resolutionNote;
 
-    const result = await service.resolveReport(tenantId, id, reportId, userId);
+    const result = await service.resolveReport(tenantId, id, reportId, userId, resolutionNote);
     res.status(200).json({
       success: true,
       message: "Question report resolved successfully",

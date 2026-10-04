@@ -12,6 +12,7 @@ import {
   QuestionBankQuerySchema,
   SavePracticeSessionSchema,
   SubmitQuestionReportSchema,
+  ResolveQuestionReportSchema,
 } from "./schemas/question-bank.schema.js";
 import {
   CreateQuestionSchema,
@@ -106,6 +107,7 @@ router.post(
 router.post(
   "/questions/:id/reports/:reportId/resolve",
   requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  validate(ResolveQuestionReportSchema),
   questionController.resolveReport
 );
 
