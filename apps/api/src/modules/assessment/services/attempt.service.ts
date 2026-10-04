@@ -44,10 +44,30 @@ export class AttemptService {
     const isStaff = userRoles.some((role) =>
       ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(role)
     );
+    const isStudent = userRoles.includes("STUDENT");
 
     const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
     if (!assessment) {
       throw new NotFoundError("Assessment not found or not accessible");
+    }
+
+    // Teacher & staff preview mode: return an in-memory session without creating student profile or database attempt
+    if (isStaff && !isStudent) {
+      const now = new Date();
+      const mockAttempt = {
+        id: `preview-${assessment.id}`,
+        assessmentId: assessment.id,
+        assignmentId: assignmentId || assessment.assignments?.[0]?.id || assessment.id,
+        attemptNumber: 1,
+        status: "IN_PROGRESS" as AttemptStatus,
+        startedAt: now,
+        answers: [],
+      };
+      const session = this.buildStudentActiveSession(mockAttempt, assessment);
+      return {
+        ...session,
+        isStaffPreview: true,
+      };
     }
 
     if (!isStaff && (assessment.status === "ARCHIVED" || assessment.status === "DRAFT")) {
@@ -112,6 +132,10 @@ export class AttemptService {
     attemptId: string,
     dto: SaveAnswerDto
   ) {
+    if (attemptId.startsWith("preview-")) {
+      return { success: true, preview: true };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     if (!student) {
       throw new ForbiddenError("Student profile not found");
@@ -149,6 +173,10 @@ export class AttemptService {
     attemptId: string,
     dto: BatchSaveAnswersDto
   ) {
+    if (attemptId.startsWith("preview-")) {
+      return { success: true, count: dto.answers.length, preview: true };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     if (!student) {
       throw new ForbiddenError("Student profile not found");
@@ -183,6 +211,90 @@ export class AttemptService {
     attemptId: string,
     dto: SubmitAttemptPayload
   ) {
+    if (attemptId.startsWith("preview-")) {
+      const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
+      if (!assessment) {
+        throw new NotFoundError("Assessment not found");
+      }
+
+      let totalAwarded = 0;
+      let totalMax = 0;
+      const gradedAnswers: Array<{
+        questionVersionId: string;
+        response: unknown;
+        isCorrect: boolean | null;
+        awardedPoints: number;
+        maxPoints: number;
+        status: AnswerStatus;
+      }> = [];
+
+      for (const q of assessment.questions) {
+        const qv = q.questionVersion;
+        const qPoints =
+          typeof q.points === "number"
+            ? q.points
+            : typeof q.points === "object" && q.points !== null && "toNumber" in q.points && typeof (q.points as { toNumber: () => number }).toNumber === "function"
+            ? (q.points as { toNumber: () => number }).toNumber()
+            : Number(q.points) || 0;
+        totalMax += qPoints;
+
+        const dtoAnswer = dto.answers?.find(
+          (a) => a.questionVersionId === q.questionVersionId
+        );
+        const studentResponse =
+          dtoAnswer && dtoAnswer.response !== undefined && dtoAnswer.response !== null && dtoAnswer.response !== ""
+            ? dtoAnswer.response
+            : null;
+
+        const qvForGrading: QuestionVersionForGrading = {
+          id: qv.id,
+          type: qv.type,
+          points: qPoints,
+          configuration: qv.configuration,
+          options: qv.options,
+        };
+
+        const result = GradingEngine.gradeResponse(qvForGrading, studentResponse);
+        const points = result.awardedPoints;
+        totalAwarded += points;
+
+        gradedAnswers.push({
+          questionVersionId: q.questionVersionId,
+          response: studentResponse,
+          isCorrect: result.isCorrect,
+          awardedPoints: points,
+          maxPoints: qPoints,
+          status: "GRADED",
+        });
+      }
+
+      const percentage = calculatePercentage(totalAwarded, totalMax);
+
+      return {
+        id: attemptId,
+        assessmentId,
+        assignmentId: assessment.assignments?.[0]?.id || assessment.id,
+        attemptNumber: 1,
+        status: "GRADED" as AttemptStatus,
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        gradedAt: new Date(),
+        score: totalAwarded,
+        maxScore: totalMax,
+        percentage,
+        answers: gradedAnswers,
+        assessment: {
+          id: assessment.id,
+          title: assessment.title,
+          type: assessment.type,
+          showResults: true,
+          timeLimitMinutes: assessment.timeLimitMinutes,
+          questions: assessment.questions,
+        },
+        isStaffPreview: true,
+      };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     const attempt = await this.attemptRepo.findAttemptById(attemptId);
 
@@ -318,6 +430,29 @@ export class AttemptService {
     assessmentId: string,
     attemptId: string
   ) {
+    if (attemptId.startsWith("preview-")) {
+      const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
+      if (!assessment) {
+        throw new NotFoundError("Assessment not found");
+      }
+      return {
+        id: attemptId,
+        assessmentId,
+        assignmentId: assessment.assignments?.[0]?.id || assessment.id,
+        attemptNumber: 1,
+        status: "GRADED",
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        gradedAt: new Date(),
+        score: 0,
+        maxScore: 100,
+        percentage: 0,
+        answers: [],
+        assessment,
+        isStaffPreview: true,
+      };
+    }
+
     const attempt = await this.attemptRepo.findAttemptById(attemptId);
     if (!attempt || attempt.assessmentId !== assessmentId) {
       throw new NotFoundError("Attempt not found");

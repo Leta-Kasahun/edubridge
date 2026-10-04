@@ -146,4 +146,5 @@ export interface StudentActiveAttemptSession {
   totalQuestions: number;
   totalPoints: number;
   questions: StudentQuestionView[];
+  isStaffPreview?: boolean;
 }
