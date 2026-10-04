@@ -7,6 +7,7 @@ import {
   UpdateContentMappingsSchema,
   CreateContentVersionSchema,
   ContentFilterQuerySchema,
+  SaveContentProgressSchema,
 } from "../schemas/content.schema.js";
 import { UnauthorizedError } from "../../../../shared/exceptions/index.js";
 
@@ -290,6 +291,64 @@ export class ContentController {
       res.status(200).json({
         success: true,
         message: result.message,
+      });
+    }
+  );
+
+  saveProgress = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const userContext = extractUserContext(req);
+      const id = req.params.id as string;
+      const input = SaveContentProgressSchema.parse(req.body);
+
+      const result = await this.service.saveProgress(
+        userContext.tenantId,
+        userContext.userId,
+        userContext.roles,
+        id,
+        input
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    }
+  );
+
+  getProgress = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const userContext = extractUserContext(req);
+      const id = req.params.id as string;
+
+      const result = await this.service.getProgress(
+        userContext.tenantId,
+        userContext.userId,
+        userContext.roles,
+        id
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    }
+  );
+
+  listStudentInProgress = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const userContext = extractUserContext(req);
+      const limit = req.query.limit ? Number(req.query.limit) : 6;
+
+      const items = await this.service.listStudentInProgress(
+        userContext.tenantId,
+        userContext.userId,
+        limit
+      );
+
+      res.status(200).json({
+        success: true,
+        data: items,
       });
     }
   );
