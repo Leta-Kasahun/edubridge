@@ -619,6 +619,12 @@ export class AttemptRepository {
     const where: Prisma.AssessmentAttemptWhereInput = {
       assessmentId,
       assessment: { tenantId },
+      student: {
+        tenantId,
+        user: {
+          teacherProfile: null,
+        },
+      },
       ...(filters.studentId && { studentId: filters.studentId }),
       ...(filters.assignmentId && { assignmentId: filters.assignmentId }),
       ...(filters.status && { status: filters.status }),
