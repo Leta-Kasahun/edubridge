@@ -9,7 +9,6 @@ import {
   Send,
   Check,
   X,
-  Sparkles,
   HelpCircle,
   MessageSquare,
 } from "lucide-react";
@@ -439,7 +438,7 @@ export function PracticeQuestionCanvas({
           {isExplanationOpen && (
             <div className="p-4 sm:p-5 rounded-2xl bg-muted/60 border border-border text-xs sm:text-sm space-y-2">
               <div className="flex items-center gap-1.5 font-bold text-foreground text-xs">
-                <Sparkles size={14} className="text-amber-500" />
+                <Lightbulb size={14} className="text-amber-500" />
                 <span>Step-by-Step Solution & Rationale</span>
               </div>
               <p className="text-muted-foreground leading-relaxed">
