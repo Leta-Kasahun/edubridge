@@ -5,13 +5,13 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   MoreVertical,
-  Edit2,
   Trash2,
-  Layers,
   Users,
   Send,
-  BarChart3,
   Play,
+  SlidersHorizontal,
+  Layers,
+  Settings2,
 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { AssessmentItem } from "../types/assessment.types";
@@ -19,10 +19,10 @@ import { ROUTES } from "@/constants/routes";
 
 export interface AssessmentRowActionsProps {
   readonly assessment: AssessmentItem;
-  readonly onManageQuestions: (assessment: AssessmentItem) => void;
+  readonly onManageQuestions?: (assessment: AssessmentItem) => void;
   readonly onAssign: (assessment: AssessmentItem) => void;
   readonly onPublish?: (assessment: AssessmentItem) => void;
-  readonly onViewResults: (assessment: AssessmentItem) => void;
+  readonly onViewResults?: (assessment: AssessmentItem) => void;
   readonly onEdit: (assessment: AssessmentItem) => void;
   readonly onDelete: (assessment: AssessmentItem) => void;
   readonly isBusy?: boolean;
@@ -33,7 +33,6 @@ export function AssessmentRowActions({
   onManageQuestions,
   onAssign,
   onPublish,
-  onViewResults,
   onEdit,
   onDelete,
   isBusy = false,
@@ -46,17 +45,19 @@ export function AssessmentRowActions({
   const updatePosition = () => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
-    const menuWidth = 192;
-    const menuHeight = 250;
+    const menuWidth = 216;
+    const menuHeight = 240;
 
-    let top = rect.bottom + 4;
+    let top = rect.bottom + 6;
     if (top + menuHeight > window.innerHeight) {
-      top = Math.max(10, rect.top - menuHeight - 4);
+      top = Math.max(10, rect.top - menuHeight - 6);
     }
 
     let left = rect.right - menuWidth;
     if (left < 10) {
       left = 10;
+    } else if (left + menuWidth > window.innerWidth - 10) {
+      left = window.innerWidth - menuWidth - 10;
     }
 
     setCoords({ top, left });
@@ -107,7 +108,7 @@ export function AssessmentRowActions({
           setIsOpen((prev) => !prev);
         }}
         disabled={isBusy}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-hidden cursor-pointer disabled:opacity-50 transition-colors"
         aria-label="Assessment Actions"
         aria-expanded={isOpen}
       >
@@ -126,16 +127,48 @@ export function AssessmentRowActions({
               left: `${coords.left}px`,
               zIndex: 9999,
             }}
-            className="w-48 bg-card text-foreground border border-border rounded-xl shadow-lg p-1 animate-in fade-in-0 zoom-in-95 text-xs"
+            className="w-54 bg-card text-foreground border border-border rounded-xl shadow-xl p-1.5 animate-in fade-in-0 zoom-in-95 text-xs select-none"
           >
             {isPublishedOrActive && (
               <Link
                 href={ROUTES.ASSESSMENTS.ATTEMPT(assessment.id)}
                 onClick={() => setIsOpen(false)}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <Play size={13} className="text-primary fill-primary/20 shrink-0" />
+                <Play size={14} className="text-primary fill-primary/20 shrink-0" />
                 <span>Launch / Preview</span>
+              </Link>
+            )}
+
+            <Link
+              href={`/dashboard/assessments/${assessment.id}`}
+              onClick={() => setIsOpen(false)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+            >
+              <SlidersHorizontal size={14} className="text-primary shrink-0" />
+              <span>Manage Questions</span>
+            </Link>
+
+            {onManageQuestions ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onManageQuestions(assessment);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <Layers size={14} className="text-primary shrink-0" />
+                <span>Add from Bank</span>
+              </button>
+            ) : (
+              <Link
+                href={`/dashboard/assessments/${assessment.id}?mode=bank`}
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <Layers size={14} className="text-primary shrink-0" />
+                <span>Add from Bank</span>
               </Link>
             )}
 
@@ -143,23 +176,11 @@ export function AssessmentRowActions({
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                onManageQuestions(assessment);
-              }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
-            >
-              <Layers size={13} className="text-muted-foreground shrink-0" />
-              <span>Manage Questions</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
                 onAssign(assessment);
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Users size={13} className="text-emerald-600 shrink-0" />
+              <Users size={14} className="text-muted-foreground shrink-0" />
               <span>Assign to Sections</span>
             </button>
 
@@ -170,24 +191,12 @@ export function AssessmentRowActions({
                   setIsOpen(false);
                   onPublish(assessment);
                 }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
-                <Send size={13} className="shrink-0" />
+                <Send size={14} className="shrink-0" />
                 <span>Publish Assessment</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onViewResults(assessment);
-              }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
-            >
-              <BarChart3 size={13} className="text-primary shrink-0" />
-              <span>Results & Analytics</span>
-            </button>
 
             <div className="my-1 border-t border-border" />
 
@@ -197,9 +206,9 @@ export function AssessmentRowActions({
                 setIsOpen(false);
                 onEdit(assessment);
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Edit2 size={13} className="text-muted-foreground shrink-0" />
+              <Settings2 size={14} className="shrink-0" />
               <span>Edit Settings</span>
             </button>
 
@@ -209,9 +218,9 @@ export function AssessmentRowActions({
                 setIsOpen(false);
                 onDelete(assessment);
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
             >
-              <Trash2 size={13} className="shrink-0" />
+              <Trash2 size={14} className="shrink-0" />
               <span>Archive Assessment</span>
             </button>
           </div>,
