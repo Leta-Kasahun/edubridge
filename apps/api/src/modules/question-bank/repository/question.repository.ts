@@ -189,10 +189,32 @@ export class QuestionRepository {
 
   async findById(questionId: string, tenantId?: string) {
     if (!isValidUuid(questionId)) return null;
+
+    if (tenantId && isValidUuid(tenantId)) {
+      const scoped = await prisma.question.findFirst({
+        where: {
+          id: questionId,
+          questionBank: { tenantId },
+        },
+        include: {
+          ...questionInclude,
+          questionBank: true,
+          versions: {
+            orderBy: { version: "desc" },
+            include: {
+              options: {
+                orderBy: { orderIndex: "asc" },
+              },
+            },
+          },
+        },
+      });
+      if (scoped) return scoped;
+    }
+
     return prisma.question.findFirst({
       where: {
         id: questionId,
-        ...(tenantId && isValidUuid(tenantId) && { questionBank: { tenantId } }),
       },
       include: {
         ...questionInclude,
