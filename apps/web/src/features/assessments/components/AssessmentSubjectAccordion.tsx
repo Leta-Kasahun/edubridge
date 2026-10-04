@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import Link from "next/link";
 import {
   Folder,
   FolderOpen,
@@ -99,9 +100,12 @@ export function AssessmentSubjectAccordion({
                 >
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-sm text-foreground">
+                      <Link
+                        href={`/dashboard/assessments/${assessment.id}`}
+                        className="font-semibold text-sm text-foreground hover:text-primary transition-colors cursor-pointer"
+                      >
                         {assessment.title}
-                      </span>
+                      </Link>
                       <AssessmentStatusBadge status={assessment.status} />
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
                         {typeLabel}
