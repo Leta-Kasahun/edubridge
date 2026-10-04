@@ -93,8 +93,8 @@ app.use("/api/curriculum/import", curriculumImportRouter);
 app.use("/api/learning-content", learningContentRouter);
 app.use("/api/question-banks", questionBankRouter);
 app.use("/api/exam-contexts", examContextRouter);
-app.use("/api/assessments", assessmentRouter);
 app.use("/api/assessments", attemptRouter);
+app.use("/api/assessments", assessmentRouter);
 app.use("/api/mastery", masteryRouter);
 
 app.use(errorHandler);

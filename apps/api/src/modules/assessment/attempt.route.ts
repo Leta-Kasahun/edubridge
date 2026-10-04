@@ -18,6 +18,12 @@ const attemptController = new AttemptController();
 
 router.use(authenticate);
 
+router.get(
+  "/student/in-progress",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
+  attemptController.listStudentInProgress
+);
+
 router.post(
   "/:id/attempts/start",
   requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
