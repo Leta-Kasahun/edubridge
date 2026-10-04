@@ -186,6 +186,10 @@ export const API_ENDPOINTS = {
     QUESTION_PUBLISH: (id: string) => `/question-banks/questions/${id}/publish`,
     RESOLVE_REPORT: (questionId: string, reportId: string) =>
       `/question-banks/questions/${questionId}/reports/${reportId}/resolve`,
+    REPORT_QUESTION: (questionId: string) =>
+      `/question-banks/questions/${questionId}/report`,
+    STUDENT_IN_PROGRESS: "/question-banks/student/in-progress",
+    PRACTICE_SESSION: (id: string) => `/question-banks/${id}/practice-session`,
     UPLOAD: (bankId: string) => `/question-banks/${bankId}/upload`,
     UPLOAD_PREVIEW: (uploadId: string) => `/question-banks/upload/${uploadId}/preview`,
     UPLOAD_CONFIRM: (bankId: string, uploadId: string) =>
