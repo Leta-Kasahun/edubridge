@@ -177,6 +177,7 @@ export interface StudentActiveAttemptSession {
   totalQuestions: number;
   totalPoints: number;
   questions: StudentQuestionView[];
+  isStaffPreview?: boolean;
 }
 
 export interface StudentAnswerItem {
@@ -218,6 +219,7 @@ export interface AssessmentAttemptResult {
   percentage?: number | string | null;
   assessment?: AssessmentItem;
   answers?: StudentAnswerItem[];
+  isStaffPreview?: boolean;
   student?: {
     id: string;
     studentCode: string;
