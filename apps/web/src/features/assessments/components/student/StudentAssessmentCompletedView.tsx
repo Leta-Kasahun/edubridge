@@ -13,13 +13,15 @@ import {
   Lightbulb,
   MessageSquare,
   Send,
-  AlertCircle,
+  Flag,
 } from "lucide-react";
 import { AssessmentAttemptResult } from "../../types/assessment.types";
 import { ROUTES } from "@/constants/routes";
 import { getAttemptStatusBadge } from "@/shared/utils/assessment.util";
 import { useSubmitQuestionFeedback } from "../../hooks/useAssessmentAttempt";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SubmitButton } from "@/shared/components/SubmitButton";
 
 const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "CLARIFICATION", label: "Need Help" },
@@ -196,6 +198,19 @@ export function StudentAssessmentCompletedView({
           </div>
         )}
 
+        {/* Teacher Overall Remarks Banner */}
+        {attempt.generalFeedback && (
+          <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-left space-y-1.5 max-w-lg mx-auto">
+            <span className="text-xs font-bold text-primary uppercase flex items-center gap-1.5">
+              <MessageSquare size={14} />
+              Instructor Overall Remarks:
+            </span>
+            <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed whitespace-pre-wrap">
+              {attempt.generalFeedback}
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
           {canRetake && (
             <button
@@ -299,6 +314,27 @@ export function StudentAssessmentCompletedView({
                     </div>
                   )}
 
+                  {/* Teacher Inquiry Response if any */}
+                  {(() => {
+                    const vConfig = qv && typeof qv === "object" && "configuration" in qv ? ((qv as Record<string, unknown>).configuration as Record<string, unknown> | null) : null;
+                    const vReports = (vConfig && Array.isArray(vConfig.reports) ? vConfig.reports : []) as Array<Record<string, unknown>>;
+                    const resolvedReport = vReports.find((r) => r.resolutionNote && r.status === "RESOLVED");
+                    if (resolvedReport?.resolutionNote) {
+                      return (
+                        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase flex items-center gap-1.5">
+                            <Check size={13} />
+                            Teacher Inquiry Response:
+                          </span>
+                          <p className="text-foreground font-medium leading-relaxed">
+                            {String(resolvedReport.resolutionNote)}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   {/* Correct Option preview for incorrect MCQ/TF */}
                   {isWrong && qv?.options && qv.options.some((o) => o.isCorrect) && (
                     <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
@@ -326,9 +362,10 @@ export function StudentAssessmentCompletedView({
                       type="button"
                       onClick={() => setActiveFeedbackId(isFeedbackOpen ? null : qKey)}
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Report an issue or ask a clarification about this question"
                     >
-                      <MessageSquare size={13} />
-                      <span>{isFeedbackSubmitted ? "Feedback Sent" : "Feedback"}</span>
+                      <Flag size={13} className={isFeedbackSubmitted ? "text-primary" : ""} />
+                      <span>{isFeedbackSubmitted ? "Issue Reported" : "Report Issue"}</span>
                     </button>
                   </div>
 
@@ -359,10 +396,7 @@ export function StudentAssessmentCompletedView({
                       </div>
 
                       {submitFeedbackMutation.isError && (
-                        <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-1.5">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>Failed to submit feedback. Please try again.</span>
-                        </div>
+                        <ErrorAlert message="Failed to submit feedback. Please try again." />
                       )}
 
                       <SelectDropdown
@@ -386,7 +420,7 @@ export function StudentAssessmentCompletedView({
                         />
                       </div>
 
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setActiveFeedbackId(null)}
@@ -394,15 +428,19 @@ export function StudentAssessmentCompletedView({
                         >
                           Cancel
                         </button>
-                        <button
+                        <SubmitButton
                           type="button"
                           onClick={() => handleFeedbackSubmit(qKey)}
-                          disabled={!feedbackTexts.get(qKey)?.trim() || submitFeedbackMutation.isPending}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                          disabled={!feedbackTexts.get(qKey)?.trim()}
+                          isLoading={submitFeedbackMutation.isPending}
+                          loadingText="Sending..."
+                          size="sm"
+                          icon={<Send size={12} />}
+                          iconPosition="left"
+                          className="w-auto h-8 px-3.5 text-xs"
                         >
-                          <Send size={12} />
-                          <span>{submitFeedbackMutation.isPending ? "Sending..." : "Submit Feedback"}</span>
-                        </button>
+                          Submit Feedback
+                        </SubmitButton>
                       </div>
                     </div>
                   )}
