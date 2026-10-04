@@ -202,6 +202,7 @@ export const API_ENDPOINTS = {
   ASSESSMENTS: {
     BASE: "/assessments",
     STUDENT_IN_PROGRESS: "/assessments/student/in-progress",
+    STUDENT_RESULTS: "/assessments/student/results",
     BY_ID: (id: string) => `/assessments/${id}`,
     QUESTIONS: (id: string) => `/assessments/${id}/questions`,
     ASSIGN: (id: string) => `/assessments/${id}/assign`,
