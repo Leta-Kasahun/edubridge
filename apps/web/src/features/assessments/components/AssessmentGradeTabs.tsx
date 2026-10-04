@@ -18,16 +18,23 @@ export function AssessmentGradeTabs({
   assessments,
 }: AssessmentGradeTabsProps) {
   const countsByGrade = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, Set<string>>();
     for (const assessment of assessments) {
       for (const assignment of assessment.assignments || []) {
         const gradeId = assignment.section?.grade?.id;
         if (gradeId) {
-          map.set(gradeId, (map.get(gradeId) || 0) + 1);
+          if (!map.has(gradeId)) {
+            map.set(gradeId, new Set());
+          }
+          map.get(gradeId)!.add(assessment.id);
         }
       }
     }
-    return map;
+    const countMap = new Map<string, number>();
+    map.forEach((set, gradeId) => {
+      countMap.set(gradeId, set.size);
+    });
+    return countMap;
   }, [assessments]);
 
   return (
