@@ -62,6 +62,8 @@ export interface AssessmentGradedEvent {
   teacherName?: string | null;
   percentage: number;
   isManual: boolean;
+  hasFeedback?: boolean;
+  feedbackSnippet?: string | null;
 }
 
 export interface AssessmentAssignedEvent {
