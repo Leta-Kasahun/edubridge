@@ -678,4 +678,53 @@ export class AttemptRepository {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async listStudentInProgressAttempts(
+    tenantId: string,
+    studentId: string,
+    limit: number = 6
+  ) {
+    return prisma.assessmentAttempt.findMany({
+      where: {
+        assessment: { tenantId },
+        studentId,
+        status: "IN_PROGRESS",
+      },
+      include: {
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            timeLimitMinutes: true,
+            examContext: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
+            },
+            _count: {
+              select: {
+                questions: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            answers: {
+              where: {
+                status: "ANSWERED",
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        startedAt: "desc",
+      },
+      take: limit,
+    });
+  }
 }
