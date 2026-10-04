@@ -7,7 +7,7 @@ import { ROUTES } from "@/constants/routes";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { ConfirmDeleteModal } from "@/features/curriculum/structure/components/ConfirmDeleteModal";
+import { ConfirmDeleteModal } from "@/shared/components/ConfirmDeleteModal";
 import {
   useAssessments,
   useCreateAssessment,
@@ -115,9 +115,15 @@ export function AssessmentListView() {
   const currentAttempts = attemptsData?.items || [];
 
   const subjectGroups = useMemo<AssessmentSubjectGroup[]>(() => {
+    const filtered = selectedGradeId
+      ? assessments.filter((a) =>
+          a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
+        )
+      : assessments;
+
     const map = new Map<string, AssessmentItem[]>();
 
-    for (const assessment of assessments) {
+    for (const assessment of filtered) {
       const subjectId = assessment.examContext?.id || "general";
       const list = map.get(subjectId) || [];
       list.push(assessment);
@@ -127,7 +133,7 @@ export function AssessmentListView() {
     const groups: AssessmentSubjectGroup[] = [];
 
     for (const subj of subjects) {
-      const matched = assessments.filter(
+      const matched = filtered.filter(
         (a) => a.examContext?.id === subj.id || a.title.toLowerCase().includes(subj.name.toLowerCase())
       );
       if (matched.length > 0) {
@@ -140,7 +146,7 @@ export function AssessmentListView() {
       }
     }
 
-    const unassigned = assessments.filter(
+    const unassigned = filtered.filter(
       (a) => !groups.some((g) => g.assessments.some((item) => item.id === a.id))
     );
 
@@ -154,7 +160,7 @@ export function AssessmentListView() {
     }
 
     return groups;
-  }, [assessments, subjects]);
+  }, [assessments, subjects, selectedGradeId]);
 
   const toggleSubject = (id: string) => {
     setOpenSubjectIds((prev) => {
