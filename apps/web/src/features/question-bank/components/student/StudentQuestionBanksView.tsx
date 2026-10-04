@@ -19,6 +19,7 @@ import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile
 import { QuestionBankItem, ExamScope } from "../../types/question-bank.types";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { ROUTES } from "@/constants/routes";
 import {
   practiceSessionStorage,
   StoredPracticeSession,
@@ -308,10 +309,10 @@ export function StudentQuestionBanksView(): React.JSX.Element {
             </button>
 
             <Link
-              href={`/practice/${activeSession.bankId}`}
+              href={ROUTES.STUDENT.EXAMS}
               className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs cursor-pointer"
             >
-              <span>Resume</span>
+              <span>Go to Exams</span>
               <ChevronRight size={13} />
             </Link>
           </div>
@@ -463,10 +464,10 @@ export function StudentQuestionBanksView(): React.JSX.Element {
                   </div>
 
                   <Link
-                    href={`/practice/${bank.id}`}
+                    href={ROUTES.STUDENT.EXAMS}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-all hover:bg-primary/90 cursor-pointer shrink-0"
                   >
-                    <span>Start Practice</span>
+                    <span>View in Exams</span>
                     <ChevronRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
