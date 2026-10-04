@@ -481,7 +481,20 @@ export class AttemptService {
       }
     }
 
-    return attempt;
+    let generalFeedback: string | null = null;
+    if (attempt.gradingVersion) {
+      try {
+        const parsed = JSON.parse(attempt.gradingVersion);
+        generalFeedback = parsed.generalFeedback || parsed.feedback || null;
+      } catch {
+        generalFeedback = attempt.gradingVersion;
+      }
+    }
+
+    return {
+      ...attempt,
+      generalFeedback,
+    };
   }
 
   async manualGrade(
@@ -510,6 +523,11 @@ export class AttemptService {
           where: { userId: teacherUserId, tenantId },
           select: { firstName: true, lastName: true },
         });
+        const hasFeedback = Boolean(
+          dto.generalFeedback?.trim() ||
+          dto.grades.some((g) => g.feedback && g.feedback.trim())
+        );
+
         domainEventBus.emitEvent("assessment.graded", {
           tenantId,
           assessmentId,
@@ -519,6 +537,8 @@ export class AttemptService {
           teacherName: teacherProfile ? `${teacherProfile.firstName} ${teacherProfile.lastName}` : null,
           percentage: Math.round(Number(graded.percentage ?? 0)),
           isManual: true,
+          hasFeedback,
+          feedbackSnippet: dto.generalFeedback?.trim() || null,
         });
       }
     }
@@ -764,5 +784,59 @@ export class AttemptService {
         progressPercent,
       };
     });
+  }
+
+  async listStudentResults(
+    tenantId: string,
+    userId: string,
+    filters: { page?: number; limit?: number } = {}
+  ) {
+    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      return { items: [], total: 0, page: 1, limit: filters.limit ?? 20, totalPages: 0 };
+    }
+
+    const res = await this.attemptRepo.listStudentResults(tenantId, student.id, filters);
+
+    const items = res.items.map((a) => {
+      let generalFeedback: string | null = null;
+      if (a.gradingVersion) {
+        try {
+          const parsed = JSON.parse(a.gradingVersion);
+          generalFeedback = parsed.generalFeedback || parsed.feedback || null;
+        } catch {
+          generalFeedback = a.gradingVersion;
+        }
+      }
+      const hasQuestionFeedback = a.answers.some((ans) => Boolean(ans.feedback?.trim()));
+      const hasTeacherFeedback = Boolean(generalFeedback || hasQuestionFeedback);
+
+      return {
+        id: a.id,
+        assessmentId: a.assessment.id,
+        title: a.assessment.title,
+        type: a.assessment.type,
+        timeLimitMinutes: a.assessment.timeLimitMinutes,
+        subjectCode: a.assessment.examContext?.code || "EXAM",
+        subjectName: a.assessment.examContext?.name || a.assessment.title,
+        submittedAt: a.submittedAt ? a.submittedAt.toISOString() : null,
+        gradedAt: a.gradedAt ? a.gradedAt.toISOString() : null,
+        status: a.status,
+        score: a.score ? Number(a.score) : 0,
+        maxScore: a.maxScore ? Number(a.maxScore) : 100,
+        percentage: a.percentage ? Number(a.percentage) : 0,
+        hasTeacherFeedback,
+        generalFeedback,
+        feedbackCount: a.answers.filter((ans) => Boolean(ans.feedback?.trim())).length + (generalFeedback ? 1 : 0),
+      };
+    });
+
+    return {
+      items,
+      total: res.total,
+      page: res.page,
+      limit: res.limit,
+      totalPages: res.totalPages,
+    };
   }
 }
