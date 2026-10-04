@@ -26,6 +26,7 @@ export type ExamContextStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 
 export interface QuestionReportItem {
   readonly id: string;
+  readonly studentId?: string;
   readonly studentName?: string;
   readonly reason: string;
   readonly comment?: string;
@@ -33,6 +34,7 @@ export interface QuestionReportItem {
   readonly createdAt: string;
   readonly resolvedAt?: string;
   readonly resolvedById?: string;
+  readonly resolutionNote?: string;
 }
 
 export interface QuestionOptionItem {

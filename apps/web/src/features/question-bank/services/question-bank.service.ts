@@ -251,10 +251,12 @@ export const questionBankService = {
 
   async resolveQuestionReport(
     questionId: string,
-    reportId: string
+    reportId: string,
+    resolutionNote?: string
   ): Promise<QuestionDetailItem> {
     const response = await apiClient.post<ApiResponse<QuestionDetailItem>>(
-      API_ENDPOINTS.QUESTION_BANKS.RESOLVE_REPORT(questionId, reportId)
+      API_ENDPOINTS.QUESTION_BANKS.RESOLVE_REPORT(questionId, reportId),
+      resolutionNote?.trim() ? { resolutionNote: resolutionNote.trim() } : {}
     );
     return response.data.data;
   },
