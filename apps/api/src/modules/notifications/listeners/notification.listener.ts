@@ -14,7 +14,8 @@ import {
   TeacherStatusChangedEvent,
   StudentPromotionCommittedEvent,
   StudentWithdrawnEvent,
-  QuestionFeedbackSubmittedEvent,
+  QuestionReportSubmittedEvent,
+  QuestionReportResolvedEvent,
 } from "../../../shared/events/domain-events.js";
 import { prisma, runWithoutTenant } from "../../../lib/prisma.js";
 import { notificationService } from "../services/notification.service.js";
@@ -527,28 +528,99 @@ async function handleStudentWithdrawn(
   });
 }
 
-async function handleQuestionFeedbackSubmitted(
-  event: QuestionFeedbackSubmittedEvent
+async function handleQuestionReportSubmitted(
+  event: QuestionReportSubmittedEvent
 ): Promise<void> {
-  const targetUserId = event.teacherUserId;
-  if (!targetUserId) return;
+  const tenantId = event.tenantId;
+  if (!tenantId) return;
+
+  const recipientUserIds = new Set<string>();
+
+  if (event.authorUserId && event.authorUserId !== event.studentUserId) {
+    recipientUserIds.add(event.authorUserId);
+  }
+
+  if (recipientUserIds.size === 0) {
+    const staffMemberships = await runWithoutTenant(() =>
+      prisma.tenantMembership.findMany({
+        where: {
+          tenantId,
+          status: "ACTIVE",
+          roles: {
+            some: {
+              role: {
+                code: { in: ["TEACHER", "SCHOOL_ADMIN", "DEPT_HEAD"] },
+              },
+            },
+          },
+        },
+        select: { userId: true },
+        take: 10,
+      })
+    );
+
+    for (const m of staffMemberships) {
+      if (m.userId && m.userId !== event.studentUserId) {
+        recipientUserIds.add(m.userId);
+      }
+    }
+  }
+
+  if (recipientUserIds.size === 0) return;
+
+  const actionUrl = event.bankId
+    ? `/dashboard/question-banks/${event.bankId}`
+    : "/dashboard/question-banks";
+
+  const body = `${event.studentName} submitted feedback on a question in "${event.bankTitle}".`;
+
+  for (const userId of recipientUserIds) {
+    await notificationService.sendToUser({
+      tenantId,
+      userId,
+      category: "ACADEMIC",
+      priority: "NORMAL",
+      title: "Question Feedback Received",
+      body,
+      actionUrl,
+      sourceType: "QUESTION_REPORT",
+      sourceId: event.questionId,
+    });
+  }
+}
+
+async function handleQuestionReportResolved(
+  event: QuestionReportResolvedEvent
+): Promise<void> {
+  if (!event.studentUserId) return;
+
+  let tenantId = event.tenantId;
+  if (!tenantId) {
+    const studentMembership = await runWithoutTenant(() =>
+      prisma.tenantMembership.findFirst({
+        where: { userId: event.studentUserId, status: "ACTIVE" },
+        select: { tenantId: true },
+      })
+    );
+    tenantId = studentMembership?.tenantId || "";
+  }
+
+  if (!tenantId) return;
+
+  const body = event.resolutionNote
+    ? `Your feedback on "${event.bankTitle}" has been resolved: ${event.resolutionNote}`
+    : `Your feedback on "${event.bankTitle}" has been reviewed and resolved.`;
 
   await notificationService.sendToUser({
-    tenantId: event.tenantId,
-    userId: targetUserId,
-    category: "ASSESSMENT",
+    tenantId,
+    userId: event.studentUserId,
+    category: "ACADEMIC",
     priority: "NORMAL",
-    title: `Question Feedback from ${event.studentName}`,
-    body: `${event.studentName} sent feedback on "${event.assessmentTitle}": "${event.feedbackText}"`,
-    actionUrl: `/dashboard/assessments/${event.assessmentId}`,
-    sourceType: "ASSESSMENT_QUESTION_FEEDBACK",
-    sourceId: event.assessmentId,
-    metadata: {
-      questionVersionId: event.questionVersionId,
-      category: event.category,
-      studentUserId: event.studentUserId,
-      feedbackText: event.feedbackText,
-    },
+    title: "Feedback Resolved",
+    body,
+    actionUrl: "/dashboard/assessments",
+    sourceType: "QUESTION_REPORT",
+    sourceId: event.questionId,
   });
 }
 
@@ -567,5 +639,6 @@ export function registerNotificationListeners(): void {
   domainEventBus.onEvent("teacher.status_changed", handleTeacherStatusChanged);
   domainEventBus.onEvent("student.promotion_committed", handleStudentPromotionCommitted);
   domainEventBus.onEvent("student.withdrawn", handleStudentWithdrawn);
-  domainEventBus.onEvent("assessment.question-feedback", handleQuestionFeedbackSubmitted);
+  domainEventBus.onEvent("question.report_submitted", handleQuestionReportSubmitted);
+  domainEventBus.onEvent("question.report_resolved", handleQuestionReportResolved);
 }
