@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
-import { StudentResultsListView } from "@/features/assessments";
+import { StudentResultsListView } from "@/features/evaluations-feedback";
 
 export default function StudentResultsPage() {
   return (
