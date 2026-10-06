@@ -10,7 +10,6 @@ import {
   SaveAnswerSchema,
   BatchSaveAnswersSchema,
   SubmitAttemptSchema,
-  ManualGradeAttemptSchema,
 } from "./schemas/attempt.schema.js";
 import {
   ASSESSMENT_TYPES,
@@ -240,41 +239,6 @@ const assessmentRouteDefinitions: RouteDefinition[] = [
     },
     responses: {
       200: { description: "Attempt submitted and graded" },
-    },
-  },
-  {
-    path: "/api/assessments/{id}/attempts/{attemptId}/result",
-    method: "GET",
-    summary: "Get Attempt Result",
-    description: "Retrieve graded attempt breakdown, percentage, and feedback.",
-    tags: ["Assessment - Attempts"],
-    security: true,
-    parameters: [
-      { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-      { name: "attemptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-    ],
-    responses: {
-      200: { description: "Result retrieved" },
-    },
-  },
-  {
-    path: "/api/assessments/{id}/attempts/{attemptId}/manual-grade",
-    method: "PUT",
-    summary: "Manual Grade Attempt",
-    description: "Teacher endpoint to grade open-ended answers and provide feedback.",
-    tags: ["Assessment - Grading"],
-    security: true,
-    parameters: [
-      { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-      { name: "attemptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-    ],
-    requestBody: {
-      description: "Teacher grading payload",
-      required: true,
-      schema: ManualGradeAttemptSchema,
-    },
-    responses: {
-      200: { description: "Attempt manual grading saved" },
     },
   },
   {

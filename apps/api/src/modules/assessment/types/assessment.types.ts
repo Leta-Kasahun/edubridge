@@ -92,17 +92,6 @@ export interface SubmitAttemptPayload {
   }>;
 }
 
-export interface ManualGradeAnswerDto {
-  questionVersionId: string;
-  awardedPoints: number;
-  feedback?: string | null;
-}
-
-export interface ManualGradeAttemptDto {
-  grades: ManualGradeAnswerDto[];
-  generalFeedback?: string | null;
-}
-
 export interface AttemptQueryFilters {
   page?: number;
   limit?: number;
