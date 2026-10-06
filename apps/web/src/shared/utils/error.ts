@@ -46,6 +46,13 @@ function sanitizeMessage(msg: string): string {
   if (lower.includes("input validation failed") || lower.includes("validation_error")) {
     return "Please check your entries and try again.";
   }
+  if (
+    lower.includes("question version not found") ||
+    lower.includes("question not found") ||
+    lower.includes("report not found")
+  ) {
+    return "This feedback report could not be found or has already been resolved.";
+  }
   return msg;
 }
 
