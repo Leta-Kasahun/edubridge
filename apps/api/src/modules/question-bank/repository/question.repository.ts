@@ -11,7 +11,7 @@ import {
 
 const isValidUuid = (val?: string | null): boolean =>
   typeof val === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
 const questionInclude = {
   versions: {
@@ -190,12 +190,31 @@ export class QuestionRepository {
   async findById(questionId: string, tenantId?: string) {
     if (!isValidUuid(questionId)) return null;
 
-    if (tenantId && isValidUuid(tenantId)) {
-      const scoped = await prisma.question.findFirst({
-        where: {
-          id: questionId,
-          questionBank: { tenantId },
-        },
+    const findByResolvedId = async (id: string) => {
+      if (tenantId && isValidUuid(tenantId)) {
+        const scoped = await prisma.question.findFirst({
+          where: {
+            id,
+            questionBank: { tenantId },
+          },
+          include: {
+            ...questionInclude,
+            questionBank: true,
+            versions: {
+              orderBy: { version: "desc" },
+              include: {
+                options: {
+                  orderBy: { orderIndex: "asc" },
+                },
+              },
+            },
+          },
+        });
+        if (scoped) return scoped;
+      }
+
+      return prisma.question.findFirst({
+        where: { id },
         include: {
           ...questionInclude,
           questionBank: true,
@@ -209,26 +228,22 @@ export class QuestionRepository {
           },
         },
       });
-      if (scoped) return scoped;
+    };
+
+    const direct = await findByResolvedId(questionId);
+    if (direct) return direct;
+
+    // Check if questionId is a questionVersionId
+    const versionRecord = await prisma.questionVersion.findUnique({
+      where: { id: questionId },
+      select: { questionId: true },
+    });
+
+    if (versionRecord?.questionId) {
+      return findByResolvedId(versionRecord.questionId);
     }
 
-    return prisma.question.findFirst({
-      where: {
-        id: questionId,
-      },
-      include: {
-        ...questionInclude,
-        questionBank: true,
-        versions: {
-          orderBy: { version: "desc" },
-          include: {
-            options: {
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
-      },
-    });
+    return null;
   }
 
   async findManyByBank(
