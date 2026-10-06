@@ -317,62 +317,123 @@ export class QuestionService {
     userId: string,
     resolutionNote?: string | null
   ) {
-    const question = await this.findById(tenantId, questionId);
-    const latestVersion = question.versions[0];
-    if (!latestVersion) {
-      throw new NotFoundError("Question version not found");
+    let rawQuestion = await this.repository.findById(questionId, tenantId || undefined);
+    if (!rawQuestion && tenantId) {
+      rawQuestion = await this.repository.findById(questionId);
+    }
+    if (!rawQuestion) {
+      throw new NotFoundError("Question not found");
     }
 
-    const currentConfig =
-      typeof latestVersion.configuration === "object" && latestVersion.configuration !== null
-        ? { ...(latestVersion.configuration as Record<string, unknown>) }
-        : {};
-
-    const rawReports = Array.isArray(currentConfig.reports) ? currentConfig.reports : [];
+    const versions = (rawQuestion.versions || []) as RawQuestionVersion[];
+    const targetVersion =
+      versions.find((v: RawQuestionVersion) => {
+        const config =
+          typeof v.configuration === "object" && v.configuration !== null
+            ? (v.configuration as Record<string, unknown>)
+            : {};
+        return (
+          Array.isArray(config.reports) &&
+          config.reports.some(
+            (r: unknown) =>
+              typeof r === "object" &&
+              r !== null &&
+              (r as Record<string, unknown>).id === reportId
+          )
+        );
+      }) || versions[0];
 
     const trimmedNote = resolutionNote?.trim() || undefined;
+    let resolvedReport: Record<string, unknown> | undefined;
 
-    const updatedReports = rawReports.map((rep) => {
-      if (typeof rep === "object" && rep !== null && (rep as Record<string, unknown>).id === reportId) {
-        return {
-          ...(rep as Record<string, unknown>),
-          status: "RESOLVED",
-          resolvedAt: new Date().toISOString(),
-          resolvedById: userId,
-          ...(trimmedNote ? { resolutionNote: trimmedNote } : {}),
-        };
+    if (targetVersion) {
+      const currentConfig =
+        typeof targetVersion.configuration === "object" && targetVersion.configuration !== null
+          ? { ...(targetVersion.configuration as Record<string, unknown>) }
+          : {};
+
+      const rawReports = Array.isArray(currentConfig.reports) ? currentConfig.reports : [];
+
+      let found = false;
+      const updatedReports = rawReports.map((rep) => {
+        if (typeof rep === "object" && rep !== null && (rep as Record<string, unknown>).id === reportId) {
+          found = true;
+          const updated = {
+            ...(rep as Record<string, unknown>),
+            status: "RESOLVED",
+            resolvedAt: new Date().toISOString(),
+            resolvedById: userId,
+            ...(trimmedNote ? { resolutionNote: trimmedNote } : {}),
+          };
+          resolvedReport = updated;
+          return updated;
+        }
+        return rep;
+      });
+
+      if (found) {
+        currentConfig.reports = updatedReports;
+        await prisma.questionVersion.update({
+          where: { id: targetVersion.id },
+          data: {
+            configuration: JSON.parse(JSON.stringify(currentConfig)),
+          },
+        });
+      } else {
+        const allDbVersions = await prisma.questionVersion.findMany({
+          where: { questionId: rawQuestion.id },
+        });
+        for (const dbV of allDbVersions) {
+          const vConfig =
+            typeof dbV.configuration === "object" && dbV.configuration !== null
+              ? { ...(dbV.configuration as Record<string, unknown>) }
+              : {};
+          const vReports = Array.isArray(vConfig.reports) ? vConfig.reports : [];
+          if (
+            vReports.some(
+              (r: unknown) =>
+                typeof r === "object" && r !== null && (r as Record<string, unknown>).id === reportId
+            )
+          ) {
+            const newVReports = vReports.map((r: unknown) => {
+              if (
+                typeof r === "object" &&
+                r !== null &&
+                (r as Record<string, unknown>).id === reportId
+              ) {
+                const updated = {
+                  ...(r as Record<string, unknown>),
+                  status: "RESOLVED",
+                  resolvedAt: new Date().toISOString(),
+                  resolvedById: userId,
+                  ...(trimmedNote ? { resolutionNote: trimmedNote } : {}),
+                };
+                resolvedReport = updated;
+                return updated;
+              }
+              return r;
+            });
+            vConfig.reports = newVReports;
+            await prisma.questionVersion.update({
+              where: { id: dbV.id },
+              data: { configuration: JSON.parse(JSON.stringify(vConfig)) },
+            });
+            break;
+          }
+        }
       }
-      return rep;
-    });
-
-    currentConfig.reports = updatedReports;
-
-    await prisma.questionVersion.update({
-      where: { id: latestVersion.id },
-      data: {
-        configuration: JSON.parse(JSON.stringify(currentConfig)),
-      },
-    });
-
-    const result = await this.findById(tenantId, questionId);
-
-    const resolvedReport = updatedReports.find(
-      (rep) =>
-        typeof rep === "object" &&
-        rep !== null &&
-        (rep as Record<string, unknown>).id === reportId
-    ) as Record<string, unknown> | undefined;
+    }
 
     if (resolvedReport) {
       const bank =
-        (await this.bankRepository.findById(tenantId, question.questionBankId)) ||
-        (await this.bankRepository.findById(null, question.questionBankId));
-      const bankId = question.questionBankId;
+        (await this.bankRepository.findById(tenantId, rawQuestion.questionBankId)) ||
+        (await this.bankRepository.findById(null, rawQuestion.questionBankId));
+      const bankId = rawQuestion.questionBankId;
       const bankTitle = bank?.name || "Question Bank";
       const effectiveTenantId = bank?.tenantId || tenantId || "";
       domainEventBus.emitEvent("question.report_resolved", {
         tenantId: effectiveTenantId,
-        questionId,
+        questionId: rawQuestion.id,
         bankId,
         bankTitle,
         studentUserId: (resolvedReport.studentId as string) || "",
@@ -381,7 +442,7 @@ export class QuestionService {
       });
     }
 
-    return result;
+    return this.findById(tenantId, rawQuestion.id);
   }
 
   async submitReport(
@@ -391,8 +452,15 @@ export class QuestionService {
     userFullName: string,
     data: { reason: string; comment?: string | null }
   ) {
-    const question = await this.findById(tenantId, questionId);
-    const latestVersion = question.versions[0];
+    let rawQuestion = await this.repository.findById(questionId, tenantId || undefined);
+    if (!rawQuestion && tenantId) {
+      rawQuestion = await this.repository.findById(questionId);
+    }
+    if (!rawQuestion) {
+      throw new NotFoundError("Question not found");
+    }
+
+    const latestVersion = (rawQuestion.versions || [])[0];
     if (!latestVersion) {
       throw new NotFoundError("Question version not found");
     }
@@ -427,11 +495,11 @@ export class QuestionService {
     const result = await this.findById(tenantId, questionId);
 
     const bank =
-      (await this.bankRepository.findById(tenantId, question.questionBankId)) ||
-      (await this.bankRepository.findById(null, question.questionBankId));
-    const bankId = question.questionBankId;
+      (await this.bankRepository.findById(tenantId, rawQuestion.questionBankId)) ||
+      (await this.bankRepository.findById(null, rawQuestion.questionBankId));
+    const bankId = rawQuestion.questionBankId;
     const bankTitle = bank?.name || "Question Bank";
-    const authorUserId = question.createdBy?.id || bank?.createdById || "";
+    const authorUserId = rawQuestion.createdBy?.id || bank?.createdById || "";
     const effectiveTenantId = bank?.tenantId || tenantId || "";
 
     domainEventBus.emitEvent("question.report_submitted", {

@@ -106,7 +106,7 @@ router.post(
 
 router.post(
   "/questions/:id/reports/:reportId/resolve",
-  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  requireRoles("SCHOOL_ADMIN", "TEACHER", "SYSTEM_ADMIN"),
   validate(ResolveQuestionReportSchema),
   questionController.resolveReport
 );
