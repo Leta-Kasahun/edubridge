@@ -18,7 +18,7 @@ import {
 import { useSaveAnswer, useSubmitAttempt } from "../../hooks/useAssessmentAttempt";
 import { StudentAssessmentQuestionCard } from "./StudentAssessmentQuestionCard";
 import { AssessmentSubmitConfirmModal } from "./AssessmentSubmitConfirmModal";
-import { StudentAssessmentCompletedView } from "./StudentAssessmentCompletedView";
+import { StudentAssessmentCompletedView } from "@/features/evaluations-feedback";
 import { formatTimeRemaining } from "@/shared/utils/assessment.util";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/stores/auth.store";

@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
-import { AssessmentGlobalResultsView } from "@/features/assessments";
+import { AssessmentGlobalResultsView } from "@/features/evaluations-feedback";
 
 export default function AssessmentResultsPage() {
   return (

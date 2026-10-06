@@ -16,7 +16,11 @@ import {
   usePublishAssessment,
   useArchiveAssessment,
 } from "../hooks/useAssessments";
-import { AssessmentItem } from "../types/assessment.types";
+import {
+  AssessmentItem,
+  CreateAssessmentPayload,
+  UpdateAssessmentPayload,
+} from "../types/assessment.types";
 import { AssessmentGradeTabs } from "./AssessmentGradeTabs";
 import {
   AssessmentSubjectAccordion,
@@ -148,16 +152,16 @@ export function AssessmentListView() {
     });
   };
 
-  const handleCreateOrUpdate = async (payload: unknown) => {
+  const handleCreateOrUpdate = async (
+    payload: CreateAssessmentPayload | UpdateAssessmentPayload
+  ) => {
     if (editingAssessment) {
       await updateMutation.mutateAsync({
         id: editingAssessment.id,
-        payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]["payload"],
+        payload: payload as UpdateAssessmentPayload,
       });
     } else {
-      await createMutation.mutateAsync(
-        payload as Parameters<typeof createMutation.mutateAsync>[0]
-      );
+      await createMutation.mutateAsync(payload as CreateAssessmentPayload);
     }
     setIsFormModalOpen(false);
     setEditingAssessment(null);
