@@ -15,7 +15,9 @@ import {
   Layers,
   Tag,
   Bookmark,
+  AlertCircle,
 } from "lucide-react";
+import { getErrorMessage } from "@/shared/utils";
 import { QuestionListItem } from "../../types/question-bank.types";
 import {
   QuestionTypeBadge,
@@ -63,6 +65,7 @@ export function QuestionCardItem({
   const [resolvingReportId, setResolvingReportId] = useState<string | null>(null);
   const [activeResolvingId, setActiveResolvingId] = useState<string | null>(null);
   const [resolutionNoteInput, setResolutionNoteInput] = useState<string>("");
+  const [resolveErrorMessage, setResolveErrorMessage] = useState<string | null>(null);
 
   const formattedDate = question.createdAt
     ? new Date(question.createdAt).toLocaleDateString("en-US", {
@@ -88,10 +91,18 @@ export function QuestionCardItem({
   const handleResolve = async (reportId: string, note?: string) => {
     if (!onResolveReport) return;
     setResolvingReportId(reportId);
+    setResolveErrorMessage(null);
     try {
       await onResolveReport(question.id, reportId, note);
       setActiveResolvingId(null);
       setResolutionNoteInput("");
+    } catch (err: unknown) {
+      setResolveErrorMessage(
+        getErrorMessage(
+          err,
+          "Unable to resolve feedback report right now. Please try again."
+        )
+      );
     } finally {
       setResolvingReportId(null);
     }
@@ -327,6 +338,7 @@ export function QuestionCardItem({
                         onClick={() => {
                           setActiveResolvingId(report.id);
                           setResolutionNoteInput("");
+                          setResolveErrorMessage(null);
                         }}
                         disabled={resolvingReportId === report.id}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shrink-0 disabled:opacity-60"
@@ -345,14 +357,26 @@ export function QuestionCardItem({
                       <input
                         type="text"
                         value={resolutionNoteInput}
-                        onChange={(e) => setResolutionNoteInput(e.target.value)}
+                        onChange={(e) => {
+                          setResolutionNoteInput(e.target.value);
+                          if (resolveErrorMessage) setResolveErrorMessage(null);
+                        }}
                         placeholder="e.g. Corrected typo in option B, verified answer key..."
                         className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                       />
+                      {resolveErrorMessage && (
+                        <div className="text-[11px] text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 flex items-start gap-2 animate-in fade-in-0">
+                          <AlertCircle size={14} className="shrink-0 mt-0.5 text-destructive" />
+                          <span>{resolveErrorMessage}</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setActiveResolvingId(null)}
+                          onClick={() => {
+                            setActiveResolvingId(null);
+                            setResolveErrorMessage(null);
+                          }}
                           className="px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground hover:text-foreground cursor-pointer"
                         >
                           Cancel

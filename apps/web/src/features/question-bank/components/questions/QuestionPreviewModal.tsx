@@ -18,9 +18,11 @@ import {
   MessageSquare,
   Check,
   AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 import { QuestionListItem, QuestionDetailItem, QuestionReportItem } from "../../types/question-bank.types";
 import { buildOptionLabel } from "@/shared/utils/question.util";
+import { getErrorMessage } from "@/shared/utils";
 
 interface QuestionPreviewModalProps {
   readonly isOpen: boolean;
@@ -50,6 +52,7 @@ export function QuestionPreviewModal({
   const [activeResolvingId, setActiveResolvingId] = useState<string | null>(null);
   const [resolvingReportId, setResolvingReportId] = useState<string | null>(null);
   const [resolutionNoteInput, setResolutionNoteInput] = useState<string>("");
+  const [resolveErrorMessage, setResolveErrorMessage] = useState<string | null>(null);
   const [localReports, setLocalReports] = useState<readonly QuestionReportItem[] | null>(null);
 
   if (!isOpen || !question) return null;
@@ -65,6 +68,7 @@ export function QuestionPreviewModal({
   const handleResolve = async (reportId: string, note?: string) => {
     if (!onResolveReport) return;
     setResolvingReportId(reportId);
+    setResolveErrorMessage(null);
     try {
       await onResolveReport(question.id, reportId, note);
       setLocalReports((prev) => {
@@ -77,6 +81,13 @@ export function QuestionPreviewModal({
       });
       setActiveResolvingId(null);
       setResolutionNoteInput("");
+    } catch (err: unknown) {
+      setResolveErrorMessage(
+        getErrorMessage(
+          err,
+          "Unable to resolve feedback report right now. Please try again."
+        )
+      );
     } finally {
       setResolvingReportId(null);
     }
@@ -298,6 +309,7 @@ export function QuestionPreviewModal({
                           onClick={() => {
                             setActiveResolvingId(String(report.id));
                             setResolutionNoteInput("");
+                            setResolveErrorMessage(null);
                           }}
                           disabled={resolvingReportId === report.id}
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer disabled:opacity-60"
@@ -315,14 +327,26 @@ export function QuestionPreviewModal({
                           <input
                             type="text"
                             value={resolutionNoteInput}
-                            onChange={(e) => setResolutionNoteInput(e.target.value)}
+                            onChange={(e) => {
+                              setResolutionNoteInput(e.target.value);
+                              if (resolveErrorMessage) setResolveErrorMessage(null);
+                            }}
                             placeholder="e.g. Corrected typo in option B, answer verified..."
                             className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                           />
+                          {resolveErrorMessage && (
+                            <div className="text-[11px] text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 flex items-start gap-2 animate-in fade-in-0">
+                              <AlertCircle size={14} className="shrink-0 mt-0.5 text-destructive" />
+                              <span>{resolveErrorMessage}</span>
+                            </div>
+                          )}
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => setActiveResolvingId(null)}
+                              onClick={() => {
+                                setActiveResolvingId(null);
+                                setResolveErrorMessage(null);
+                              }}
                               className="px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground hover:text-foreground cursor-pointer"
                             >
                               Cancel
