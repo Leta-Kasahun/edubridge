@@ -174,6 +174,8 @@ export const API_ENDPOINTS = {
     ATTACHMENTS: (id: string) => `/learning-content/content/${id}/attachments`,
     ATTACHMENT_BY_ID: (id: string, attachmentId: string) =>
       `/learning-content/content/${id}/attachments/${attachmentId}`,
+    STUDENT_IN_PROGRESS: "/learning-content/content/student/in-progress",
+    PROGRESS: (id: string) => `/learning-content/content/${id}/progress`,
   },
   QUESTION_BANKS: {
     BASE: "/question-banks",
@@ -184,6 +186,10 @@ export const API_ENDPOINTS = {
     QUESTION_PUBLISH: (id: string) => `/question-banks/questions/${id}/publish`,
     RESOLVE_REPORT: (questionId: string, reportId: string) =>
       `/question-banks/questions/${questionId}/reports/${reportId}/resolve`,
+    REPORT_QUESTION: (questionId: string) =>
+      `/question-banks/questions/${questionId}/report`,
+    STUDENT_IN_PROGRESS: "/question-banks/student/in-progress",
+    PRACTICE_SESSION: (id: string) => `/question-banks/${id}/practice-session`,
     UPLOAD: (bankId: string) => `/question-banks/${bankId}/upload`,
     UPLOAD_PREVIEW: (uploadId: string) => `/question-banks/upload/${uploadId}/preview`,
     UPLOAD_CONFIRM: (bankId: string, uploadId: string) =>
@@ -195,6 +201,8 @@ export const API_ENDPOINTS = {
   },
   ASSESSMENTS: {
     BASE: "/assessments",
+    STUDENT_IN_PROGRESS: "/assessments/student/in-progress",
+    STUDENT_RESULTS: "/assessments/student/results",
     BY_ID: (id: string) => `/assessments/${id}`,
     QUESTIONS: (id: string) => `/assessments/${id}/questions`,
     ASSIGN: (id: string) => `/assessments/${id}/assign`,

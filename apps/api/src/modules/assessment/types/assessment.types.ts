@@ -15,7 +15,7 @@ export interface AssessmentQuestionInput {
 
 export interface CreateAssessmentDto {
   title: string;
-  description?: string;
+  description?: string | null;
   type: AssessmentTypeEnum;
   gradingMode?: GradingModeEnum;
   timeLimitMinutes?: number | null;
@@ -92,17 +92,6 @@ export interface SubmitAttemptPayload {
   }>;
 }
 
-export interface ManualGradeAnswerDto {
-  questionVersionId: string;
-  awardedPoints: number;
-  feedback?: string;
-}
-
-export interface ManualGradeAttemptDto {
-  grades: ManualGradeAnswerDto[];
-  generalFeedback?: string;
-}
-
 export interface AttemptQueryFilters {
   page?: number;
   limit?: number;
@@ -146,4 +135,5 @@ export interface StudentActiveAttemptSession {
   totalQuestions: number;
   totalPoints: number;
   questions: StudentQuestionView[];
+  isStaffPreview?: boolean;
 }

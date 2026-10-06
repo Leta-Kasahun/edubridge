@@ -11,7 +11,6 @@ import type {
 } from "../../../generated/prisma/enums.js";
 import {
   AttemptQueryFilters,
-  ManualGradeAttemptDto,
 } from "../types/assessment.types.js";
 
 export class AttemptRepository {
@@ -514,88 +513,6 @@ export class AttemptRepository {
     });
   }
 
-  async applyManualGrading(
-    attemptId: string,
-    gradedById: string,
-    dto: ManualGradeAttemptDto
-  ): Promise<AssessmentAttempt> {
-    return prisma.$transaction(async (tx) => {
-      const attempt = await tx.assessmentAttempt.findUniqueOrThrow({
-        where: { id: attemptId },
-        include: {
-          answers: true,
-          assessment: {
-            include: {
-              questions: true,
-            },
-          },
-        },
-      });
-
-      for (const gradeItem of dto.grades) {
-        await tx.studentAnswer.update({
-          where: {
-            attemptId_questionVersionId: {
-              attemptId,
-              questionVersionId: gradeItem.questionVersionId,
-            },
-          },
-          data: {
-            awardedPoints: new Prisma.Decimal(gradeItem.awardedPoints),
-            feedback: gradeItem.feedback ?? null,
-            gradedById,
-            gradedAt: new Date(),
-            status: "GRADED",
-            isCorrect: gradeItem.awardedPoints > 0,
-          },
-        });
-      }
-
-      const updatedAnswers = await tx.studentAnswer.findMany({
-        where: { attemptId },
-      });
-
-      let totalAwarded = 0;
-      let totalMax = 0;
-      let hasUngraded = false;
-
-      for (const q of attempt.assessment.questions) {
-        const qPoints = Number(q.points) || 0;
-        totalMax += qPoints;
-
-        const ans = updatedAnswers.find(
-          (a) => a.questionVersionId === q.questionVersionId
-        );
-        if (ans) {
-          if (ans.status !== "GRADED") {
-            hasUngraded = true;
-          }
-          totalAwarded += ans.awardedPoints ? Number(ans.awardedPoints) : 0;
-        } else {
-          hasUngraded = true;
-        }
-      }
-
-      const percentage =
-        totalMax > 0 ? Math.round((totalAwarded / totalMax) * 10000) / 100 : 0;
-      const finalStatus: AttemptStatus = hasUngraded ? "GRADING" : "GRADED";
-
-      return tx.assessmentAttempt.update({
-        where: { id: attemptId },
-        data: {
-          status: finalStatus,
-          score: new Prisma.Decimal(totalAwarded),
-          maxScore: new Prisma.Decimal(totalMax),
-          percentage: new Prisma.Decimal(percentage),
-          gradedAt: finalStatus === "GRADED" ? new Date() : attempt.gradedAt,
-        },
-        include: {
-          answers: true,
-          assessment: true,
-        },
-      });
-    });
-  }
 
   async listAttempts(
     tenantId: string,
@@ -609,6 +526,12 @@ export class AttemptRepository {
     const where: Prisma.AssessmentAttemptWhereInput = {
       assessmentId,
       assessment: { tenantId },
+      student: {
+        tenantId,
+        user: {
+          teacherProfile: null,
+        },
+      },
       ...(filters.studentId && { studentId: filters.studentId }),
       ...(filters.assignmentId && { assignmentId: filters.assignmentId }),
       ...(filters.status && { status: filters.status }),
@@ -662,4 +585,54 @@ export class AttemptRepository {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async listStudentInProgressAttempts(
+    tenantId: string,
+    studentId: string,
+    limit: number = 6
+  ) {
+    return prisma.assessmentAttempt.findMany({
+      where: {
+        assessment: { tenantId },
+        studentId,
+        status: "IN_PROGRESS",
+      },
+      include: {
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            timeLimitMinutes: true,
+            examContext: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
+            },
+            _count: {
+              select: {
+                questions: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            answers: {
+              where: {
+                status: "ANSWERED",
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        startedAt: "desc",
+      },
+      take: limit,
+    });
+  }
+
 }

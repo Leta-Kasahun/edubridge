@@ -6,12 +6,10 @@ import {
   SaveAnswerDto,
   BatchSaveAnswersDto,
   SubmitAttemptPayload,
-  ManualGradeAttemptDto,
   AttemptQueryFilters,
   StudentActiveAttemptSession,
   StudentQuestionView,
 } from "../types/assessment.types.js";
-import { SubmitQuestionFeedbackInput } from "../schemas/attempt.schema.js";
 import { NotFoundError } from "../../../shared/exceptions/not-found-error.js";
 import { BadRequestError } from "../../../shared/exceptions/bad-request-error.js";
 import { ForbiddenError } from "../../../shared/exceptions/forbidden-error.js";
@@ -25,7 +23,6 @@ import type {
   AnswerStatus,
 } from "../../../generated/prisma/enums.js";
 import { domainEventBus } from "../../../shared/events/domain-events.js";
-import { prisma } from "../../../lib/prisma.js";
 
 export class AttemptService {
   constructor(
@@ -44,10 +41,30 @@ export class AttemptService {
     const isStaff = userRoles.some((role) =>
       ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(role)
     );
+    const isStudent = userRoles.includes("STUDENT");
 
     const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
     if (!assessment) {
       throw new NotFoundError("Assessment not found or not accessible");
+    }
+
+    // Teacher & staff preview mode: return an in-memory session without creating student profile or database attempt
+    if (isStaff && !isStudent) {
+      const now = new Date();
+      const mockAttempt = {
+        id: `preview-${assessment.id}`,
+        assessmentId: assessment.id,
+        assignmentId: assignmentId || assessment.assignments?.[0]?.id || assessment.id,
+        attemptNumber: 1,
+        status: "IN_PROGRESS" as AttemptStatus,
+        startedAt: now,
+        answers: [],
+      };
+      const session = this.buildStudentActiveSession(mockAttempt, assessment);
+      return {
+        ...session,
+        isStaffPreview: true,
+      };
     }
 
     if (!isStaff && (assessment.status === "ARCHIVED" || assessment.status === "DRAFT")) {
@@ -112,6 +129,10 @@ export class AttemptService {
     attemptId: string,
     dto: SaveAnswerDto
   ) {
+    if (attemptId.startsWith("preview-")) {
+      return { success: true, preview: true };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     if (!student) {
       throw new ForbiddenError("Student profile not found");
@@ -149,6 +170,10 @@ export class AttemptService {
     attemptId: string,
     dto: BatchSaveAnswersDto
   ) {
+    if (attemptId.startsWith("preview-")) {
+      return { success: true, count: dto.answers.length, preview: true };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     if (!student) {
       throw new ForbiddenError("Student profile not found");
@@ -183,6 +208,90 @@ export class AttemptService {
     attemptId: string,
     dto: SubmitAttemptPayload
   ) {
+    if (attemptId.startsWith("preview-")) {
+      const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
+      if (!assessment) {
+        throw new NotFoundError("Assessment not found");
+      }
+
+      let totalAwarded = 0;
+      let totalMax = 0;
+      const gradedAnswers: Array<{
+        questionVersionId: string;
+        response: unknown;
+        isCorrect: boolean | null;
+        awardedPoints: number;
+        maxPoints: number;
+        status: AnswerStatus;
+      }> = [];
+
+      for (const q of assessment.questions) {
+        const qv = q.questionVersion;
+        const qPoints =
+          typeof q.points === "number"
+            ? q.points
+            : typeof q.points === "object" && q.points !== null && "toNumber" in q.points && typeof (q.points as { toNumber: () => number }).toNumber === "function"
+            ? (q.points as { toNumber: () => number }).toNumber()
+            : Number(q.points) || 0;
+        totalMax += qPoints;
+
+        const dtoAnswer = dto.answers?.find(
+          (a) => a.questionVersionId === q.questionVersionId
+        );
+        const studentResponse =
+          dtoAnswer && dtoAnswer.response !== undefined && dtoAnswer.response !== null && dtoAnswer.response !== ""
+            ? dtoAnswer.response
+            : null;
+
+        const qvForGrading: QuestionVersionForGrading = {
+          id: qv.id,
+          type: qv.type,
+          points: qPoints,
+          configuration: qv.configuration,
+          options: qv.options,
+        };
+
+        const result = GradingEngine.gradeResponse(qvForGrading, studentResponse);
+        const points = result.awardedPoints;
+        totalAwarded += points;
+
+        gradedAnswers.push({
+          questionVersionId: q.questionVersionId,
+          response: studentResponse,
+          isCorrect: result.isCorrect,
+          awardedPoints: points,
+          maxPoints: qPoints,
+          status: "GRADED",
+        });
+      }
+
+      const percentage = calculatePercentage(totalAwarded, totalMax);
+
+      return {
+        id: attemptId,
+        assessmentId,
+        assignmentId: assessment.assignments?.[0]?.id || assessment.id,
+        attemptNumber: 1,
+        status: "GRADED" as AttemptStatus,
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        gradedAt: new Date(),
+        score: totalAwarded,
+        maxScore: totalMax,
+        percentage,
+        answers: gradedAnswers,
+        assessment: {
+          id: assessment.id,
+          title: assessment.title,
+          type: assessment.type,
+          showResults: true,
+          timeLimitMinutes: assessment.timeLimitMinutes,
+          questions: assessment.questions,
+        },
+        isStaffPreview: true,
+      };
+    }
+
     const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
     const attempt = await this.attemptRepo.findAttemptById(attemptId);
 
@@ -311,84 +420,6 @@ export class AttemptService {
     return finalized;
   }
 
-  async getAttemptResult(
-    tenantId: string,
-    userId: string,
-    userRoles: string[],
-    assessmentId: string,
-    attemptId: string
-  ) {
-    const attempt = await this.attemptRepo.findAttemptById(attemptId);
-    if (!attempt || attempt.assessmentId !== assessmentId) {
-      throw new NotFoundError("Attempt not found");
-    }
-
-    const isTeacherOrSchoolAdmin = userRoles.some((role) =>
-      ["TEACHER", "SCHOOL_ADMIN"].includes(role)
-    );
-
-    if (!isTeacherOrSchoolAdmin) {
-      const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
-      if (!student || attempt.studentId !== student.id) {
-        throw new ForbiddenError("You are not authorized to view this attempt result");
-      }
-
-      if (!attempt.assessment.showResults && attempt.status !== "GRADED") {
-        return {
-          id: attempt.id,
-          assessmentId: attempt.assessmentId,
-          attemptNumber: attempt.attemptNumber,
-          status: attempt.status,
-          startedAt: attempt.startedAt,
-          submittedAt: attempt.submittedAt,
-          message: "Results are hidden by the instructor until grading is finalized.",
-        };
-      }
-    }
-
-    return attempt;
-  }
-
-  async manualGrade(
-    tenantId: string,
-    teacherUserId: string,
-    assessmentId: string,
-    attemptId: string,
-    dto: ManualGradeAttemptDto
-  ) {
-    const attempt = await this.attemptRepo.findAttemptById(attemptId);
-    if (!attempt || attempt.assessmentId !== assessmentId) {
-      throw new NotFoundError("Attempt not found");
-    }
-
-    const graded = await this.attemptRepo.applyManualGrading(attemptId, teacherUserId, dto);
-    if (graded.status === "GRADED") {
-      try {
-        await this.masteryService.recordEvidenceForAttempt(attemptId, tenantId);
-      } catch {
-        // Evidence recording is non-blocking
-      }
-
-      const studentUserId = attempt.student?.user?.id ?? null;
-      if (studentUserId) {
-        const teacherProfile = await prisma.teacherProfile.findFirst({
-          where: { userId: teacherUserId, tenantId },
-          select: { firstName: true, lastName: true },
-        });
-        domainEventBus.emitEvent("assessment.graded", {
-          tenantId,
-          assessmentId,
-          assessmentTitle: attempt.assessment.title,
-          attemptId,
-          studentUserId,
-          teacherName: teacherProfile ? `${teacherProfile.firstName} ${teacherProfile.lastName}` : null,
-          percentage: Math.round(Number(graded.percentage ?? 0)),
-          isManual: true,
-        });
-      }
-    }
-    return graded;
-  }
 
   async listAttempts(
     tenantId: string,
@@ -512,34 +543,43 @@ export class AttemptService {
     };
   }
 
-  async submitQuestionFeedback(
+
+  async listStudentInProgressAttempts(
     tenantId: string,
     userId: string,
-    assessmentId: string,
-    dto: SubmitQuestionFeedbackInput
+    limit: number = 6
   ) {
-    const assessment = await this.attemptRepo.findAssessmentForAttempt(tenantId, assessmentId);
-    if (!assessment) {
-      throw new NotFoundError("Assessment not found");
+    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
+    if (!student) {
+      return [];
     }
 
-    const student = await this.attemptRepo.findStudentProfileByUserId(tenantId, userId);
-    const studentName = student
-      ? `${student.firstName} ${student.lastName ?? ""}`.trim()
-      : "Student";
-
-    domainEventBus.emitEvent("assessment.question-feedback", {
+    const attempts = await this.attemptRepo.listStudentInProgressAttempts(
       tenantId,
-      assessmentId,
-      assessmentTitle: assessment.title,
-      questionVersionId: dto.questionVersionId,
-      studentUserId: userId,
-      studentName,
-      feedbackText: dto.message,
-      category: dto.category,
-      teacherUserId: assessment.createdById,
-    });
+      student.id,
+      limit
+    );
 
-    return { success: true, message: "Feedback submitted successfully" };
+    return attempts.map((a) => {
+      const totalQuestions = a.assessment._count?.questions ?? 0;
+      const answeredCount = a._count?.answers ?? 0;
+      const progressPercent =
+        totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+
+      return {
+        id: a.id,
+        assessmentId: a.assessment.id,
+        title: a.assessment.title,
+        type: a.assessment.type,
+        timeLimitMinutes: a.assessment.timeLimitMinutes,
+        subjectCode: a.assessment.examContext?.code || "EXAM",
+        subjectName: a.assessment.examContext?.name || a.assessment.title,
+        startedAt: a.startedAt.toISOString(),
+        totalQuestions,
+        answeredCount,
+        progressPercent,
+      };
+    });
   }
+
 }

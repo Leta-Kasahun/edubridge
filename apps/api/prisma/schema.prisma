@@ -422,6 +422,8 @@ masteryHistory         MasteryHistory[]
 
   notifications          Notification[]
   studentBookmarks       StudentBookmark[]
+  studentContentProgress StudentContentProgress[]
+  studentPracticeSessions StudentPracticeSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -918,6 +920,8 @@ model StudentProfile {
   topicMasteries    StudentTopicMastery[]
   masteryHistory    MasteryHistory[]
   bookmarks         StudentBookmark[]
+  contentProgress   StudentContentProgress[]
+  practiceSessions  StudentPracticeSession[]
 
   @@unique([tenantId, studentCode])
   @@index([tenantId, status])
@@ -1435,6 +1439,7 @@ model LearningContent {
   objectives ContentObjective[]
 
   attachments ContentAttachment[]
+  studentProgress StudentContentProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1548,6 +1553,7 @@ model QuestionBank {
   questions Question[]
 
   examContexts ExamContext[]
+  practiceSessions StudentPracticeSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2136,4 +2142,71 @@ model StudentBookmark {
   @@index([tenantId, studentId, targetType])
   @@index([tenantId, targetType, targetId])
 }
+
+// ============================================================
+// STUDENT LEARNING & CONTENT PROGRESS
+// ============================================================
+
+model StudentContentProgress {
+  id                  String          @id @default(uuid()) @db.Uuid
+  tenantId            String          @db.Uuid
+  studentId           String          @db.Uuid
+  contentId           String          @db.Uuid
+
+  lastPositionSeconds Float           @default(0)
+  durationSeconds     Float           @default(0)
+  progressPercent     Decimal         @default(0) @db.Decimal(5, 2)
+  isCompleted         Boolean         @default(false)
+  completedAt         DateTime?
+  lastAccessedAt      DateTime        @default(now())
+
+  tenant              Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student             StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content             LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@unique([studentId, contentId])
+  @@index([tenantId, studentId, isCompleted])
+  @@index([contentId])
+  @@index([studentId, lastAccessedAt])
+}
+
+// ============================================================
+// STUDENT QUESTION BANK PRACTICE SESSIONS
+// ============================================================
+
+model StudentPracticeSession {
+  id                   String         @id @default(uuid()) @db.Uuid
+  tenantId             String         @db.Uuid
+  studentId            String         @db.Uuid
+  bankId               String         @db.Uuid
+
+  currentIndex         Int            @default(0)
+  totalQuestions       Int            @default(0)
+  answeredCount        Int            @default(0)
+  secondsElapsed       Int            @default(0)
+  isFinished           Boolean        @default(false)
+
+  selectedAnswers      Json           @default("{}")
+  flaggedQuestionIds   Json           @default("[]")
+  eliminatedOptions    Json           @default("{}")
+  revealedExplanations Json           @default("{}")
+
+  lastAccessedAt       DateTime       @default(now())
+
+  tenant               Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student              StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  bank                 QuestionBank   @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@unique([studentId, bankId])
+  @@index([tenantId, studentId, isFinished])
+  @@index([bankId])
+  @@index([studentId, lastAccessedAt])
+}
+
 

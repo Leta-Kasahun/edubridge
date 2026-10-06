@@ -9,6 +9,7 @@ import {
   FileCheck,
   ChevronRight,
   BookOpen,
+  Lock,
 } from "lucide-react";
 import { useAssessments } from "../../hooks/useAssessments";
 import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
@@ -71,7 +72,9 @@ export function StudentAssessmentsView() {
   });
 
   const allAssessments = useMemo(() => {
-    return data?.items ?? [];
+    return (data?.items ?? []).filter(
+      (a) => a.status === "PUBLISHED" || a.status === "ACTIVE"
+    );
   }, [data]);
 
   const filteredAssessments = useMemo(() => {
@@ -261,6 +264,14 @@ export function StudentAssessmentsView() {
             const typeLabel =
               ASSESSMENT_TYPE_LABELS[assessment.type] || assessment.type;
 
+            const now = new Date();
+            const isUpcoming = Boolean(
+              assessment.availableFrom && new Date(assessment.availableFrom) > now
+            );
+            const isExpired = Boolean(
+              assessment.availableUntil && new Date(assessment.availableUntil) < now
+            );
+
             return (
               <div
                 key={assessment.id}
@@ -272,6 +283,17 @@ export function StudentAssessmentsView() {
                       <FileCheck className="h-4.5 w-4.5" />
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {isUpcoming && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          <Lock size={10} />
+                          Upcoming
+                        </span>
+                      )}
+                      {isExpired && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                          Closed
+                        </span>
+                      )}
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                         {typeLabel}
                       </span>
@@ -308,13 +330,24 @@ export function StudentAssessmentsView() {
                     {assessment.timeLimitMinutes ? "Timed Exam" : "Practice"}
                   </span>
 
-                  <Link
-                    href={ROUTES.ASSESSMENTS.ATTEMPT(assessment.id)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-all hover:bg-primary/90 cursor-pointer shrink-0"
-                  >
-                    <span>Start Exam</span>
-                    <ChevronRight size={13} />
-                  </Link>
+                  {isUpcoming ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-muted text-muted-foreground text-xs font-semibold">
+                      <Lock size={12} />
+                      <span>Opens Soon</span>
+                    </span>
+                  ) : isExpired ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-muted text-muted-foreground text-xs font-semibold">
+                      <span>Closed</span>
+                    </span>
+                  ) : (
+                    <Link
+                      href={ROUTES.ASSESSMENTS.ATTEMPT(assessment.id)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-all hover:bg-primary/90 cursor-pointer shrink-0"
+                    >
+                      <span>Start Exam</span>
+                      <ChevronRight size={13} />
+                    </Link>
+                  )}
                 </div>
               </div>
             );

@@ -15,6 +15,9 @@ import {
   QuestionUploadResponse,
   ConfirmUploadDto,
   PaginatedResponse,
+  StudentInProgressPracticeItem,
+  SavePracticeSessionDto,
+  SubmitQuestionReportDto,
 } from "../types/question-bank.types";
 
 export const questionBankService = {
@@ -248,10 +251,12 @@ export const questionBankService = {
 
   async resolveQuestionReport(
     questionId: string,
-    reportId: string
+    reportId: string,
+    resolutionNote?: string
   ): Promise<QuestionDetailItem> {
     const response = await apiClient.post<ApiResponse<QuestionDetailItem>>(
-      API_ENDPOINTS.QUESTION_BANKS.RESOLVE_REPORT(questionId, reportId)
+      API_ENDPOINTS.QUESTION_BANKS.RESOLVE_REPORT(questionId, reportId),
+      resolutionNote?.trim() ? { resolutionNote: resolutionNote.trim() } : {}
     );
     return response.data.data;
   },
@@ -301,4 +306,48 @@ export const questionBankService = {
     >(API_ENDPOINTS.QUESTION_BANKS.UPLOAD_CONFIRM(bankId, uploadId), payload);
     return response.data.data;
   },
+
+  async getStudentInProgressPractices(): Promise<readonly StudentInProgressPracticeItem[]> {
+    const response = await apiClient.get<ApiResponse<readonly StudentInProgressPracticeItem[]>>(
+      API_ENDPOINTS.QUESTION_BANKS.STUDENT_IN_PROGRESS
+    );
+    return response.data.data || [];
+  },
+
+  async getPracticeSession(bankId: string): Promise<Record<string, unknown> | null> {
+    const response = await apiClient.get<ApiResponse<Record<string, unknown> | null>>(
+      API_ENDPOINTS.QUESTION_BANKS.PRACTICE_SESSION(bankId)
+    );
+    return response.data.data || null;
+  },
+
+  async savePracticeSession(
+    bankId: string,
+    payload: SavePracticeSessionDto
+  ): Promise<Record<string, unknown>> {
+    const response = await apiClient.put<ApiResponse<Record<string, unknown>>>(
+      API_ENDPOINTS.QUESTION_BANKS.PRACTICE_SESSION(bankId),
+      payload
+    );
+    return response.data.data;
+  },
+
+  async deletePracticeSession(bankId: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      API_ENDPOINTS.QUESTION_BANKS.PRACTICE_SESSION(bankId)
+    );
+    return response.data;
+  },
+
+  async submitQuestionReport(
+    questionId: string,
+    payload: SubmitQuestionReportDto
+  ): Promise<{ success: boolean; report: unknown }> {
+    const response = await apiClient.post<ApiResponse<{ success: boolean; report: unknown }>>(
+      API_ENDPOINTS.QUESTION_BANKS.REPORT_QUESTION(questionId),
+      payload
+    );
+    return response.data.data;
+  },
 };
+

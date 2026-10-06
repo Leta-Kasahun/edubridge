@@ -31,12 +31,12 @@ export const ATTEMPT_STATUSES = [
 export type AttemptStatus = (typeof ATTEMPT_STATUSES)[number];
 
 export const ASSESSMENT_TYPE_LABELS: Record<AssessmentType, string> = {
-  PRACTICE: "Practice Test",
+  PRACTICE: "Practice",
   QUIZ: "Quiz",
   ASSIGNMENT: "Assignment",
-  EXAM: "Formal Examination",
-  DIAGNOSTIC: "Diagnostic Assessment",
-  MOCK_EXAM: "Mock National Exam",
+  DIAGNOSTIC: "Knowledge Check",
+  EXAM: "School Exam",
+  MOCK_EXAM: "Mock Exam",
 };
 
 export const ASSESSMENT_STATUS_LABELS: Record<AssessmentStatus, string> = {
@@ -48,9 +48,9 @@ export const ASSESSMENT_STATUS_LABELS: Record<AssessmentStatus, string> = {
 };
 
 export const GRADING_MODE_LABELS: Record<GradingMode, string> = {
-  AUTOMATIC: "Automatic (Instant)",
-  MANUAL: "Manual Teacher Review",
-  MIXED: "Mixed (Auto + Review)",
+  AUTOMATIC: "Automatic",
+  MANUAL: "Manual",
+  MIXED: "Mixed",
 };
 
 export const ATTEMPT_STATUS_LABELS: Record<AttemptStatus, string> = {

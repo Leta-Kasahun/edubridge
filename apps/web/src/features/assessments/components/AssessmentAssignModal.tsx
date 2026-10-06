@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, Users, Calendar, Check } from "lucide-react";
+import { X, Users, Check } from "lucide-react";
 import { SubmitButton } from "@/shared/components/SubmitButton";
+import { DatePicker } from "@/shared/components/DatePicker";
 import { SectionRecord } from "@/features/academic";
 import { AssessmentItem, AssignAssessmentPayload } from "../types/assessment.types";
 
@@ -143,18 +144,12 @@ export function AssessmentAssignModal({
             {error && <p className="text-xs text-rose-500 mt-1.5">{error}</p>}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
-              <Calendar size={14} className="text-primary/70" />
-              Submission Due Date (Optional)
-            </label>
-            <input
-              type="datetime-local"
-              value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+          <DatePicker
+            label="Submission Due Date (Optional)"
+            value={dueAt}
+            onChange={setDueAt}
+            showEthiopianReference
+          />
 
           <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <button

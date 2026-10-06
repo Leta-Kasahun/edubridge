@@ -1,10 +1,12 @@
 import { apiClient } from "@/lib/apiClient";
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import { ApiResponse } from "@/shared/types";
+import { evaluationService } from "@/features/evaluations-feedback";
 import {
   StudentActiveAttemptSession,
   AssessmentAttemptResult,
   ManualGradeAttemptPayload,
+  StudentResultsResponse,
 } from "../types/assessment.types";
 
 export interface PaginatedAttemptsResponse {
@@ -72,10 +74,7 @@ export const attemptService = {
     assessmentId: string,
     attemptId: string
   ): Promise<AssessmentAttemptResult> {
-    const response = await apiClient.get<ApiResponse<AssessmentAttemptResult>>(
-      API_ENDPOINTS.ASSESSMENTS.ATTEMPT_RESULT(assessmentId, attemptId)
-    );
-    return response.data.data;
+    return evaluationService.getAttemptResult(assessmentId, attemptId);
   },
 
   async manualGrade(
@@ -83,11 +82,7 @@ export const attemptService = {
     attemptId: string,
     payload: ManualGradeAttemptPayload
   ): Promise<AssessmentAttemptResult> {
-    const response = await apiClient.put<ApiResponse<AssessmentAttemptResult>>(
-      API_ENDPOINTS.ASSESSMENTS.MANUAL_GRADE(assessmentId, attemptId),
-      payload
-    );
-    return response.data.data;
+    return evaluationService.manualGrade(assessmentId, attemptId, payload);
   },
 
   async listAttempts(
@@ -141,10 +136,13 @@ export const attemptService = {
       category?: "CLARIFICATION" | "TYPO_REPORT" | "CONTENT_ISSUE" | "GENERAL";
     }
   ): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>(
-      API_ENDPOINTS.ASSESSMENTS.QUESTION_FEEDBACK(assessmentId),
-      payload
-    );
-    return response.data.data;
+    return evaluationService.submitQuestionFeedback(assessmentId, payload);
+  },
+
+  async listStudentResults(params: {
+    page?: number;
+    limit?: number;
+  } = {}): Promise<StudentResultsResponse> {
+    return evaluationService.listStudentResults(params);
   },
 };

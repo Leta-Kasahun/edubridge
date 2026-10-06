@@ -7,18 +7,20 @@ import { ROUTES } from "@/constants/routes";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { ConfirmDeleteModal } from "@/features/curriculum/structure/components/ConfirmDeleteModal";
+import { ConfirmDeleteModal } from "@/shared/components/ConfirmDeleteModal";
 import {
   useAssessments,
   useCreateAssessment,
   useUpdateAssessment,
-  useSetAssessmentQuestions,
   useAssignAssessment,
   usePublishAssessment,
   useArchiveAssessment,
 } from "../hooks/useAssessments";
-import { useAssessmentAttempts, useManualGradeAttempt } from "../hooks/useAssessmentAttempt";
-import { AssessmentItem, AssessmentAttemptResult } from "../types/assessment.types";
+import {
+  AssessmentItem,
+  CreateAssessmentPayload,
+  UpdateAssessmentPayload,
+} from "../types/assessment.types";
 import { AssessmentGradeTabs } from "./AssessmentGradeTabs";
 import {
   AssessmentSubjectAccordion,
@@ -27,11 +29,7 @@ import {
 import { AssessmentRowActions } from "./AssessmentRowActions";
 import { AssessmentFormModal } from "./AssessmentFormModal";
 import { AssessmentAssignModal } from "./AssessmentAssignModal";
-import { AssessmentQuestionSelectorModal } from "./AssessmentQuestionSelectorModal";
-import { AssessmentResultsView } from "./AssessmentResultsView";
-import { AssessmentManualGradeModal } from "./AssessmentManualGradeModal";
 import { useGrades, useSubjects, useSections, useAcademicYears } from "@/features/academic";
-import { useQuestionBanks } from "@/features/question-bank/hooks/useQuestionBanks";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   ASSESSMENT_TYPES,
@@ -61,11 +59,6 @@ export function AssessmentListView() {
   const [editingAssessment, setEditingAssessment] = useState<AssessmentItem | null>(null);
 
   const [assigningAssessment, setAssigningAssessment] = useState<AssessmentItem | null>(null);
-  const [selectingQuestionsFor, setSelectingQuestionsFor] = useState<AssessmentItem | null>(null);
-
-  const [viewingResultsFor, setViewingResultsFor] = useState<AssessmentItem | null>(null);
-  const [manualGradingAttempt, setManualGradingAttempt] = useState<AssessmentAttemptResult | null>(null);
-
   const [deletingAssessment, setDeletingAssessment] = useState<AssessmentItem | null>(null);
 
   const { data: academicYearsData } = useAcademicYears();
@@ -79,9 +72,6 @@ export function AssessmentListView() {
 
   const { data: sectionsData } = useSections();
   const sections = sectionsData || [];
-
-  const { data: questionBanksData } = useQuestionBanks();
-  const questionBanks = questionBanksData?.items || [];
 
   const {
     data: assessmentsData,
@@ -98,22 +88,20 @@ export function AssessmentListView() {
 
   const createMutation = useCreateAssessment();
   const updateMutation = useUpdateAssessment();
-  const setQuestionsMutation = useSetAssessmentQuestions();
   const assignMutation = useAssignAssessment();
   const publishMutation = usePublishAssessment();
   const archiveMutation = useArchiveAssessment();
-  const manualGradeMutation = useManualGradeAttempt();
-
-  const { data: attemptsData } = useAssessmentAttempts(
-    viewingResultsFor?.id || "",
-    {}
-  );
-  const currentAttempts = attemptsData?.items || [];
 
   const subjectGroups = useMemo<AssessmentSubjectGroup[]>(() => {
+    const filtered = selectedGradeId
+      ? assessments.filter((a) =>
+          a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
+        )
+      : assessments;
+
     const map = new Map<string, AssessmentItem[]>();
 
-    for (const assessment of assessments) {
+    for (const assessment of filtered) {
       const subjectId = assessment.examContext?.id || "general";
       const list = map.get(subjectId) || [];
       list.push(assessment);
@@ -123,7 +111,7 @@ export function AssessmentListView() {
     const groups: AssessmentSubjectGroup[] = [];
 
     for (const subj of subjects) {
-      const matched = assessments.filter(
+      const matched = filtered.filter(
         (a) => a.examContext?.id === subj.id || a.title.toLowerCase().includes(subj.name.toLowerCase())
       );
       if (matched.length > 0) {
@@ -136,7 +124,7 @@ export function AssessmentListView() {
       }
     }
 
-    const unassigned = assessments.filter(
+    const unassigned = filtered.filter(
       (a) => !groups.some((g) => g.assessments.some((item) => item.id === a.id))
     );
 
@@ -150,7 +138,7 @@ export function AssessmentListView() {
     }
 
     return groups;
-  }, [assessments, subjects]);
+  }, [assessments, subjects, selectedGradeId]);
 
   const toggleSubject = (id: string) => {
     setOpenSubjectIds((prev) => {
@@ -164,30 +152,19 @@ export function AssessmentListView() {
     });
   };
 
-  const handleCreateOrUpdate = async (payload: unknown) => {
+  const handleCreateOrUpdate = async (
+    payload: CreateAssessmentPayload | UpdateAssessmentPayload
+  ) => {
     if (editingAssessment) {
       await updateMutation.mutateAsync({
         id: editingAssessment.id,
-        payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]["payload"],
+        payload: payload as UpdateAssessmentPayload,
       });
     } else {
-      await createMutation.mutateAsync(
-        payload as Parameters<typeof createMutation.mutateAsync>[0]
-      );
+      await createMutation.mutateAsync(payload as CreateAssessmentPayload);
     }
     setIsFormModalOpen(false);
     setEditingAssessment(null);
-  };
-
-  const handleSetQuestions = async (
-    questions: Array<{ questionVersionId: string; orderIndex: number; points: number }>
-  ) => {
-    if (!selectingQuestionsFor) return;
-    await setQuestionsMutation.mutateAsync({
-      id: selectingQuestionsFor.id,
-      questions,
-    });
-    setSelectingQuestionsFor(null);
   };
 
   const handleAssign = async (payload: { sectionIds: string[]; dueAt?: string | null }) => {
@@ -207,19 +184,6 @@ export function AssessmentListView() {
     if (!deletingAssessment) return;
     await archiveMutation.mutateAsync(deletingAssessment.id);
     setDeletingAssessment(null);
-  };
-
-  const handleManualGradeSubmit = async (payload: {
-    grades: Array<{ questionVersionId: string; awardedPoints: number; feedback?: string }>;
-    generalFeedback?: string;
-  }) => {
-    if (!viewingResultsFor || !manualGradingAttempt) return;
-    await manualGradeMutation.mutateAsync({
-      assessmentId: viewingResultsFor.id,
-      attemptId: manualGradingAttempt.id,
-      payload,
-    });
-    setManualGradingAttempt(null);
   };
 
   const filterGroups: FilterGroup[] = [
@@ -272,40 +236,36 @@ export function AssessmentListView() {
       : []),
   ];
 
-  if (viewingResultsFor) {
-    return (
-      <>
-        <AssessmentResultsView
-          assessment={viewingResultsFor}
-          attempts={currentAttempts}
-          onOpenManualGrade={(attempt) => setManualGradingAttempt(attempt)}
-          onBack={() => setViewingResultsFor(null)}
-        />
-
-        {manualGradingAttempt && (
-          <AssessmentManualGradeModal
-            isOpen={Boolean(manualGradingAttempt)}
-            onClose={() => setManualGradingAttempt(null)}
-            onSubmit={handleManualGradeSubmit}
-            attempt={manualGradingAttempt}
-            isLoading={manualGradeMutation.isPending}
-          />
-        )}
-      </>
-    );
-  }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto w-full pb-10">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">
-          {isStudent ? "My Assessments" : "Assessments"}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {isStudent
-            ? "View and complete your assigned quizzes, tests, and examinations."
-            : "Create, schedule, assign, and grade curriculum assessments."}
-        </p>
+    <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
+      {/* Enterprise Single-Row Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate">
+            {isStudent ? "My Assessments" : "Assessments"}
+          </h1>
+          <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+            {assessments.length} {assessments.length === 1 ? "Assessment" : "Assessments"}
+          </span>
+        </div>
+
+        {!isStudent && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setEditingAssessment(null);
+                setIsFormModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-1 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+              title="Create Assessment"
+            >
+              <Plus size={14} />
+              <span>Assessment</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <AssessmentGradeTabs
@@ -321,21 +281,6 @@ export function AssessmentListView() {
           onSearchChange={setSearch}
           searchPlaceholder="Search assessments by title or topic..."
           filters={filterGroups}
-          actionButton={
-            !isStudent ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingAssessment(null);
-                  setIsFormModalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer shrink-0"
-              >
-                <Plus size={16} />
-                Create Assessment
-              </button>
-            ) : undefined
-          }
         />
       </div>
 
@@ -392,10 +337,8 @@ export function AssessmentListView() {
                   ) : (
                     <AssessmentRowActions
                       assessment={assessment}
-                      onManageQuestions={(a) => setSelectingQuestionsFor(a)}
                       onAssign={(a) => setAssigningAssessment(a)}
                       onPublish={(a) => handlePublish(a)}
-                      onViewResults={(a) => setViewingResultsFor(a)}
                       onEdit={(a) => {
                         setEditingAssessment(a);
                         setIsFormModalOpen(true);
@@ -420,17 +363,6 @@ export function AssessmentListView() {
           onSubmit={handleCreateOrUpdate}
           initialData={editingAssessment}
           isLoading={createMutation.isPending || updateMutation.isPending}
-        />
-      )}
-
-      {selectingQuestionsFor && (
-        <AssessmentQuestionSelectorModal
-          isOpen={Boolean(selectingQuestionsFor)}
-          onClose={() => setSelectingQuestionsFor(null)}
-          onSubmit={handleSetQuestions}
-          assessment={selectingQuestionsFor}
-          questionBanks={questionBanks}
-          isLoading={setQuestionsMutation.isPending}
         />
       )}
 

@@ -86,7 +86,7 @@ export async function seedAssessments(tenantId?: string) {
           bankName.includes("grade 7") ||
           bankName.includes("g7") ||
           prompt.includes("grade 7") ||
-          qv.question.type === "NUMERIC"
+          qv.type === "NUMERIC"
         );
       });
 
@@ -101,24 +101,59 @@ export async function seedAssessments(tenantId?: string) {
 
       const mathQuestions = allQuestionVersions.filter((qv) => {
         const bank = qv.question.questionBank?.name.toLowerCase() || "";
-        return bank.includes("math") || qv.question.type === "NUMERIC";
+        return bank.includes("math") || qv.type === "NUMERIC";
       });
 
       const scienceQuestions = allQuestionVersions.filter((qv) => {
         const bank = qv.question.questionBank?.name.toLowerCase() || "";
-        return bank.includes("science") || qv.question.type === "TRUE_FALSE";
+        return bank.includes("science") || qv.type === "TRUE_FALSE";
       });
 
       const englishQuestions = allQuestionVersions.filter((qv) => {
         const bank = qv.question.questionBank?.name.toLowerCase() || "";
-        return bank.includes("english") || qv.question.type === "SHORT_ANSWER";
+        return bank.includes("english") || qv.type === "SHORT_ANSWER";
+      });
+
+      const examContexts = await prisma.examContext.findMany({
+        where: { tenantId: tenant.id },
       });
 
       const assessmentBlueprints = [
         {
-          title: "Grade 7 Mathematics Diagnostic Quiz",
-          description: "Assessment evaluating linear equations, rational numbers, operations, and basic arithmetic.",
-          type: "QUIZ" as const,
+          title: "Grade 8 Math - National Mock Exam",
+          description: "Full-length standardized national exam simulation covering coordinate geometry, equations, and statistics.",
+          type: "MOCK_EXAM" as const,
+          contextPrefix: "NAT-G8-MATH",
+          gradingMode: "AUTOMATIC" as const,
+          timeLimitMinutes: 60,
+          maxAttempts: 1,
+          randomizeQuestions: true,
+          randomizeOptions: true,
+          showResults: true,
+          status: "PUBLISHED" as const,
+          sections: grade8Sections.length > 0 ? grade8Sections : allSections.slice(2, 4),
+          questionsPool: mathQuestions.length >= 3 ? mathQuestions : g8Questions,
+        },
+        {
+          title: "Grade 8 Science - Regional Practice Test",
+          description: "Adaptive practice test covering forces, energy transformations, and physical sciences.",
+          type: "PRACTICE" as const,
+          contextPrefix: "REG-G8-SCI",
+          gradingMode: "AUTOMATIC" as const,
+          timeLimitMinutes: 30,
+          maxAttempts: 3,
+          randomizeQuestions: true,
+          randomizeOptions: true,
+          showResults: true,
+          status: "PUBLISHED" as const,
+          sections: grade8Sections.length > 0 ? grade8Sections : allSections.slice(2, 4),
+          questionsPool: scienceQuestions.length >= 3 ? scienceQuestions : g8Questions,
+        },
+        {
+          title: "Grade 7 Math - Knowledge Check",
+          description: "Baseline evaluation on linear equations, rational numbers, and arithmetic operations.",
+          type: "DIAGNOSTIC" as const,
+          contextPrefix: "SCH-G7-MATH",
           gradingMode: "AUTOMATIC" as const,
           timeLimitMinutes: 30,
           maxAttempts: 2,
@@ -130,53 +165,12 @@ export async function seedAssessments(tenantId?: string) {
           questionsPool: g7Questions.length >= 3 ? g7Questions : mathQuestions,
         },
         {
-          title: "Grade 7 General Science Practical Assessment",
-          description: "Curriculum test covering living organisms, ecosystem classification, and scientific methods.",
-          type: "ASSIGNMENT" as const,
-          gradingMode: "AUTOMATIC" as const,
-          timeLimitMinutes: 35,
-          maxAttempts: 2,
-          randomizeQuestions: true,
-          randomizeOptions: true,
-          showResults: true,
-          status: "PUBLISHED" as const,
-          sections: grade7Sections.length > 0 ? grade7Sections : allSections.slice(0, 2),
-          questionsPool: scienceQuestions.length >= 3 ? scienceQuestions : allQuestionVersions,
-        },
-        {
-          title: "Grade 8 Mathematics Midterm Examination",
-          description: "Comprehensive mid-semester examination covering coordinate geometry, exponents, and system of linear equations.",
-          type: "EXAM" as const,
-          gradingMode: "AUTOMATIC" as const,
-          timeLimitMinutes: 45,
-          maxAttempts: 1,
-          randomizeQuestions: true,
-          randomizeOptions: true,
-          showResults: true,
-          status: "PUBLISHED" as const,
-          sections: grade8Sections.length > 0 ? grade8Sections : allSections.slice(2, 4),
-          questionsPool: mathQuestions.length >= 3 ? mathQuestions : g8Questions,
-        },
-        {
-          title: "Grade 8 Integrated Science Diagnostic",
-          description: "Standardized evaluation on cell structure, forces, energy transformations, and physical sciences.",
-          type: "DIAGNOSTIC" as const,
-          gradingMode: "AUTOMATIC" as const,
-          timeLimitMinutes: 40,
-          maxAttempts: 2,
-          randomizeQuestions: false,
-          randomizeOptions: true,
-          showResults: true,
-          status: "PUBLISHED" as const,
-          sections: grade8Sections.length > 0 ? grade8Sections : allSections.slice(2, 4),
-          questionsPool: scienceQuestions.length >= 3 ? scienceQuestions : g8Questions,
-        },
-        {
-          title: "Grade 8 English Language & Literature Review",
-          description: "Reading comprehension, grammatical mechanics, and textual inference test.",
+          title: "Grade 8 English - Grammar Quiz",
+          description: "Reading comprehension, grammatical syntax, and vocabulary evaluation.",
           type: "QUIZ" as const,
+          contextPrefix: "SCH-G8-ENG",
           gradingMode: "MANUAL" as const,
-          timeLimitMinutes: 40,
+          timeLimitMinutes: 25,
           maxAttempts: 1,
           randomizeQuestions: false,
           randomizeOptions: false,
@@ -186,22 +180,42 @@ export async function seedAssessments(tenantId?: string) {
           questionsPool: englishQuestions.length >= 2 ? englishQuestions : allQuestionVersions,
         },
         {
-          title: "Grade 8 STEM Multi-Discipline Challenge",
-          description: "Integrated question set combining mathematics problem-solving, science concepts, and analytical reasoning.",
-          type: "PRACTICE" as const,
+          title: "Grade 7 Math - Midterm Exam",
+          description: "Official mid-semester examination covering exponents, fractions, and numeric problem solving.",
+          type: "EXAM" as const,
+          contextPrefix: "SCH-G7-MATH",
           gradingMode: "AUTOMATIC" as const,
-          timeLimitMinutes: 50,
-          maxAttempts: 3,
+          timeLimitMinutes: 45,
+          maxAttempts: 1,
           randomizeQuestions: true,
           randomizeOptions: true,
           showResults: true,
           status: "PUBLISHED" as const,
+          sections: grade7Sections.length > 0 ? grade7Sections : allSections.slice(0, 2),
+          questionsPool: g7Questions.length >= 3 ? g7Questions : mathQuestions,
+        },
+        {
+          title: "Grade 8 Science - Weekly Assignment",
+          description: "Coursework assignment covering living organisms, ecosystem classification, and scientific methods.",
+          type: "ASSIGNMENT" as const,
+          contextPrefix: "REG-G8-SCI",
+          gradingMode: "AUTOMATIC" as const,
+          timeLimitMinutes: 40,
+          maxAttempts: 2,
+          randomizeQuestions: false,
+          randomizeOptions: true,
+          showResults: true,
+          status: "PUBLISHED" as const,
           sections: grade8Sections.length > 0 ? grade8Sections : allSections,
-          questionsPool: allQuestionVersions,
+          questionsPool: scienceQuestions.length >= 3 ? scienceQuestions : allQuestionVersions,
         },
       ];
 
       for (const bp of assessmentBlueprints) {
+        const matchedContext = bp.contextPrefix
+          ? examContexts.find((c) => c.code.startsWith(bp.contextPrefix))
+          : undefined;
+
         let assessment = await prisma.assessment.findFirst({
           where: {
             tenantId: tenant.id,
@@ -219,6 +233,7 @@ export async function seedAssessments(tenantId?: string) {
               title: bp.title,
               description: bp.description,
               type: bp.type,
+              examContextId: matchedContext?.id ?? null,
               gradingMode: bp.gradingMode,
               timeLimitMinutes: bp.timeLimitMinutes,
               maxAttempts: bp.maxAttempts,

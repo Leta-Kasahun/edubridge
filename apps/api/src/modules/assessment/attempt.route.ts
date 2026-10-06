@@ -8,15 +8,19 @@ import {
   SaveAnswerSchema,
   BatchSaveAnswersSchema,
   SubmitAttemptSchema,
-  ManualGradeAttemptSchema,
   AttemptQuerySchema,
-  SubmitQuestionFeedbackSchema,
 } from "./schemas/attempt.schema.js";
 
 const router: Router = Router();
 const attemptController = new AttemptController();
 
 router.use(authenticate);
+
+router.get(
+  "/student/in-progress",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
+  attemptController.listStudentInProgress
+);
 
 router.post(
   "/:id/attempts/start",
@@ -47,30 +51,10 @@ router.post(
 );
 
 router.get(
-  "/:id/attempts/:attemptId/result",
-  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
-  attemptController.getResult
-);
-
-router.put(
-  "/:id/attempts/:attemptId/manual-grade",
-  requireRoles("TEACHER", "SCHOOL_ADMIN"),
-  validate(ManualGradeAttemptSchema),
-  attemptController.manualGrade
-);
-
-router.get(
   "/:id/attempts",
   requireRoles("TEACHER", "SCHOOL_ADMIN", "STUDENT"),
   validate({ query: AttemptQuerySchema }),
   attemptController.listAttempts
-);
-
-router.post(
-  "/:id/question-feedback",
-  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN"),
-  validate(SubmitQuestionFeedbackSchema),
-  attemptController.submitQuestionFeedback
 );
 
 export default router;

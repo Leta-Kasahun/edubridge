@@ -7,9 +7,7 @@ import {
   SaveAnswerInput,
   BatchSaveAnswersInput,
   SubmitAttemptInput,
-  ManualGradeAttemptInput,
   AttemptQueryInput,
-  SubmitQuestionFeedbackInput,
 } from "../schemas/attempt.schema.js";
 
 export class AttemptController {
@@ -39,13 +37,13 @@ export class AttemptController {
     if (!req.user?.tenantId || !req.user?.userId) {
       throw new UnauthorizedError();
     }
-    const id = req.params.id as string;
+    const assessmentId = req.params.id as string;
     const attemptId = req.params.attemptId as string;
     const body = req.body as SaveAnswerInput;
     const result = await this.attemptService.saveAnswer(
       req.user.tenantId,
       req.user.userId,
-      id,
+      assessmentId,
       attemptId,
       body
     );
@@ -59,13 +57,13 @@ export class AttemptController {
     if (!req.user?.tenantId || !req.user?.userId) {
       throw new UnauthorizedError();
     }
-    const id = req.params.id as string;
+    const assessmentId = req.params.id as string;
     const attemptId = req.params.attemptId as string;
     const body = req.body as BatchSaveAnswersInput;
     const result = await this.attemptService.batchSaveAnswers(
       req.user.tenantId,
       req.user.userId,
-      id,
+      assessmentId,
       attemptId,
       body
     );
@@ -79,59 +77,19 @@ export class AttemptController {
     if (!req.user?.tenantId || !req.user?.userId) {
       throw new UnauthorizedError();
     }
-    const id = req.params.id as string;
+    const assessmentId = req.params.id as string;
     const attemptId = req.params.attemptId as string;
     const body = req.body as SubmitAttemptInput;
     const result = await this.attemptService.submitAttempt(
       req.user.tenantId,
       req.user.userId,
-      id,
+      assessmentId,
       attemptId,
       body
     );
     res.status(200).json({
       success: true,
       message: "Attempt submitted successfully",
-      data: result,
-    });
-  });
-
-  getResult = asyncHandler(async (req: Request, res: Response) => {
-    if (!req.user?.tenantId || !req.user?.userId) {
-      throw new UnauthorizedError();
-    }
-    const id = req.params.id as string;
-    const attemptId = req.params.attemptId as string;
-    const result = await this.attemptService.getAttemptResult(
-      req.user.tenantId,
-      req.user.userId,
-      req.user.roles,
-      id,
-      attemptId
-    );
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  });
-
-  manualGrade = asyncHandler(async (req: Request, res: Response) => {
-    if (!req.user?.tenantId || !req.user?.userId) {
-      throw new UnauthorizedError();
-    }
-    const id = req.params.id as string;
-    const attemptId = req.params.attemptId as string;
-    const body = req.body as ManualGradeAttemptInput;
-    const result = await this.attemptService.manualGrade(
-      req.user.tenantId,
-      req.user.userId,
-      id,
-      attemptId,
-      body
-    );
-    res.status(200).json({
-      success: true,
-      message: "Attempt graded successfully",
       data: result,
     });
   });
@@ -153,21 +111,19 @@ export class AttemptController {
     });
   });
 
-  submitQuestionFeedback = asyncHandler(async (req: Request, res: Response) => {
+  listStudentInProgress = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user?.tenantId || !req.user?.userId) {
       throw new UnauthorizedError();
     }
-    const id = req.params.id as string;
-    const body = req.body as SubmitQuestionFeedbackInput;
-    const result = await this.attemptService.submitQuestionFeedback(
+    const limit = req.query.limit ? Number(req.query.limit) : 6;
+    const items = await this.attemptService.listStudentInProgressAttempts(
       req.user.tenantId,
       req.user.userId,
-      id,
-      body
+      limit
     );
     res.status(200).json({
       success: true,
-      data: result,
+      data: items,
     });
   });
 }

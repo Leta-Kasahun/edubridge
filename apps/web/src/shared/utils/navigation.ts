@@ -103,7 +103,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
     children: [
-      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
       { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
@@ -111,6 +111,10 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Assessments",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: CheckSquare,
+    children: [
+      { label: "Assessments", href: ROUTES.ASSESSMENTS.LIST },
+      { label: "Results & Grading", href: ROUTES.ASSESSMENTS.RESULTS },
+    ],
   },
   {
     label: "Learning Progress",
@@ -164,7 +168,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     href: ROUTES.QUESTION_BANK.BASE,
     icon: FolderArchive,
     children: [
-      { label: "Exams", href: ROUTES.QUESTION_BANK.BANKS },
+      { label: "Question Banks", href: ROUTES.QUESTION_BANK.BANKS },
       { label: "Exam Types", href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS },
     ],
   },
@@ -172,6 +176,10 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Assessments",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: CheckSquare,
+    children: [
+      { label: "Assessments", href: ROUTES.ASSESSMENTS.LIST },
+      { label: "Results & Grading", href: ROUTES.ASSESSMENTS.RESULTS },
+    ],
   },
   {
     label: "Learning Progress",
@@ -215,6 +223,11 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "My Exams",
     href: ROUTES.ASSESSMENTS.BASE,
     icon: GraduationCap,
+  },
+  {
+    label: "My Evaluetions",
+    href: ROUTES.STUDENT.RESULTS,
+    icon: Award,
   },
   {
     label: "My Progress",

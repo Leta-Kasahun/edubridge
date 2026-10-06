@@ -10,6 +10,9 @@ import {
   UpdateContentMappingsDto,
   CreateContentVersionDto,
   PaginatedContentResponse,
+  SaveContentProgressDto,
+  StudentContentProgressItem,
+  StudentInProgressContentItem,
 } from "../types/content.types";
 
 export const LEARNING_CONTENT_QUERY_KEY = ["learning-content"] as const;
@@ -248,5 +251,42 @@ export function useDeleteAttachment(id: string) {
         queryKey: [...LEARNING_CONTENT_QUERY_KEY, "detail", id],
       });
     },
+  });
+}
+
+export function useContentProgress(contentId: string | null) {
+  return useQuery<StudentContentProgressItem | null, Error>({
+    queryKey: [...LEARNING_CONTENT_QUERY_KEY, "progress", contentId],
+    queryFn: () => {
+      if (!contentId) return null;
+      return contentService.getProgress(contentId);
+    },
+    enabled: Boolean(contentId),
+    staleTime: 10_000,
+  });
+}
+
+export function useSaveContentProgress(contentId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    StudentContentProgressItem,
+    Error,
+    SaveContentProgressDto
+  >({
+    mutationFn: (payload) => contentService.saveProgress(contentId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...LEARNING_CONTENT_QUERY_KEY, "in-progress"],
+      });
+    },
+  });
+}
+
+export function useStudentInProgressContent(limit: number = 6) {
+  return useQuery<readonly StudentInProgressContentItem[], Error>({
+    queryKey: [...LEARNING_CONTENT_QUERY_KEY, "in-progress", limit],
+    queryFn: () => contentService.getStudentInProgressContent(limit),
+    staleTime: 10_000,
   });
 }

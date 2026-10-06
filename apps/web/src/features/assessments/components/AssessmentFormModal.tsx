@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Sparkles, Sliders } from "lucide-react";
+import { X, Sliders } from "lucide-react";
 import { FormField } from "@/shared/components/FormField";
 import { SelectDropdown } from "@/shared/components/SelectDropdown";
 import { SubmitButton } from "@/shared/components/SubmitButton";
+import { DatePicker } from "@/shared/components/DatePicker";
 import {
   AssessmentItem,
   CreateAssessmentPayload,
@@ -18,6 +19,13 @@ import {
   AssessmentType,
   GradingMode,
 } from "@/shared/constants/assessment.constants";
+
+function safeDateToInput(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
 
 interface AssessmentFormModalProps {
   readonly isOpen: boolean;
@@ -64,16 +72,8 @@ export function AssessmentFormModal({
       setRandomizeQuestions(initialData.randomizeQuestions);
       setRandomizeOptions(initialData.randomizeOptions);
       setShowResults(initialData.showResults);
-      setAvailableFrom(
-        initialData.availableFrom
-          ? new Date(initialData.availableFrom).toISOString().slice(0, 16)
-          : ""
-      );
-      setAvailableUntil(
-        initialData.availableUntil
-          ? new Date(initialData.availableUntil).toISOString().slice(0, 16)
-          : ""
-      );
+      setAvailableFrom(safeDateToInput(initialData.availableFrom));
+      setAvailableUntil(safeDateToInput(initialData.availableUntil));
     } else {
       setTitle("");
       setDescription("");
@@ -228,32 +228,22 @@ export function AssessmentFormModal({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Available From (Optional)
-              </label>
-              <input
-                type="datetime-local"
-                value={availableFrom}
-                onChange={(e) => setAvailableFrom(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
+            <DatePicker
+              label="Available From (Optional)"
+              value={availableFrom}
+              onChange={setAvailableFrom}
+              showEthiopianReference
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Available Until / Due (Optional)
-              </label>
-              <input
-                type="datetime-local"
-                value={availableUntil}
-                onChange={(e) => setAvailableUntil(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-              />
-              {errors.availableUntil && (
-                <p className="text-[11px] text-rose-500 mt-1">{errors.availableUntil}</p>
-              )}
-            </div>
+            <DatePicker
+              label="Available Until / Due (Optional)"
+              value={availableUntil}
+              onChange={setAvailableUntil}
+              min={availableFrom || undefined}
+              showEthiopianReference
+              align="right"
+              error={errors.availableUntil}
+            />
           </div>
 
           <div className="pt-2 border-t border-border space-y-2.5">

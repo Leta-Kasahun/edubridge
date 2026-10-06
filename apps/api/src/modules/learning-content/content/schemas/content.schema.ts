@@ -187,8 +187,16 @@ export const ContentFilterQuerySchema = z.object({
     .default(DEFAULT_CONTENT_PAGE_LIMIT),
 });
 
+export const SaveContentProgressSchema = z.object({
+  lastPositionSeconds: z.number().min(0).default(0),
+  durationSeconds: z.number().min(0).default(0),
+  progressPercent: z.number().min(0).max(100).default(0),
+  isCompleted: z.boolean().optional(),
+});
+
 export type CreateLearningContentInput = z.infer<typeof CreateLearningContentSchema>;
 export type UpdateLearningContentInput = z.infer<typeof UpdateLearningContentSchema>;
 export type UpdateContentMappingsInput = z.infer<typeof UpdateContentMappingsSchema>;
 export type CreateContentVersionInput = z.infer<typeof CreateContentVersionSchema>;
 export type ContentFilterQueryInput = z.infer<typeof ContentFilterQuerySchema>;
+export type SaveContentProgressInput = z.infer<typeof SaveContentProgressSchema>;

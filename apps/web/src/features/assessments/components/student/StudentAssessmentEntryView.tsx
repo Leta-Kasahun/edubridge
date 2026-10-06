@@ -1,11 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { Clock, ShieldAlert, FileText, ArrowLeft, Target } from "lucide-react";
+import { Clock, ShieldAlert, FileText, ArrowLeft, Target, Eye } from "lucide-react";
 import { AssessmentItem } from "../../types/assessment.types";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { formatMinutes } from "@/shared/utils/assessment.util";
 import { ROUTES } from "@/constants/routes";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface StudentAssessmentEntryViewProps {
   readonly assessment: AssessmentItem;
@@ -20,6 +19,12 @@ export function StudentAssessmentEntryView({
   onStart,
   isLoading = false,
 }: StudentAssessmentEntryViewProps) {
+  const user = useAuthStore((s) => s.user);
+  const isTeacherOrStaff = Boolean(
+    user?.roles?.some((r) => ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(r)) &&
+      !user?.roles?.includes("STUDENT")
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border px-4 py-3 sm:px-6">
@@ -32,15 +37,31 @@ export function StudentAssessmentEntryView({
             <span>Exit to Exams</span>
           </Link>
 
-          <span className="text-xs font-bold text-foreground truncate">
-            {assessment.title}
-          </span>
+          <div className="flex items-center gap-2 truncate">
+            {isTeacherOrStaff && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                Teacher Preview
+              </span>
+            )}
+            <span className="text-xs font-bold text-foreground truncate">
+              {assessment.title}
+            </span>
+          </div>
         </div>
       </header>
 
       <main className="max-w-2xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 flex flex-col justify-center">
         <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
           <div className="p-6 sm:p-8 space-y-6">
+            {isTeacherOrStaff && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-2.5 font-medium leading-relaxed">
+                <Eye size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>
+                  <strong>Teacher Preview Mode:</strong> You are previewing this assessment. Responses and test submissions in preview mode will not affect student grades, class averages, or analytics.
+                </span>
+              </div>
+            )}
+
             <div className="space-y-2">
               <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase tracking-wider">
                 {assessment.type} Exam

@@ -19,7 +19,9 @@ export interface AssessmentQuestionItem {
     difficulty: DifficultyLevel;
     questionText: string;
     explanation?: string | null;
+    imageUrl?: string | null;
     points: number | string;
+    configuration?: unknown;
     options?: Array<{
       id: string;
       optionKey: string;
@@ -91,7 +93,7 @@ export interface AssessmentItem {
 
 export interface CreateAssessmentPayload {
   title: string;
-  description?: string;
+  description?: string | null;
   type: AssessmentType;
   gradingMode?: GradingMode;
   timeLimitMinutes?: number | null;
@@ -176,66 +178,31 @@ export interface StudentActiveAttemptSession {
   totalQuestions: number;
   totalPoints: number;
   questions: StudentQuestionView[];
+  isStaffPreview?: boolean;
 }
 
-export interface StudentAnswerItem {
-  id: string;
-  attemptId: string;
-  questionVersionId: string;
-  answer?: unknown;
-  status: "UNANSWERED" | "ANSWERED" | "FLAGGED" | "GRADED";
-  isCorrect?: boolean | null;
-  awardedPoints?: number | string | null;
-  maxPoints?: number | string | null;
-  feedback?: string | null;
-  questionVersion?: {
-    id: string;
-    type: QuestionType;
-    questionText: string;
-    explanation?: string | null;
-    options?: Array<{
-      id: string;
-      optionKey: string;
-      optionText: string;
-      isCorrect?: boolean;
-    }>;
-  };
-}
+export type {
+  StudentAnswerItem,
+  AssessmentAttemptResult,
+  ManualGradeItemPayload,
+  ManualGradeAttemptPayload,
+} from "@/features/evaluations-feedback";
 
-export interface AssessmentAttemptResult {
+export interface StudentInProgressAssessmentItem {
   id: string;
   assessmentId: string;
-  assignmentId: string;
-  studentId: string;
-  attemptNumber: number;
-  status: AttemptStatus;
+  title: string;
+  type: AssessmentType;
+  timeLimitMinutes?: number | null;
+  subjectCode: string;
+  subjectName: string;
   startedAt: string;
-  submittedAt?: string | null;
-  gradedAt?: string | null;
-  score?: number | string | null;
-  maxScore?: number | string | null;
-  percentage?: number | string | null;
-  assessment?: AssessmentItem;
-  answers?: StudentAnswerItem[];
-  student?: {
-    id: string;
-    studentCode: string;
-    user?: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-    };
-  };
+  totalQuestions: number;
+  answeredCount: number;
+  progressPercent: number;
 }
 
-export interface ManualGradeItemPayload {
-  questionVersionId: string;
-  awardedPoints: number;
-  feedback?: string;
-}
-
-export interface ManualGradeAttemptPayload {
-  grades: ManualGradeItemPayload[];
-  generalFeedback?: string;
-}
+export type {
+  StudentResultItem,
+  StudentResultsResponse,
+} from "@/features/evaluations-feedback";

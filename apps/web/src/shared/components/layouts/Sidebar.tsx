@@ -62,11 +62,21 @@ function NavTreeItem({
     }
   }, [isChildActive]);
 
-  const isActive = node.href.includes("?")
-    ? fullPath === node.href
-    : node.href === ROUTES.DASHBOARD
-      ? pathname === ROUTES.DASHBOARD && !tabParam
-      : pathname === node.href || (pathname.startsWith(node.href) && !hasChildren);
+  const isDetailRoute =
+    !hasChildren &&
+    node.href !== ROUTES.DASHBOARD &&
+    pathname.startsWith(node.href + "/") &&
+    !pathname.startsWith(ROUTES.ASSESSMENTS.RESULTS) &&
+    !pathname.startsWith(ROUTES.QUESTION_BANK.EXAM_CONTEXTS) &&
+    !pathname.startsWith(ROUTES.QUESTION_BANK.BANKS);
+
+  const isActive =
+    !hasChildren &&
+    (node.href.includes("?")
+      ? fullPath === node.href
+      : node.href === ROUTES.DASHBOARD
+        ? pathname === ROUTES.DASHBOARD && !tabParam
+        : pathname === node.href || isDetailRoute);
 
   const Icon = node.icon;
 
@@ -82,18 +92,22 @@ function NavTreeItem({
       <div className="flex items-center">
         <Link
           href={node.href}
-          onClick={() => {
-            if (!hasChildren) onNavigate();
+          onClick={(e) => {
+            if (hasChildren) {
+              toggleOpen(e);
+            } else {
+              onNavigate();
+            }
           }}
           title={collapsed ? node.label : undefined}
           className={cn(
-            "flex-1 flex items-center gap-2.5 rounded-lg text-xs font-medium transition-colors duration-150 group relative",
+            "flex-1 flex items-center gap-2.5 rounded-lg text-xs font-medium transition-colors duration-150 group relative cursor-pointer",
             depth === 0 ? "px-2.5 py-2" : depth === 1 ? "pl-8 pr-2.5 py-1.5" : "pl-11 pr-2 py-1.5",
             collapsed && !mobileOpen ? "justify-center px-1.5" : "",
             isActive
               ? "bg-[#0C4A6E] text-[#38BDF8] font-semibold"
               : isChildActive
-                ? "text-white font-medium bg-[#1E293B]/40"
+                ? "text-white font-medium bg-[#1E293B]/50 hover:bg-[#1E293B]/80"
                 : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white"
           )}
         >
@@ -102,7 +116,7 @@ function NavTreeItem({
               size={18}
               className={cn(
                 "shrink-0 transition-colors",
-                isActive ? "text-[#38BDF8]" : "text-[#94A3B8] group-hover:text-white"
+                isActive || isChildActive ? "text-[#38BDF8]" : "text-[#94A3B8] group-hover:text-white"
               )}
             />
           ) : (
@@ -136,7 +150,12 @@ function NavTreeItem({
           <button
             type="button"
             onClick={toggleOpen}
-            className="p-1.5 ml-0.5 rounded-md text-[#94A3B8] hover:text-white hover:bg-[#1E293B] focus:outline-hidden"
+            className={cn(
+              "p-1.5 ml-0.5 rounded-md focus:outline-hidden cursor-pointer transition-colors",
+              isChildActive
+                ? "text-[#38BDF8]/80 hover:text-[#38BDF8] hover:bg-[#1E293B]"
+                : "text-[#94A3B8] hover:text-white hover:bg-[#1E293B]"
+            )}
             aria-label={isOpen ? "Collapse submenu" : "Expand submenu"}
           >
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

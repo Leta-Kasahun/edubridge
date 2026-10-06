@@ -32,17 +32,6 @@ export const SubmitAttemptSchema = z.object({
     .optional(),
 });
 
-export const ManualGradeAnswerItemSchema = z.object({
-  questionVersionId: z.string().uuid("Invalid questionVersionId format"),
-  awardedPoints: z.number().min(0, "Awarded points must be 0 or positive"),
-  feedback: z.string().trim().max(1000).optional(),
-});
-
-export const ManualGradeAttemptSchema = z.object({
-  grades: z.array(ManualGradeAnswerItemSchema).min(1, "At least one grade item is required"),
-  generalFeedback: z.string().trim().max(2000).optional(),
-});
-
 export const AttemptQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
@@ -54,17 +43,8 @@ export const AttemptQuerySchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export const SubmitQuestionFeedbackSchema = z.object({
-  questionVersionId: z.string().uuid("Invalid questionVersionId format"),
-  message: z.string().trim().min(3, "Feedback message must be at least 3 characters").max(1000),
-  category: z.enum(["CLARIFICATION", "TYPO_REPORT", "CONTENT_ISSUE", "GENERAL"]).default("CLARIFICATION"),
-});
-
 export type StartAttemptInput = z.infer<typeof StartAttemptSchema>;
 export type SaveAnswerInput = z.infer<typeof SaveAnswerSchema>;
 export type BatchSaveAnswersInput = z.infer<typeof BatchSaveAnswersSchema>;
 export type SubmitAttemptInput = z.infer<typeof SubmitAttemptSchema>;
-export type ManualGradeAttemptInput = z.infer<typeof ManualGradeAttemptSchema>;
 export type AttemptQueryInput = z.infer<typeof AttemptQuerySchema>;
-export type SubmitQuestionFeedbackInput = z.infer<typeof SubmitQuestionFeedbackSchema>;
-

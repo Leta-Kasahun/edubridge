@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
@@ -11,6 +9,7 @@ import {
   Send,
   Menu,
   X,
+  Eye,
 } from "lucide-react";
 import {
   StudentActiveAttemptSession,
@@ -19,9 +18,10 @@ import {
 import { useSaveAnswer, useSubmitAttempt } from "../../hooks/useAssessmentAttempt";
 import { StudentAssessmentQuestionCard } from "./StudentAssessmentQuestionCard";
 import { AssessmentSubmitConfirmModal } from "./AssessmentSubmitConfirmModal";
-import { StudentAssessmentCompletedView } from "./StudentAssessmentCompletedView";
+import { StudentAssessmentCompletedView } from "@/features/evaluations-feedback";
 import { formatTimeRemaining } from "@/shared/utils/assessment.util";
 import { ROUTES } from "@/constants/routes";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface StudentAssessmentRunnerViewProps {
   readonly session: StudentActiveAttemptSession;
@@ -34,6 +34,12 @@ export function StudentAssessmentRunnerView({
   onFinish,
   onRetake,
 }: StudentAssessmentRunnerViewProps) {
+  const user = useAuthStore((s) => s.user);
+  const isTeacherOrStaff = Boolean(
+    session.isStaffPreview ||
+      (user?.roles?.some((r) => ["TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"].includes(r)) &&
+        !user?.roles?.includes("STUDENT"))
+  );
   const [activeIdx, setActiveIdx] = useState(0);
   const [answers, setAnswers] = useState<Map<string, unknown>>(() => {
     const map = new Map<string, unknown>();
@@ -204,13 +210,20 @@ export function StudentAssessmentRunnerView({
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
             <Link
-              href={ROUTES.STUDENT.PRACTICE}
+              href={isTeacherOrStaff ? ROUTES.ASSESSMENTS.LIST : ROUTES.STUDENT.PRACTICE}
               className="p-1.5 sm:p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold shrink-0"
-              title="Exit Exam"
+              title={isTeacherOrStaff ? "Exit Preview" : "Exit Exam"}
             >
               <ArrowLeft size={15} />
-              <span className="hidden md:inline">Exit</span>
+              <span className="hidden md:inline">{isTeacherOrStaff ? "Exit Preview" : "Exit"}</span>
             </Link>
+
+            {isTeacherOrStaff && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 text-[11px] font-bold">
+                <Eye size={13} />
+                <span>Preview Mode</span>
+              </span>
+            )}
 
             <button
               type="button"

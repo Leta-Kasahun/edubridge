@@ -3,6 +3,7 @@ import { QuestionBankService } from "../services/question-bank.service.js";
 import { QuestionBankQueryDto } from "../types/question-bank.types.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { UnauthorizedError } from "../../../shared/exceptions/index.js";
+import { prisma } from "../../../lib/prisma.js";
 
 const service = new QuestionBankService();
 
@@ -104,4 +105,109 @@ export class QuestionBankController {
       message: "Question bank deleted successfully",
     });
   });
+
+  savePracticeSession = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const bankId = req.params.id as string;
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: {
+        tenantId,
+        userId,
+      },
+      select: { id: true },
+    });
+    const studentId = profile?.id || userId;
+
+    const result = await service.savePracticeSession(
+      tenantId,
+      studentId,
+      bankId,
+      req.body
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Practice session saved successfully",
+      data: result,
+    });
+  });
+
+  getPracticeSession = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const bankId = req.params.id as string;
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: {
+        tenantId,
+        userId,
+      },
+      select: { id: true },
+    });
+    const studentId = profile?.id || userId;
+
+    const result = await service.getPracticeSession(
+      tenantId,
+      studentId,
+      bankId
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  deletePracticeSession = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const bankId = req.params.id as string;
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: {
+        tenantId,
+        userId,
+      },
+      select: { id: true },
+    });
+    const studentId = profile?.id || userId;
+
+    await service.deletePracticeSession(
+      tenantId,
+      studentId,
+      bankId
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Practice session cleared successfully",
+    });
+  });
+
+  listStudentInProgress = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+
+    const profile = await prisma.studentProfile.findFirst({
+      where: {
+        tenantId,
+        userId,
+      },
+      select: { id: true },
+    });
+    const studentId = profile?.id || userId;
+
+    const result = await service.listStudentInProgressPractices(
+      tenantId,
+      studentId
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
+

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2, Plus, Check, Image as ImageIcon, Sparkles, X } from "lucide-react";
+import { Trash2, Plus, Check, Image as ImageIcon, Lightbulb, X } from "lucide-react";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import {
   QuestionType,
@@ -339,7 +339,7 @@ export function QuestionBatchItemCard({
 
       <div className="space-y-1.5 pt-1">
         <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5" htmlFor={`explanation-${item.id}`}>
-          <Sparkles size={12} className="text-primary" />
+          <Lightbulb size={13} className="text-amber-500" />
           <span>Answer Explanation</span>
         </label>
         <input

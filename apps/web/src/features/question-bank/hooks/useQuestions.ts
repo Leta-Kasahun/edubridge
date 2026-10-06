@@ -120,10 +120,10 @@ export function useResolveQuestionReport(bankId: string) {
   return useMutation<
     QuestionDetailItem,
     Error,
-    { questionId: string; reportId: string }
+    { questionId: string; reportId: string; resolutionNote?: string }
   >({
-    mutationFn: ({ questionId, reportId }) =>
-      questionBankService.resolveQuestionReport(questionId, reportId),
+    mutationFn: ({ questionId, reportId, resolutionNote }) =>
+      questionBankService.resolveQuestionReport(questionId, reportId, resolutionNote),
     onSuccess: (_, { questionId }) => {
       queryClient.invalidateQueries({
         queryKey: [...QUESTIONS_QUERY_KEY, bankId],
@@ -134,6 +134,30 @@ export function useResolveQuestionReport(bankId: string) {
     },
   });
 }
+
+export function useSubmitQuestionReport(bankId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { success: boolean; report: unknown },
+    Error,
+    { questionId: string; payload: { reason: string; comment?: string | null } }
+  >({
+    mutationFn: ({ questionId, payload }) =>
+      questionBankService.submitQuestionReport(questionId, payload),
+    onSuccess: (_, { questionId }) => {
+      if (bankId) {
+        queryClient.invalidateQueries({
+          queryKey: [...QUESTIONS_QUERY_KEY, bankId],
+        });
+      }
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTIONS_QUERY_KEY, "detail", questionId],
+      });
+    },
+  });
+}
+
 
 export function useDeleteQuestion(bankId: string) {
   const queryClient = useQueryClient();

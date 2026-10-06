@@ -29,6 +29,10 @@ router.get(
 
 router.use(authenticate);
 
+router.get("/student/in-progress", contentController.listStudentInProgress);
+router.get("/:id/progress", contentController.getProgress);
+router.put("/:id/progress", contentController.saveProgress);
+
 router.get("/", contentController.listContent);
 router.get("/:id", contentController.getContentDetail);
 router.post(

@@ -1,5 +1,5 @@
 import { seedAssessments } from "./seeds/assessment.seeder.js";
-import { prisma } from "../src/lib/prisma.js";
+import { prisma, pool } from "../src/lib/prisma.js";
 
 async function main() {
   console.log("Seeding Grade 7 and Grade 8 mixed assessments...");
@@ -14,4 +14,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

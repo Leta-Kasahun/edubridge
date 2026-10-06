@@ -54,6 +54,7 @@ export interface QuestionBankQueryDto {
 
 export interface QuestionReportItem {
   id: string;
+  studentId?: string;
   studentName?: string;
   reason: string;
   comment?: string;
@@ -61,6 +62,7 @@ export interface QuestionReportItem {
   createdAt: string;
   resolvedAt?: string;
   resolvedById?: string;
+  resolutionNote?: string;
 }
 
 export interface CreateQuestionInput {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -11,16 +11,20 @@ import {
   CheckSquare,
   Square,
   Binary,
-  RotateCcw,
   Send,
   Archive,
   Trash2,
   CheckCheck,
   Tag,
+  MessageSquare,
+  ChevronDown,
+  Check,
+  X,
 } from "lucide-react";
-import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
-import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { FilterGroup } from "@/shared/components/TableToolbar";
+import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import {
@@ -47,23 +51,143 @@ import { QuestionUploadModal } from "../upload/QuestionUploadModal";
 import { ConfirmDeleteModal } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
+interface QuestionFiltersToolbarProps {
+  readonly filters: readonly FilterGroup[];
+  readonly hasActiveFilters: boolean;
+  readonly onResetAll: () => void;
+  readonly resultCount?: number;
+}
+
+function QuestionFiltersToolbar({
+  filters,
+  hasActiveFilters,
+  onResetAll,
+  resultCount,
+}: QuestionFiltersToolbarProps) {
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(containerRef, () => setOpenFilterId(null));
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex items-center justify-between gap-2.5 flex-wrap w-full"
+    >
+      <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+        {filters.map((group, index) => {
+          const isOpen = openFilterId === group.id;
+          const selectedOption = group.options.find(
+            (o) => o.value === group.selectedValue
+          );
+          const GroupIcon = group.icon || Filter;
+          const isActive = Boolean(group.selectedValue && group.selectedValue !== "ALL");
+          const isTrailing = index >= Math.max(1, filters.length - 2);
+
+          return (
+            <div key={group.id} className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setOpenFilterId(isOpen ? null : group.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
+                  isActive
+                    ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15"
+                    : "bg-card text-foreground border-border hover:bg-muted"
+                )}
+              >
+                <GroupIcon size={13} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                <span className={cn("font-medium", isActive ? "text-primary/80" : "text-muted-foreground")}>
+                  {group.label}:
+                </span>
+                <span className={cn("font-semibold", isActive ? "text-primary" : "text-foreground")}>
+                  {selectedOption ? selectedOption.label : "All"}
+                </span>
+                <ChevronDown
+                  size={13}
+                  className={cn(
+                    "ml-0.5 transition-transform duration-150",
+                    isOpen && "rotate-180",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                />
+              </button>
+
+              {isOpen && (
+                <div
+                  className={cn(
+                    "absolute top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95",
+                    isTrailing ? "right-0" : "left-0"
+                  )}
+                >
+                  {group.options.map((opt) => {
+                    const isSelected = group.selectedValue === opt.value;
+
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          group.onSelect(opt.value);
+                          setOpenFilterId(null);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left",
+                          isSelected
+                            ? "bg-muted font-bold text-foreground"
+                            : "text-foreground hover:bg-muted/60 font-medium"
+                        )}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {isSelected && <Check size={13} className="text-foreground shrink-0 ml-1" />}
+                        {!isSelected && opt.count !== undefined && (
+                          <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                            {opt.count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onResetAll}
+            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            title="Reset all filters"
+          >
+            <X size={13} />
+            <span>Reset</span>
+          </button>
+        )}
+      </div>
+
+      {resultCount !== undefined && (
+        <div className="text-[11px] font-medium text-muted-foreground shrink-0 hidden sm:block">
+          Showing {resultCount} {resultCount === 1 ? "question" : "questions"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface QuestionListViewProps {
   readonly bankId: string;
 }
 
 export function QuestionListView({ bankId }: QuestionListViewProps) {
-  const user = useAuthStore((state) => state.user);
-  const isStudent = user?.roles?.includes("STUDENT");
-
-  const [search, setSearch] = useState("");
   const [topicFilter, setTopicFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [feedbackFilter, setFeedbackFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
 
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [revealedExplanations, setRevealedExplanations] = useState<Record<string, boolean>>({});
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -78,22 +202,33 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const { data: questionsData, isLoading: isQuestionsLoading, error } = useQuestions(
     bankId,
     {
-      search: search.trim() || undefined,
       topicId: topicFilter === "ALL" ? undefined : topicFilter,
       type: typeFilter === "ALL" ? undefined : (typeFilter as QuestionType),
       difficulty:
         difficultyFilter === "ALL"
           ? undefined
           : (difficultyFilter as DifficultyLevel),
-      status: isStudent
-        ? ("PUBLISHED" as QuestionStatus)
-        : statusFilter === "ALL"
-        ? undefined
-        : (statusFilter as QuestionStatus),
+      status: statusFilter === "ALL" ? undefined : (statusFilter as QuestionStatus),
       page,
       limit: 50,
     }
   );
+
+  const hasActiveFilters =
+    topicFilter !== "ALL" ||
+    typeFilter !== "ALL" ||
+    difficultyFilter !== "ALL" ||
+    statusFilter !== "ALL" ||
+    feedbackFilter !== "ALL";
+
+  const handleResetFilters = () => {
+    setTopicFilter("ALL");
+    setTypeFilter("ALL");
+    setDifficultyFilter("ALL");
+    setStatusFilter("ALL");
+    setFeedbackFilter("ALL");
+    setPage(1);
+  };
 
   const statusMutation = useUpdateQuestionStatus(bankId);
   const publishMutation = usePublishQuestion(bankId);
@@ -104,6 +239,22 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const bulkDeleteMutation = useBulkDeleteQuestions(bankId);
 
   const items = questionsData?.items ?? [];
+
+  const questionsWithPendingReports = useMemo(
+    () => items.filter((q) => (q.reports || []).some((r) => r.status === "PENDING")),
+    [items]
+  );
+  const pendingReportsCount = questionsWithPendingReports.length;
+
+  const displayedItems = useMemo(() => {
+    if (feedbackFilter === "PENDING") {
+      return items.filter((q) => (q.reports || []).some((r) => r.status === "PENDING"));
+    }
+    if (feedbackFilter === "RESOLVED") {
+      return items.filter((q) => (q.reports || []).some((r) => r.status === "RESOLVED"));
+    }
+    return items;
+  }, [items, feedbackFilter]);
 
   const draftQuestions = useMemo(
     () => items.filter((q) => q.status === "DRAFT" || q.status === "REVIEW"),
@@ -179,8 +330,12 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   };
 
-  const handleResolveReport = async (questionId: string, reportId: string) => {
-    await resolveReportMutation.mutateAsync({ questionId, reportId });
+  const handleResolveReport = async (
+    questionId: string,
+    reportId: string,
+    resolutionNote?: string
+  ) => {
+    await resolveReportMutation.mutateAsync({ questionId, reportId, resolutionNote });
   };
 
   const handleCreate = () => {
@@ -226,41 +381,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   };
 
-  const handleOptionSelect = (questionId: string, optionKey: string) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionKey,
-    }));
-  };
-
-  const handleToggleExplanation = (questionId: string) => {
-    setRevealedExplanations((prev) => ({
-      ...prev,
-      [questionId]: !prev[questionId],
-    }));
-  };
-
-  const handleResetPractice = () => {
-    setSelectedAnswers({});
-    setRevealedExplanations({});
-  };
-
-  const practiceStats = useMemo(() => {
-    let correct = 0;
-    let attempted = 0;
-    for (const q of items) {
-      const selected = selectedAnswers[q.id];
-      if (selected) {
-        attempted++;
-        const correctOpt = q.options?.find((o) => o.isCorrect);
-        if (correctOpt && (correctOpt.id === selected || correctOpt.text === selected)) {
-          correct++;
-        }
-      }
-    }
-    return { correct, attempted, total: items.length };
-  }, [items, selectedAnswers]);
-
   const availableTopics = useMemo(() => {
     const map = new Map<string, string>();
     for (const q of items) {
@@ -288,7 +408,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All Topics", value: "ALL" },
+          { label: "All", value: "ALL" },
           ...availableTopics,
         ],
       });
@@ -330,11 +450,8 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Medium", value: "MEDIUM" },
           { label: "Hard", value: "HARD" },
         ],
-      }
-    );
-
-    if (!isStudent) {
-      filters.push({
+      },
+      {
         id: "status",
         label: "Status",
         icon: Filter,
@@ -350,11 +467,26 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           { label: "Published", value: "PUBLISHED" },
           { label: "Archived", value: "ARCHIVED" },
         ],
-      });
-    }
+      },
+      {
+        id: "feedback",
+        label: "Feedback",
+        icon: MessageSquare,
+        selectedValue: feedbackFilter,
+        onSelect: (val) => {
+          setFeedbackFilter(val);
+          setPage(1);
+        },
+        options: [
+          { label: "All", value: "ALL" },
+          { label: `Needs Review (${pendingReportsCount})`, value: "PENDING" },
+          { label: "Resolved", value: "RESOLVED" },
+        ],
+      }
+    );
 
     return filters;
-  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter, isStudent]);
+  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter, feedbackFilter, pendingReportsCount]);
 
   const isAnyBulkPending =
     bulkPublishMutation.isPending ||
@@ -362,83 +494,77 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     bulkDeleteMutation.isPending;
 
   return (
-    <div className="space-y-3.5 sm:space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Link
-          href={ROUTES.QUESTION_BANK.BANKS}
-          className="hover:text-foreground transition-colors flex items-center gap-1 font-medium"
-        >
-          <ArrowLeft size={13} />
-          <span>Question Banks</span>
-        </Link>
-        <span>/</span>
-        <span className="text-foreground font-semibold truncate">
-          {bank?.name || "Loading..."}
-        </span>
-      </div>
+    <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
+      {/* Enterprise Single-Row Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <Link
+            href={ROUTES.QUESTION_BANK.BANKS}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted px-2 py-1 rounded-lg transition-colors shrink-0"
+            title="Back to Question Banks"
+          >
+            <ArrowLeft size={14} />
+            <span>Back</span>
+          </Link>
 
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h1 className="text-base sm:text-lg font-bold text-foreground">
+          <span className="text-border text-xs font-light select-none">|</span>
+
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+            <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate">
               {bank?.name || "Question Bank"}
             </h1>
-            {isStudent && (
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                Practice Mode
-              </span>
-            )}
-          </div>
-          {bank?.description && (
-            <p className="text-xs text-muted-foreground max-w-2xl line-clamp-2">
-              {bank.description}
-            </p>
-          )}
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          {isStudent ? (
-            <div className="flex items-center gap-3">
-              <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-muted border border-border flex items-center gap-2">
-                <span className="text-muted-foreground">Score:</span>
-                <span className="text-foreground font-bold">
-                  {practiceStats.correct} / {practiceStats.attempted}
-                </span>
-                <span className="text-muted-foreground text-[10px]">
-                  ({practiceStats.total} total)
-                </span>
-              </div>
-              {practiceStats.attempted > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                {items.length} {items.length === 1 ? "Question" : "Questions"}
+              </span>
+              {pendingReportsCount > 0 && (
                 <button
                   type="button"
-                  onClick={handleResetPractice}
-                  className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  onClick={() => setFeedbackFilter((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
+                  className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors cursor-pointer whitespace-nowrap ${
+                    feedbackFilter === "PENDING"
+                      ? "bg-amber-500 text-white border-amber-600 dark:bg-amber-600"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20"
+                  }`}
+                  title="Filter questions with pending feedback"
                 >
-                  <RotateCcw size={12} />
-                  <span>Reset</span>
+                  {pendingReportsCount} Feedback Pending
                 </button>
               )}
+              {bank?.subject?.name && (
+                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                  {bank.subject.name}
+                </span>
+              )}
+              {bank?.grade && (
+                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                  Grade {bank.grade.level}
+                </span>
+              )}
             </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
-              >
-                <Upload size={14} />
-                <span>Upload Document</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleCreate}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Plus size={14} />
-                <span>Add Question</span>
-              </button>
-            </>
-          )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+            title="Upload Document"
+          >
+            <Upload size={13} />
+            <span>Upload</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            className="inline-flex items-center justify-center gap-1 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+            title="Add Question"
+          >
+            <Plus size={14} />
+            <span>Question</span>
+          </button>
         </div>
       </div>
 
@@ -446,20 +572,17 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         <ErrorAlert message={error.message || "Failed to load questions."} />
       )}
 
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
-        <TableToolbar
-          searchValue={search}
-          onSearchChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
-          searchPlaceholder="Search questions..."
+      <div className="bg-card rounded-2xl border border-border p-3 sm:p-3.5 shadow-xs">
+        <QuestionFiltersToolbar
           filters={toolbarFilters}
+          hasActiveFilters={hasActiveFilters}
+          onResetAll={handleResetFilters}
+          resultCount={displayedItems.length}
         />
       </div>
 
-      {/* Bulk Action & Management Toolbar (For Teachers & Admins) */}
-      {!isStudent && items.length > 0 && (
+      {/* Bulk Action & Management Toolbar */}
+      {items.length > 0 && (
         <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap animate-in fade-in-0">
           <div className="flex items-center gap-3">
             <button
@@ -572,59 +695,64 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         </div>
       )}
 
-      {isQuestionsLoading || isBankLoading ? (
-        <div className="min-h-[300px] flex items-center justify-center p-8">
+      {/* Questions List */}
+      {isBankLoading || isQuestionsLoading ? (
+        <div className="p-12 flex items-center justify-center">
           <LoadingSpinner size={32} />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-card rounded-2xl border border-border">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+        <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <HelpCircle size={20} />
           </div>
           <h3 className="text-sm font-bold text-foreground mb-1">
             No Questions in this Bank
           </h3>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
-            {isStudent
-              ? "No published questions are available in this question bank yet."
-              : "Add your first question manually or upload an exam document to extract questions automatically."}
+            Upload a document or add questions manually to start building this question repository.
           </p>
-          {!isStudent && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCreate}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
-              >
-                <Plus size={13} />
-                <span>Add Question</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
-              >
-                <Upload size={13} />
-                <span>Upload Document</span>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+            >
+              <Upload size={13} />
+              <span>Upload Document</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+            >
+              <Plus size={13} />
+              <span>Add Question</span>
+            </button>
+          </div>
+        </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 sm:p-12 text-center bg-card flex flex-col items-center justify-center">
+          <p className="text-xs text-muted-foreground mb-3">
+            No questions match the current feedback filter.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFeedbackFilter("ALL")}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+          >
+            Show All Questions
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((question, qIndex) => (
+          {displayedItems.map((q, idx) => (
             <QuestionCardItem
-              key={question.id}
-              question={question}
-              qIndex={qIndex}
-              isStudent={isStudent}
-              isSelected={selectedQuestionIds.has(question.id)}
-              onToggleSelect={() => handleToggleSelect(question.id)}
-              selectedOptKey={selectedAnswers[question.id]}
-              onOptionSelect={handleOptionSelect}
-              isExplanationOpen={Boolean(revealedExplanations[question.id])}
-              onToggleExplanation={handleToggleExplanation}
-              onPreview={(q) => setPreviewQuestion(q)}
+              key={q.id}
+              question={q}
+              qIndex={idx}
+              isSelected={selectedQuestionIds.has(q.id)}
+              onToggleSelect={() => handleToggleSelect(q.id)}
+              onPreview={setPreviewQuestion}
               onEdit={handleEdit}
               onPublish={handlePublish}
               onArchive={handleArchive}
@@ -632,10 +760,9 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
               onDelete={handleDelete}
               onResolveReport={handleResolveReport}
               isBusy={
+                statusMutation.isPending ||
                 publishMutation.isPending ||
                 deleteMutation.isPending ||
-                statusMutation.isPending ||
-                resolveReportMutation.isPending ||
                 bulkPublishMutation.isPending ||
                 bulkArchiveMutation.isPending ||
                 bulkDeleteMutation.isPending
@@ -666,7 +793,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         }}
         onPublish={handlePublish}
         onArchive={handleArchive}
-        isStudent={isStudent}
+        onResolveReport={handleResolveReport}
       />
 
       <QuestionUploadModal
@@ -705,4 +832,3 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     </div>
   );
 }
-

@@ -1,14 +1,7 @@
-"use client";
+import { redirect } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
 
-import { use } from "react";
-import { StudentQuestionPracticeView } from "@/features/question-bank";
-
-interface PracticePageProps {
-  readonly params: Promise<{ id: string }>;
+export default function PracticePage() {
+  redirect(ROUTES.STUDENT.EXAMS);
 }
 
-export default function PracticePage({ params }: PracticePageProps) {
-  const resolvedParams = use(params);
-
-  return <StudentQuestionPracticeView bankId={resolvedParams.id} />;
-}

@@ -82,3 +82,58 @@ export function useDeleteQuestionBank() {
     },
   });
 }
+
+export function useStudentInProgressPractices() {
+  return useQuery({
+    queryKey: [...QUESTION_BANKS_QUERY_KEY, "in-progress"],
+    queryFn: () => questionBankService.getStudentInProgressPractices(),
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function usePracticeSession(bankId: string | null | undefined) {
+  return useQuery({
+    queryKey: [...QUESTION_BANKS_QUERY_KEY, "practice-session", bankId],
+    queryFn: () => {
+      if (!bankId) throw new Error("Question bank ID is required");
+      return questionBankService.getPracticeSession(bankId);
+    },
+    enabled: Boolean(bankId),
+    staleTime: 5_000,
+  });
+}
+
+export function useSavePracticeSession(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof questionBankService.savePracticeSession>[1]) =>
+      questionBankService.savePracticeSession(bankId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTION_BANKS_QUERY_KEY, "in-progress"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTION_BANKS_QUERY_KEY, "practice-session", bankId],
+      });
+    },
+  });
+}
+
+export function useDeletePracticeSession(bankId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => questionBankService.deletePracticeSession(bankId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTION_BANKS_QUERY_KEY, "in-progress"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...QUESTION_BANKS_QUERY_KEY, "practice-session", bankId],
+      });
+    },
+  });
+}
+

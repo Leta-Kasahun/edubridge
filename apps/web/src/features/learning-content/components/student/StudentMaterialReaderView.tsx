@@ -22,7 +22,12 @@ import {
   ZoomOut,
   RotateCw,
 } from "lucide-react";
-import { useContentDetail, useContentList } from "../../hooks/useLearningContent";
+import {
+  useContentDetail,
+  useContentList,
+  useContentProgress,
+  useSaveContentProgress,
+} from "../../hooks/useLearningContent";
 import { LearningContentListItem } from "../../types/content.types";
 import { isPdfDocument, downloadFileFromDataUrl } from "@/shared/utils/document.util";
 import { env } from "@/config/env";
@@ -40,6 +45,12 @@ export function StudentMaterialReaderView({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const hasSeekedRef = React.useRef(false);
+  const lastSyncTimeRef = React.useRef<number>(0);
+
+  const { data: savedProgress } = useContentProgress(contentId);
+  const saveProgressMutation = useSaveContentProgress(contentId);
 
   const {
     data: detail,
@@ -121,6 +132,60 @@ export function StudentMaterialReaderView({
     const name = primaryAttachment?.fileName || `${detail?.title || "learning_material"}.pdf`;
     downloadFileFromDataUrl(primaryMediaUrl, name);
   };
+
+  // Resume video playback to saved position on initial load
+  React.useEffect(() => {
+    if (
+      savedProgress?.lastPositionSeconds &&
+      videoRef.current &&
+      !hasSeekedRef.current &&
+      savedProgress.lastPositionSeconds > 0
+    ) {
+      videoRef.current.currentTime = savedProgress.lastPositionSeconds;
+      hasSeekedRef.current = true;
+    }
+  }, [savedProgress]);
+
+  // Initial read progress beacon (for text, lesson, pdf)
+  React.useEffect(() => {
+    if (detail && !savedProgress) {
+      saveProgressMutation.mutate({
+        lastPositionSeconds: 0,
+        durationSeconds: 0,
+        progressPercent: 10,
+        isCompleted: false,
+      });
+    }
+  }, [detail, savedProgress, saveProgressMutation]);
+
+  const handleVideoTimeUpdate = React.useCallback(() => {
+    if (!videoRef.current) return;
+    const now = Date.now();
+    // Throttled sync every 6 seconds
+    if (now - lastSyncTimeRef.current > 6000) {
+      lastSyncTimeRef.current = now;
+      const current = videoRef.current.currentTime;
+      const duration = videoRef.current.duration || 1;
+      const pct = Math.min(100, Math.round((current / duration) * 100));
+      saveProgressMutation.mutate({
+        lastPositionSeconds: current,
+        durationSeconds: duration,
+        progressPercent: pct,
+        isCompleted: pct >= 90,
+      });
+    }
+  }, [saveProgressMutation]);
+
+  const handleVideoEnded = React.useCallback(() => {
+    if (!videoRef.current) return;
+    const duration = videoRef.current.duration || 1;
+    saveProgressMutation.mutate({
+      lastPositionSeconds: duration,
+      durationSeconds: duration,
+      progressPercent: 100,
+      isCompleted: true,
+    });
+  }, [saveProgressMutation]);
 
   if (isDetailLoading) {
     return (
@@ -300,8 +365,12 @@ export function StudentMaterialReaderView({
                 <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-black shadow-lg">
                   {primaryMediaUrl ? (
                     <video
+                      ref={videoRef}
                       src={primaryMediaUrl}
                       controls
+                      onTimeUpdate={handleVideoTimeUpdate}
+                      onPause={handleVideoTimeUpdate}
+                      onEnded={handleVideoEnded}
                       className="w-full aspect-video rounded-2xl bg-black"
                     >
                       Your browser does not support video playback.

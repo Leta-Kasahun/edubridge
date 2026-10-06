@@ -14,6 +14,7 @@ export const ASSESSMENT_QUERY_KEYS = {
     [...ASSESSMENT_QUERY_KEYS.lists(), params] as const,
   details: () => [...ASSESSMENT_QUERY_KEYS.all, "detail"] as const,
   detail: (id: string) => [...ASSESSMENT_QUERY_KEYS.details(), id] as const,
+  studentInProgress: () => [...ASSESSMENT_QUERY_KEYS.all, "student-in-progress"] as const,
 };
 
 export function useAssessments(params: AssessmentQueryParams = {}) {
@@ -128,5 +129,13 @@ export function useArchiveAssessment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ASSESSMENT_QUERY_KEYS.lists() });
     },
+  });
+}
+
+export function useStudentInProgressAssessments(limit: number = 6) {
+  return useQuery({
+    queryKey: [...ASSESSMENT_QUERY_KEYS.studentInProgress(), limit],
+    queryFn: () => assessmentService.getStudentInProgressAssessments(limit),
+    staleTime: 10_000,
   });
 }

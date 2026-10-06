@@ -12,36 +12,75 @@ export const AssessmentQuestionItemSchema = z.object({
   points: z.number().positive("Points must be greater than 0"),
 });
 
+const coerceIsoDate = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") {
+    return null;
+  }
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val.toISOString();
+  }
+  if (typeof val === "string") {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}, z.string().datetime().nullable().optional());
+
+const coerceUuidOrNull = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") {
+    return null;
+  }
+  if (typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim())) {
+    return val.trim();
+  }
+  return null;
+}, z.string().uuid().nullable().optional());
+
+const coerceNullablePositiveInt = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") {
+    return null;
+  }
+  const num = Number(val);
+  return isNaN(num) || num <= 0 ? null : num;
+}, z.number().int().positive().nullable().optional());
+
+const coerceNullableString = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "" || val === "null" || val === "undefined") {
+    return null;
+  }
+  return typeof val === "string" ? val.trim() || null : null;
+}, z.string().max(2000).nullable().optional());
+
 export const CreateAssessmentSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200),
-  description: z.string().trim().max(2000).optional(),
+  description: coerceNullableString,
   type: z.enum(ASSESSMENT_TYPES),
   gradingMode: z.enum(GRADING_MODES).default("AUTOMATIC"),
-  timeLimitMinutes: z.number().int().min(1).max(300).nullable().optional(),
-  maxAttempts: z.number().int().min(1).max(100).nullable().optional(),
+  timeLimitMinutes: coerceNullablePositiveInt,
+  maxAttempts: coerceNullablePositiveInt,
   randomizeQuestions: z.boolean().default(false),
   randomizeOptions: z.boolean().default(false),
   showResults: z.boolean().default(true),
-  availableFrom: z.string().datetime().nullable().optional(),
-  availableUntil: z.string().datetime().nullable().optional(),
-  examContextId: z.string().uuid().nullable().optional(),
+  availableFrom: coerceIsoDate,
+  availableUntil: coerceIsoDate,
+  examContextId: coerceUuidOrNull,
   questions: z.array(AssessmentQuestionItemSchema).optional(),
 });
 
 export const UpdateAssessmentSchema = z.object({
-  title: z.string().trim().min(3).max(200).optional(),
-  description: z.string().trim().max(2000).nullable().optional(),
+  title: z.string().trim().min(3, "Title must be at least 3 characters").max(200).optional(),
+  description: coerceNullableString,
   type: z.enum(ASSESSMENT_TYPES).optional(),
   status: z.enum(ASSESSMENT_STATUSES).optional(),
   gradingMode: z.enum(GRADING_MODES).optional(),
-  timeLimitMinutes: z.number().int().min(1).max(300).nullable().optional(),
-  maxAttempts: z.number().int().min(1).max(100).nullable().optional(),
+  timeLimitMinutes: coerceNullablePositiveInt,
+  maxAttempts: coerceNullablePositiveInt,
   randomizeQuestions: z.boolean().optional(),
   randomizeOptions: z.boolean().optional(),
   showResults: z.boolean().optional(),
-  availableFrom: z.string().datetime().nullable().optional(),
-  availableUntil: z.string().datetime().nullable().optional(),
-  examContextId: z.string().uuid().nullable().optional(),
+  availableFrom: coerceIsoDate,
+  availableUntil: coerceIsoDate,
+  examContextId: coerceUuidOrNull,
 });
 
 export const AssessmentQuerySchema = z.object({
@@ -68,12 +107,12 @@ export const AssignAssessmentSchema = z.object({
   sectionIds: z
     .array(z.string().uuid("Invalid sectionId format"))
     .min(1, "At least one section must be selected"),
-  dueAt: z.string().datetime().nullable().optional(),
+  dueAt: coerceIsoDate,
 });
 
 export const UpdateAssignmentSchema = z.object({
   status: z.enum(ASSESSMENT_ASSIGNMENT_STATUSES).optional(),
-  dueAt: z.string().datetime().nullable().optional(),
+  dueAt: coerceIsoDate,
 });
 
 export type CreateAssessmentInput = z.infer<typeof CreateAssessmentSchema>;

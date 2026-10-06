@@ -8,6 +8,7 @@ import {
   AssessmentQueryParams,
   AssignAssessmentPayload,
   AssessmentAssignmentItem,
+  StudentInProgressAssessmentItem,
 } from "../types/assessment.types";
 
 export interface PaginatedAssessmentsResponse {
@@ -118,5 +119,14 @@ export const assessmentService = {
 
   async archiveAssessment(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.ASSESSMENTS.BY_ID(id));
+  },
+
+  async getStudentInProgressAssessments(
+    limit: number = 6
+  ): Promise<StudentInProgressAssessmentItem[]> {
+    const response = await apiClient.get<ApiResponse<StudentInProgressAssessmentItem[]>>(
+      `${API_ENDPOINTS.ASSESSMENTS.STUDENT_IN_PROGRESS}?limit=${limit}`
+    );
+    return response.data.data ?? [];
   },
 };

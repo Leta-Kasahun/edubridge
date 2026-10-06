@@ -29,22 +29,22 @@ export default function BankUploadPage({ params }: BankUploadPageProps) {
     <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER"]}>
       <DashboardLayout>
         <div className="max-w-5xl mx-auto space-y-6">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Link
               href={`/dashboard/question-banks/${bankId}`}
-              className="hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1"
+              className="hover:text-foreground transition-colors flex items-center gap-1 font-medium"
             >
               <ArrowLeft size={13} />
               <span>{bank?.name || "Question Bank"}</span>
             </Link>
             <span>/</span>
-            <span className="text-slate-900 dark:text-slate-100 font-medium">
+            <span className="text-foreground font-semibold">
               Upload & Extract Questions
             </span>
           </div>
 
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="text-lg sm:text-xl font-bold text-foreground">
               Upload Questions
             </h1>
           </div>

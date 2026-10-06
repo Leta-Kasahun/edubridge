@@ -77,3 +77,43 @@ export const practiceSessionStorage = {
     }
   },
 };
+
+export interface ActivePracticeSessionSummary {
+  readonly bankId: string;
+  readonly sessionId: string;
+  readonly bankName: string;
+  readonly answeredCount: number;
+  readonly totalQuestions: number;
+  readonly lastUpdated: number;
+}
+
+export function getAllActiveSessions(): ActivePracticeSessionSummary[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const list: ActivePracticeSessionSummary[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(STORAGE_PREFIX)) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw) as StoredPracticeSession;
+          const answeredCount = Object.keys(parsed.selectedAnswers || {}).length;
+          const totalQuestions = parsed.totalQuestions || 10;
+          if (parsed && parsed.bankId && answeredCount > 0 && answeredCount < totalQuestions) {
+            list.push({
+              bankId: parsed.bankId,
+              sessionId: `qb-practice-${parsed.bankId}`,
+              bankName: parsed.bankTitle || "Practice Session",
+              answeredCount,
+              totalQuestions,
+              lastUpdated: parsed.lastUpdated || 0,
+            });
+          }
+        }
+      }
+    }
+    return list.sort((a, b) => b.lastUpdated - a.lastUpdated);
+  } catch {
+    return [];
+  }
+}

@@ -5,8 +5,10 @@ import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { useAttemptResult } from "@/features/assessments/hooks/useAssessmentAttempt";
-import { StudentAssessmentCompletedView } from "@/features/assessments/components/student";
+import {
+  useAttemptResult,
+  StudentAssessmentCompletedView,
+} from "@/features/evaluations-feedback";
 
 interface AssessmentAttemptResultPageProps {
   readonly params: Promise<{ id: string; attemptId: string }>;

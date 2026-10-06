@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import {
-  FolderArchive,
-  ChevronRight,
-  Layers,
-} from "lucide-react";
+import { FolderArchive, Layers, ChevronRight } from "lucide-react";
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
+import { StudentQuestionBanksView } from "@/features/question-bank";
+import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
 
 interface QuestionBankSectionItem {
@@ -15,61 +13,89 @@ interface QuestionBankSectionItem {
   readonly description: string;
   readonly href: string;
   readonly icon: React.ElementType;
+  readonly badge: string;
+  readonly actionLabel: string;
 }
 
 const QUESTION_BANK_SECTIONS: readonly QuestionBankSectionItem[] = [
   {
     title: "Question Banks",
-    description: "Author, organize, and manage subject question repositories.",
+    description:
+      "Manage subject-specific question repositories, multi-format items, points allocation, and taxonomy tagging.",
     href: ROUTES.QUESTION_BANK.BANKS,
     icon: FolderArchive,
+    badge: "Item Repositories",
+    actionLabel: "Manage",
   },
   {
     title: "Exam Types",
-    description: "National, regional, and school-level exam types and blueprints.",
+    description:
+      "Configure standardized institutional exam categories, national test contexts, and assessment frameworks.",
     href: ROUTES.QUESTION_BANK.EXAM_CONTEXTS,
     icon: Layers,
+    badge: "Assessment Types",
+    actionLabel: "Configure",
   },
 ];
 
-export default function QuestionBankDashboardPage() {
+export default function QuestionBanksOverviewPage() {
+  const isStudent = useAuthStore(
+    (s) =>
+      Boolean(
+        s.user?.roles?.includes("STUDENT") &&
+          !s.user?.roles?.includes("TEACHER") &&
+          !s.user?.roles?.includes("SCHOOL_ADMIN")
+      )
+  );
+
   return (
     <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "STUDENT"]}>
       <DashboardLayout>
-        <div className="grid grid-cols-1 sm:grid-cols-2 max-w-3xl gap-4">
-          {QUESTION_BANK_SECTIONS.map((sec) => {
-            const Icon = sec.icon;
+        {isStudent ? (
+          <div className="max-w-7xl mx-auto space-y-6">
+            <StudentQuestionBanksView />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {QUESTION_BANK_SECTIONS.map((sec) => {
+              const Icon = sec.icon;
 
-            return (
-              <Link
-                key={sec.href}
-                href={sec.href}
-                className="bg-card rounded-2xl border border-border p-5 shadow-xs hover:border-primary/50 hover:shadow-sm transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground mb-3 group-hover:scale-105 transition-transform">
-                    <Icon size={20} />
+              return (
+                <Link
+                  key={sec.href}
+                  href={sec.href}
+                  className="bg-card rounded-2xl border border-border p-5 shadow-xs hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <Icon size={22} />
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {sec.badge}
+                      </span>
+                    </div>
+
+                    <h2 className="text-sm font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+                      {sec.title}
+                    </h2>
+                    <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                      {sec.description}
+                    </p>
                   </div>
 
-                  <h2 className="text-sm font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
-                    {sec.title}
-                  </h2>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {sec.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-border mt-4 flex items-center justify-between text-xs font-semibold text-primary">
-                  <span>Open</span>
-                  <ChevronRight
-                    size={14}
-                    className="group-hover:translate-x-0.5 transition-transform"
-                  />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                  <div className="pt-4 border-t border-border mt-5 flex items-center justify-between text-xs font-semibold text-primary">
+                    <span>{sec.actionLabel}</span>
+                    <ChevronRight
+                      size={15}
+                      className="group-hover:translate-x-0.5 transition-transform"
+                    />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </DashboardLayout>
     </RoleGuard>
   );
