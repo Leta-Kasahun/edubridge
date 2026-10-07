@@ -36,6 +36,12 @@ export class AssessmentRepository {
         availableFrom: assessmentData.availableFrom ? new Date(assessmentData.availableFrom) : null,
         availableUntil: assessmentData.availableUntil ? new Date(assessmentData.availableUntil) : null,
         examContextId: assessmentData.examContextId ?? null,
+        scope: assessmentData.scope ?? "TOPIC",
+        subjectId: assessmentData.subjectId ?? null,
+        gradeId: assessmentData.gradeId ?? null,
+        unitId: assessmentData.unitId ?? null,
+        topicId: assessmentData.topicId ?? null,
+        curriculumVersionId: assessmentData.curriculumVersionId ?? null,
         questions: questions && questions.length > 0
           ? {
               create: questions.map((q) => ({
@@ -60,6 +66,11 @@ export class AssessmentRepository {
           },
         },
         examContext: true,
+        subject: true,
+        grade: true,
+        unit: true,
+        topic: true,
+        curriculumVersion: true,
       },
     });
   }
@@ -104,6 +115,11 @@ export class AssessmentRepository {
           },
         },
         examContext: true,
+        subject: true,
+        grade: true,
+        unit: true,
+        topic: true,
+        curriculumVersion: true,
         createdBy: {
           select: {
             id: true,
@@ -133,6 +149,12 @@ export class AssessmentRepository {
       ...(filters.type && { type: filters.type }),
       ...(filters.status && { status: filters.status }),
       ...(filters.gradingMode && { gradingMode: filters.gradingMode }),
+      ...(filters.scope && { scope: filters.scope }),
+      ...(filters.subjectId && { subjectId: filters.subjectId }),
+      ...(filters.gradeId && { gradeId: filters.gradeId }),
+      ...(filters.unitId && { unitId: filters.unitId }),
+      ...(filters.topicId && { topicId: filters.topicId }),
+      ...(filters.curriculumVersionId && { curriculumVersionId: filters.curriculumVersionId }),
       ...(filters.examContextId && { examContextId: filters.examContextId }),
       ...(filters.academicYearId && {
         assignments: {
@@ -169,6 +191,33 @@ export class AssessmentRepository {
               name: true,
               code: true,
               scope: true,
+            },
+          },
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+          grade: {
+            select: {
+              id: true,
+              level: true,
+            },
+          },
+          unit: {
+            select: {
+              id: true,
+              title: true,
+              code: true,
+            },
+          },
+          topic: {
+            select: {
+              id: true,
+              title: true,
+              code: true,
             },
           },
           createdBy: {
@@ -224,6 +273,12 @@ export class AssessmentRepository {
           availableUntil: dto.availableUntil ? new Date(dto.availableUntil) : null,
         }),
         ...(dto.examContextId !== undefined && { examContextId: dto.examContextId }),
+        ...(dto.scope !== undefined && { scope: dto.scope }),
+        ...(dto.subjectId !== undefined && { subjectId: dto.subjectId }),
+        ...(dto.gradeId !== undefined && { gradeId: dto.gradeId }),
+        ...(dto.unitId !== undefined && { unitId: dto.unitId }),
+        ...(dto.topicId !== undefined && { topicId: dto.topicId }),
+        ...(dto.curriculumVersionId !== undefined && { curriculumVersionId: dto.curriculumVersionId }),
       },
       include: {
         questions: {
@@ -239,6 +294,11 @@ export class AssessmentRepository {
           },
         },
         examContext: true,
+        subject: true,
+        grade: true,
+        unit: true,
+        topic: true,
+        curriculumVersion: true,
       },
     });
   }

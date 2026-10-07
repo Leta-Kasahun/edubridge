@@ -218,6 +218,7 @@ export class QuestionService {
       status?: QuestionStatusEnum;
       type?: QuestionTypeEnum;
       difficulty?: DifficultyLevelEnum;
+      unitId?: string;
       topicId?: string;
       objectiveId?: string;
       search?: string;

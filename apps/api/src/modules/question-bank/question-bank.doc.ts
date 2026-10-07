@@ -112,6 +112,7 @@ const questionBankRouteDefinitions: RouteDefinition[] = [
       { name: "type", in: "query", schema: { type: "string", enum: [...QUESTION_TYPES] } },
       { name: "difficulty", in: "query", schema: { type: "string", enum: [...DIFFICULTY_LEVELS] } },
       { name: "status", in: "query", schema: { type: "string", enum: [...QUESTION_STATUSES] } },
+      { name: "unitId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "topicId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "objectiveId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "search", in: "query", schema: { type: "string" } },

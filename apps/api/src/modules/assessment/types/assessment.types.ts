@@ -6,6 +6,7 @@ import {
   AttemptStatusEnum,
 } from "../../../shared/constants/assessment.constants.js";
 import { QuestionTypeEnum, DifficultyLevelEnum } from "../../../shared/constants/question-bank.constants.js";
+import { ContentScopeEnum } from "../../../shared/constants/learning-content.constants.js";
 
 export interface AssessmentQuestionInput {
   questionVersionId: string;
@@ -18,6 +19,12 @@ export interface CreateAssessmentDto {
   description?: string | null;
   type: AssessmentTypeEnum;
   gradingMode?: GradingModeEnum;
+  scope?: ContentScopeEnum;
+  subjectId?: string | null;
+  gradeId?: string | null;
+  unitId?: string | null;
+  topicId?: string | null;
+  curriculumVersionId?: string | null;
   timeLimitMinutes?: number | null;
   maxAttempts?: number | null;
   randomizeQuestions?: boolean;
@@ -35,6 +42,12 @@ export interface UpdateAssessmentDto {
   type?: AssessmentTypeEnum;
   status?: AssessmentStatusEnum;
   gradingMode?: GradingModeEnum;
+  scope?: ContentScopeEnum;
+  subjectId?: string | null;
+  gradeId?: string | null;
+  unitId?: string | null;
+  topicId?: string | null;
+  curriculumVersionId?: string | null;
   timeLimitMinutes?: number | null;
   maxAttempts?: number | null;
   randomizeQuestions?: boolean;
@@ -52,6 +65,12 @@ export interface AssessmentQueryFilters {
   type?: AssessmentTypeEnum;
   status?: AssessmentStatusEnum;
   gradingMode?: GradingModeEnum;
+  scope?: ContentScopeEnum;
+  subjectId?: string;
+  gradeId?: string;
+  unitId?: string;
+  topicId?: string;
+  curriculumVersionId?: string;
   examContextId?: string;
   academicYearId?: string;
   createdById?: string;

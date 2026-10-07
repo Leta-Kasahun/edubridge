@@ -87,6 +87,7 @@ export class QuestionController {
       status: query.status,
       type: query.type,
       difficulty: query.difficulty,
+      unitId: query.unitId,
       topicId: query.topicId,
       objectiveId: query.objectiveId,
       search: query.search,

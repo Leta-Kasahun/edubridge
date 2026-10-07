@@ -17,6 +17,7 @@ import {
   GRADING_MODES,
   ATTEMPT_STATUSES,
 } from "../../shared/constants/assessment.constants.js";
+import { CONTENT_SCOPES } from "../../shared/constants/learning-content.constants.js";
 
 const assessmentRouteDefinitions: RouteDefinition[] = [
   {
@@ -31,6 +32,12 @@ const assessmentRouteDefinitions: RouteDefinition[] = [
       { name: "type", in: "query", schema: { type: "string", enum: [...ASSESSMENT_TYPES] } },
       { name: "status", in: "query", schema: { type: "string", enum: [...ASSESSMENT_STATUSES] } },
       { name: "gradingMode", in: "query", schema: { type: "string", enum: [...GRADING_MODES] } },
+      { name: "scope", in: "query", schema: { type: "string", enum: [...CONTENT_SCOPES] } },
+      { name: "subjectId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "gradeId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "unitId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "topicId", in: "query", schema: { type: "string", format: "uuid" } },
+      { name: "curriculumVersionId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "examContextId", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "createdById", in: "query", schema: { type: "string", format: "uuid" } },
       { name: "page", in: "query", schema: { type: "integer", default: 1 } },
