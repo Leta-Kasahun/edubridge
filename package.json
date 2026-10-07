@@ -55,10 +55,17 @@
       "axios": "^1.20.0",
       "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
       "js-yaml": "^4.3.2",
-      "fast-uri": "^3.1.6",
+      "fast-uri": "^3.1.8",
       "deepmerge-ts": "^8.0.0",
       "mysql2": "^3.22.0",
-      "sharp": "^0.35.4"
+      "sharp": "^0.35.5",
+      "proxy-addr": "^2.0.8",
+      "source-map-js": "^1.2.2",
+      "compression": "^1.8.2",
+      "ip-address": "^10.7.1",
+      "morgan": "^1.12.1",
+      "multer": "^2.4.0",
+      "qs": "^6.16.0"
     }
   },
   "devDependencies": {
