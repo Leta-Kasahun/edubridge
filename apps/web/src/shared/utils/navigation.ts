@@ -14,6 +14,7 @@ import {
   CheckSquare,
   GraduationCap,
   TrendingUp,
+  Bookmark,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -233,6 +234,11 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     label: "My Progress",
     href: ROUTES.STUDENT.PROGRESS,
     icon: TrendingUp,
+  },
+  {
+    label: "Saved Questions",
+    href: ROUTES.STUDENT.BOOKMARKS,
+    icon: Bookmark,
   },
   {
     label: "Learning Materials",
