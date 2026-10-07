@@ -233,6 +233,12 @@ export const API_ENDPOINTS = {
     PREFERENCES: "/notifications/preferences",
     SEND: "/notifications/send",
   },
+  BOOKMARKS: {
+    BASE: "/bookmarks",
+    TOGGLE: "/bookmarks/toggle",
+    CHECK: "/bookmarks/check",
+    BY_ID: (id: string) => `/bookmarks/${id}`,
+  },
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;

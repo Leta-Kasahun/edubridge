@@ -25,6 +25,7 @@ export const ROUTES = {
     RESULTS: "/dashboard/results",
     PRACTICE: "/dashboard/assessments",
     PROGRESS: "/dashboard/progress",
+    BOOKMARKS: "/dashboard/bookmarks",
     MATERIALS: "/dashboard/learning-content/materials",
     PROFILE: "/dashboard/profile",
   },
