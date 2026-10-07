@@ -145,6 +145,9 @@ export const questionBankService = {
     if (filters.topicId) {
       params.append("topicId", filters.topicId);
     }
+    if (filters.unitId) {
+      params.append("unitId", filters.unitId);
+    }
     if (filters.objectiveId) {
       params.append("objectiveId", filters.objectiveId);
     }

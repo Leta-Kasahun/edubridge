@@ -625,33 +625,18 @@ export class MasteryRepository {
         let topicId =
           qTopics.find((t) => t.isPrimary)?.topicId ?? qTopics[0]?.topicId;
 
-        // Fallback: resolve topic from curriculum subject if question was not linked
-        if (!topicId) {
-          const fallbackCs = await tx.curriculumSubject.findFirst({
-            where: {
-              curriculumVersion: { curriculum: { tenantId } },
-            },
-            include: {
-              units: {
-                orderBy: { orderIndex: "asc" },
-                include: {
-                  topics: {
-                    orderBy: { orderIndex: "asc" },
-                  },
-                },
-              },
-            },
+        if (!topicId && attempt.assessment.topicId) {
+          topicId = attempt.assessment.topicId;
+        }
+
+        if (!topicId && attempt.assessment.unitId) {
+          const unitTopic = await tx.curriculumTopic.findFirst({
+            where: { unitId: attempt.assessment.unitId },
+            orderBy: { orderIndex: "asc" },
+            select: { id: true },
           });
-          const fbTopic = fallbackCs?.units[0]?.topics[0];
-          if (fbTopic) {
-            topicId = fbTopic.id;
-            await tx.questionTopic.create({
-              data: {
-                questionId: qv.question.id,
-                topicId: fbTopic.id,
-                isPrimary: true,
-              },
-            }).catch(() => {});
+          if (unitTopic) {
+            topicId = unitTopic.id;
           }
         }
 

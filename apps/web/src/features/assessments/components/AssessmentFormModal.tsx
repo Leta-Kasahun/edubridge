@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Sliders } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { X, Sliders, Layers } from "lucide-react";
 import { FormField } from "@/shared/components/FormField";
-import { SelectDropdown } from "@/shared/components/SelectDropdown";
+import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { DatePicker } from "@/shared/components/DatePicker";
+import { useGrades } from "@/features/academic/grades";
+import { useSubjects } from "@/features/academic/subjects";
+import {
+  useCurricula,
+  useCurriculumDetails,
+} from "@/features/curriculum/curricula/hooks/useCurricula";
+import {
+  useCurriculumSubjects,
+  useCurriculumUnits,
+  useCurriculumTopics,
+} from "@/features/curriculum/structure/hooks/useStructure";
 import {
   AssessmentItem,
   CreateAssessmentPayload,
@@ -37,6 +48,16 @@ interface AssessmentFormModalProps {
   readonly isLoading?: boolean;
 }
 
+type AssessmentScopeOption = "GENERAL" | "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
+
+const ASSESSMENT_SCOPE_OPTIONS: readonly SelectDropdownOption[] = [
+  { value: "GENERAL", label: "General / Standard (Multi-Grade & Mock)" },
+  { value: "SUBJECT", label: "Subject-Level" },
+  { value: "GRADE_SUBJECT", label: "Grade & Subject" },
+  { value: "UNIT", label: "Curriculum Unit" },
+  { value: "TOPIC", label: "Curriculum Topic" },
+];
+
 export function AssessmentFormModal({
   isOpen,
   onClose,
@@ -48,6 +69,11 @@ export function AssessmentFormModal({
   const [description, setDescription] = useState("");
   const [type, setType] = useState<AssessmentType>("QUIZ");
   const [gradingMode, setGradingMode] = useState<GradingMode>("AUTOMATIC");
+  const [scope, setScope] = useState<AssessmentScopeOption>("GENERAL");
+  const [gradeId, setGradeId] = useState("");
+  const [subjectId, setSubjectId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [topicId, setTopicId] = useState("");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<string>("");
   const [maxAttempts, setMaxAttempts] = useState<string>("1");
   const [randomizeQuestions, setRandomizeQuestions] = useState(false);
@@ -57,12 +83,111 @@ export function AssessmentFormModal({
   const [availableUntil, setAvailableUntil] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const { data: gradesList = [] } = useGrades();
+  const { data: subjectsList = [] } = useSubjects();
+  const { data: curriculaData } = useCurricula({ limit: 100 });
+  const curricula = curriculaData?.data ?? [];
+  const selectedCurriculumId = curricula[0]?.id || "";
+  const { data: curriculumDetail } = useCurriculumDetails(selectedCurriculumId || null);
+  const versions = curriculumDetail?.versions ?? [];
+  const activeVersion =
+    versions.find((v) => v.status === "ACTIVE") ||
+    versions.find((v) => v.status === "DRAFT") ||
+    versions[0];
+  const versionId = activeVersion?.id || "";
+  const { data: curriculumSubjects = [] } = useCurriculumSubjects(versionId);
+
+  const matchedCurriculumSubject = curriculumSubjects.find(
+    (cs) => cs.gradeId === gradeId && cs.subjectId === subjectId
+  );
+  const curriculumSubjectId = matchedCurriculumSubject?.id || "";
+
+  const { data: units = [] } = useCurriculumUnits(
+    curriculumSubjectId,
+    Boolean(curriculumSubjectId)
+  );
+
+  const { data: topics = [] } = useCurriculumTopics(
+    unitId,
+    Boolean(unitId)
+  );
+
+  const gradeOptions = useMemo(
+    () => [
+      { value: "", label: scope === "GENERAL" ? "General / All Grades" : "Select Grade" },
+      ...gradesList.map((g) => ({ value: g.id, label: `Grade ${g.level}` })),
+    ],
+    [gradesList, scope]
+  );
+
+  const availableSubjectOptions = useMemo(() => {
+    let list = subjectsList;
+    if (gradeId && curriculumSubjects.length > 0) {
+      const subjectIdsForGrade = new Set(
+        curriculumSubjects
+          .filter((cs) => cs.gradeId === gradeId)
+          .map((cs) => cs.subjectId)
+      );
+      if (subjectIdsForGrade.size > 0) {
+        list = subjectsList.filter((s) => subjectIdsForGrade.has(s.id));
+      }
+    }
+    return [
+      { value: "", label: scope === "GENERAL" ? "General / All Subjects" : "Select Subject" },
+      ...list.map((s) => ({
+        value: s.id,
+        label: s.code ? `${s.code} - ${s.name}` : s.name,
+      })),
+    ];
+  }, [subjectsList, gradeId, curriculumSubjects, scope]);
+
+  const unitOptions = useMemo(
+    () => [
+      { value: "", label: "Select Curriculum Unit" },
+      ...units.map((u) => ({ value: u.id, label: `${u.code ? u.code + ": " : ""}${u.title}` })),
+    ],
+    [units]
+  );
+
+  const topicOptions = useMemo(
+    () => [
+      { value: "", label: "Select Topic" },
+      ...topics.map((t) => ({ value: t.id, label: `${t.code ? t.code + ": " : ""}${t.title}` })),
+    ],
+    [topics]
+  );
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
       setDescription(initialData.description || "");
       setType(initialData.type);
       setGradingMode(initialData.gradingMode);
+
+      const resolvedGrade = initialData.gradeId || initialData.grade?.id || "";
+      const resolvedSubject = initialData.subjectId || initialData.subject?.id || "";
+      const resolvedUnit = initialData.unitId || initialData.unit?.id || "";
+      const resolvedTopic = initialData.topicId || initialData.topic?.id || "";
+
+      setGradeId(resolvedGrade);
+      setSubjectId(resolvedSubject);
+      setUnitId(resolvedUnit);
+      setTopicId(resolvedTopic);
+
+      if (initialData.scope) {
+        setScope(initialData.scope as AssessmentScopeOption);
+      } else if (resolvedTopic) {
+        setScope("TOPIC");
+      } else if (resolvedUnit) {
+        setScope("UNIT");
+      } else if (resolvedGrade && resolvedSubject) {
+        setScope("GRADE_SUBJECT");
+      } else if (resolvedSubject) {
+        setScope("SUBJECT");
+      } else {
+        setScope("GENERAL");
+      }
+
       setTimeLimitMinutes(
         initialData.timeLimitMinutes ? String(initialData.timeLimitMinutes) : ""
       );
@@ -79,6 +204,11 @@ export function AssessmentFormModal({
       setDescription("");
       setType("QUIZ");
       setGradingMode("AUTOMATIC");
+      setScope("GENERAL");
+      setGradeId("");
+      setSubjectId("");
+      setUnitId("");
+      setTopicId("");
       setTimeLimitMinutes("30");
       setMaxAttempts("1");
       setRandomizeQuestions(false);
@@ -100,6 +230,26 @@ export function AssessmentFormModal({
       newErrors.title = "Title is required";
     }
 
+    if (scope === "SUBJECT" && !subjectId) {
+      newErrors.subjectId = "Please select a subject";
+    }
+
+    if ((scope === "GRADE_SUBJECT" || scope === "UNIT" || scope === "TOPIC") && !gradeId) {
+      newErrors.gradeId = "Please select a grade level";
+    }
+
+    if ((scope === "GRADE_SUBJECT" || scope === "UNIT" || scope === "TOPIC") && !subjectId) {
+      newErrors.subjectId = "Please select a subject";
+    }
+
+    if ((scope === "UNIT" || scope === "TOPIC") && !unitId) {
+      newErrors.unitId = "Please select a curriculum unit";
+    }
+
+    if (scope === "TOPIC" && !topicId) {
+      newErrors.topicId = "Please select a specific topic";
+    }
+
     if (availableFrom && availableUntil) {
       if (new Date(availableFrom) > new Date(availableUntil)) {
         newErrors.availableUntil = "Closing date must be after opening date";
@@ -116,6 +266,12 @@ export function AssessmentFormModal({
       description: description.trim() || undefined,
       type,
       gradingMode,
+      scope: scope === "GENERAL" ? undefined : scope,
+      subjectId: subjectId || undefined,
+      gradeId: gradeId || undefined,
+      unitId: (scope === "UNIT" || scope === "TOPIC") ? (unitId || undefined) : undefined,
+      topicId: scope === "TOPIC" ? (topicId || undefined) : undefined,
+      curriculumVersionId: versionId || undefined,
       timeLimitMinutes: timeLimitMinutes ? Number(timeLimitMinutes) : null,
       maxAttempts: maxAttempts ? Number(maxAttempts) : null,
       randomizeQuestions,
@@ -182,6 +338,189 @@ export function AssessmentFormModal({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Provide context, required materials, or instructions for students..."
           />
+
+          <div className="bg-muted/30 border border-border/70 rounded-2xl p-4 space-y-3.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+              <Layers size={15} className="text-primary" />
+              <span>Academic & Curriculum Alignment</span>
+              <span className="text-[10px] font-normal text-muted-foreground ml-auto">
+                {scope === "GENERAL" ? "Optional for broad/mock exams" : "Strictly aligned to syllabus"}
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Alignment Scope
+              </label>
+              <SelectDropdown
+                options={ASSESSMENT_SCOPE_OPTIONS}
+                value={scope}
+                onChange={(val) => {
+                  const newScope = val as AssessmentScopeOption;
+                  setScope(newScope);
+                  setErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.subjectId;
+                    delete next.gradeId;
+                    delete next.unitId;
+                    delete next.topicId;
+                    return next;
+                  });
+                  if (newScope === "GENERAL") {
+                    setUnitId("");
+                    setTopicId("");
+                  } else if (newScope === "SUBJECT") {
+                    setGradeId("");
+                    setUnitId("");
+                    setTopicId("");
+                  } else if (newScope === "GRADE_SUBJECT") {
+                    setUnitId("");
+                    setTopicId("");
+                  } else if (newScope === "UNIT") {
+                    setTopicId("");
+                  }
+                }}
+              />
+            </div>
+
+            {scope === "GENERAL" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <SelectDropdown
+                  label="Grade Level (Optional)"
+                  options={gradeOptions}
+                  value={gradeId}
+                  onChange={(val) => {
+                    setGradeId(val);
+                    setUnitId("");
+                    setTopicId("");
+                  }}
+                />
+
+                <SelectDropdown
+                  label="Subject (Optional)"
+                  options={availableSubjectOptions}
+                  value={subjectId}
+                  onChange={(val) => {
+                    setSubjectId(val);
+                    setUnitId("");
+                    setTopicId("");
+                  }}
+                />
+              </div>
+            )}
+
+            {scope === "SUBJECT" && (
+              <div className="pt-1">
+                <SelectDropdown
+                  label="Subject *"
+                  options={availableSubjectOptions.filter((s) => s.value !== "")}
+                  value={subjectId}
+                  onChange={(val) => {
+                    setSubjectId(val);
+                    setUnitId("");
+                    setTopicId("");
+                  }}
+                  error={errors.subjectId}
+                  placeholder="Select Subject"
+                />
+              </div>
+            )}
+
+            {(scope === "GRADE_SUBJECT" || scope === "UNIT" || scope === "TOPIC") && (
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <SelectDropdown
+                    label="Grade Level *"
+                    options={gradeOptions.filter((g) => g.value !== "")}
+                    value={gradeId}
+                    onChange={(val) => {
+                      setGradeId(val);
+                      setUnitId("");
+                      setTopicId("");
+                    }}
+                    error={errors.gradeId}
+                    placeholder="Select Grade"
+                  />
+
+                  <SelectDropdown
+                    label="Subject *"
+                    options={availableSubjectOptions.filter((s) => s.value !== "")}
+                    value={subjectId}
+                    onChange={(val) => {
+                      setSubjectId(val);
+                      setUnitId("");
+                      setTopicId("");
+                    }}
+                    error={errors.subjectId}
+                    placeholder={gradeId ? "Select Subject" : "Select grade first"}
+                    disabled={!gradeId}
+                  />
+                </div>
+
+                {scope === "UNIT" && (
+                  <div>
+                    <SelectDropdown
+                      label="Curriculum Unit *"
+                      options={unitOptions.filter((u) => u.value !== "")}
+                      value={unitId}
+                      onChange={(val) => {
+                        setUnitId(val);
+                        setTopicId("");
+                      }}
+                      error={errors.unitId}
+                      disabled={!curriculumSubjectId || units.length === 0}
+                      placeholder={
+                        !subjectId
+                          ? "Select subject first"
+                          : units.length === 0
+                          ? "No units found for this subject"
+                          : "Select Curriculum Unit"
+                      }
+                    />
+                  </div>
+                )}
+
+                {scope === "TOPIC" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <SelectDropdown
+                      label="Curriculum Unit *"
+                      options={unitOptions.filter((u) => u.value !== "")}
+                      value={unitId}
+                      onChange={(val) => {
+                        setUnitId(val);
+                        setTopicId("");
+                      }}
+                      error={errors.unitId}
+                      disabled={!curriculumSubjectId || units.length === 0}
+                      placeholder={
+                        !subjectId
+                          ? "Select subject first"
+                          : units.length === 0
+                          ? "No units found"
+                          : "Select Unit"
+                      }
+                    />
+
+                    <SelectDropdown
+                      label="Specific Topic *"
+                      options={topicOptions.filter((t) => t.value !== "")}
+                      value={topicId}
+                      onChange={setTopicId}
+                      error={errors.topicId}
+                      disabled={!unitId || topics.length === 0}
+                      placeholder={
+                        !unitId
+                          ? "Select unit first"
+                          : topics.length === 0
+                          ? "No topics found"
+                          : "Select Topic"
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

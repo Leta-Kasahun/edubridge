@@ -189,6 +189,7 @@ export const QuestionQuerySchema = z.object({
   status: z.preprocess(emptyToUndefined, z.enum(QUESTION_STATUSES).optional()),
   type: z.preprocess(emptyToUndefined, z.enum(QUESTION_TYPES).optional()),
   difficulty: z.preprocess(emptyToUndefined, z.enum(DIFFICULTY_LEVELS).optional()),
+  unitId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
   topicId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
   objectiveId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
   search: z.preprocess(emptyToUndefined, z.string().trim().optional()),

@@ -16,6 +16,7 @@ import {
   Trash2,
   CheckCheck,
   Tag,
+  Layers,
   MessageSquare,
   ChevronDown,
   Check,
@@ -181,6 +182,7 @@ interface QuestionListViewProps {
 }
 
 export function QuestionListView({ bankId }: QuestionListViewProps) {
+  const [unitFilter, setUnitFilter] = useState<string>("ALL");
   const [topicFilter, setTopicFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
@@ -202,6 +204,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const { data: questionsData, isLoading: isQuestionsLoading, error } = useQuestions(
     bankId,
     {
+      unitId: unitFilter === "ALL" ? undefined : unitFilter,
       topicId: topicFilter === "ALL" ? undefined : topicFilter,
       type: typeFilter === "ALL" ? undefined : (typeFilter as QuestionType),
       difficulty:
@@ -215,6 +218,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   );
 
   const hasActiveFilters =
+    unitFilter !== "ALL" ||
     topicFilter !== "ALL" ||
     typeFilter !== "ALL" ||
     difficultyFilter !== "ALL" ||
@@ -222,6 +226,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     feedbackFilter !== "ALL";
 
   const handleResetFilters = () => {
+    setUnitFilter("ALL");
     setTopicFilter("ALL");
     setTypeFilter("ALL");
     setDifficultyFilter("ALL");
@@ -381,6 +386,19 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     }
   };
 
+  const availableUnits = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const q of items) {
+      if (q.unit?.id && q.unit?.title) {
+        map.set(q.unit.id, q.unit.title);
+      }
+    }
+    return Array.from(map.entries()).map(([id, title]) => ({
+      label: title,
+      value: id,
+    }));
+  }, [items]);
+
   const availableTopics = useMemo(() => {
     const map = new Map<string, string>();
     for (const q of items) {
@@ -396,6 +414,23 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
 
   const toolbarFilters: readonly FilterGroup[] = useMemo(() => {
     const filters: FilterGroup[] = [];
+
+    if (availableUnits.length > 0) {
+      filters.push({
+        id: "unit",
+        label: "Unit",
+        icon: Layers,
+        selectedValue: unitFilter,
+        onSelect: (val) => {
+          setUnitFilter(val);
+          setPage(1);
+        },
+        options: [
+          { label: "All", value: "ALL" },
+          ...availableUnits,
+        ],
+      });
+    }
 
     if (availableTopics.length > 0) {
       filters.push({

@@ -59,6 +59,12 @@ export interface AssessmentItem {
   type: AssessmentType;
   status: AssessmentStatus;
   gradingMode: GradingMode;
+  scope?: "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC" | null;
+  subjectId?: string | null;
+  gradeId?: string | null;
+  unitId?: string | null;
+  topicId?: string | null;
+  curriculumVersionId?: string | null;
   timeLimitMinutes?: number | null;
   maxAttempts?: number | null;
   randomizeQuestions: boolean;
@@ -68,6 +74,25 @@ export interface AssessmentItem {
   availableUntil?: string | null;
   createdById: string;
   examContextId?: string | null;
+  subject?: {
+    id: string;
+    name: string;
+    code?: string;
+  } | null;
+  grade?: {
+    id: string;
+    level: number;
+  } | null;
+  unit?: {
+    id: string;
+    title: string;
+    code?: string;
+  } | null;
+  topic?: {
+    id: string;
+    title: string;
+    code?: string;
+  } | null;
   examContext?: {
     id: string;
     name: string;
@@ -96,6 +121,12 @@ export interface CreateAssessmentPayload {
   description?: string | null;
   type: AssessmentType;
   gradingMode?: GradingMode;
+  scope?: "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
+  subjectId?: string | null;
+  gradeId?: string | null;
+  unitId?: string | null;
+  topicId?: string | null;
+  curriculumVersionId?: string | null;
   timeLimitMinutes?: number | null;
   maxAttempts?: number | null;
   randomizeQuestions?: boolean;
@@ -117,6 +148,12 @@ export interface UpdateAssessmentPayload {
   type?: AssessmentType;
   status?: AssessmentStatus;
   gradingMode?: GradingMode;
+  scope?: "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
+  subjectId?: string | null;
+  gradeId?: string | null;
+  unitId?: string | null;
+  topicId?: string | null;
+  curriculumVersionId?: string | null;
   timeLimitMinutes?: number | null;
   maxAttempts?: number | null;
   randomizeQuestions?: boolean;
@@ -134,6 +171,12 @@ export interface AssessmentQueryParams {
   type?: AssessmentType;
   status?: AssessmentStatus;
   gradingMode?: GradingMode;
+  scope?: "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
+  subjectId?: string;
+  gradeId?: string;
+  unitId?: string;
+  topicId?: string;
+  curriculumVersionId?: string;
   examContextId?: string;
   academicYearId?: string;
   createdById?: string;

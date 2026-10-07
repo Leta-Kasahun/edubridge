@@ -23,6 +23,46 @@ export class AssessmentService {
       }
     }
 
+    if (dto.topicId && (!dto.unitId || !dto.subjectId || !dto.gradeId)) {
+      const topic = await prisma.curriculumTopic.findUnique({
+        where: { id: dto.topicId },
+        include: {
+          unit: {
+            include: {
+              curriculumSubject: true,
+            },
+          },
+        },
+      });
+      if (topic) {
+        if (!dto.unitId) dto.unitId = topic.unitId;
+        if (!dto.subjectId) dto.subjectId = topic.unit.curriculumSubject.subjectId;
+        if (!dto.gradeId) dto.gradeId = topic.unit.curriculumSubject.gradeId;
+        if (!dto.curriculumVersionId) dto.curriculumVersionId = topic.unit.curriculumSubject.curriculumVersionId;
+      }
+    } else if (dto.unitId && (!dto.subjectId || !dto.gradeId)) {
+      const unit = await prisma.curriculumUnit.findUnique({
+        where: { id: dto.unitId },
+        include: {
+          curriculumSubject: true,
+        },
+      });
+      if (unit) {
+        if (!dto.subjectId) dto.subjectId = unit.curriculumSubject.subjectId;
+        if (!dto.gradeId) dto.gradeId = unit.curriculumSubject.gradeId;
+        if (!dto.curriculumVersionId) dto.curriculumVersionId = unit.curriculumSubject.curriculumVersionId;
+      }
+    } else if (dto.examContextId && (!dto.subjectId || !dto.gradeId)) {
+      const ctx = await prisma.examContext.findUnique({
+        where: { id: dto.examContextId },
+      });
+      if (ctx) {
+        if (!dto.subjectId && ctx.subjectId) dto.subjectId = ctx.subjectId;
+        if (!dto.gradeId && ctx.gradeId) dto.gradeId = ctx.gradeId;
+        if (!dto.curriculumVersionId && ctx.curriculumVersionId) dto.curriculumVersionId = ctx.curriculumVersionId;
+      }
+    }
+
     return this.assessmentRepo.create(tenantId, createdById, dto);
   }
 
@@ -52,6 +92,37 @@ export class AssessmentService {
       const until = new Date(resolvedUntil).getTime();
       if (!Number.isNaN(from) && !Number.isNaN(until) && from > until) {
         throw new BadRequestError("availableFrom cannot be later than availableUntil");
+      }
+    }
+
+    if (dto.topicId && (!dto.unitId || !dto.subjectId || !dto.gradeId)) {
+      const topic = await prisma.curriculumTopic.findUnique({
+        where: { id: dto.topicId },
+        include: {
+          unit: {
+            include: {
+              curriculumSubject: true,
+            },
+          },
+        },
+      });
+      if (topic) {
+        if (!dto.unitId) dto.unitId = topic.unitId;
+        if (!dto.subjectId) dto.subjectId = topic.unit.curriculumSubject.subjectId;
+        if (!dto.gradeId) dto.gradeId = topic.unit.curriculumSubject.gradeId;
+        if (!dto.curriculumVersionId) dto.curriculumVersionId = topic.unit.curriculumSubject.curriculumVersionId;
+      }
+    } else if (dto.unitId && (!dto.subjectId || !dto.gradeId)) {
+      const unit = await prisma.curriculumUnit.findUnique({
+        where: { id: dto.unitId },
+        include: {
+          curriculumSubject: true,
+        },
+      });
+      if (unit) {
+        if (!dto.subjectId) dto.subjectId = unit.curriculumSubject.subjectId;
+        if (!dto.gradeId) dto.gradeId = unit.curriculumSubject.gradeId;
+        if (!dto.curriculumVersionId) dto.curriculumVersionId = unit.curriculumSubject.curriculumVersionId;
       }
     }
 

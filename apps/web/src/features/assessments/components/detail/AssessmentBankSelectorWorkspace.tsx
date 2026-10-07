@@ -13,6 +13,8 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronUp,
+  Layers,
+  Tag,
 } from "lucide-react";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -78,6 +80,8 @@ export function AssessmentBankSelectorWorkspace({
   );
   const [selectedDifficulty, setSelectedDifficulty] = useState("ALL");
   const [selectedType, setSelectedType] = useState("ALL");
+  const [selectedUnit, setSelectedUnit] = useState("ALL");
+  const [selectedTopic, setSelectedTopic] = useState("ALL");
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("ALL");
   const [batchPoints, setBatchPoints] = useState<string>("1");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
@@ -99,6 +103,26 @@ export function AssessmentBankSelectorWorkspace({
   );
   const availableQuestions = useMemo(() => questionsData?.items || [], [questionsData]);
 
+  const bankUnits = useMemo(() => {
+    const map = new Map<string, string>();
+    availableQuestions.forEach((q) => {
+      if (q.unit?.id && q.unit?.title) {
+        map.set(q.unit.id, q.unit.title);
+      }
+    });
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
+  }, [availableQuestions]);
+
+  const bankTopics = useMemo(() => {
+    const map = new Map<string, string>();
+    availableQuestions.forEach((q) => {
+      if (q.topic?.id && q.topic?.title) {
+        map.set(q.topic.id, q.topic.title);
+      }
+    });
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
+  }, [availableQuestions]);
+
   // Questions allocated to this assessment
   const [allocations, setAllocations] = useState<Map<string, SelectedQuestionAllocation>>(() => {
     const map = new Map<string, SelectedQuestionAllocation>();
@@ -116,7 +140,7 @@ export function AssessmentBankSelectorWorkspace({
     return q.latestVersionId || q.versionId || q.id;
   };
 
-  // Filter questions based on scope, difficulty, and type
+  // Filter questions based on scope, difficulty, type, unit, and topic
   const filteredQuestions = useMemo(() => {
     return availableQuestions.filter((q) => {
       const versionId = getQuestionVersionId(q);
@@ -134,9 +158,15 @@ export function AssessmentBankSelectorWorkspace({
       if (selectedType !== "ALL" && q.type !== selectedType) {
         return false;
       }
+      if (selectedUnit !== "ALL" && q.unitId !== selectedUnit && q.unit?.id !== selectedUnit) {
+        return false;
+      }
+      if (selectedTopic !== "ALL" && q.topicId !== selectedTopic && q.topic?.id !== selectedTopic) {
+        return false;
+      }
       return true;
     });
-  }, [availableQuestions, allocations, scopeFilter, selectedDifficulty, selectedType]);
+  }, [availableQuestions, allocations, scopeFilter, selectedDifficulty, selectedType, selectedUnit, selectedTopic]);
 
   const inAssessmentCount = useMemo(() => {
     return availableQuestions.filter((q) => {
@@ -448,6 +478,34 @@ export function AssessmentBankSelectorWorkspace({
             />
           </div>
 
+          {bankUnits.length > 0 && (
+            <div className="w-full sm:w-52 min-w-[150px]">
+              <SelectDropdown
+                value={selectedUnit}
+                onChange={setSelectedUnit}
+                options={[
+                  { value: "ALL", label: "All Units" },
+                  ...bankUnits.map((u) => ({ value: u.id, label: u.title })),
+                ]}
+                placeholder="Unit"
+              />
+            </div>
+          )}
+
+          {bankTopics.length > 0 && (
+            <div className="w-full sm:w-52 min-w-[150px]">
+              <SelectDropdown
+                value={selectedTopic}
+                onChange={setSelectedTopic}
+                options={[
+                  { value: "ALL", label: "All Topics" },
+                  ...bankTopics.map((t) => ({ value: t.id, label: t.title })),
+                ]}
+                placeholder="Topic"
+              />
+            </div>
+          )}
+
           {selectedBankId && (
             <button
               type="button"
@@ -668,6 +726,23 @@ export function AssessmentBankSelectorWorkspace({
                         </span>
                       )}
                     </div>
+
+                    {(q.unit?.title || q.topic?.title) && (
+                      <div className="flex items-center gap-1.5 flex-wrap text-[11px] pt-0.5">
+                        {q.unit?.title && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary font-medium border border-primary/20">
+                            <Layers size={11} />
+                            <span>{q.unit.title}</span>
+                          </span>
+                        )}
+                        {q.topic?.title && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-semibold border border-border">
+                            <Tag size={11} />
+                            <span>Topic: {q.topic.title}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <p className="text-xs sm:text-sm font-semibold text-foreground break-words leading-relaxed pt-0.5">
                       {q.prompt}

@@ -172,6 +172,7 @@ export interface QuestionFilters {
   readonly type?: QuestionType;
   readonly difficulty?: DifficultyLevel;
   readonly status?: QuestionStatus;
+  readonly unitId?: string;
   readonly topicId?: string;
   readonly objectiveId?: string;
   readonly examContextId?: string;

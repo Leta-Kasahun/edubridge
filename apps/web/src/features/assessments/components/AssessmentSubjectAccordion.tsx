@@ -110,6 +110,21 @@ export function AssessmentSubjectAccordion({
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
                         {typeLabel}
                       </span>
+                      {assessment.grade && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+                          Grade {assessment.grade.level}
+                        </span>
+                      )}
+                      {assessment.unit && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                          Unit: {assessment.unit.title}
+                        </span>
+                      )}
+                      {assessment.topic && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+                          Topic: {assessment.topic.title}
+                        </span>
+                      )}
                     </div>
 
                     {assessment.description && (

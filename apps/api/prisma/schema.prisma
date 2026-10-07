@@ -1154,6 +1154,7 @@ model Grade {
   curriculumSubjects CurriculumSubject[]
   examContexts       ExamContext[]
   learningContents   LearningContent[]
+  assessments        Assessment[]
   @@unique([tenantId, level])
   @@index([tenantId, isActive])
   @@index([level])
@@ -1188,6 +1189,7 @@ model Subject {
   curriculumSubjects CurriculumSubject[]
   examContexts       ExamContext[]
   learningContents   LearningContent[]
+  assessments        Assessment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1285,6 +1287,7 @@ model CurriculumVersion {
   subjects         CurriculumSubject[]
   examContexts     ExamContext[]
   learningContents LearningContent[]
+  assessments      Assessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1334,6 +1337,7 @@ model CurriculumUnit {
 
   topics           CurriculumTopic[]
   learningContents LearningContent[]
+  assessments      Assessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1365,6 +1369,7 @@ model CurriculumTopic {
   performances StudentTopicPerformance[]
   masteries StudentTopicMastery[]
   masteryHistory MasteryHistory[]
+  assessments    Assessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1735,11 +1740,23 @@ model Assessment {
 
   createdById String @db.Uuid
 
+  scope               ContentScope?       @default(TOPIC)
+  subjectId           String?             @db.Uuid
+  gradeId             String?             @db.Uuid
+  unitId              String?             @db.Uuid
+  topicId             String?             @db.Uuid
+  curriculumVersionId String?             @db.Uuid
+
   examContextId String? @db.Uuid
   evidences LearningEvidence[]
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdBy User @relation(fields: [createdById], references: [id])
   examContext ExamContext? @relation(fields: [examContextId], references: [id], onDelete: SetNull)
+  subject           Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  grade             Grade?             @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  unit              CurriculumUnit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  topic             CurriculumTopic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  curriculumVersion CurriculumVersion? @relation(fields: [curriculumVersionId], references: [id], onDelete: SetNull)
 
   questions AssessmentQuestion[]
 
@@ -1753,6 +1770,16 @@ model Assessment {
   @@index([tenantId, status])
   @@index([tenantId, type])
   @@index([tenantId, createdById])
+  @@index([tenantId, subjectId])
+  @@index([tenantId, gradeId])
+  @@index([tenantId, unitId])
+  @@index([tenantId, topicId])
+  @@index([tenantId, scope])
+  @@index([subjectId])
+  @@index([gradeId])
+  @@index([unitId])
+  @@index([topicId])
+  @@index([curriculumVersionId])
   @@index([examContextId])
   @@index([availableFrom, availableUntil])
 }

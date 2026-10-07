@@ -51,11 +51,21 @@ const coerceNullableString = z.preprocess((val) => {
   return typeof val === "string" ? val.trim() || null : null;
 }, z.string().max(2000).nullable().optional());
 
+import {
+  CONTENT_SCOPES,
+} from "../../../shared/constants/learning-content.constants.js";
+
 export const CreateAssessmentSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200),
   description: coerceNullableString,
   type: z.enum(ASSESSMENT_TYPES),
   gradingMode: z.enum(GRADING_MODES).default("AUTOMATIC"),
+  scope: z.enum(CONTENT_SCOPES).optional().default("TOPIC"),
+  subjectId: coerceUuidOrNull,
+  gradeId: coerceUuidOrNull,
+  unitId: coerceUuidOrNull,
+  topicId: coerceUuidOrNull,
+  curriculumVersionId: coerceUuidOrNull,
   timeLimitMinutes: coerceNullablePositiveInt,
   maxAttempts: coerceNullablePositiveInt,
   randomizeQuestions: z.boolean().default(false),
@@ -73,6 +83,12 @@ export const UpdateAssessmentSchema = z.object({
   type: z.enum(ASSESSMENT_TYPES).optional(),
   status: z.enum(ASSESSMENT_STATUSES).optional(),
   gradingMode: z.enum(GRADING_MODES).optional(),
+  scope: z.enum(CONTENT_SCOPES).optional(),
+  subjectId: coerceUuidOrNull,
+  gradeId: coerceUuidOrNull,
+  unitId: coerceUuidOrNull,
+  topicId: coerceUuidOrNull,
+  curriculumVersionId: coerceUuidOrNull,
   timeLimitMinutes: coerceNullablePositiveInt,
   maxAttempts: coerceNullablePositiveInt,
   randomizeQuestions: z.boolean().optional(),
@@ -90,6 +106,12 @@ export const AssessmentQuerySchema = z.object({
   type: z.enum(ASSESSMENT_TYPES).optional(),
   status: z.enum(ASSESSMENT_STATUSES).optional(),
   gradingMode: z.enum(GRADING_MODES).optional(),
+  scope: z.enum(CONTENT_SCOPES).optional(),
+  subjectId: z.string().uuid().optional(),
+  gradeId: z.string().uuid().optional(),
+  unitId: z.string().uuid().optional(),
+  topicId: z.string().uuid().optional(),
+  curriculumVersionId: z.string().uuid().optional(),
   examContextId: z.string().uuid().optional(),
   academicYearId: z.string().uuid().optional(),
   createdById: z.string().uuid().optional(),

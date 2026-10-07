@@ -252,6 +252,7 @@ export class QuestionRepository {
       status?: QuestionStatusEnum;
       type?: QuestionTypeEnum;
       difficulty?: DifficultyLevelEnum;
+      unitId?: string;
       topicId?: string;
       objectiveId?: string;
       search?: string;
@@ -273,6 +274,16 @@ export class QuestionRepository {
 
     if (filters.status) {
       where.status = filters.status;
+    }
+
+    if (filters.unitId && isValidUuid(filters.unitId)) {
+      where.topics = {
+        some: {
+          topic: {
+            unitId: filters.unitId,
+          },
+        },
+      };
     }
 
     if (filters.topicId && isValidUuid(filters.topicId)) {
