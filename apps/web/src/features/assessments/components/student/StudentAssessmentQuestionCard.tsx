@@ -7,6 +7,7 @@ import { QuestionDifficultyBadge } from "@/features/question-bank/components/que
 import { buildOptionLabel } from "@/shared/utils/question.util";
 import { useSubmitQuestionFeedback } from "../../hooks/useAssessmentAttempt";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { BookmarkButton } from "@/features/bookmarks";
 
 const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "CLARIFICATION", label: "Need Help" },
@@ -287,6 +288,15 @@ export function StudentAssessmentQuestionCard({
         </div>
 
         <div className="flex items-center gap-2">
+          {(question.questionId || question.questionVersionId) && (
+            <BookmarkButton
+              key={question.questionId || question.questionVersionId}
+              targetType="QUESTION"
+              targetId={question.questionId || question.questionVersionId}
+              variant="button"
+            />
+          )}
+
           {assessmentId && (
             <button
               type="button"
