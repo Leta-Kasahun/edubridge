@@ -22,6 +22,7 @@ import { useSubmitQuestionFeedback } from "../hooks/useEvaluations";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { SubmitButton } from "@/shared/components/SubmitButton";
+import { BookmarkButton } from "@/features/bookmarks";
 
 const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "CLARIFICATION", label: "Need Help" },
@@ -247,6 +248,7 @@ export function StudentAssessmentCompletedView({
               );
               const qv = ans.questionVersion || matchedAssessmentQ?.questionVersion;
               const actualQuestionVersionId = ans.questionVersionId || qv?.id || matchedAssessmentQ?.questionVersionId || "";
+              const targetQuestionId = matchedAssessmentQ?.questionVersion?.questionId || (qv as { questionId?: string })?.questionId || actualQuestionVersionId;
               const qKey = ans.questionVersionId || actualQuestionVersionId || String(idx);
               const isCorrect = ans.isCorrect === true;
               const isWrong = ans.isCorrect === false;
@@ -281,9 +283,20 @@ export function StudentAssessmentCompletedView({
                       )}
                     </div>
 
-                    <span className="text-xs font-bold font-mono text-muted-foreground">
-                      {ans.isCorrect !== null ? `${awardedPts} / ${maxPts} pts` : `— / ${maxPts} pts`}
-                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-bold font-mono text-muted-foreground">
+                        {ans.isCorrect !== null ? `${awardedPts} / ${maxPts} pts` : `— / ${maxPts} pts`}
+                      </span>
+                      {targetQuestionId && (
+                        <BookmarkButton
+                          key={targetQuestionId}
+                          targetType="QUESTION"
+                          targetId={targetQuestionId}
+                          note={attempt.assessment?.title}
+                          variant="button"
+                        />
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-xs sm:text-sm font-medium text-foreground">
