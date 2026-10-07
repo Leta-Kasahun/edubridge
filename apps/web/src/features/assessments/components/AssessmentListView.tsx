@@ -94,15 +94,22 @@ export function AssessmentListView() {
 
   const subjectGroups = useMemo<AssessmentSubjectGroup[]>(() => {
     const filtered = selectedGradeId
-      ? assessments.filter((a) =>
-          a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
+      ? assessments.filter(
+          (a) =>
+            a.gradeId === selectedGradeId ||
+            a.grade?.id === selectedGradeId ||
+            a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
         )
       : assessments;
 
     const map = new Map<string, AssessmentItem[]>();
 
     for (const assessment of filtered) {
-      const subjectId = assessment.examContext?.id || "general";
+      const subjectId =
+        assessment.subjectId ||
+        assessment.subject?.id ||
+        assessment.examContext?.id ||
+        "general";
       const list = map.get(subjectId) || [];
       list.push(assessment);
       map.set(subjectId, list);
@@ -112,7 +119,11 @@ export function AssessmentListView() {
 
     for (const subj of subjects) {
       const matched = filtered.filter(
-        (a) => a.examContext?.id === subj.id || a.title.toLowerCase().includes(subj.name.toLowerCase())
+        (a) =>
+          a.subjectId === subj.id ||
+          a.subject?.id === subj.id ||
+          a.examContext?.id === subj.id ||
+          a.title.toLowerCase().includes(subj.name.toLowerCase())
       );
       if (matched.length > 0) {
         groups.push({

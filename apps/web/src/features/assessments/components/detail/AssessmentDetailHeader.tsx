@@ -54,6 +54,26 @@ export function AssessmentDetailHeader({
               {ASSESSMENT_TYPE_LABELS[assessment.type] || assessment.type}
             </span>
             <AssessmentStatusBadge status={assessment.status} />
+            {assessment.grade && (
+              <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                Grade {assessment.grade.level}
+              </span>
+            )}
+            {assessment.subject && (
+              <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                {assessment.subject.name}
+              </span>
+            )}
+            {assessment.unit && (
+              <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                Unit: {assessment.unit.title}
+              </span>
+            )}
+            {assessment.topic && (
+              <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                Topic: {assessment.topic.title}
+              </span>
+            )}
           </div>
         </div>
       </div>

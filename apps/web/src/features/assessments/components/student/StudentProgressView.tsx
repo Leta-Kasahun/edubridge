@@ -4,27 +4,21 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  RotateCcw,
   ChevronRight,
   TrendingUp,
   Target,
-  CalendarDays,
   PlayCircle,
-  HelpCircle,
   Award,
   Sparkles,
-  Clock,
 } from "lucide-react";
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
 import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
-import { useAssessments, useStudentInProgressAssessments } from "../../hooks/useAssessments";
+import { useStudentInProgressAssessments } from "../../hooks/useAssessments";
 import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
 import { useStudentInProgressPractices } from "@/features/question-bank/hooks/useQuestionBanks";
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
-import { ASSESSMENT_TYPE_LABELS } from "@/shared/constants/assessment.constants";
 import { ROUTES } from "@/constants/routes";
-import { formatMinutes } from "@/shared/utils/assessment.util";
 
 type MasteryStage = "Mastered" | "Doing Well" | "Needs Practice" | "Learning" | "Not Started";
 
@@ -61,15 +55,6 @@ interface InProgressActivityItem {
   readonly href: string;
 }
 
-interface RecentActivityItem {
-  readonly id: string;
-  readonly type: string;
-  readonly title: string;
-  readonly subjectCode: string;
-  readonly date: string;
-  readonly totalQuestions: number;
-  readonly rawDate: number;
-}
 
 function getMasteryStage(pct: number | null | undefined): MasteryStage {
   if (pct === null || pct === undefined) return "Not Started";
@@ -115,18 +100,6 @@ function getMasteryColors(stage: MasteryStage) {
   }
 }
 
-function formatRelativeTime(dateStr: string | null | undefined): string {
-  if (!dateStr) return "Recently";
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
 
 export function StudentProgressView(): React.JSX.Element {
   const { data: profile, isLoading: isProfileLoading } = useMyStudentProfile();
@@ -363,35 +336,6 @@ export function StudentProgressView(): React.JSX.Element {
     return list;
   }, [inProgressAssessments, inProgressContent, inProgressPractices]);
 
-  // Recent Completed Activity derived from recorded topic practice and assessment evidence
-  const recentActivities: readonly RecentActivityItem[] = useMemo(() => {
-    if (uniqueSubjects.length === 0) return [];
-
-    const activities: RecentActivityItem[] = [];
-
-    for (const s of uniqueSubjects) {
-      for (const u of s.units) {
-        for (const t of u.topics) {
-          if (t.questionCount > 0) {
-            const dateMs = t.lastObservedAt
-              ? new Date(t.lastObservedAt).getTime()
-              : 0;
-            activities.push({
-              id: t.topicId,
-              type: "Topic Practice",
-              title: `${t.topicTitle} — ${u.unitTitle}`,
-              subjectCode: s.subjectCode,
-              date: formatRelativeTime(t.lastObservedAt),
-              totalQuestions: t.questionCount,
-              rawDate: dateMs,
-            });
-          }
-        }
-      }
-    }
-
-    return activities.sort((a, b) => b.rawDate - a.rawDate).slice(0, 4);
-  }, [uniqueSubjects]);
 
   // High-level aggregate metrics
   const totalMasteredTopics = useMemo(() => {
@@ -907,77 +851,7 @@ export function StudentProgressView(): React.JSX.Element {
         })()}
       </div>
 
-      {/* Section 5: Recent Activity */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <CalendarDays size={18} className="text-primary" />
-            <span>Recent Activity</span>
-          </h2>
-          <Link
-            href={ROUTES.ASSESSMENTS.BASE}
-            className="text-xs font-semibold text-primary hover:underline shrink-0"
-          >
-            All exams
-          </Link>
-        </div>
 
-        {recentActivities.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
-            <CalendarDays className="h-8 w-8 text-muted-foreground/60 mb-2" />
-            <h3 className="text-sm font-semibold text-foreground">
-              No recent practice activity yet
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
-              Complete your first topic practice test or exam to see your learning history here!
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {recentActivities.map((item, idx) => (
-              <div
-                key={`activity-${item.id}-${idx}`}
-                className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
-              >
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-muted text-muted-foreground shrink-0">
-                      {item.subjectCode}
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
-                      {item.type}
-                    </span>
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                      {item.title}
-                    </h3>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays size={11} />
-                      <span>{item.date}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <BookOpen size={11} />
-                      <span>{item.totalQuestions} questions answered</span>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
-                  <Link
-                    href={ROUTES.ASSESSMENTS.BASE}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground text-xs font-semibold transition-all shadow-xs"
-                  >
-                    <RotateCcw size={12} />
-                    <span>Practice Again</span>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

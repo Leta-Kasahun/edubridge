@@ -22,6 +22,15 @@ import { useSubjects } from "@/features/academic/subjects/hooks/useSubjects";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import { useAcademicYears } from "@/features/academic/academic-years";
 import {
+  useCurricula,
+  useCurriculumDetails,
+} from "@/features/curriculum/curricula/hooks/useCurricula";
+import {
+  useCurriculumSubjects,
+  useCurriculumUnits,
+  useCurriculumTopics,
+} from "@/features/curriculum/structure/hooks/useStructure";
+import {
   QuestionBatchItemCard,
   BatchQuestionDraft,
 } from "./QuestionBatchItemCard";
@@ -62,6 +71,8 @@ export function QuestionFormModal({
 
   const [subjectId, setSubjectId] = useState("");
   const [gradeId, setGradeId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [topicId, setTopicId] = useState("");
   const [examContextId, setExamContextId] = useState("");
   const [examYear, setExamYear] = useState("");
 
@@ -76,6 +87,33 @@ export function QuestionFormModal({
   const { data: examContextsData } = useExamContexts({ limit: 100 });
   const examContexts = examContextsData?.items ?? [];
 
+  const { data: curriculaData } = useCurricula({ limit: 100 });
+  const curricula = curriculaData?.data ?? [];
+  const selectedCurriculumId = curricula[0]?.id || "";
+  const { data: curriculumDetail } = useCurriculumDetails(selectedCurriculumId || null);
+  const versions = curriculumDetail?.versions ?? [];
+  const activeVersion =
+    versions.find((v) => v.status === "ACTIVE") ||
+    versions.find((v) => v.status === "DRAFT") ||
+    versions[0];
+  const versionId = activeVersion?.id || "";
+  const { data: curriculumSubjects = [] } = useCurriculumSubjects(versionId);
+
+  const matchedCurriculumSubject = curriculumSubjects.find(
+    (cs) => cs.gradeId === gradeId && cs.subjectId === subjectId
+  );
+  const curriculumSubjectId = matchedCurriculumSubject?.id || "";
+
+  const { data: units = [] } = useCurriculumUnits(
+    curriculumSubjectId,
+    Boolean(curriculumSubjectId)
+  );
+
+  const { data: topics = [] } = useCurriculumTopics(
+    unitId,
+    Boolean(unitId)
+  );
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -85,6 +123,8 @@ export function QuestionFormModal({
     if (initialData) {
       setSubjectId(initialData.subjectId || "");
       setGradeId(initialData.gradeId || "");
+      setUnitId(initialData.unitId || initialData.unit?.id || "");
+      setTopicId(initialData.topicId || initialData.topic?.id || "");
       setExamContextId(initialData.examContextId || "");
       setExamYear(initialData.examYear ? String(initialData.examYear) : "");
 
@@ -117,6 +157,8 @@ export function QuestionFormModal({
     } else {
       setSubjectId("");
       setGradeId("");
+      setUnitId("");
+      setTopicId("");
       setExamContextId("");
       setExamYear("");
       setQuestions([createDefaultDraft(0)]);
@@ -124,11 +166,25 @@ export function QuestionFormModal({
   }, [initialData, isOpen]);
 
   const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    let list = subjectsList;
+    if (gradeId && curriculumSubjects.length > 0) {
+      const subjectIdsForGrade = new Set(
+        curriculumSubjects
+          .filter((cs) => cs.gradeId === gradeId)
+          .map((cs) => cs.subjectId)
+      );
+      if (subjectIdsForGrade.size > 0) {
+        list = subjectsList.filter((s) => subjectIdsForGrade.has(s.id));
+      }
+    }
     return [
       { value: "", label: "General Subject" },
-      ...subjectsList.map((s) => ({ value: s.id, label: s.name })),
+      ...list.map((s) => ({
+        value: s.id,
+        label: s.code ? `${s.code} - ${s.name}` : s.name,
+      })),
     ];
-  }, [subjectsList]);
+  }, [subjectsList, gradeId, curriculumSubjects]);
 
   const gradeOptions: readonly SelectDropdownOption[] = useMemo(() => {
     return [
@@ -136,6 +192,20 @@ export function QuestionFormModal({
       ...gradesList.map((g) => ({ value: g.id, label: `Grade ${g.level}` })),
     ];
   }, [gradesList]);
+
+  const unitOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return [
+      { value: "", label: "General Unit (Optional)" },
+      ...units.map((u) => ({ value: u.id, label: `${u.code ? u.code + ": " : ""}${u.title}` })),
+    ];
+  }, [units]);
+
+  const topicOptions: readonly SelectDropdownOption[] = useMemo(() => {
+    return [
+      { value: "", label: "General Topic (Optional)" },
+      ...topics.map((t) => ({ value: t.id, label: `${t.code ? t.code + ": " : ""}${t.title}` })),
+    ];
+  }, [topics]);
 
   const contextOptions: readonly SelectDropdownOption[] = useMemo(() => {
     return [
@@ -234,6 +304,8 @@ export function QuestionFormModal({
           examContextId: examContextId || undefined,
           subjectId: subjectId || undefined,
           gradeId: gradeId || undefined,
+          unitId: unitId || undefined,
+          topicId: topicId || undefined,
           examYear: parsedYear,
           options:
             single.type === "MCQ" || single.type === "TRUE_FALSE"
@@ -252,6 +324,8 @@ export function QuestionFormModal({
           examContextId: examContextId || undefined,
           subjectId: subjectId || undefined,
           gradeId: gradeId || undefined,
+          unitId: unitId || undefined,
+          topicId: topicId || undefined,
           examYear: parsedYear,
           options:
             q.type === "MCQ" || q.type === "TRUE_FALSE"
@@ -303,14 +377,43 @@ export function QuestionFormModal({
                   label="Subject"
                   options={subjectOptions}
                   value={subjectId}
-                  onChange={(val) => setSubjectId(val)}
+                  onChange={(val) => {
+                    setSubjectId(val);
+                    setUnitId("");
+                    setTopicId("");
+                  }}
                 />
 
                 <SelectDropdown
                   label="Grade Level"
                   options={gradeOptions}
                   value={gradeId}
-                  onChange={(val) => setGradeId(val)}
+                  onChange={(val) => {
+                    setGradeId(val);
+                    setUnitId("");
+                    setTopicId("");
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <SelectDropdown
+                  label="Curriculum Unit (Optional)"
+                  options={unitOptions}
+                  value={unitId}
+                  onChange={(val) => {
+                    setUnitId(val);
+                    setTopicId("");
+                  }}
+                  disabled={!subjectId || !gradeId || units.length === 0}
+                />
+
+                <SelectDropdown
+                  label="Specific Topic (Optional)"
+                  options={topicOptions}
+                  value={topicId}
+                  onChange={setTopicId}
+                  disabled={!unitId || topics.length === 0}
                 />
               </div>
 
