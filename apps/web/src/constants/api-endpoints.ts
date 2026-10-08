@@ -217,6 +217,7 @@ export const API_ENDPOINTS = {
     QUESTION_FEEDBACK: (id: string) => `/assessments/${id}/question-feedback`,
   },
   MASTERY: {
+    OVERVIEW: "/mastery/overview",
     SECTION_MATRIX: (sectionId: string) => `/mastery/sections/${sectionId}`,
     STUDENT: (studentId: string) => `/mastery/students/${studentId}`,
     TOPIC_HISTORY: (studentId: string, topicId: string) => `/mastery/students/${studentId}/topics/${topicId}/history`,

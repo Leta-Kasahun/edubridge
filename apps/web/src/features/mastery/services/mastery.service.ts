@@ -8,9 +8,17 @@ import {
   SectionMasteryQueryParams,
   RecalculateMasteryPayload,
   RecordPracticeEvidencePayload,
+  MasteryOverviewResponse,
 } from "../types/mastery.types";
 
 export const masteryService = {
+  async getMasteryOverview(): Promise<MasteryOverviewResponse> {
+    const response = await apiClient.get<ApiResponse<MasteryOverviewResponse>>(
+      API_ENDPOINTS.MASTERY.OVERVIEW
+    );
+    return response.data.data;
+  },
+
   async getSectionMastery(
     sectionId: string,
     params?: SectionMasteryQueryParams
