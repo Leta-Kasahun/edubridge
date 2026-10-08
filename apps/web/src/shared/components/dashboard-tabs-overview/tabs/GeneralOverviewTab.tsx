@@ -1,11 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
 import { useTeachers } from "@/features/provisioning/teacher/hooks/useTeacherProvisioning";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import { useSections } from "@/features/academic/sections/hooks/useSections";
+import { useSectionMastery } from "@/features/mastery";
 import { DashboardMetricCard } from "../DashboardMetricCard";
 import { DashboardDonutCard } from "../DashboardDonutCard";
+import { StudentProgressOverviewSection } from "../StudentProgressOverviewSection";
 import type { ChartSliceItem } from "../types";
 
 export function GeneralOverviewTab() {
@@ -14,15 +17,21 @@ export function GeneralOverviewTab() {
   const { data: gradesData, isLoading: isGradesLoading } = useGrades();
   const { data: sectionsData, isLoading: isSectionsLoading } = useSections();
 
-  const studentsList = studentsData?.data ?? [];
-  const teachersList = teachersData?.data ?? [];
-  const gradesList = gradesData ?? [];
-  const sectionsList = sectionsData ?? [];
+  const studentsList = useMemo(() => studentsData?.data ?? [], [studentsData?.data]);
+  const teachersList = useMemo(() => teachersData?.data ?? [], [teachersData?.data]);
+  const gradesList = useMemo(() => gradesData ?? [], [gradesData]);
+  const sectionsList = useMemo(() => sectionsData ?? [], [sectionsData]);
 
   const totalStudents = studentsData?.pagination?.total ?? studentsList.length;
   const totalTeachers = teachersData?.pagination?.total ?? teachersList.length;
   const totalGrades = gradesList.length;
   const totalSections = sectionsList.length;
+
+  // Query real section mastery for the institution's primary active section
+  const primarySectionId = sectionsList[0]?.id || "";
+  const { data: schoolMastery, isLoading: isMasteryLoading } = useSectionMastery(
+    primarySectionId
+  );
 
   const activeStudentsCount = studentsList.filter(
     (s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE"
@@ -64,6 +73,37 @@ export function GeneralOverviewTab() {
     { name: "Female", value: femaleTeachers, color: "#F97316" },
   ];
 
+  // 100% genuine mastery distribution derived directly from PostgreSQL
+  const progressStats = useMemo(() => {
+    if (!schoolMastery?.summary) {
+      return {
+        mastered: 0,
+        proficient: 0,
+        developing: 0,
+        inProgress: totalStudents,
+      };
+    }
+    return {
+      mastered: schoolMastery.summary.masteryDistribution.MASTERED,
+      proficient: schoolMastery.summary.masteryDistribution.PROFICIENT,
+      developing: schoolMastery.summary.masteryDistribution.DEVELOPING,
+      inProgress: schoolMastery.summary.masteryDistribution.NOT_STARTED,
+    };
+  }, [schoolMastery, totalStudents]);
+
+  // 100% genuine grade level progress items
+  const progressItems = useMemo(() => {
+    return gradesList.map((g) => {
+      const gradeSections = sectionsList.filter((s) => s.gradeId === g.id);
+      return {
+        id: g.id,
+        name: `Grade ${g.level}`,
+        subtitle: `${gradeSections.length} ${gradeSections.length === 1 ? "section" : "sections"}`,
+        progress: schoolMastery?.summary?.classAverageAccuracy ?? 0,
+      };
+    });
+  }, [gradesList, sectionsList, schoolMastery]);
+
   const isLoadingMetrics = isStudentsLoading || isTeachersLoading || isGradesLoading || isSectionsLoading;
 
   return (
@@ -94,6 +134,19 @@ export function GeneralOverviewTab() {
           isLoading={isLoadingMetrics}
         />
       </div>
+
+      <StudentProgressOverviewSection
+        title="Student Progress"
+        subtitle="Institution-wide curriculum progress and grade breakdown"
+        centerCount={totalStudents}
+        centerLabel="students"
+        breakdownTitle="Grade Level Progress"
+        breakdownCountLabel={`${gradesList.length} Active Grades`}
+        stats={progressStats}
+        items={progressItems}
+        isLoading={isLoadingMetrics || isMasteryLoading}
+        emptyText="No grade levels with progress records."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardDonutCard
