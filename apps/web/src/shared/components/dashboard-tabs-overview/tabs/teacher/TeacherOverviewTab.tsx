@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
-import { useSectionMastery } from "@/features/mastery";
+import { useMasteryOverview } from "@/features/mastery";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
 import { StudentProgressOverviewSection } from "../../StudentProgressOverviewSection";
@@ -26,52 +26,40 @@ export function TeacherOverviewTab() {
     isLoading: isStudentsLoading,
   } = useTeacherAssignedStudents();
 
-  // Query real section mastery for the teacher's primary active assigned section & subject
-  const primarySectionId = assignedSections[0]?.id || "";
-  const primarySubjectId = assignedSubjects[0]?.id || undefined;
-  const { data: sectionMastery, isLoading: isMasteryLoading } = useSectionMastery(
-    primarySectionId,
-    primarySubjectId ? { subjectId: primarySubjectId } : undefined
-  );
+  const { data: masteryOverview, isLoading: isMasteryLoading } = useMasteryOverview();
 
-  // 100% genuine mastery distribution derived directly from PostgreSQL
   const progressStats = useMemo(() => {
-    if (!sectionMastery?.summary) {
+    if (!masteryOverview?.stats) {
       return {
         mastered: 0,
-        proficient: 0,
-        developing: 0,
-        inProgress: totalStudents,
+        doingWell: 0,
+        needsPractice: 0,
+        notStarted: totalStudents,
       };
     }
     return {
-      mastered: sectionMastery.summary.masteryDistribution.MASTERED,
-      proficient: sectionMastery.summary.masteryDistribution.PROFICIENT,
-      developing: sectionMastery.summary.masteryDistribution.DEVELOPING,
-      inProgress: sectionMastery.summary.masteryDistribution.NOT_STARTED,
+      mastered: masteryOverview.stats.mastered,
+      doingWell: masteryOverview.stats.doingWell,
+      needsPractice: masteryOverview.stats.needsPractice,
+      notStarted: masteryOverview.stats.notStarted,
     };
-  }, [sectionMastery, totalStudents]);
+  }, [masteryOverview, totalStudents]);
 
-  // 100% genuine mastery progress per assigned subject
   const progressItems = useMemo(() => {
+    if (masteryOverview?.breakdown && masteryOverview.breakdown.length > 0) {
+      return masteryOverview.breakdown;
+    }
     return assignedSubjects.map((s) => {
       const classCount = assignments.filter((a) => a.subjectId === s.id).length;
-      const isSubjectMatch = sectionMastery?.subject?.id === s.id;
-      const accuracy =
-        isSubjectMatch && sectionMastery?.summary?.classAverageAccuracy !== null && sectionMastery?.summary?.classAverageAccuracy !== undefined
-          ? Math.round(sectionMastery.summary.classAverageAccuracy)
-          : sectionMastery?.summary?.classAverageAccuracy !== null && sectionMastery?.summary?.classAverageAccuracy !== undefined
-          ? Math.round(sectionMastery.summary.classAverageAccuracy)
-          : 0;
-
       return {
         id: s.id,
         name: s.name,
         subtitle: `${classCount} ${classCount === 1 ? "class" : "classes"} assigned`,
-        progress: accuracy,
+        progress: 0,
+        status: "Not Started" as const,
       };
     });
-  }, [assignedSubjects, assignments, sectionMastery]);
+  }, [assignedSubjects, assignments, masteryOverview]);
 
   const gradeColors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = assignedGrades.map((g, idx) => ({

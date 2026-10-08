@@ -7,21 +7,26 @@ import { ROUTES } from "@/constants/routes";
 
 export interface StudentProgressStats {
   readonly mastered: number;
-  readonly proficient: number;
-  readonly developing: number;
-  readonly inProgress: number;
+  readonly doingWell?: number;
+  readonly needsPractice?: number;
+  readonly notStarted?: number;
+  readonly proficient?: number;
+  readonly developing?: number;
+  readonly inProgress?: number;
 }
 
 export interface ProgressBreakdownItem {
   readonly id: string;
   readonly name: string;
   readonly subtitle?: string;
+  readonly progress?: number;
   readonly status?:
     | "Mastered"
     | "Proficient"
     | "Developing"
     | "Not Started"
     | "Doing Well"
+    | "Needs Practice"
     | "Learning"
     | "In Progress";
 }
@@ -53,45 +58,49 @@ export function StudentProgressOverviewSection({
   isLoading = false,
   emptyText = "No active progress records available.",
 }: StudentProgressOverviewSectionProps): React.JSX.Element {
-  // SVG Donut Chart Dimensions matching Student Dashboard
   const donutSize = 120;
   const strokeWidth = 14;
   const radius = (donutSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
+  const doingWellCount = stats.doingWell ?? stats.proficient ?? 0;
+  const needsPracticeCount = stats.needsPractice ?? stats.developing ?? 0;
+  const notStartedCount = stats.notStarted ?? stats.inProgress ?? 0;
+
   const total = Math.max(
     1,
-    stats.mastered + stats.proficient + stats.developing + stats.inProgress
+    stats.mastered + doingWellCount + needsPracticeCount + notStartedCount
   );
 
   const seg1Len = (stats.mastered / total) * circumference;
   const seg1Offset = 0;
 
-  const seg2Len = (stats.proficient / total) * circumference;
+  const seg2Len = (doingWellCount / total) * circumference;
   const seg2Offset = -seg1Len;
 
-  const seg3Len = (stats.developing / total) * circumference;
+  const seg3Len = (needsPracticeCount / total) * circumference;
   const seg3Offset = -(seg1Len + seg2Len);
 
-  const seg4Len = (stats.inProgress / total) * circumference;
+  const seg4Len = (notStartedCount / total) * circumference;
   const seg4Offset = -(seg1Len + seg2Len + seg3Len);
 
   const safeItems = useMemo(() => {
     return items.map((item) => {
-      const progress = Math.max(0, Math.min(100, Math.round(item.progress)));
-      let status: "Mastered" | "Proficient" | "Developing" | "Not Started" =
-        item.status === "Doing Well"
-          ? "Proficient"
-          : item.status === "Learning"
-          ? "Developing"
+      const progress = Math.max(0, Math.min(100, Math.round(item.progress ?? 0)));
+      let status: "Mastered" | "Doing Well" | "Needs Practice" | "Learning" | "Not Started" =
+        item.status === "Proficient"
+          ? "Doing Well"
+          : item.status === "Developing"
+          ? "Needs Practice"
           : item.status === "In Progress"
           ? "Not Started"
           : item.status || "Not Started";
 
       if (!item.status) {
         if (progress >= 80) status = "Mastered";
-        else if (progress >= 50) status = "Proficient";
-        else if (progress > 0) status = "Developing";
+        else if (progress >= 65) status = "Doing Well";
+        else if (progress >= 40) status = "Needs Practice";
+        else if (progress > 0) status = "Learning";
         else status = "Not Started";
       }
 
@@ -232,20 +241,20 @@ export function StudentProgressOverviewSection({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                  <span className="text-muted-foreground font-medium">Proficient</span>
+                  <span className="text-muted-foreground font-medium">Doing Well</span>
                 </div>
                 <span className="font-bold text-foreground tabular-nums">
-                  {stats.proficient.toLocaleString()}
+                  {doingWellCount.toLocaleString()}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-                  <span className="text-muted-foreground font-medium">Developing</span>
+                  <span className="text-muted-foreground font-medium">Needs Practice</span>
                 </div>
                 <span className="font-bold text-foreground tabular-nums">
-                  {stats.developing.toLocaleString()}
+                  {needsPracticeCount.toLocaleString()}
                 </span>
               </div>
 
@@ -255,14 +264,13 @@ export function StudentProgressOverviewSection({
                   <span className="text-muted-foreground font-medium">Not Started</span>
                 </div>
                 <span className="font-bold text-foreground tabular-nums">
-                  {stats.inProgress.toLocaleString()}
+                  {notStartedCount.toLocaleString()}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Topics / Courses Progress List */}
         <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-xs flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-2.5">
@@ -292,24 +300,24 @@ export function StudentProgressOverviewSection({
               <div className="space-y-3.5">
                 {safeItems.map((item) => {
                   const isMastered = item.status === "Mastered";
-                  const isProficient =
-                    item.status === "Proficient" || item.status === "Doing Well";
-                  const isDeveloping =
-                    item.status === "Developing" || item.status === "Learning";
+                  const isDoingWell = item.status === "Doing Well";
+                  const isNeedsPractice =
+                    item.status === "Needs Practice" ||
+                    item.status === "Learning";
 
                   const barColor = isMastered
                     ? "bg-emerald-500"
-                    : isProficient
+                    : isDoingWell
                     ? "bg-blue-500"
-                    : isDeveloping
+                    : isNeedsPractice
                     ? "bg-amber-500"
                     : "bg-muted-foreground/30";
 
                   const badgeStyle = isMastered
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 border"
-                    : isProficient
+                    : isDoingWell
                     ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 border"
-                    : isDeveloping
+                    : isNeedsPractice
                     ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 border"
                     : "bg-muted text-muted-foreground border-border border";
 

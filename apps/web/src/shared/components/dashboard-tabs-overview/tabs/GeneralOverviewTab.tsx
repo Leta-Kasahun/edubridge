@@ -5,7 +5,7 @@ import { useStudents } from "@/features/provisioning/student/hooks/useStudents";
 import { useTeachers } from "@/features/provisioning/teacher/hooks/useTeacherProvisioning";
 import { useGrades } from "@/features/academic/grades/hooks/useGrades";
 import { useSections } from "@/features/academic/sections/hooks/useSections";
-import { useSectionMastery } from "@/features/mastery";
+import { useMasteryOverview } from "@/features/mastery";
 import { DashboardMetricCard } from "../DashboardMetricCard";
 import { DashboardDonutCard } from "../DashboardDonutCard";
 import { StudentProgressOverviewSection } from "../StudentProgressOverviewSection";
@@ -27,11 +27,7 @@ export function GeneralOverviewTab() {
   const totalGrades = gradesList.length;
   const totalSections = sectionsList.length;
 
-  // Query real section mastery for the institution's primary active section
-  const primarySectionId = sectionsList[0]?.id || "";
-  const { data: schoolMastery, isLoading: isMasteryLoading } = useSectionMastery(
-    primarySectionId
-  );
+  const { data: masteryOverview, isLoading: isMasteryLoading } = useMasteryOverview();
 
   const activeStudentsCount = studentsList.filter(
     (s) => s.status === "ACTIVE" || s.studentStatus === "ACTIVE"
@@ -73,36 +69,38 @@ export function GeneralOverviewTab() {
     { name: "Female", value: femaleTeachers, color: "#F97316" },
   ];
 
-  // 100% genuine mastery distribution derived directly from PostgreSQL
   const progressStats = useMemo(() => {
-    if (!schoolMastery?.summary) {
+    if (!masteryOverview?.stats) {
       return {
         mastered: 0,
-        proficient: 0,
-        developing: 0,
-        inProgress: totalStudents,
+        doingWell: 0,
+        needsPractice: 0,
+        notStarted: totalStudents,
       };
     }
     return {
-      mastered: schoolMastery.summary.masteryDistribution.MASTERED,
-      proficient: schoolMastery.summary.masteryDistribution.PROFICIENT,
-      developing: schoolMastery.summary.masteryDistribution.DEVELOPING,
-      inProgress: schoolMastery.summary.masteryDistribution.NOT_STARTED,
+      mastered: masteryOverview.stats.mastered,
+      doingWell: masteryOverview.stats.doingWell,
+      needsPractice: masteryOverview.stats.needsPractice,
+      notStarted: masteryOverview.stats.notStarted,
     };
-  }, [schoolMastery, totalStudents]);
+  }, [masteryOverview, totalStudents]);
 
-  // 100% genuine grade level progress items
   const progressItems = useMemo(() => {
+    if (masteryOverview?.breakdown && masteryOverview.breakdown.length > 0) {
+      return masteryOverview.breakdown;
+    }
     return gradesList.map((g) => {
       const gradeSections = sectionsList.filter((s) => s.gradeId === g.id);
       return {
         id: g.id,
         name: `Grade ${g.level}`,
         subtitle: `${gradeSections.length} ${gradeSections.length === 1 ? "section" : "sections"}`,
-        progress: schoolMastery?.summary?.classAverageAccuracy ?? 0,
+        progress: 0,
+        status: "Not Started" as const,
       };
     });
-  }, [gradesList, sectionsList, schoolMastery]);
+  }, [gradesList, sectionsList, masteryOverview]);
 
   const isLoadingMetrics = isStudentsLoading || isTeachersLoading || isGradesLoading || isSectionsLoading;
 
