@@ -141,4 +141,17 @@ export class AssessmentController {
       data: result,
     });
   });
+
+  unarchive = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.tenantId) {
+      throw new UnauthorizedError();
+    }
+    const id = req.params.id as string;
+    const result = await this.assessmentService.unarchive(req.user.tenantId, id);
+    res.status(200).json({
+      success: true,
+      message: "Assessment restored from archive successfully",
+      data: result,
+    });
+  });
 }

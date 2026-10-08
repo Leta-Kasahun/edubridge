@@ -124,3 +124,28 @@ export interface RecordPracticeEvidencePayload {
   bankId: string;
   results: PracticeEvidenceItem[];
 }
+
+export interface MasteryOverviewItem {
+  readonly id: string;
+  readonly name: string;
+  readonly subtitle?: string;
+  readonly progress: number;
+  readonly status: "Mastered" | "Doing Well" | "Needs Practice" | "Learning" | "Not Started";
+  readonly totalTopics?: number;
+  readonly masteredTopics?: number;
+}
+
+export interface MasteryOverviewResponse {
+  readonly totalStudents: number;
+  readonly overallAccuracy: number | null;
+  readonly stats: {
+    readonly mastered: number;
+    readonly doingWell: number;
+    readonly needsPractice: number;
+    readonly notStarted: number;
+    readonly proficient: number;
+    readonly developing: number;
+    readonly inProgress: number;
+  };
+  readonly breakdown: readonly MasteryOverviewItem[];
+}

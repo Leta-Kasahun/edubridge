@@ -8,6 +8,7 @@ import {
 
 export const MASTERY_QUERY_KEYS = {
   all: ["mastery"] as const,
+  overview: () => [...MASTERY_QUERY_KEYS.all, "overview"] as const,
   sections: () => [...MASTERY_QUERY_KEYS.all, "section"] as const,
   section: (sectionId: string, params?: SectionMasteryQueryParams) =>
     [...MASTERY_QUERY_KEYS.sections(), sectionId, params] as const,
@@ -17,6 +18,14 @@ export const MASTERY_QUERY_KEYS = {
   history: (studentId: string, topicId: string) =>
     [...MASTERY_QUERY_KEYS.all, "history", studentId, topicId] as const,
 };
+
+export function useMasteryOverview() {
+  return useQuery({
+    queryKey: MASTERY_QUERY_KEYS.overview(),
+    queryFn: () => masteryService.getMasteryOverview(),
+    staleTime: 30_000,
+  });
+}
 
 export function useSectionMastery(
   sectionId: string,

@@ -117,6 +117,14 @@ export const assessmentService = {
     return response.data.data;
   },
 
+  async unarchiveAssessment(id: string): Promise<AssessmentItem> {
+    const response = await apiClient.post<ApiResponse<AssessmentItem>>(
+      API_ENDPOINTS.ASSESSMENTS.UNARCHIVE(id),
+      {}
+    );
+    return response.data.data;
+  },
+
   async archiveAssessment(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.ASSESSMENTS.BY_ID(id));
   },

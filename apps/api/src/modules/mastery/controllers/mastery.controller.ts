@@ -8,6 +8,31 @@ import { ForbiddenError } from "../../../shared/exceptions/forbidden-error.js";
 export class MasteryController {
   constructor(private readonly masteryService: MasteryService = new MasteryService()) {}
 
+  getMasteryOverview = asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) {
+      throw new UnauthorizedError("Tenant context required");
+    }
+
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new UnauthorizedError("User context required");
+    }
+
+    const roles = req.user?.roles || [];
+
+    const data = await this.masteryService.getMasteryOverview(
+      tenantId,
+      userId,
+      roles
+    );
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  });
+
   getSectionMasteryMatrix = asyncHandler(async (req: Request, res: Response) => {
     const tenantId = req.user?.tenantId;
     if (!tenantId) {

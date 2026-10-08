@@ -154,6 +154,20 @@ const assessmentRouteDefinitions: RouteDefinition[] = [
     },
   },
   {
+    path: "/api/assessments/{id}/unarchive",
+    method: "POST",
+    summary: "Unarchive Assessment",
+    description: "Restore an archived assessment back to DRAFT status.",
+    tags: ["Assessment - Assessments"],
+    security: true,
+    parameters: [
+      { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+    ],
+    responses: {
+      200: { description: "Assessment restored from archive successfully" },
+    },
+  },
+  {
     path: "/api/assessments/{id}",
     method: "DELETE",
     summary: "Archive Assessment",

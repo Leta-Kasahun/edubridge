@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotificationStore } from "@/stores/notification.store";
 import { notificationApiService, ListNotificationsParams } from "../services/notification.service";
 
@@ -8,6 +8,8 @@ export const NOTIFICATION_KEYS = {
   all: ["notifications"] as const,
   list: (params?: ListNotificationsParams) =>
     ["notifications", "list", params] as const,
+  infinite: (params?: Omit<ListNotificationsParams, "page">) =>
+    ["notifications", "infinite", params] as const,
   unreadCount: () => ["notifications", "unread-count"] as const,
   preferences: () => ["notifications", "preferences"] as const,
 };
@@ -16,6 +18,26 @@ export function useNotificationList(params?: ListNotificationsParams) {
   return useQuery({
     queryKey: NOTIFICATION_KEYS.list(params),
     queryFn: () => notificationApiService.list(params),
+    staleTime: 30_000,
+  });
+}
+
+export function useInfiniteNotificationList(
+  params?: Omit<ListNotificationsParams, "page">
+) {
+  return useInfiniteQuery({
+    queryKey: NOTIFICATION_KEYS.infinite(params),
+    queryFn: ({ pageParam }) =>
+      notificationApiService.list({
+        ...params,
+        page: pageParam as number,
+        limit: params?.limit ?? 15,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.meta;
+      return page < totalPages ? page + 1 : undefined;
+    },
     staleTime: 30_000,
   });
 }

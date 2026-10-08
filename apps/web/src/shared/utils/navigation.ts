@@ -118,7 +118,7 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Progress",
+    label: "Student Progress",
     href: ROUTES.MASTERY,
     icon: TrendingUp,
   },
@@ -183,7 +183,7 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Progress",
+    label: "Student Progress",
     href: ROUTES.MASTERY,
     icon: TrendingUp,
   },

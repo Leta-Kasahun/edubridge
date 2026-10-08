@@ -51,11 +51,11 @@ interface AssessmentFormModalProps {
 type AssessmentScopeOption = "GENERAL" | "SUBJECT" | "GRADE_SUBJECT" | "UNIT" | "TOPIC";
 
 const ASSESSMENT_SCOPE_OPTIONS: readonly SelectDropdownOption[] = [
-  { value: "GENERAL", label: "General / Standard (Multi-Grade & Mock)" },
-  { value: "SUBJECT", label: "Subject-Level" },
-  { value: "GRADE_SUBJECT", label: "Grade & Subject" },
-  { value: "UNIT", label: "Curriculum Unit" },
-  { value: "TOPIC", label: "Curriculum Topic" },
+  { value: "GENERAL", label: "General" },
+  { value: "SUBJECT", label: "Subject" },
+  { value: "GRADE_SUBJECT", label: "Grade" },
+  { value: "UNIT", label: "Unit" },
+  { value: "TOPIC", label: "Topic" },
 ];
 
 export function AssessmentFormModal({
@@ -114,7 +114,7 @@ export function AssessmentFormModal({
 
   const gradeOptions = useMemo(
     () => [
-      { value: "", label: scope === "GENERAL" ? "General / All Grades" : "Select Grade" },
+      { value: "", label: scope === "GENERAL" ? "All Grades" : "Select Grade" },
       ...gradesList.map((g) => ({ value: g.id, label: `Grade ${g.level}` })),
     ],
     [gradesList, scope]
@@ -133,7 +133,7 @@ export function AssessmentFormModal({
       }
     }
     return [
-      { value: "", label: scope === "GENERAL" ? "General / All Subjects" : "Select Subject" },
+      { value: "", label: scope === "GENERAL" ? "All Subjects" : "Select Subject" },
       ...list.map((s) => ({
         value: s.id,
         label: s.code ? `${s.code} - ${s.name}` : s.name,
@@ -143,7 +143,7 @@ export function AssessmentFormModal({
 
   const unitOptions = useMemo(
     () => [
-      { value: "", label: "Select Curriculum Unit" },
+      { value: "", label: "Select Unit" },
       ...units.map((u) => ({ value: u.id, label: `${u.code ? u.code + ": " : ""}${u.title}` })),
     ],
     [units]
@@ -342,10 +342,7 @@ export function AssessmentFormModal({
           <div className="bg-muted/30 border border-border/70 rounded-2xl p-4 space-y-3.5">
             <div className="flex items-center gap-2 text-xs font-bold text-foreground">
               <Layers size={15} className="text-primary" />
-              <span>Academic & Curriculum Alignment</span>
-              <span className="text-[10px] font-normal text-muted-foreground ml-auto">
-                {scope === "GENERAL" ? "Optional for broad/mock exams" : "Strictly aligned to syllabus"}
-              </span>
+              <span>Academic Alignment</span>
             </div>
 
             <div>
@@ -460,7 +457,7 @@ export function AssessmentFormModal({
                 {scope === "UNIT" && (
                   <div>
                     <SelectDropdown
-                      label="Curriculum Unit *"
+                      label="Unit *"
                       options={unitOptions.filter((u) => u.value !== "")}
                       value={unitId}
                       onChange={(val) => {
@@ -474,7 +471,7 @@ export function AssessmentFormModal({
                           ? "Select subject first"
                           : units.length === 0
                           ? "No units found for this subject"
-                          : "Select Curriculum Unit"
+                          : "Select Unit"
                       }
                     />
                   </div>
@@ -483,7 +480,7 @@ export function AssessmentFormModal({
                 {scope === "TOPIC" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <SelectDropdown
-                      label="Curriculum Unit *"
+                      label="Unit *"
                       options={unitOptions.filter((u) => u.value !== "")}
                       value={unitId}
                       onChange={(val) => {
@@ -502,7 +499,7 @@ export function AssessmentFormModal({
                     />
 
                     <SelectDropdown
-                      label="Specific Topic *"
+                      label="Topic *"
                       options={topicOptions.filter((t) => t.value !== "")}
                       value={topicId}
                       onChange={setTopicId}
@@ -575,7 +572,7 @@ export function AssessmentFormModal({
             />
 
             <DatePicker
-              label="Available Until / Due (Optional)"
+              label="Available Until (Optional)"
               value={availableUntil}
               onChange={setAvailableUntil}
               min={availableFrom || undefined}
@@ -607,7 +604,7 @@ export function AssessmentFormModal({
                 onChange={(e) => setRandomizeOptions(e.target.checked)}
                 className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
               />
-              <span>Randomize answer choice options (MCQ / True-False)</span>
+              <span>Randomize answer choice options</span>
             </label>
 
             <label className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer select-none">

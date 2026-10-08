@@ -15,6 +15,7 @@ import {
   useAssignAssessment,
   usePublishAssessment,
   useArchiveAssessment,
+  useUnarchiveAssessment,
 } from "../hooks/useAssessments";
 import {
   AssessmentItem,
@@ -91,6 +92,7 @@ export function AssessmentListView() {
   const assignMutation = useAssignAssessment();
   const publishMutation = usePublishAssessment();
   const archiveMutation = useArchiveAssessment();
+  const unarchiveMutation = useUnarchiveAssessment();
 
   const subjectGroups = useMemo<AssessmentSubjectGroup[]>(() => {
     const filtered = selectedGradeId
@@ -189,6 +191,10 @@ export function AssessmentListView() {
 
   const handlePublish = async (assessment: AssessmentItem) => {
     await publishMutation.mutateAsync(assessment.id);
+  };
+
+  const handleUnarchive = async (assessment: AssessmentItem) => {
+    await unarchiveMutation.mutateAsync(assessment.id);
   };
 
   const handleArchiveConfirm = async () => {
@@ -350,6 +356,7 @@ export function AssessmentListView() {
                       assessment={assessment}
                       onAssign={(a) => setAssigningAssessment(a)}
                       onPublish={(a) => handlePublish(a)}
+                      onUnarchive={(a) => handleUnarchive(a)}
                       onEdit={(a) => {
                         setEditingAssessment(a);
                         setIsFormModalOpen(true);

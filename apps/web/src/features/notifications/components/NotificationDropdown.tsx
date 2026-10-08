@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  useNotificationList,
+  useInfiniteNotificationList,
   useMarkRead,
   useMarkAllRead,
 } from "../hooks/useNotifications";
@@ -129,12 +130,51 @@ function NotificationRow({
 }
 
 export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
-  const { data, isLoading } = useNotificationList({ limit: 20 });
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteNotificationList({ limit: 15 });
   const { mutate: markRead } = useMarkRead();
   const { mutate: markAllRead, isPending: isMarkingAll } = useMarkAllRead();
 
-  const items = data?.items ?? [];
-  const unreadCount = data?.meta.unreadCount ?? 0;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const items = Array.from(
+    new Map(
+      (data?.pages.flatMap((page) => page.items) ?? []).map((item) => [
+        item.id,
+        item,
+      ])
+    ).values()
+  );
+  const unreadCount = data?.pages[0]?.meta.unreadCount ?? 0;
+  const total = data?.pages[0]?.meta.total ?? 0;
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const target = observerRef.current;
+    const root = scrollContainerRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      {
+        root,
+        rootMargin: "100px",
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleMarkAll = () => {
     markAllRead(undefined, { onSuccess: onClose });
@@ -187,7 +227,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         </div>
       </div>
 
-      <div className="max-h-[min(380px,calc(100dvh-11rem))] sm:max-h-[420px] overflow-y-auto divide-y divide-border/60 overscroll-contain">
+      <div
+        ref={scrollContainerRef}
+        className="max-h-[min(380px,calc(100dvh-11rem))] sm:max-h-[420px] overflow-y-auto divide-y divide-border/60 overscroll-contain"
+      >
         {isLoading && (
           <div className="flex items-center justify-center py-10">
             <Loader2 size={20} className="animate-spin text-muted-foreground" />
@@ -210,17 +253,41 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
               onClose={onClose}
             />
           ))}
+
+        {!isLoading && hasNextPage && <div ref={observerRef} className="h-1" />}
+
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-3 text-muted-foreground bg-muted/10">
+            <Loader2 size={16} className="animate-spin text-primary" />
+          </div>
+        )}
       </div>
 
-      {items.length > 0 && (
+      {!isLoading && items.length > 0 && (
         <div className="border-t border-border px-4 py-2.5 bg-muted/20 text-center shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[11px] sm:text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer py-0.5"
-          >
-            View all notifications
-          </button>
+          {hasNextPage ? (
+            <button
+              type="button"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer py-0.5 disabled:opacity-50"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 size={12} className="animate-spin shrink-0" />
+                  <span>Loading more notifications...</span>
+                </>
+              ) : (
+                <span>
+                  Load more notifications ({items.length} of {total})
+                </span>
+              )}
+            </button>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">
+              All {items.length} {items.length === 1 ? "notification" : "notifications"} loaded
+            </span>
+          )}
         </div>
       )}
     </div>

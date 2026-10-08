@@ -26,7 +26,7 @@ export function getMasteryLevelConfig(level: MasteryLevel) {
       };
     case "PROFICIENT":
       return {
-        label: "Proficient",
+        label: "Doing Well",
         studentLabel: "Doing Well",
         icon: Clock,
         badgeClass:
@@ -34,11 +34,11 @@ export function getMasteryLevelConfig(level: MasteryLevel) {
         dotClass: "bg-blue-500",
         textClass: "text-blue-600 dark:text-blue-400",
         progressColor: "bg-blue-500",
-        description: "Meets standard expectations (50% - 79%).",
+        description: "Meets standard expectations (65% - 79%).",
       };
     case "DEVELOPING":
       return {
-        label: "Developing",
+        label: "Needs Practice",
         studentLabel: "Needs Practice",
         icon: AlertCircle,
         badgeClass:
@@ -46,7 +46,7 @@ export function getMasteryLevelConfig(level: MasteryLevel) {
         dotClass: "bg-amber-500",
         textClass: "text-amber-600 dark:text-amber-400",
         progressColor: "bg-amber-500",
-        description: "Under 50% accuracy or insufficient evidence (< 3 items).",
+        description: "Under 65% accuracy or needs reinforcement.",
       };
     case "NOT_STARTED":
     default:

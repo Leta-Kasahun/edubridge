@@ -1,8 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { useMyTeacherAssignments, useTeacherAssignedStudents } from "@/features/academic/assignments/teacher";
+import { useMasteryOverview } from "@/features/mastery";
 import { DashboardMetricCard } from "../../DashboardMetricCard";
 import { DashboardDonutCard } from "../../DashboardDonutCard";
+import { StudentProgressOverviewSection } from "../../StudentProgressOverviewSection";
 import type { ChartSliceItem } from "../../types";
 
 export function TeacherOverviewTab() {
@@ -22,6 +25,41 @@ export function TeacherOverviewTab() {
     studentGenderSlices,
     isLoading: isStudentsLoading,
   } = useTeacherAssignedStudents();
+
+  const { data: masteryOverview, isLoading: isMasteryLoading } = useMasteryOverview();
+
+  const progressStats = useMemo(() => {
+    if (!masteryOverview?.stats) {
+      return {
+        mastered: 0,
+        doingWell: 0,
+        needsPractice: 0,
+        notStarted: totalStudents,
+      };
+    }
+    return {
+      mastered: masteryOverview.stats.mastered,
+      doingWell: masteryOverview.stats.doingWell,
+      needsPractice: masteryOverview.stats.needsPractice,
+      notStarted: masteryOverview.stats.notStarted,
+    };
+  }, [masteryOverview, totalStudents]);
+
+  const progressItems = useMemo(() => {
+    if (masteryOverview?.breakdown && masteryOverview.breakdown.length > 0) {
+      return masteryOverview.breakdown;
+    }
+    return assignedSubjects.map((s) => {
+      const classCount = assignments.filter((a) => a.subjectId === s.id).length;
+      return {
+        id: s.id,
+        name: s.name,
+        subtitle: `${classCount} ${classCount === 1 ? "class" : "classes"} assigned`,
+        progress: 0,
+        status: "Not Started" as const,
+      };
+    });
+  }, [assignedSubjects, assignments, masteryOverview]);
 
   const gradeColors = ["#059669", "#0284c7", "#6366f1", "#f59e0b", "#e11d48", "#14b8a6"];
   const gradeSlices: readonly ChartSliceItem[] = assignedGrades.map((g, idx) => ({
@@ -63,6 +101,19 @@ export function TeacherOverviewTab() {
           isLoading={isAssignmentsLoading}
         />
       </div>
+
+      <StudentProgressOverviewSection
+        title="Student Progress"
+        subtitle="Assigned classroom learning progress and course breakdown"
+        centerCount={totalStudents}
+        centerLabel="assigned"
+        breakdownTitle="Assigned Subjects Progress"
+        breakdownCountLabel={`${assignedSubjects.length} Active Courses`}
+        stats={progressStats}
+        items={progressItems}
+        isLoading={isLoadingMetrics || isMasteryLoading}
+        emptyText="No assigned courses with progress records."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardDonutCard

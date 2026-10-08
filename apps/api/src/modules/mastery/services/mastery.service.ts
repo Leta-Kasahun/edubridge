@@ -4,12 +4,21 @@ import {
   SingleStudentMasteryResponse,
   TopicMasteryHistoryItem,
   RecordPracticeEvidenceDto,
+  MasteryOverviewResponse,
 } from "../types/mastery.types.js";
 
 export class MasteryService {
   constructor(
     private readonly masteryRepo: MasteryRepository = new MasteryRepository()
   ) {}
+
+  async getMasteryOverview(
+    tenantId: string,
+    userId: string,
+    roles: string[]
+  ): Promise<MasteryOverviewResponse> {
+    return this.masteryRepo.getMasteryOverview(tenantId, userId, roles);
+  }
 
   async getSectionMasteryMatrix(
     tenantId: string,

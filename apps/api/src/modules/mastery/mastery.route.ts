@@ -14,6 +14,8 @@ const controller = new MasteryController();
 
 router.use(authenticate);
 
+router.get("/overview", controller.getMasteryOverview);
+
 router.post(
   "/practice",
   requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "SYSTEM_ADMIN"),

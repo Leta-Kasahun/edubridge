@@ -106,11 +106,11 @@ export function SectionMasteryTable({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-            <span>Proficient (50-79%)</span>
+            <span>Doing Well (65-79%)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-            <span>Developing (&lt;50%)</span>
+            <span>Needs Practice (&lt;65%)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/40" />

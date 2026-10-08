@@ -207,6 +207,7 @@ export const API_ENDPOINTS = {
     QUESTIONS: (id: string) => `/assessments/${id}/questions`,
     ASSIGN: (id: string) => `/assessments/${id}/assign`,
     PUBLISH: (id: string) => `/assessments/${id}/publish`,
+    UNARCHIVE: (id: string) => `/assessments/${id}/unarchive`,
     ATTEMPTS: (id: string) => `/assessments/${id}/attempts`,
     START_ATTEMPT: (id: string) => `/assessments/${id}/attempts/start`,
     SAVE_ANSWER: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/answers`,
@@ -217,6 +218,7 @@ export const API_ENDPOINTS = {
     QUESTION_FEEDBACK: (id: string) => `/assessments/${id}/question-feedback`,
   },
   MASTERY: {
+    OVERVIEW: "/mastery/overview",
     SECTION_MATRIX: (sectionId: string) => `/mastery/sections/${sectionId}`,
     STUDENT: (studentId: string) => `/mastery/students/${studentId}`,
     TOPIC_HISTORY: (studentId: string, topicId: string) => `/mastery/students/${studentId}/topics/${topicId}/history`,

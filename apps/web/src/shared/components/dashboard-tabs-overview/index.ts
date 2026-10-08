@@ -4,6 +4,7 @@ export { SystemAdminDashboardTabs } from "./SystemAdminDashboardTabs";
 export { DashboardTabsNav } from "./DashboardTabsNav";
 export { DashboardMetricCard } from "./DashboardMetricCard";
 export { DashboardDonutCard } from "./DashboardDonutCard";
+export { StudentProgressOverviewSection } from "./StudentProgressOverviewSection";
 export * from "./types";
 export * from "./tabs";
 export * from "./tabs/student";
