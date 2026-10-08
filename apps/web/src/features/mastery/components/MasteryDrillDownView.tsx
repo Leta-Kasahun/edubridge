@@ -29,8 +29,8 @@ type DrillStep = "units" | "topics" | "objectives" | "students" | "evidence";
 const STANDING_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "ALL", label: "All Levels" },
   { value: "MASTERED", label: "Mastered" },
-  { value: "PROFICIENT", label: "Proficient" },
-  { value: "DEVELOPING", label: "Developing" },
+  { value: "PROFICIENT", label: "Doing Well" },
+  { value: "DEVELOPING", label: "Needs Practice" },
   { value: "NOT_STARTED", label: "Not Started" },
 ];
 
@@ -513,13 +513,13 @@ export function MasteryDrillDownView({
                     </div>
                     <div>
                       <span className="text-[10px] text-blue-600 dark:text-blue-400 block font-medium">
-                        Proficient
+                        Doing Well
                       </span>
                       <span className="font-bold text-foreground">{proficient}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-medium">
-                        Developing
+                        Needs Practice
                       </span>
                       <span className="font-bold text-foreground">{developing}</span>
                     </div>
