@@ -8,7 +8,7 @@ import {
   Award,
   Calendar,
   BookOpen,
-  BookMarked,
+  BookCopy,
   Users,
   FolderArchive,
   CheckSquare,
@@ -49,9 +49,9 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Materials",
+    label: "Resources",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
-    icon: BookMarked,
+    icon: BookCopy,
   },
   {
     label: "Settings",
@@ -95,9 +95,9 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     ],
   },
   {
-    label: "Learning Materials",
+    label: "Resources",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
-    icon: BookMarked,
+    icon: BookCopy,
   },
   {
     label: "Question Banks",
@@ -188,9 +188,9 @@ export const TEACHER_NAVIGATION_TREE: readonly NavNode[] = [
     icon: TrendingUp,
   },
   {
-    label: "Learning Materials",
+    label: "Resources",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
-    icon: BookMarked,
+    icon: BookCopy,
   },
   {
     label: "Curriculum",
@@ -236,14 +236,14 @@ export const STUDENT_NAVIGATION_TREE: readonly NavNode[] = [
     icon: TrendingUp,
   },
   {
-    label: "Saved Questions",
+    label: "Saved List",
     href: ROUTES.STUDENT.BOOKMARKS,
     icon: Bookmark,
   },
   {
-    label: "Learning Materials",
+    label: "My Resources",
     href: ROUTES.STUDENT.MATERIALS,
-    icon: BookMarked,
+    icon: BookCopy,
   },
   {
     label: "My Profile",
