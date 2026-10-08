@@ -275,6 +275,7 @@ export function StudentAssessmentRunnerView({
         <main className="lg:col-span-8 xl:col-span-9 space-y-5 sm:space-y-6 flex flex-col justify-between">
           {currentQuestion ? (
             <StudentAssessmentQuestionCard
+              key={currentQuestion.questionVersionId}
               assessmentId={session.assessmentId}
               question={currentQuestion}
               questionIndex={activeIdx}

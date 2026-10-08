@@ -18,6 +18,7 @@ import { registerNotificationDocs } from "../modules/notifications/notification.
 import { registerQuestionBankDocs } from "../modules/question-bank/question-bank.doc.js";
 import { registerMasteryDocs } from "../modules/mastery/mastery.doc.js";
 import { registerEvaluationDocs } from "../modules/evaluation/evaluation.doc.js";
+import { registerBookmarksDocs } from "../modules/bookmarks/index.js";
 
 export function registerAllModules(): void {
   registerAuthDocs();
@@ -40,5 +41,6 @@ export function registerAllModules(): void {
   registerQuestionBankDocs();
   registerMasteryDocs();
   registerEvaluationDocs();
+  registerBookmarksDocs();
 }
 
