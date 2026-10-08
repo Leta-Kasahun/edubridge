@@ -207,4 +207,12 @@ export class AssessmentService {
     }
     return this.assessmentRepo.archive(tenantId, id);
   }
+
+  async unarchive(tenantId: string, id: string) {
+    const assessment = await this.assessmentRepo.findById(tenantId, id);
+    if (!assessment) {
+      throw new NotFoundError("Assessment not found");
+    }
+    return this.assessmentRepo.unarchive(tenantId, id);
+  }
 }

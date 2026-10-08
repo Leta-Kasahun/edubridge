@@ -425,4 +425,11 @@ export class AssessmentRepository {
       data: { status: "ARCHIVED" },
     });
   }
+
+  async unarchive(tenantId: string, id: string): Promise<Assessment> {
+    return prisma.assessment.update({
+      where: { id, tenantId },
+      data: { status: "DRAFT" },
+    });
+  }
 }

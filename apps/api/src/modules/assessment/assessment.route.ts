@@ -70,6 +70,12 @@ router.post(
   assessmentController.publish
 );
 
+router.post(
+  "/:id/unarchive",
+  requireRoles("SCHOOL_ADMIN", "TEACHER"),
+  assessmentController.unarchive
+);
+
 router.delete(
   "/:id",
   requireRoles("SCHOOL_ADMIN", "TEACHER"),

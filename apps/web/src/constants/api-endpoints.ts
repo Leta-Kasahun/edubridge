@@ -207,6 +207,7 @@ export const API_ENDPOINTS = {
     QUESTIONS: (id: string) => `/assessments/${id}/questions`,
     ASSIGN: (id: string) => `/assessments/${id}/assign`,
     PUBLISH: (id: string) => `/assessments/${id}/publish`,
+    UNARCHIVE: (id: string) => `/assessments/${id}/unarchive`,
     ATTEMPTS: (id: string) => `/assessments/${id}/attempts`,
     START_ATTEMPT: (id: string) => `/assessments/${id}/attempts/start`,
     SAVE_ANSWER: (id: string, attemptId: string) => `/assessments/${id}/attempts/${attemptId}/answers`,

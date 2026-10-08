@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Layers,
   Settings2,
+  RotateCcw,
 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { AssessmentItem } from "../types/assessment.types";
@@ -22,6 +23,7 @@ export interface AssessmentRowActionsProps {
   readonly onManageQuestions?: (assessment: AssessmentItem) => void;
   readonly onAssign: (assessment: AssessmentItem) => void;
   readonly onPublish?: (assessment: AssessmentItem) => void;
+  readonly onUnarchive?: (assessment: AssessmentItem) => void;
   readonly onViewResults?: (assessment: AssessmentItem) => void;
   readonly onEdit: (assessment: AssessmentItem) => void;
   readonly onDelete: (assessment: AssessmentItem) => void;
@@ -33,6 +35,7 @@ export function AssessmentRowActions({
   onManageQuestions,
   onAssign,
   onPublish,
+  onUnarchive,
   onEdit,
   onDelete,
   isBusy = false,
@@ -184,7 +187,7 @@ export function AssessmentRowActions({
               <span>Assign to Sections</span>
             </button>
 
-            {assessment.status === "DRAFT" && onPublish && (
+            {(assessment.status === "DRAFT" || assessment.status === "ARCHIVED") && onPublish && (
               <button
                 type="button"
                 onClick={() => {
@@ -194,7 +197,21 @@ export function AssessmentRowActions({
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
               >
                 <Send size={14} className="shrink-0" />
-                <span>Publish Assessment</span>
+                <span>{assessment.status === "ARCHIVED" ? "Publish Again" : "Publish Assessment"}</span>
+              </button>
+            )}
+
+            {assessment.status === "ARCHIVED" && onUnarchive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onUnarchive(assessment);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <RotateCcw size={14} className="text-primary shrink-0" />
+                <span>Restore to Draft</span>
               </button>
             )}
 
@@ -212,17 +229,19 @@ export function AssessmentRowActions({
               <span>Edit Settings</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onDelete(assessment);
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
-            >
-              <Trash2 size={14} className="shrink-0" />
-              <span>Archive Assessment</span>
-            </button>
+            {assessment.status !== "ARCHIVED" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onDelete(assessment);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer text-left whitespace-nowrap font-medium"
+              >
+                <Trash2 size={14} className="shrink-0" />
+                <span>Archive Assessment</span>
+              </button>
+            )}
           </div>,
           document.body
         )}

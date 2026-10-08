@@ -132,6 +132,20 @@ export function useArchiveAssessment() {
   });
 }
 
+export function useUnarchiveAssessment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => assessmentService.unarchiveAssessment(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ASSESSMENT_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({
+        queryKey: ASSESSMENT_QUERY_KEYS.detail(data.id),
+      });
+    },
+  });
+}
+
 export function useStudentInProgressAssessments(limit: number = 6) {
   return useQuery({
     queryKey: [...ASSESSMENT_QUERY_KEYS.studentInProgress(), limit],
