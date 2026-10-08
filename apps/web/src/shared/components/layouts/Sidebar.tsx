@@ -6,7 +6,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   PanelLeftClose,
   PanelLeftOpen,
-  ChevronDown,
   ChevronRight,
   X,
 } from "lucide-react";
@@ -87,57 +86,65 @@ function NavTreeItem({
     }
   };
 
+  const isCollapsedDesktop = collapsed && !mobileOpen;
+
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0.5 relative group">
       <div className="flex items-center">
         <Link
           href={node.href}
           onClick={(e) => {
-            if (hasChildren) {
+            if (hasChildren && !isCollapsedDesktop) {
               toggleOpen(e);
-            } else {
+            } else if (!hasChildren) {
               onNavigate();
             }
           }}
-          title={collapsed ? node.label : undefined}
           className={cn(
-            "flex-1 flex items-center gap-2.5 rounded-lg text-xs font-medium transition-colors duration-150 group relative cursor-pointer",
+            "flex-1 flex items-center gap-2.5 rounded-lg text-xs font-medium cursor-pointer relative",
+            "transition-all duration-200",
             depth === 0 ? "px-2.5 py-2" : depth === 1 ? "pl-8 pr-2.5 py-1.5" : "pl-11 pr-2 py-1.5",
-            collapsed && !mobileOpen ? "justify-center px-1.5" : "",
+            isCollapsedDesktop ? "justify-center px-1.5" : "",
+            // Vertical accent bar on the left edge
+            "before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:rounded-r-full before:transition-all before:duration-200",
             isActive
-              ? "bg-[#0C4A6E] text-[#38BDF8] font-semibold"
+              ? "bg-[#0C4A6E] text-[#38BDF8] font-semibold before:opacity-100 before:bg-[#38BDF8] before:h-5 shadow-xs"
               : isChildActive
-                ? "text-white font-medium bg-[#1E293B]/50 hover:bg-[#1E293B]/80"
-                : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white"
+                ? "text-white font-medium bg-[#1E293B]/60 hover:bg-[#1E293B] hover:tracking-wide before:opacity-80 before:bg-[#38BDF8]/70 before:h-4"
+                : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white hover:tracking-wide before:opacity-0 before:bg-[#38BDF8] hover:before:opacity-100 hover:before:h-4"
           )}
         >
           {Icon ? (
             <Icon
               size={18}
               className={cn(
-                "shrink-0 transition-colors",
-                isActive || isChildActive ? "text-[#38BDF8]" : "text-[#94A3B8] group-hover:text-white"
+                "shrink-0 transition-colors duration-200",
+                isActive || isChildActive
+                  ? "text-[#38BDF8]"
+                  : "text-[#94A3B8] group-hover:text-white"
               )}
             />
           ) : (
             <span
               className={cn(
-                "h-1.5 w-1.5 rounded-full shrink-0",
+                "h-1.5 w-1.5 rounded-full shrink-0 transition-colors duration-200",
                 isActive ? "bg-[#38BDF8]" : "bg-[#94A3B8]/60 group-hover:bg-white"
               )}
             />
           )}
 
-          {(!collapsed || mobileOpen) && (
-            <span className="truncate flex-1">{node.label}</span>
+          {!isCollapsedDesktop && (
+            <span className="truncate flex-1 tracking-normal transition-[letter-spacing] duration-200">
+              {node.label}
+            </span>
           )}
 
-          {(!collapsed || mobileOpen) && node.badge && (
+          {!isCollapsedDesktop && node.badge && (
             <span
               className={cn(
-                "px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                "px-1.5 py-0.5 text-[10px] font-semibold rounded-full shrink-0 transition-colors",
                 isActive
-                  ? "bg-[#0284C7]/20 text-[#38BDF8]"
+                  ? "bg-[#0284C7]/20 text-[#38BDF8] border border-[#0284C7]/30"
                   : "bg-[#1E293B] text-[#94A3B8] group-hover:text-white"
               )}
             >
@@ -146,7 +153,7 @@ function NavTreeItem({
           )}
         </Link>
 
-        {hasChildren && (!collapsed || mobileOpen) && (
+        {hasChildren && !isCollapsedDesktop && (
           <button
             type="button"
             onClick={toggleOpen}
@@ -158,12 +165,19 @@ function NavTreeItem({
             )}
             aria-label={isOpen ? "Collapse submenu" : "Expand submenu"}
           >
-            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <ChevronRight
+              size={14}
+              className={cn(
+                "transition-transform duration-200",
+                isOpen && "rotate-90 text-[#38BDF8]"
+              )}
+            />
           </button>
         )}
       </div>
 
-      {hasChildren && isOpen && (!collapsed || mobileOpen) && (
+      {/* Expanded Submenu Tree */}
+      {hasChildren && isOpen && !isCollapsedDesktop && (
         <div className="space-y-0.5 relative before:absolute before:left-4 before:top-1 before:bottom-1 before:w-px before:bg-[#1E293B]">
           {node.children?.map((child, childIdx) => (
             <NavTreeItem
@@ -175,6 +189,75 @@ function NavTreeItem({
               onNavigate={onNavigate}
             />
           ))}
+        </div>
+      )}
+
+      {/* Collapsed State: Single Item Floating Tooltip */}
+      {!hasChildren && isCollapsedDesktop && depth === 0 && (
+        <div className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 opacity-0 group-hover:opacity-100 transition-all duration-150 transform translate-x-1 group-hover:translate-x-0 hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#0F172A] border border-[#1E293B] text-slate-100 text-xs font-semibold shadow-2xl whitespace-nowrap">
+          <span>{node.label}</span>
+          {node.badge && (
+            <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-[#0284C7]/20 text-[#38BDF8] font-bold border border-[#0284C7]/30">
+              {node.badge}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Collapsed State: Hover Submenu Flyout */}
+      {hasChildren && isCollapsedDesktop && depth === 0 && (
+        <div className="absolute left-full top-0 ml-2.5 z-50 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-all duration-200 transform translate-x-1 group-hover:translate-x-0 hidden lg:block w-52 rounded-xl bg-[#0F172A] border border-[#1E293B] p-1.5 shadow-2xl backdrop-blur-md before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']">
+          <div className="px-3 py-2 text-xs font-bold text-[#38BDF8] border-b border-[#1E293B] flex items-center gap-2">
+            {Icon && <Icon size={14} className="text-[#38BDF8] shrink-0" />}
+            <span className="truncate">{node.label}</span>
+          </div>
+
+          <div className="py-1 space-y-0.5">
+            {node.children?.map((child, childIdx) => {
+              const isSubActive =
+                child.href === fullPath ||
+                pathname === child.href ||
+                (child.href !== ROUTES.DASHBOARD && pathname.startsWith(child.href + "/"));
+              const SubIcon = child.icon;
+
+              return (
+                <Link
+                  key={`collapsed-flyout-${child.href}-${childIdx}`}
+                  href={child.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 relative group/flyout",
+                    isSubActive
+                      ? "bg-[#0C4A6E] text-[#38BDF8] font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-3.5 before:rounded-r-full before:bg-[#38BDF8]"
+                      : "text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white hover:tracking-wide"
+                  )}
+                >
+                  {SubIcon ? (
+                    <SubIcon
+                      size={14}
+                      className={cn(
+                        "shrink-0 transition-colors",
+                        isSubActive ? "text-[#38BDF8]" : "text-slate-400 group-hover/flyout:text-white"
+                      )}
+                    />
+                  ) : (
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full shrink-0",
+                        isSubActive ? "bg-[#38BDF8]" : "bg-slate-500 group-hover/flyout:bg-white"
+                      )}
+                    />
+                  )}
+                  <span className="truncate flex-1">{child.label}</span>
+                  {child.badge && (
+                    <span className="px-1.5 py-0.2 text-[9px] font-semibold rounded-full bg-[#0284C7]/20 text-[#38BDF8] border border-[#0284C7]/30">
+                      {child.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -230,13 +313,14 @@ export function Sidebar() {
             : "-translate-x-full lg:translate-x-0"
         )}
       >
+        {/* Sidebar Header */}
         <div
           className={cn(
             "flex h-16 items-center px-3.5 border-b border-[#1E293B]",
             sidebarCollapsed ? "lg:justify-center" : "justify-between"
           )}
         >
-          {(!sidebarCollapsed || sidebarMobileOpen) ? (
+          {!sidebarCollapsed || sidebarMobileOpen ? (
             <>
               <Link
                 href={ROUTES.HOME}
@@ -302,6 +386,7 @@ export function Sidebar() {
           )}
         </div>
 
+        {/* School / Tenant Badge Header */}
         {(!sidebarCollapsed || sidebarMobileOpen) && (
           <div className="px-3.5 py-3 border-b border-[#1E293B]">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#1E293B]/70 to-[#0F172A]/90 border border-[#1E293B] shadow-2xs space-y-1">
@@ -320,7 +405,15 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
+        {/* Navigation Items List */}
+        <div
+          className={cn(
+            "flex-1 px-2.5 py-3 space-y-1 scrollbar-thin",
+            sidebarCollapsed && !sidebarMobileOpen
+              ? "overflow-y-auto lg:overflow-visible"
+              : "overflow-y-auto"
+          )}
+        >
           {navTree.map((node, nodeIdx) => (
             <NavTreeItem
               key={`${node.href}-${node.label}-${nodeIdx}`}
