@@ -7,6 +7,7 @@ import { ContentTypeBadge } from "./ContentTypeBadge";
 import { ContentStatusBadge } from "./ContentStatusBadge";
 import { ContentRowActions } from "./ContentTable";
 import { getContentIcon } from "../../utils/content-format.util";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 
 export interface SubjectAccordionGroup {
   readonly id: string;
@@ -87,7 +88,7 @@ export function ContentSubjectAccordion({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                {subject.name}
+                <SearchHighlight text={subject.name} />
               </h3>
               {subject.code && (
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border uppercase">
@@ -184,11 +185,11 @@ export function ContentSubjectAccordion({
                                 )}
                             </div>
                             <h4 className="text-xs font-bold text-foreground truncate">
-                              {item.title}
+                              <SearchHighlight text={item.title} />
                             </h4>
                             {item.description && (
                               <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                                {item.description}
+                                <SearchHighlight text={item.description} />
                               </p>
                             )}
                           </div>
@@ -266,7 +267,7 @@ export function ContentSubjectAccordion({
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="font-semibold text-foreground text-xs truncate">
-                                    {item.title}
+                                    <SearchHighlight text={item.title} />
                                   </span>
                                   <span className="font-mono text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0">
                                     v{item.currentVersion}
@@ -280,7 +281,7 @@ export function ContentSubjectAccordion({
                                 </div>
                                 {item.description && (
                                   <div className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                                    {item.description}
+                                    <SearchHighlight text={item.description} />
                                   </div>
                                 )}
                               </div>

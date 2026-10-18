@@ -51,7 +51,9 @@ import {
   LoadingSpinner,
   ErrorAlert,
   ConfirmDeleteModal,
+  SearchQueryProvider,
 } from "@/shared/components";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
@@ -88,6 +90,21 @@ export function ContentListView() {
     page: 1,
     limit: 50,
   });
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    setFilters((prev) => {
+      const nextSearch = debouncedSearch.trim() || undefined;
+      if (prev.search === nextSearch) return prev;
+      return {
+        ...prev,
+        search: nextSearch,
+        page: 1,
+      };
+    });
+  }, [debouncedSearch]);
 
   const [selectedGradeId, setSelectedGradeId] = useState<string>("ALL");
   const [selectedAcademicYearId, setSelectedAcademicYearId] =
@@ -180,15 +197,27 @@ export function ContentListView() {
   }, [grades, selectedGradeId]);
 
   const filteredByGradeItems = useMemo(() => {
-    if (!activeGrade) return items;
-    return items.filter(
-      (item) =>
-        item.gradeId === activeGrade.id ||
-        item.gradeLevel === activeGrade.level ||
-        (item.targetGradeLevels &&
-          item.targetGradeLevels.includes(activeGrade.level))
-    );
-  }, [items, activeGrade]);
+    let list = items;
+    if (activeGrade) {
+      list = list.filter(
+        (item) =>
+          item.gradeId === activeGrade.id ||
+          item.gradeLevel === activeGrade.level ||
+          (item.targetGradeLevels &&
+            item.targetGradeLevels.includes(activeGrade.level))
+      );
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          (item.description && item.description.toLowerCase().includes(q)) ||
+          (item.subjectName && item.subjectName.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [items, activeGrade, search]);
 
   const subjectGroups: readonly SubjectAccordionGroup[] = useMemo(() => {
     const map = new Map<string, LearningContentListItem[]>();
@@ -291,12 +320,8 @@ export function ContentListView() {
     setTimeout(() => setCopiedPath(false), 2000);
   };
 
-  const handleSearchChange = (search: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: search || undefined,
-      page: 1,
-    }));
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
   };
 
   const handleTypeSelect = (typeVal: string) => {
@@ -507,24 +532,6 @@ export function ContentListView() {
     return list;
   }, [academicYears, selectedAcademicYearId, filters.type, filters.status]);
 
-  if (isLoading) {
-    return (
-      <div className="py-20 flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert
-          message={getErrorMessage(error, "Failed to load learning materials.")}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
       <div className="bg-card rounded-xl border border-border px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs shadow-2xs">
@@ -555,9 +562,9 @@ export function ContentListView() {
         </div>
       </div>
 
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
+          searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search materials..."
           filters={filterGroups}
@@ -565,7 +572,7 @@ export function ContentListView() {
             <button
               type="button"
               onClick={handleOpenAdd}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
               <span>New Material</span>
@@ -641,7 +648,17 @@ export function ContentListView() {
         </div>
       )}
 
-      {subjectGroups.length === 0 ? (
+      {isLoading && !data ? (
+        <div className="py-20 flex items-center justify-center bg-card rounded-none border border-border">
+          <LoadingSpinner />
+        </div>
+      ) : error ? (
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <ErrorAlert
+            message={getErrorMessage(error, "Failed to load learning materials.")}
+          />
+        </div>
+      ) : subjectGroups.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <Folder size={20} />
@@ -664,29 +681,31 @@ export function ContentListView() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {subjectGroups.map((subject) => (
-            <ContentSubjectAccordion
-              key={subject.id}
-              subject={subject}
-              isOpen={openSubjectIds.has(subject.id)}
-              onToggle={() => handleToggleSubject(subject.id)}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-              onViewDetail={(item) => setDetailItem(item)}
-              onEdit={handleOpenEdit}
-              onOpenUpload={(item) => setUploadTargetItem(item)}
-              onSaveNewVersion={handleOpenNewVersion}
-              onSubmitForReview={(item) => submitMutation.mutate(item.id)}
-              onApprove={(item) => approveMutation.mutate(item.id)}
-              onPublish={(item) => publishMutation.mutate(item.id)}
-              onArchive={(item) => archiveMutation.mutate(item.id)}
-              onActivate={(item) => activateMutation.mutate(item.id)}
-              onDelete={handleDelete}
-              onAddMaterial={handleOpenAddForSubject}
-            />
-          ))}
-        </div>
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
+            {subjectGroups.map((subject) => (
+              <ContentSubjectAccordion
+                key={subject.id}
+                subject={subject}
+                isOpen={openSubjectIds.has(subject.id)}
+                onToggle={() => handleToggleSubject(subject.id)}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+                onViewDetail={(item) => setDetailItem(item)}
+                onEdit={handleOpenEdit}
+                onOpenUpload={(item) => setUploadTargetItem(item)}
+                onSaveNewVersion={handleOpenNewVersion}
+                onSubmitForReview={(item) => submitMutation.mutate(item.id)}
+                onApprove={(item) => approveMutation.mutate(item.id)}
+                onPublish={(item) => publishMutation.mutate(item.id)}
+                onArchive={(item) => archiveMutation.mutate(item.id)}
+                onActivate={(item) => activateMutation.mutate(item.id)}
+                onDelete={handleDelete}
+                onAddMaterial={handleOpenAddForSubject}
+              />
+            ))}
+          </div>
+        </SearchQueryProvider>
       )}
 
       {pagination && pagination.totalPages > 1 && (
