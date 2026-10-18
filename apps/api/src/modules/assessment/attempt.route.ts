@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AttemptController } from "./controllers/attempt.controller.js";
 import { authenticate } from "../../middleware/auth.js";
+import { requireIdempotency } from "../../middleware/idempotency.js";
 import { requireRoles } from "../../middleware/rbac.js";
 import { validate } from "../../middleware/validate.js";
 import {
@@ -15,6 +16,7 @@ const router: Router = Router();
 const attemptController = new AttemptController();
 
 router.use(authenticate);
+router.use(requireIdempotency);
 
 router.get(
   "/student/in-progress",
