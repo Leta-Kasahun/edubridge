@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Calendar, GraduationCap, BookOpen, Shield } from "lucide-react";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getErrorMessage } from "@/shared/utils";
 import { useTeacherAssignments } from "../hooks/useTeacherAssignments";
 import { useAcademicYears } from "@/features/academic/academic-years";
@@ -23,6 +24,21 @@ import { TeacherAssignmentRoleType } from "@/shared/constants/teacher-assignment
 
 export function TeacherAssignmentsView() {
   const [filters, setFilters] = useState<TeacherAssignmentFilters>({});
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    setFilters((prev) => {
+      const nextSearch = debouncedSearch.trim() || undefined;
+      if (prev.search === nextSearch) return prev;
+      return {
+        ...prev,
+        search: nextSearch,
+        page: 1,
+      };
+    });
+  }, [debouncedSearch]);
+
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [reassignAssignment, setReassignAssignment] = useState<TeacherAssignmentListItem | null>(null);
   const [endAssignment, setEndAssignment] = useState<TeacherAssignmentListItem | null>(null);
@@ -36,55 +52,65 @@ export function TeacherAssignmentsView() {
     return years.find((y) => y.status === "ACTIVE") || years[0] || null;
   }, [years]);
 
-  useEffect(() => {
-    if (activeYear?.id && !filters.academicYearId) {
-      setFilters((prev) => ({
-        ...prev,
-        academicYearId: activeYear.id,
-      }));
-    }
-  }, [activeYear, filters.academicYearId]);
+  const effectiveAcademicYearId = filters.academicYearId || activeYear?.id || "";
 
   const { data: sections = [] } = useSections({
-    academicYearId: filters.academicYearId,
+    academicYearId: effectiveAcademicYearId || undefined,
     gradeId: filters.gradeId,
   });
 
   const { data: subjects = [] } = useSubjects();
 
+  const queryFilters = useMemo(
+    () => ({
+      ...filters,
+      academicYearId: effectiveAcademicYearId || undefined,
+    }),
+    [filters, effectiveAcademicYearId]
+  );
+
   const {
     data: assignmentsResponse,
     isLoading: isLoadingAssignments,
     error: assignmentsError,
-  } = useTeacherAssignments(filters);
+  } = useTeacherAssignments(queryFilters);
 
   const assignments = assignmentsResponse?.items || [];
   const pagination = assignmentsResponse?.pagination;
 
+  const filteredAssignments = useMemo(() => {
+    if (!search.trim()) return assignments;
+    const q = search.trim().toLowerCase();
+    return assignments.filter(
+      (a) =>
+        a.teacherName.toLowerCase().includes(q) ||
+        (a.employeeCode && a.employeeCode.toLowerCase().includes(q)) ||
+        (a.subjectName && a.subjectName.toLowerCase().includes(q)) ||
+        (a.sectionName && a.sectionName.toLowerCase().includes(q))
+    );
+  }, [assignments, search]);
+
   const handleSearchChange = (val: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: val || undefined,
-      page: 1,
-    }));
+    setSearch(val);
   };
 
   const filterGroups: FilterGroup[] = [
     {
       id: "academicYear",
-      label: "Year",
+      label: "Academic Year",
       icon: Calendar,
-      selectedValue: filters.academicYearId || "",
+      selectedValue: filters.academicYearId || "ALL",
       options: [
+        { label: "All", value: "ALL" },
         ...years.map((y) => ({
-          label: y.name,
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
           value: y.id,
         })),
       ],
       onSelect: (val) => {
         setFilters((prev) => ({
           ...prev,
-          academicYearId: val,
+          academicYearId: val === "ALL" ? "" : val,
           page: 1,
         }));
       },
@@ -174,9 +200,9 @@ export function TeacherAssignmentsView() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
+          searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search by teacher, code, section, or subject..."
           filters={filterGroups}
@@ -184,7 +210,7 @@ export function TeacherAssignmentsView() {
             <button
               type="button"
               onClick={() => setIsAssignModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap w-full sm:w-auto"
             >
               <Plus size={14} />
               <span>Assign Teacher</span>
@@ -195,25 +221,27 @@ export function TeacherAssignmentsView() {
 
       {assignmentsError ? (
         <ErrorAlert message={getErrorMessage(assignmentsError, "Failed to load teacher assignments.")} />
-      ) : isLoadingAssignments ? (
-        <div className="min-h-[300px] flex items-center justify-center p-8">
+      ) : isLoadingAssignments && assignments.length === 0 ? (
+        <div className="min-h-[300px] flex items-center justify-center p-8 bg-card rounded-none border border-border">
           <LoadingSpinner size={28} />
         </div>
       ) : (
-        <TeacherAssignmentsTable
-          items={assignments}
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onLimitChange={handleLimitChange}
-          onReassign={(assignment) => setReassignAssignment(assignment)}
-          onEndAssignment={(assignment) => setEndAssignment(assignment)}
-          onViewLoad={(assignment) =>
-            setLoadTeacher({
-              id: assignment.teacherId,
-              name: assignment.teacherName,
-            })
-          }
-        />
+        <SearchQueryProvider query={search}>
+          <TeacherAssignmentsTable
+            items={filteredAssignments}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+            onReassign={(assignment) => setReassignAssignment(assignment)}
+            onEndAssignment={(assignment) => setEndAssignment(assignment)}
+            onViewLoad={(assignment) =>
+              setLoadTeacher({
+                id: assignment.teacherId,
+                name: assignment.teacherName,
+              })
+            }
+          />
+        </SearchQueryProvider>
       )}
 
       {/* Modals */}

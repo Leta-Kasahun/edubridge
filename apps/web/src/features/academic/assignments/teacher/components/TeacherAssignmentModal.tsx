@@ -229,10 +229,10 @@ export function TeacherAssignmentModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg sm:max-w-xl rounded-2xl bg-card border border-border p-3.5 sm:p-6 shadow-2xl z-10 max-h-[94vh] flex flex-col my-auto min-w-0">
+      <div className="relative w-full max-w-lg sm:max-w-xl rounded-none bg-card border border-border p-3.5 sm:p-6 shadow-2xl z-10 max-h-[94vh] flex flex-col my-auto min-w-0">
         <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <UserCheck size={18} className="sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
@@ -245,7 +245,7 @@ export function TeacherAssignmentModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="p-1.5 text-muted-foreground hover:text-foreground rounded-none hover:bg-muted transition-colors cursor-pointer shrink-0"
           >
             <X size={16} className="sm:w-4 sm:h-4" />
           </button>
@@ -288,7 +288,7 @@ export function TeacherAssignmentModal({
               <button
                 type="button"
                 onClick={() => setRole("SUBJECT_TEACHER")}
-                className={`h-9 sm:h-10 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`h-9 sm:h-10 rounded-none border text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   role === "SUBJECT_TEACHER"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
                     : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -303,7 +303,7 @@ export function TeacherAssignmentModal({
                   setRole("HOMEROOM_TEACHER");
                   setSubjectId("");
                 }}
-                className={`h-9 sm:h-10 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`h-9 sm:h-10 rounded-none border text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   role === "HOMEROOM_TEACHER"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
                     : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -335,7 +335,7 @@ export function TeacherAssignmentModal({
                 Class Sections <span className="text-destructive">*</span>
               </label>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-none bg-primary/10 text-primary">
                   {selectedSectionIds.length} selected
                 </span>
                 {sections.length > 0 && (
@@ -361,11 +361,11 @@ export function TeacherAssignmentModal({
             </div>
 
             {sections.length === 0 ? (
-              <div className="p-3 sm:p-4 rounded-xl bg-muted/30 border border-border text-center text-xs text-muted-foreground">
+              <div className="p-3 sm:p-4 rounded-none bg-muted/30 border border-border text-center text-xs text-muted-foreground">
                 No sections available for the selected academic year.
               </div>
             ) : (
-              <div className="space-y-3 max-h-52 sm:max-h-56 overflow-y-auto p-2 sm:p-2.5 rounded-xl bg-muted/20 border border-border">
+              <div className="space-y-3 max-h-52 sm:max-h-56 overflow-y-auto p-2 sm:p-2.5 rounded-none bg-muted/20 border border-border">
                 {groupedSections.map((group) => {
                   const gradeSectionIds = group.sections.map((s) => s.id);
                   const allInGradeSelected = gradeSectionIds.every((id) => selectedSectionIds.includes(id));
@@ -401,7 +401,7 @@ export function TeacherAssignmentModal({
                               key={sec.id}
                               type="button"
                               onClick={() => toggleSection(sec.id)}
-                              className={`p-2 rounded-lg border text-left transition-all flex items-center justify-between cursor-pointer min-h-[38px] min-w-0 ${
+                              className={`p-2 rounded-none border text-left transition-all flex items-center justify-between cursor-pointer min-h-[38px] min-w-0 ${
                                 isSelected
                                   ? "bg-primary/10 border-primary text-primary font-medium ring-1 ring-primary"
                                   : "bg-background border-border text-foreground hover:border-muted-foreground/40 hover:bg-muted/50"
@@ -412,7 +412,7 @@ export function TeacherAssignmentModal({
                                 <p className="text-[10px] opacity-70 truncate">{sec.code}</p>
                               </div>
                               <div
-                                className={`h-4 w-4 rounded shrink-0 flex items-center justify-center transition-colors ${
+                                className={`h-4 w-4 rounded-none shrink-0 flex items-center justify-center transition-colors ${
                                   isSelected
                                     ? "bg-primary text-primary-foreground"
                                     : "border border-border bg-background"
@@ -435,7 +435,7 @@ export function TeacherAssignmentModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 h-9 sm:h-10 rounded-xl text-xs sm:text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
+              className="w-full sm:w-auto px-4 h-9 sm:h-10 rounded-none text-xs sm:text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
