@@ -15,7 +15,7 @@ import {
   CurriculumItem,
   CurriculumStatus,
 } from "../types/curriculum.types";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, SearchHighlight } from "@/shared/components";
 
 interface CurriculaTableProps {
   readonly items: readonly CurriculumItem[];
@@ -281,16 +281,16 @@ export function CurriculaTable({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                   <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-muted text-foreground border border-border">
-                    {item.code}
+                    <SearchHighlight text={item.code} />
                   </span>
                   <StatusBadge status={item.status} />
                 </div>
                 <h4 className="text-sm font-bold text-foreground truncate">
-                  {item.name}
+                  <SearchHighlight text={item.name} />
                 </h4>
                 {item.description && (
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {item.description}
+                    <SearchHighlight text={item.description} />
                   </p>
                 )}
               </div>
@@ -309,7 +309,7 @@ export function CurriculaTable({
               <span>
                 {item.activeVersionName || (item.versionNames && item.versionNames[0]) || `${item.versionCount} versions`}
               </span>
-              <span>{item.authorityName || "—"}</span>
+              <span>{item.authorityName ? <SearchHighlight text={item.authorityName} /> : "—"}</span>
             </div>
           </div>
         ))}
@@ -336,16 +336,16 @@ export function CurriculaTable({
                 >
                   <td className="py-3.5 px-4 font-mono font-bold text-foreground">
                     <span className="px-2 py-1 rounded-md bg-muted border border-border">
-                      {item.code}
+                      <SearchHighlight text={item.code} />
                     </span>
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="font-semibold text-foreground text-xs">
-                      {item.name}
+                      <SearchHighlight text={item.name} />
                     </div>
                     {item.description && (
                       <div className="text-[11px] text-muted-foreground line-clamp-1 max-w-xs">
-                        {item.description}
+                        <SearchHighlight text={item.description} />
                       </div>
                     )}
                   </td>
@@ -353,7 +353,7 @@ export function CurriculaTable({
                     {item.activeVersionName || (item.versionNames && item.versionNames.length > 0 ? item.versionNames.join(", ") : "—")}
                   </td>
                   <td className="py-3.5 px-4 text-muted-foreground text-xs">
-                    {item.authorityName || "—"}
+                    {item.authorityName ? <SearchHighlight text={item.authorityName} /> : "—"}
                   </td>
                   <td className="py-3.5 px-4">
                     <StatusBadge status={item.status} />

@@ -22,19 +22,24 @@ import { CurriculaTable } from "./CurriculaTable";
 import { CurriculumFormModal } from "./CurriculumFormModal";
 import { CurriculumDetailModal } from "./CurriculumDetailModal";
 import { CurriculumVersionFormModal } from "./CurriculumVersionFormModal";
+import { useMemo } from "react";
 import {
   TableToolbar,
   FilterGroup,
   LoadingSpinner,
   ErrorAlert,
+  SearchQueryProvider,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export function CurriculaView() {
   const user = useAuthStore((s) => s.user);
   const isTeacher = user?.roles?.includes("TEACHER");
 
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [filters, setFilters] = useState<CurriculumFilters>({
     page: 1,
     limit: 10,
@@ -49,16 +54,24 @@ export function CurriculaView() {
   const [versionToEdit, setVersionToEdit] =
     useState<CurriculumVersionItem | null>(null);
 
-  const { data, isLoading, error, isFetching } = useCurricula(filters);
+  const queryFilters = useMemo(
+    () => ({
+      ...filters,
+      search: debouncedSearch.trim() || undefined,
+    }),
+    [filters, debouncedSearch]
+  );
+
+  const { data, isLoading, error, isFetching } = useCurricula(queryFilters);
   const changeStatusMutation = useChangeCurriculumStatus();
 
   const items = data?.data ?? [];
   const pagination = data?.pagination;
 
-  const handleSearchChange = (search: string) => {
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
     setFilters((prev) => ({
       ...prev,
-      search: search || undefined,
       page: 1,
     }));
   };
@@ -115,7 +128,7 @@ export function CurriculaView() {
   const filterGroups: readonly FilterGroup[] = [
     {
       id: "version",
-      label: "Versions",
+      label: "Version",
       selectedValue: filters.version || "ALL",
       onSelect: handleVersionSelect,
       icon: Layers,
@@ -141,27 +154,11 @@ export function CurriculaView() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={getErrorMessage(error, "Failed to load curricula.")} />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3.5 sm:space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
+          searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search curriculum name, code, or authority..."
           filters={filterGroups}
@@ -170,7 +167,7 @@ export function CurriculaView() {
               <button
                 type="button"
                 onClick={handleOpenAdd}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
               >
                 <Plus size={14} />
                 <span>Curriculum</span>
@@ -180,18 +177,30 @@ export function CurriculaView() {
         />
       </div>
 
-      <CurriculaTable
-        items={items}
-        onViewDetails={(item) => setDetailItem(item)}
-        onEdit={handleOpenEdit}
-        onAddVersion={handleOpenAddVersion}
-        onStatusChange={handleStatusChange}
-        isUpdatingStatus={changeStatusMutation.isPending}
-        isReadOnly={isTeacher}
-      />
+      {isLoading ? (
+        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
+          <LoadingSpinner size={32} />
+        </div>
+      ) : error ? (
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <ErrorAlert message={getErrorMessage(error, "Failed to load curricula.")} />
+        </div>
+      ) : (
+        <SearchQueryProvider query={search}>
+          <CurriculaTable
+            items={items}
+            onViewDetails={(item) => setDetailItem(item)}
+            onEdit={handleOpenEdit}
+            onAddVersion={handleOpenAddVersion}
+            onStatusChange={handleStatusChange}
+            isUpdatingStatus={changeStatusMutation.isPending}
+            isReadOnly={isTeacher}
+          />
+        </SearchQueryProvider>
+      )}
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="bg-card rounded-2xl border border-border p-3 sm:px-4 flex items-center justify-between text-xs text-muted-foreground shadow-xs">
+        <div className="bg-card rounded-none border border-border p-3 sm:px-4 flex items-center justify-between text-xs text-muted-foreground shadow-xs">
           <span>
             Page <strong className="text-foreground">{pagination.page}</strong> of{" "}
             <strong className="text-foreground">{pagination.totalPages}</strong> ({pagination.total} total)
@@ -206,7 +215,7 @@ export function CurriculaView() {
                 }))
               }
               disabled={pagination.page <= 1 || isFetching}
-              className="h-8 px-2.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1 font-medium"
+              className="h-8 px-2.5 rounded-none border border-border bg-card text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1 font-medium"
             >
               <ChevronLeft size={13} />
               <span>Previous</span>
@@ -226,7 +235,7 @@ export function CurriculaView() {
               disabled={
                 pagination.page >= pagination.totalPages || isFetching
               }
-              className="h-8 px-2.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1 font-medium"
+              className="h-8 px-2.5 rounded-none border border-border bg-card text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1 font-medium"
             >
               <span>Next</span>
               <ChevronRight size={13} />
