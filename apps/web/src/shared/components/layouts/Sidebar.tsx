@@ -134,7 +134,7 @@ function NavTreeItem({
           )}
 
           {!isCollapsedDesktop && (
-            <span className="truncate flex-1 tracking-normal transition-[letter-spacing] duration-200">
+            <span className="truncate flex-1 tracking-normal transition-transform duration-200 ease-out group-hover:translate-x-1.5">
               {node.label}
             </span>
           )}
@@ -248,7 +248,7 @@ function NavTreeItem({
                       )}
                     />
                   )}
-                  <span className="truncate flex-1">{child.label}</span>
+                  <span className="truncate flex-1 transition-transform duration-200 ease-out group-hover/flyout:translate-x-1.5">{child.label}</span>
                   {child.badge && (
                     <span className="px-1.5 py-0.2 text-[9px] font-semibold rounded-full bg-[#0284C7]/20 text-[#38BDF8] border border-[#0284C7]/30">
                       {child.badge}
