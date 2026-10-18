@@ -52,6 +52,9 @@ export const RedisKeys = {
     // Unread badge count cache
     unreadCount: (tenantId: string, userId: string) => `notif:unread:${tenantId}:${userId}`,
   },
+  idempotency: {
+    key: (tenantId: string, key: string) => `idempotency:${tenantId}:${key}`,
+  },
   patterns: {
     userPermissions: (tenantId: string) => `perm:user:${tenantId}:*`,
     userSessions: (userId: string) => `auth:user:${userId}:*`,
