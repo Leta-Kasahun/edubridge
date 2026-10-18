@@ -32,7 +32,7 @@ export function SubmitButton({
       size={size}
       disabled={disabled || isLoading}
       className={cn(
-        "rounded-xl font-semibold shadow-xs transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2",
+        "rounded-none font-semibold shadow-2xs border border-primary/20 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2",
         size === "sm"
           ? "w-auto h-9 text-xs px-4"
           : "w-full h-11 sm:h-12 text-sm sm:text-base",

@@ -71,7 +71,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
             ref={ref}
             type={inputType}
             className={cn(
-              "h-11 sm:h-12 w-full rounded-xl border border-input bg-background/50 px-3.5 text-sm font-normal shadow-xs transition-all duration-200 placeholder:text-muted-foreground/60 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20",
+              "h-11 sm:h-12 w-full rounded-none border border-input bg-background/50 px-3.5 text-sm font-normal shadow-xs transition-all duration-200 placeholder:text-muted-foreground/60 focus-visible:bg-background focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20",
               leftIcon && "pl-11",
               (rightIcon || isPassword) && "pr-11",
               error && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20",
@@ -86,7 +86,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
               onClick={() => setShowPassword((prev) => !prev)}
               tabIndex={-1}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3.5 h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 active:scale-95 transition-all cursor-pointer"
+              className="absolute right-3.5 h-8 w-8 inline-flex items-center justify-center rounded-none text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 active:scale-95 transition-all cursor-pointer"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>

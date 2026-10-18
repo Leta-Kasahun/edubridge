@@ -378,7 +378,7 @@ export function StudentAssessmentRunnerView({
             <button
               type="button"
               onClick={() => setIsConfirmModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all border border-primary/20 shadow-2xs cursor-pointer"
             >
               <Send size={13} />
               <span className="hidden sm:inline">Review & Submit</span>
@@ -424,7 +424,7 @@ export function StudentAssessmentRunnerView({
               type="button"
               onClick={() => setActiveIdx((prev) => Math.max(0, prev - 1))}
               disabled={activeIdx === 0}
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-none border border-border bg-card text-xs font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft size={16} />
               <span>Previous</span>
@@ -438,7 +438,7 @@ export function StudentAssessmentRunnerView({
               <button
                 type="button"
                 onClick={() => setActiveIdx((prev) => Math.min(totalCount - 1, prev + 1))}
-                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors border border-primary/20 cursor-pointer shadow-2xs"
               >
                 <span>Next</span>
                 <ChevronRight size={16} />
@@ -447,7 +447,7 @@ export function StudentAssessmentRunnerView({
               <button
                 type="button"
                 onClick={() => setIsConfirmModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-none bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors border border-emerald-600/20 cursor-pointer shadow-2xs"
               >
                 <span>Finish & Submit</span>
                 <Send size={14} />
