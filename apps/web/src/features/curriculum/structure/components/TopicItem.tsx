@@ -23,7 +23,7 @@ import {
 } from "../hooks/useStructure";
 import { ObjectiveItem } from "./ObjectiveItem";
 import { ObjectiveFormModal } from "./ObjectiveFormModal";
-import { LoadingSpinner, ConfirmDeleteModal } from "@/shared/components";
+import { LoadingSpinner, ConfirmDeleteModal, SearchHighlight } from "@/shared/components";
 
 interface TopicItemProps {
   readonly topic: CurriculumTopicItem;
@@ -90,7 +90,7 @@ export function TopicItem({
   };
 
   return (
-    <div className="rounded-xl border border-border/80 bg-background/60 overflow-hidden transition-all">
+    <div className="rounded-none border border-border/80 bg-background/60 overflow-hidden transition-all">
       <div className="flex items-center justify-between gap-2 p-2.5 sm:p-3 hover:bg-muted/30 transition-colors">
         <button
           type="button"
@@ -100,18 +100,18 @@ export function TopicItem({
           <div className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </div>
-          <div className="h-7 w-7 rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
+          <div className="h-7 w-7 rounded-none bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
             <FolderGit2 size={14} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-sm bg-muted text-foreground uppercase tracking-wider">
-                {topic.code}
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-none bg-muted text-foreground uppercase tracking-wider">
+                <SearchHighlight text={topic.code} />
               </span>
               <span className="text-xs font-semibold text-foreground truncate">
-                {topic.title}
+                <SearchHighlight text={topic.title} />
               </span>
-              <span className="text-[10px] font-medium px-1.5 py-0.2 rounded-full bg-muted/80 text-muted-foreground">
+              <span className="text-[10px] font-medium px-1.5 py-0.2 rounded-none bg-muted/80 text-muted-foreground">
                 {objectives.length || topic.objectiveCount} objectives
               </span>
             </div>
@@ -125,7 +125,7 @@ export function TopicItem({
               onClick={() => onMoveUp(topic)}
               disabled={isFirst}
               title="Move topic up"
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ArrowUp size={13} />
             </button>
@@ -134,7 +134,7 @@ export function TopicItem({
               onClick={() => onMoveDown(topic)}
               disabled={isLast}
               title="Move topic down"
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ArrowDown size={13} />
             </button>
@@ -145,7 +145,7 @@ export function TopicItem({
                 setIsAddObjectiveOpen(true);
               }}
               title="Add learning objective"
-              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-none text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
             >
               <Plus size={12} />
               <span>Objective</span>
@@ -154,7 +154,7 @@ export function TopicItem({
               type="button"
               onClick={() => onEdit(topic)}
               title="Edit topic"
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-1 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <Edit2 size={13} />
             </button>
@@ -162,7 +162,7 @@ export function TopicItem({
               type="button"
               onClick={() => onDelete(topic)}
               title="Delete topic"
-              className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="p-1 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
               <Trash2 size={13} />
             </button>

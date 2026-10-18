@@ -23,7 +23,7 @@ import {
 } from "../hooks/useStructure";
 import { TopicItem } from "./TopicItem";
 import { TopicFormModal } from "./TopicFormModal";
-import { LoadingSpinner, ConfirmDeleteModal } from "@/shared/components";
+import { LoadingSpinner, ConfirmDeleteModal, SearchHighlight } from "@/shared/components";
 
 interface UnitItemProps {
   readonly unit: CurriculumUnitItem;
@@ -90,7 +90,7 @@ export function UnitItem({
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden transition-all">
+    <div className="rounded-none border border-border bg-card shadow-xs overflow-hidden transition-all">
       <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4 hover:bg-muted/20 transition-colors">
         <button
           type="button"
@@ -100,24 +100,24 @@ export function UnitItem({
           <div className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </div>
-          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Layers size={18} />
           </div>
           <div className="min-w-0 flex-1 space-y-0.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-muted text-foreground uppercase tracking-wider">
-                {unit.code}
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-muted text-foreground uppercase tracking-wider">
+                <SearchHighlight text={unit.code} />
               </span>
               <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                {unit.title}
+                <SearchHighlight text={unit.title} />
               </h3>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-none bg-primary/10 text-primary">
                 {topics.length || unit.topicCount} topics
               </span>
             </div>
             {unit.description && !isExpanded && (
               <p className="text-xs text-muted-foreground line-clamp-1 leading-normal">
-                {unit.description}
+                <SearchHighlight text={unit.description} />
               </p>
             )}
           </div>
@@ -130,7 +130,7 @@ export function UnitItem({
               onClick={() => onMoveUp(unit)}
               disabled={isFirst}
               title="Move unit up"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ArrowUp size={14} />
             </button>
@@ -139,7 +139,7 @@ export function UnitItem({
               onClick={() => onMoveDown(unit)}
               disabled={isLast}
               title="Move unit down"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
             >
               <ArrowDown size={14} />
             </button>
@@ -150,7 +150,7 @@ export function UnitItem({
                 setIsAddTopicOpen(true);
               }}
               title="Add topic"
-              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-none text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
             >
               <Plus size={13} />
               <span>Topic</span>
@@ -159,7 +159,7 @@ export function UnitItem({
               type="button"
               onClick={() => onEdit(unit)}
               title="Edit unit"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <Edit2 size={14} />
             </button>
@@ -167,7 +167,7 @@ export function UnitItem({
               type="button"
               onClick={() => onDelete(unit)}
               title="Delete unit"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
               <Trash2 size={14} />
             </button>
