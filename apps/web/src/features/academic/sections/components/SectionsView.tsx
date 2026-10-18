@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Plus, Calendar, GraduationCap, Layers } from "lucide-react";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage } from "@/shared/utils";
 import { useSections } from "../hooks/useSections";
@@ -14,6 +14,7 @@ import { BulkSectionFormModal } from "./BulkSectionFormModal";
 import { SectionDetailModal } from "./SectionDetailModal";
 import { SectionRecord, SectionFilterParams } from "../types/section.types";
 import { useAuthStore } from "@/stores/auth.store";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export function SectionsView() {
   const user = useAuthStore((s) => s.user);
@@ -23,6 +24,8 @@ export function SectionsView() {
       !user?.roles?.includes("SYSTEM_ADMIN")
   );
 
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [filters, setFilters] = useState<SectionFilterParams>({});
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -42,14 +45,20 @@ export function SectionsView() {
 
   const effectiveAcademicYearId = filters.academicYearId || (isTeacher ? "" : activeYear?.id || "");
 
+  const queryFilters = useMemo(
+    () => ({
+      ...filters,
+      search: debouncedSearch.trim() || undefined,
+      academicYearId: effectiveAcademicYearId || undefined,
+    }),
+    [filters, debouncedSearch, effectiveAcademicYearId]
+  );
+
   const {
     data: rawSections = [],
     isLoading,
     error,
-  } = useSections({
-    ...filters,
-    academicYearId: effectiveAcademicYearId || undefined,
-  });
+  } = useSections(queryFilters);
 
   const sections = rawSections;
 
@@ -76,22 +85,19 @@ export function SectionsView() {
   };
 
   const handleSearchChange = (val: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: val || undefined,
-    }));
+    setSearch(val);
   };
 
   const filterGroups: FilterGroup[] = [
     {
       id: "academicYear",
-      label: "Year",
+      label: "Academic Year",
       icon: Calendar,
-      selectedValue: effectiveAcademicYearId || "ALL",
+      selectedValue: filters.academicYearId || "ALL",
       options: [
         { label: "All", value: "ALL" },
         ...academicYears.map((y) => ({
-          label: y.name,
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
           value: y.id,
         })),
       ],
@@ -123,27 +129,13 @@ export function SectionsView() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={getErrorMessage(error, "Failed to load sections.")} />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
+          searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search sections..."
           filters={filterGroups}
@@ -153,7 +145,7 @@ export function SectionsView() {
                 <button
                   type="button"
                   onClick={() => setIsBulkModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                 >
                   <Layers size={14} />
                   <span>Bulk Generate</span>
@@ -161,7 +153,7 @@ export function SectionsView() {
                 <button
                   type="button"
                   onClick={handleOpenAdd}
-                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                 >
                   <Plus size={14} />
                   <span>Section</span>
@@ -172,12 +164,24 @@ export function SectionsView() {
         />
       </div>
 
-      <SectionsTable
-        items={sections}
-        onViewDetails={handleOpenDetail}
-        onEdit={handleOpenEdit}
-        isReadOnly={isTeacher}
-      />
+      {isLoading ? (
+        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
+          <LoadingSpinner size={32} />
+        </div>
+      ) : error ? (
+        <div className="p-6 max-w-7xl mx-auto">
+          <ErrorAlert message={getErrorMessage(error, "Failed to load sections.")} />
+        </div>
+      ) : (
+        <SearchQueryProvider query={search}>
+          <SectionsTable
+            items={sections}
+            onViewDetails={handleOpenDetail}
+            onEdit={handleOpenEdit}
+            isReadOnly={isTeacher}
+          />
+        </SearchQueryProvider>
+      )}
 
       {!isTeacher && (
         <>
