@@ -77,7 +77,7 @@ export function TableToolbar({
               onSearchChange(e.target.value);
               setShowSuggestions(true);
             }}
-            className="w-full h-9 pl-9 pr-8 text-xs bg-muted/40 focus:bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors"
+            className="w-full h-9 pl-9 pr-8 text-xs bg-muted/40 focus:bg-background border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-colors"
           />
 
           {searchValue && (
@@ -94,7 +94,7 @@ export function TableToolbar({
           )}
 
           {showSuggestions && searchValue.length > 0 && filteredSuggestions.length > 0 && (
-            <div className="absolute left-0 top-10 w-full bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
+            <div className="absolute left-0 top-10 w-full bg-card border border-border rounded-none shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
               <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
                 Suggestions
               </div>
@@ -106,7 +106,7 @@ export function TableToolbar({
                     onSearchChange(item);
                     setShowSuggestions(false);
                   }}
-                  className="w-full text-left px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer truncate"
+                  className="w-full text-left px-2.5 py-1.5 text-xs text-foreground hover:bg-muted rounded-none transition-colors cursor-pointer truncate"
                 >
                   {item}
                 </button>
@@ -135,7 +135,7 @@ export function TableToolbar({
                       setOpenFilterId(isOpen ? null : group.id)
                     }
                     className={cn(
-                      "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap",
+                      "inline-flex items-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap",
                       group.selectedValue && group.selectedValue !== "ALL"
                         ? "bg-muted/80 border-border text-foreground"
                         : "bg-card text-foreground border-border hover:bg-muted"
@@ -150,7 +150,7 @@ export function TableToolbar({
                   </button>
 
                   {isOpen && (
-                    <div className="absolute left-0 top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
+                    <div className="absolute left-0 top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-none shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95">
                       {group.options.map((opt) => {
                         const isSelected = group.selectedValue === opt.value;
 
@@ -163,7 +163,7 @@ export function TableToolbar({
                               setOpenFilterId(null);
                             }}
                             className={cn(
-                              "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left",
+                              "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-none transition-colors cursor-pointer text-left",
                               isSelected
                                 ? "bg-muted font-bold text-foreground"
                                 : "text-foreground hover:bg-muted/60 font-medium"

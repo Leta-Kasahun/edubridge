@@ -101,7 +101,7 @@ export function SelectDropdown({
           disabled={disabled}
           onClick={() => !disabled && setIsOpen((prev) => !prev)}
           className={cn(
-            "w-full h-10 px-3.5 rounded-xl border text-xs sm:text-sm text-foreground flex items-center justify-between gap-2 transition-all cursor-pointer select-none text-left min-w-0",
+            "w-full h-10 px-3.5 rounded-none border text-xs sm:text-sm text-foreground flex items-center justify-between gap-2 transition-all cursor-pointer select-none text-left min-w-0",
             isOpen
               ? "bg-background border-primary ring-2 ring-primary/20 shadow-xs"
               : "bg-card border-border hover:bg-muted/60 hover:border-muted-foreground/30",
@@ -135,9 +135,9 @@ export function SelectDropdown({
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 right-0 top-full mt-1.5 max-h-64 w-full min-w-[200px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-xl p-1 z-50 flex flex-col animate-in fade-in-0 zoom-in-95">
+          <div className="absolute left-0 right-0 top-full mt-1.5 max-h-64 w-full min-w-[200px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-none shadow-xl p-1 z-50 flex flex-col animate-in fade-in-0 zoom-in-95">
             {showSearch && (
-              <div className="p-1.5 border-b border-border/80 sticky top-0 bg-card rounded-t-lg shrink-0">
+              <div className="p-1.5 border-b border-border/80 sticky top-0 bg-card rounded-none shrink-0">
                 <div className="relative flex items-center">
                   <Search size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
                   <input
@@ -146,7 +146,7 @@ export function SelectDropdown({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={searchPlaceholder}
-                    className="w-full h-8 pl-8 pr-7 text-xs bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-primary transition-colors"
+                    className="w-full h-8 pl-8 pr-7 text-xs bg-muted/50 border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-primary transition-colors"
                   />
                   {searchQuery && (
                     <button
@@ -177,7 +177,7 @@ export function SelectDropdown({
                       disabled={opt.disabled}
                       onClick={() => handleSelect(opt.value)}
                       className={cn(
-                        "w-full flex items-center justify-between gap-2 px-2.5 py-2 text-xs rounded-lg transition-colors cursor-pointer text-left min-h-[36px]",
+                        "w-full flex items-center justify-between gap-2 px-2.5 py-2 text-xs rounded-none transition-colors cursor-pointer text-left min-h-[36px]",
                         isSelected
                           ? "bg-primary/10 text-primary font-bold border border-primary/20"
                           : "text-foreground hover:bg-muted/70 font-medium",

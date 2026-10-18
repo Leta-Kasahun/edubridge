@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { BookmarksController } from "./controllers/bookmarks.controller.js";
 import { authenticate } from "../../middleware/auth.js";
+import { requireIdempotency } from "../../middleware/idempotency.js";
 import { requireRoles } from "../../middleware/rbac.js";
 import { validate } from "../../middleware/validate.js";
 import {
@@ -14,6 +15,7 @@ const router: Router = Router();
 const controller = new BookmarksController();
 
 router.use(authenticate);
+router.use(requireIdempotency);
 router.use(requireRoles("STUDENT"));
 
 router.post(

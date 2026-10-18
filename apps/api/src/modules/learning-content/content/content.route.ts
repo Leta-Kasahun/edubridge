@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { authenticate, optionalAuthenticate } from "../../../middleware/auth.js";
+import { requireIdempotency } from "../../../middleware/idempotency.js";
 import { requireRoles } from "../../../middleware/rbac.js";
 import { contentController } from "./controllers/content.controller.js";
 import { contentAttachmentController } from "./controllers/content-attachment.controller.js";
@@ -31,7 +32,7 @@ router.use(authenticate);
 
 router.get("/student/in-progress", contentController.listStudentInProgress);
 router.get("/:id/progress", contentController.getProgress);
-router.put("/:id/progress", contentController.saveProgress);
+router.put("/:id/progress", requireIdempotency, contentController.saveProgress);
 
 router.get("/", contentController.listContent);
 router.get("/:id", contentController.getContentDetail);

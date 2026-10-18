@@ -167,9 +167,13 @@ export const THEME_FOCUS = {
 } as const;
 
 export const THEME_RADIUS = {
-  sm: '6px',
-  md: '8px',
-  lg: '12px',
+  none: '0px',
+  button: '0px',
+  input: '0px',
+  sm: '0px',
+  md: '0px',
+  lg: '0px',
+  xl: '0px',
 } as const;
 
 export const THEME_BORDERS = {

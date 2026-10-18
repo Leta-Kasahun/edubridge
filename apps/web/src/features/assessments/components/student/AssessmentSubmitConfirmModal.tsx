@@ -122,7 +122,7 @@ export function AssessmentSubmitConfirmModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-10 px-4 rounded-xl text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
+              className="h-10 px-4 rounded-none text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-50"
             >
               Return to Test
             </button>

@@ -32,6 +32,7 @@ import { LearningContentListItem } from "../../types/content.types";
 import { isPdfDocument, downloadFileFromDataUrl } from "@/shared/utils/document.util";
 import { env } from "@/config/env";
 import { getAccessToken } from "@/lib/apiClient";
+import { OfflineStatusIcon } from "@/features/offline";
 
 interface StudentMaterialReaderViewProps {
   readonly contentId: string;
@@ -253,6 +254,7 @@ export function StudentMaterialReaderView({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <OfflineStatusIcon />
           {primaryMediaUrl && (
             <button
               type="button"
