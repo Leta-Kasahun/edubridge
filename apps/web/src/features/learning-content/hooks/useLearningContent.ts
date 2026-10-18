@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contentService } from "../services/content.service";
+import { useAuthStore } from "@/stores/auth.store";
+import { API_ENDPOINTS } from "@/constants/api-endpoints";
+import {
+  outboxRepository,
+  contentProgressCacheRepository,
+  CachedContentProgress,
+} from "@/features/offline";
 import {
   ContentFilters,
   LearningContentDetailItem,
@@ -14,6 +21,22 @@ import {
   StudentContentProgressItem,
   StudentInProgressContentItem,
 } from "../types/content.types";
+
+function mapCachedToProgressItem(
+  cached: CachedContentProgress
+): StudentContentProgressItem {
+  return {
+    id: cached.id,
+    tenantId: cached.tenantId,
+    studentId: cached.userId,
+    contentId: cached.contentId,
+    lastPositionSeconds: cached.lastPositionSeconds,
+    durationSeconds: cached.durationSeconds,
+    progressPercent: cached.progressPercent,
+    isCompleted: cached.isCompleted,
+    lastAccessedAt: new Date(cached.updatedAt).toISOString(),
+  };
+}
 
 export const LEARNING_CONTENT_QUERY_KEY = ["learning-content"] as const;
 
@@ -257,9 +280,50 @@ export function useDeleteAttachment(id: string) {
 export function useContentProgress(contentId: string | null) {
   return useQuery<StudentContentProgressItem | null, Error>({
     queryKey: [...LEARNING_CONTENT_QUERY_KEY, "progress", contentId],
-    queryFn: () => {
+    queryFn: async () => {
       if (!contentId) return null;
-      return contentService.getProgress(contentId);
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      const tenantId = useAuthStore.getState().tenantId;
+      const userId = useAuthStore.getState().user?.id;
+
+      if (isOffline && tenantId && userId) {
+        const cached = await contentProgressCacheRepository.getProgress(
+          tenantId,
+          userId,
+          contentId
+        );
+        return cached ? mapCachedToProgressItem(cached) : null;
+      }
+
+      try {
+        const result = await contentService.getProgress(contentId);
+        if (result && tenantId && userId) {
+          await contentProgressCacheRepository.saveProgressLocal(
+            tenantId,
+            userId,
+            contentId,
+            {
+              lastPositionSeconds: result.lastPositionSeconds,
+              durationSeconds: result.durationSeconds,
+              progressPercent: result.progressPercent,
+              isCompleted: result.isCompleted,
+            }
+          );
+        }
+        return result;
+      } catch (err: unknown) {
+        if (tenantId && userId) {
+          const cached = await contentProgressCacheRepository.getProgress(
+            tenantId,
+            userId,
+            contentId
+          );
+          if (cached) {
+            return mapCachedToProgressItem(cached);
+          }
+        }
+        throw err;
+      }
     },
     enabled: Boolean(contentId),
     staleTime: 10_000,
@@ -274,8 +338,76 @@ export function useSaveContentProgress(contentId: string) {
     Error,
     SaveContentProgressDto
   >({
-    mutationFn: (payload) => contentService.saveProgress(contentId, payload),
-    onSuccess: () => {
+    mutationFn: async (payload) => {
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      const tenantId = useAuthStore.getState().tenantId;
+      const userId = useAuthStore.getState().user?.id;
+
+      let localCached: CachedContentProgress | null = null;
+      if (tenantId && userId) {
+        localCached = await contentProgressCacheRepository.saveProgressLocal(
+          tenantId,
+          userId,
+          contentId,
+          payload
+        );
+      }
+
+      if (isOffline && tenantId && userId && localCached) {
+        await outboxRepository.enqueue({
+          tenantId,
+          userId,
+          targetEntityKey: `content_progress:${contentId}`,
+          actionType: "SAVE_CONTENT_PROGRESS",
+          endpoint: API_ENDPOINTS.LEARNING_CONTENT.PROGRESS(contentId),
+          method: "PUT",
+          payload: {
+            lastPositionSeconds: payload.lastPositionSeconds,
+            durationSeconds: payload.durationSeconds,
+            progressPercent: payload.progressPercent,
+            isCompleted: payload.isCompleted,
+          },
+          clientTimestamp: Date.now(),
+          conflictStrategy: "MONOTONIC_PROGRESS",
+          idempotencyKey: `cp:${contentId}:${tenantId}:${userId}:${Date.now()}`,
+        });
+
+        return mapCachedToProgressItem(localCached);
+      }
+
+      try {
+        const result = await contentService.saveProgress(contentId, payload);
+        return result;
+      } catch (err: unknown) {
+        if (tenantId && userId && localCached) {
+          await outboxRepository.enqueue({
+            tenantId,
+            userId,
+            targetEntityKey: `content_progress:${contentId}`,
+            actionType: "SAVE_CONTENT_PROGRESS",
+            endpoint: API_ENDPOINTS.LEARNING_CONTENT.PROGRESS(contentId),
+            method: "PUT",
+            payload: {
+              lastPositionSeconds: payload.lastPositionSeconds,
+              durationSeconds: payload.durationSeconds,
+              progressPercent: payload.progressPercent,
+              isCompleted: payload.isCompleted,
+            },
+            clientTimestamp: Date.now(),
+            conflictStrategy: "MONOTONIC_PROGRESS",
+            idempotencyKey: `cp:${contentId}:${tenantId}:${userId}:${Date.now()}`,
+          });
+
+          return mapCachedToProgressItem(localCached);
+        }
+        throw err;
+      }
+    },
+    onSuccess: (saved) => {
+      queryClient.setQueryData(
+        [...LEARNING_CONTENT_QUERY_KEY, "progress", contentId],
+        saved
+      );
       queryClient.invalidateQueries({
         queryKey: [...LEARNING_CONTENT_QUERY_KEY, "in-progress"],
       });

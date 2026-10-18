@@ -7,6 +7,7 @@ import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { useUiStore } from "@/stores/ui.store";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { OfflineStatusIcon } from "@/features/offline";
 
 interface DashboardHeaderProps {
   readonly className?: string;
@@ -47,6 +48,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
+        <OfflineStatusIcon />
         <NotificationBell />
 
         <div className="h-5 w-px bg-border my-auto mx-0.5" />
