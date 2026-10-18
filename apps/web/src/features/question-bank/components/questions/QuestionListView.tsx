@@ -91,7 +91,7 @@ function QuestionFiltersToolbar({
                 type="button"
                 onClick={() => setOpenFilterId(isOpen ? null : group.id)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
+                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
                   isActive
                     ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15"
                     : "bg-card text-foreground border-border hover:bg-muted"
@@ -117,7 +117,7 @@ function QuestionFiltersToolbar({
               {isOpen && (
                 <div
                   className={cn(
-                    "absolute top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-xl shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95",
+                    "absolute top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-none shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95",
                     isTrailing ? "right-0" : "left-0"
                   )}
                 >
@@ -133,7 +133,7 @@ function QuestionFiltersToolbar({
                           setOpenFilterId(null);
                         }}
                         className={cn(
-                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left",
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-none transition-colors cursor-pointer text-left",
                           isSelected
                             ? "bg-muted font-bold text-foreground"
                             : "text-foreground hover:bg-muted/60 font-medium"
@@ -159,7 +159,7 @@ function QuestionFiltersToolbar({
           <button
             type="button"
             onClick={onResetAll}
-            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-none text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
             title="Reset all filters"
           >
             <X size={13} />
@@ -535,7 +535,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <Link
             href={ROUTES.QUESTION_BANK.BANKS}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted px-2 py-1 rounded-lg transition-colors shrink-0"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted px-2 py-1 rounded-none transition-colors shrink-0"
             title="Back to Question Banks"
           >
             <ArrowLeft size={14} />
@@ -550,14 +550,14 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
             </h1>
 
             <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-none bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
                 {items.length} {items.length === 1 ? "Question" : "Questions"}
               </span>
               {pendingReportsCount > 0 && (
                 <button
                   type="button"
                   onClick={() => setFeedbackFilter((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
-                  className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors cursor-pointer whitespace-nowrap ${
+                  className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-none border transition-colors cursor-pointer whitespace-nowrap ${
                     feedbackFilter === "PENDING"
                       ? "bg-amber-500 text-white border-amber-600 dark:bg-amber-600"
                       : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20"
@@ -568,12 +568,12 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                 </button>
               )}
               {bank?.subject?.name && (
-                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-none bg-muted text-muted-foreground border border-border whitespace-nowrap">
                   {bank.subject.name}
                 </span>
               )}
               {bank?.grade && (
-                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-none bg-muted text-muted-foreground border border-border whitespace-nowrap">
                   Grade {bank.grade.level}
                 </span>
               )}
@@ -585,7 +585,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-8.5 px-3 rounded-none text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
             title="Upload Document"
           >
             <Upload size={13} />
@@ -594,7 +594,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           <button
             type="button"
             onClick={handleCreate}
-            className="inline-flex items-center justify-center gap-1 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center justify-center gap-1 h-8 sm:h-8.5 px-3 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
             title="Add Question"
           >
             <Plus size={14} />
@@ -607,7 +607,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         <ErrorAlert message={error.message || "Failed to load questions."} />
       )}
 
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-3.5 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-3.5 shadow-xs">
         <QuestionFiltersToolbar
           filters={toolbarFilters}
           hasActiveFilters={hasActiveFilters}
@@ -618,7 +618,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
 
       {/* Bulk Action & Management Toolbar */}
       {items.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap animate-in fade-in-0">
+        <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap animate-in fade-in-0">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -649,7 +649,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                   type="button"
                   onClick={handleBulkPublishSelected}
                   disabled={isAnyBulkPending}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
                 >
                   <Send size={12} />
                   <span>
@@ -663,7 +663,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                   type="button"
                   onClick={handleBulkArchiveSelected}
                   disabled={isAnyBulkPending}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
                 >
                   <Archive size={12} />
                   <span>
@@ -677,7 +677,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                   type="button"
                   onClick={() => setIsBulkDeleteOpen(true)}
                   disabled={isAnyBulkPending}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-destructive hover:bg-destructive/10 border border-destructive/30 transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold text-destructive hover:bg-destructive/10 border border-destructive/30 transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
                 >
                   <Trash2 size={12} />
                   <span>Delete Selected</span>
@@ -698,7 +698,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                     type="button"
                     onClick={handlePublishAllDrafts}
                     disabled={bulkPublishMutation.isPending}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/20 border border-emerald-600/30 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/20 border border-emerald-600/30 transition-colors cursor-pointer"
                   >
                     <CheckCheck size={13} />
                     <span>
@@ -714,7 +714,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
                     type="button"
                     onClick={handleArchiveAllPublished}
                     disabled={bulkArchiveMutation.isPending}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                   >
                     <Archive size={12} />
                     <span>
@@ -736,8 +736,8 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           <LoadingSpinner size={32} />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+        <div className="bg-card rounded-none border border-border p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <HelpCircle size={20} />
           </div>
           <h3 className="text-sm font-bold text-foreground mb-1">
