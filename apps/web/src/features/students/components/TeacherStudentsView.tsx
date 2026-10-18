@@ -14,9 +14,10 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchHighlight, SearchQueryProvider } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage, useInfiniteScrollSentinel } from "@/shared/utils";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useAcademicYears } from "@/features/academic/academic-years";
 import { useSections } from "@/features/academic/sections/hooks/useSections";
 import { useGrades } from "@/features/academic/grades";
@@ -134,12 +135,14 @@ export function TeacherStudentsView() {
   const { data: academicYearsResponse } = useAcademicYears();
   const academicYears = academicYearsResponse?.data || [];
 
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
+
   const activeYear = useMemo(
-    () => academicYears.find((y) => y.status === "ACTIVE"),
+    () =>
+      academicYears.find((y) => y.status === "ACTIVE") ||
+      academicYears[0],
     [academicYears]
   );
-
-  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
   const effectiveAcademicYearId = selectedAcademicYearId || activeYear?.id || "";
 
   const { data: sections = [] } = useSections({
@@ -154,6 +157,7 @@ export function TeacherStudentsView() {
   const [selectedGradeId, setSelectedGradeId] = useState<string | undefined>(undefined);
   const [genderFilter, setGenderFilter] = useState<"ALL" | "MALE" | "FEMALE">("ALL");
   const [search, setSearch] = useState<string>("");
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedStudent, setSelectedStudent] = useState<StudentRosterItem | null>(null);
   const [transferStudent, setTransferStudent] = useState<StudentRosterItem | null>(null);
   const [isPromotionOpen, setIsPromotionOpen] = useState(false);
@@ -183,7 +187,7 @@ export function TeacherStudentsView() {
     academicYearId: effectiveAcademicYearId || undefined,
     sectionId: selectedSectionId,
     gradeId: selectedGradeId,
-    search: search.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
     limit: 30,
   });
 
@@ -193,9 +197,21 @@ export function TeacherStudentsView() {
   }, [rosterPages]);
 
   const students = useMemo(() => {
-    if (genderFilter === "ALL") return rawStudents;
-    return rawStudents.filter((st) => st.gender === genderFilter);
-  }, [rawStudents, genderFilter]);
+    let list = rawStudents;
+    if (genderFilter !== "ALL") {
+      list = list.filter((st) => st.gender === genderFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (st) =>
+          st.fullName.toLowerCase().includes(q) ||
+          st.studentCode.toLowerCase().includes(q) ||
+          (st.sectionName || "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [rawStudents, genderFilter, search]);
 
   const gradeCountMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -216,13 +232,13 @@ export function TeacherStudentsView() {
   const filterGroups: FilterGroup[] = [
     {
       id: "academicYear",
-      label: "Year",
+      label: "Academic Year",
       icon: Calendar,
-      selectedValue: effectiveAcademicYearId || "ALL",
+      selectedValue: selectedAcademicYearId || "ALL",
       options: [
         { label: "All", value: "ALL" },
         ...academicYears.map((y) => ({
-          label: y.name,
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
           value: y.id,
         })),
       ],
@@ -262,25 +278,9 @@ export function TeacherStudentsView() {
     },
   ];
 
-  if (isLoading && !rosterPages) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={getErrorMessage(error, "Failed to load student roster.")} />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={search}
           onSearchChange={(val) => {
@@ -293,7 +293,7 @@ export function TeacherStudentsView() {
               <button
                 type="button"
                 onClick={() => setIsPromotionOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap flex-1 sm:flex-initial"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap flex-1 sm:flex-initial"
               >
                 <ArrowUpRight size={14} />
                 <span>Run Promotion</span>
@@ -311,7 +311,7 @@ export function TeacherStudentsView() {
               setSelectedGradeId(undefined);
             }}
             className={cn(
-              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-none text-xs font-semibold transition-colors cursor-pointer shadow-xs",
               !selectedGradeId
                 ? "bg-primary text-primary-foreground"
                 : "bg-card border border-border text-foreground hover:bg-muted/80"
@@ -340,7 +340,7 @@ export function TeacherStudentsView() {
                   setSelectedGradeId(g.id);
                 }}
                 className={cn(
-                  "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+                  "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-none text-xs font-semibold transition-colors cursor-pointer shadow-xs",
                   isSelected
                     ? "bg-primary text-primary-foreground"
                     : "bg-card border border-border text-foreground hover:bg-muted/80"
@@ -363,9 +363,17 @@ export function TeacherStudentsView() {
         </div>
       )}
 
-      {students.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border min-h-[260px] flex flex-col items-center justify-center p-8 text-center shadow-xs">
-          <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+      {isLoading && !rosterPages ? (
+        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
+          <LoadingSpinner size={32} />
+        </div>
+      ) : error ? (
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <ErrorAlert message={getErrorMessage(error, "Failed to load student roster.")} />
+        </div>
+      ) : students.length === 0 ? (
+        <div className="bg-card rounded-none border border-border min-h-[260px] flex flex-col items-center justify-center p-8 text-center shadow-xs">
+          <div className="h-12 w-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <GraduationCap size={22} />
           </div>
           <h3 className="text-sm font-semibold text-foreground">No students found</h3>
@@ -376,121 +384,129 @@ export function TeacherStudentsView() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="md:hidden space-y-3">
-            {students.map((st) => (
-              <div
-                key={st.enrollmentId}
-                onClick={() => setSelectedStudent(st)}
-                className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-foreground truncate">
-                      {st.fullName}
-                    </p>
-                    {st.username && (
-                      <p className="text-[11px] font-mono text-muted-foreground mt-0.5 truncate">
-                        @{st.username}
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
+            <div className="md:hidden space-y-3">
+              {students.map((st) => (
+                <div
+                  key={st.enrollmentId}
+                  onClick={() => setSelectedStudent(st)}
+                  className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        <SearchHighlight text={st.fullName} />
                       </p>
-                    )}
-                  </div>
+                      {st.username && (
+                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5 truncate">
+                          <SearchHighlight text={`@${st.username}`} />
+                        </p>
+                      )}
+                    </div>
 
-                  <div
-                    className="shrink-0 flex items-center gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <StudentRowActions
-                      student={st}
-                      onViewDetails={setSelectedStudent}
-                      onTransfer={setTransferStudent}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">Class</span>
-                    <p className="text-xs font-medium text-foreground truncate">
-                      Section {st.sectionName}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">Grade</span>
-                    <p className="text-xs font-medium text-foreground">
-                      Grade {st.gradeLevel}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">Status</span>
-                    <span className="font-medium text-foreground text-xs">{st.status}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
-                  <tr>
-                    <th className="py-3 px-4">Student</th>
-                    <th className="py-3 px-4">Username</th>
-                    <th className="py-3 px-4">Class</th>
-                    <th className="py-3 px-4">Gender</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right w-16">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {students.map((st) => (
-                    <tr
-                      key={st.enrollmentId}
-                      onClick={() => setSelectedStudent(st)}
-                      className="hover:bg-muted/20 transition-colors"
+                    <div
+                      className="shrink-0 flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-foreground">{st.fullName}</div>
-                      </td>
+                      <StudentRowActions
+                        student={st}
+                        onViewDetails={setSelectedStudent}
+                        onTransfer={setTransferStudent}
+                      />
+                    </div>
+                  </div>
 
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
-                        {st.username ? `@${st.username}` : "—"}
-                      </td>
+                  <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Class</span>
+                      <p className="text-xs font-medium text-foreground truncate">
+                        <SearchHighlight text={`Section ${st.sectionName}`} />
+                      </p>
+                    </div>
 
-                      <td className="py-3.5 px-4 text-foreground">
-                        Section {st.sectionName}
-                      </td>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Grade</span>
+                      <p className="text-xs font-medium text-foreground">
+                        Grade {st.gradeLevel}
+                      </p>
+                    </div>
 
-                      <td className="py-3.5 px-4 text-foreground">
-                        {st.gender === "MALE" ? "Male" : "Female"}
-                      </td>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">Status</span>
+                      <span className="font-medium text-foreground text-xs">{st.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                      <td className="py-3.5 px-4 font-medium text-foreground">
-                        {st.status}
-                      </td>
-
-                      <td
-                        className="py-3.5 px-4 text-right"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-end gap-1.5">
-                          <StudentRowActions
-                            student={st}
-                            onViewDetails={setSelectedStudent}
-                            onTransfer={setTransferStudent}
-                          />
-                        </div>
-                      </td>
+            <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Student</th>
+                      <th className="py-3 px-4">Username</th>
+                      <th className="py-3 px-4">Class</th>
+                      <th className="py-3 px-4">Gender</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right w-16">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {students.map((st) => (
+                      <tr
+                        key={st.enrollmentId}
+                        onClick={() => setSelectedStudent(st)}
+                        className="hover:bg-muted/20 transition-colors"
+                      >
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-foreground">
+                            <SearchHighlight text={st.fullName} />
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
+                          {st.username ? (
+                            <SearchHighlight text={`@${st.username}`} />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-foreground">
+                          <SearchHighlight text={`Section ${st.sectionName}`} />
+                        </td>
+
+                        <td className="py-3.5 px-4 text-foreground">
+                          {st.gender === "MALE" ? "Male" : "Female"}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-medium text-foreground">
+                          {st.status}
+                        </td>
+
+                        <td
+                          className="py-3.5 px-4 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-end gap-1.5">
+                            <StudentRowActions
+                              student={st}
+                              onViewDetails={setSelectedStudent}
+                              onTransfer={setTransferStudent}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
+        </SearchQueryProvider>
       )}
 
       <div ref={sentinelRef} className="flex justify-center py-4">
