@@ -9,6 +9,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 import { QuestionBankItem } from "../../types/question-bank.types";
 
 export interface BankSubjectAccordionGroup {
@@ -71,7 +72,7 @@ export function QuestionBankSubjectAccordion({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                {group.name}
+                <SearchHighlight text={group.name} />
               </h3>
               {group.code && (
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border uppercase">
@@ -134,11 +135,11 @@ export function QuestionBankSubjectAccordion({
                                   href={`/dashboard/question-banks/${bank.id}`}
                                   className="font-semibold text-foreground hover:text-primary transition-colors block text-xs truncate"
                                 >
-                                  {bank.name}
+                                  <SearchHighlight text={bank.name} />
                                 </Link>
                                 {bank.description && (
                                   <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                                    {bank.description}
+                                    <SearchHighlight text={bank.description} />
                                   </p>
                                 )}
                               </div>
@@ -204,11 +205,11 @@ export function QuestionBankSubjectAccordion({
                               href={`/dashboard/question-banks/${bank.id}`}
                               className="font-semibold text-foreground hover:text-primary transition-colors block text-xs"
                             >
-                              {bank.name}
+                              <SearchHighlight text={bank.name} />
                             </Link>
                             {bank.description && (
                               <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                                {bank.description}
+                                <SearchHighlight text={bank.description} />
                               </p>
                             )}
                           </div>
