@@ -26,7 +26,7 @@ export function NotificationBell() {
         type="button"
         onClick={() => setOpen((p) => !p)}
         className={cn(
-          "relative p-2 rounded-lg transition-colors focus:outline-none cursor-pointer",
+          "relative p-2 rounded-none transition-colors focus:outline-none cursor-pointer",
           "text-muted-foreground hover:text-foreground hover:bg-muted",
           open && "bg-muted text-foreground"
         )}
@@ -37,7 +37,7 @@ export function NotificationBell() {
         <Bell size={17} />
         {unreadCount > 0 && (
           <span
-            className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground ring-2 ring-card px-0.5"
+            className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-none bg-primary text-[9px] font-bold text-primary-foreground ring-2 ring-card px-0.5"
             aria-hidden="true"
           >
             {badgeLabel}
