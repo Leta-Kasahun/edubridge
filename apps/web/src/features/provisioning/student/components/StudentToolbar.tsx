@@ -39,24 +39,22 @@ export function StudentToolbar({
   onOpenAddStudent,
   onOpenImportCsv,
 }: StudentToolbarProps) {
-  const currentYear =
-    academicYears.find((y) => y.id === selectedAcademicYearId) ||
-    academicYears.find((y) => y.isCurrent) ||
-    academicYears[0];
-
   const filters: readonly FilterGroup[] = useMemo(() => {
     const list: FilterGroup[] = [];
 
     if (academicYears.length > 0) {
       list.push({
         id: "academicYear",
-        label: "Academic year",
-        options: academicYears.map((y) => ({
-          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
-          value: y.id,
-        })),
-        selectedValue: selectedAcademicYearId || currentYear?.id || "",
-        onSelect: onSelectAcademicYear,
+        label: "Academic Year",
+        options: [
+          { label: "All", value: "ALL" },
+          ...academicYears.map((y) => ({
+            label: y.name.replace(/Academic Year/i, "").trim() || y.name,
+            value: y.id,
+          })),
+        ],
+        selectedValue: selectedAcademicYearId || "ALL",
+        onSelect: (val) => onSelectAcademicYear(val === "ALL" ? "" : val),
         icon: Calendar,
       });
     }
@@ -89,7 +87,6 @@ export function StudentToolbar({
   }, [
     academicYears,
     selectedAcademicYearId,
-    currentYear?.id,
     onSelectAcademicYear,
     accountStatus,
     onAccountStatusChange,
@@ -108,7 +105,7 @@ export function StudentToolbar({
           <button
             type="button"
             onClick={onOpenImportCsv}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
           >
             <Upload size={14} className="text-foreground" />
             <span>Import</span>
@@ -117,7 +114,7 @@ export function StudentToolbar({
           <button
             type="button"
             onClick={onOpenAddStudent}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
           >
             <Plus size={14} />
             <span>Student</span>

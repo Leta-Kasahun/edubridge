@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, MoreVertical, Eye, UserX, UserCheck, KeyRound } from "lucide-react";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 import { formatStudentAccountStatus } from "@/shared/utils";
 import { cn } from "@/lib/utils";
 import {
@@ -192,7 +193,7 @@ export function StudentSectionAccordion({
   const displayCount = sectionStudents.length > 0 ? sectionStudents.length : section.studentCount;
 
   return (
-    <div className="rounded-2xl bg-card border border-border overflow-hidden shadow-xs transition-all">
+    <div className="rounded-none bg-card border border-border overflow-hidden shadow-xs transition-all">
       <button
         type="button"
         onClick={onToggle}
@@ -253,13 +254,13 @@ export function StudentSectionAccordion({
                         className="hover:bg-muted/30 transition-colors group"
                       >
                         <td className="px-4 sm:px-6 py-3.5 font-medium text-foreground">
-                          {fullName}
+                          <SearchHighlight text={fullName} />
                         </td>
                         <td className="px-4 py-3.5 font-mono text-foreground font-semibold">
-                          {student.studentCode}
+                          <SearchHighlight text={student.studentCode} />
                         </td>
                         <td className="px-4 py-3.5 font-mono text-foreground">
-                          {student.username}
+                          <SearchHighlight text={student.username} />
                         </td>
                         <td className="px-4 py-3.5 text-muted-foreground capitalize">
                           {student.gender.toLowerCase()}

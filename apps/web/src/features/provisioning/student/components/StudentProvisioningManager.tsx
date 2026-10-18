@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import {
   useAcademicStructure,
   useStudents,
@@ -54,22 +55,17 @@ export function StudentProvisioningManager() {
   >(null);
 
   const { data: structureData, isLoading: isStructureLoading } =
-    useAcademicStructure(selectedAcademicYearId);
+    useAcademicStructure(selectedAcademicYearId || undefined);
 
   const academicYears = structureData?.academicYears || [];
   const currentAcademicYear =
-    academicYears.find((y) => y.id === selectedAcademicYearId) ||
+    (selectedAcademicYearId && academicYears.find((y) => y.id === selectedAcademicYearId)) ||
     structureData?.currentAcademicYear ||
+    academicYears.find((y) => y.isCurrent) ||
     academicYears[0];
 
-  const currentYearId = currentAcademicYear?.id;
+  const effectiveAcademicYearId = selectedAcademicYearId || currentAcademicYear?.id || "";
   const grades = currentAcademicYear?.grades || [];
-
-  useEffect(() => {
-    if (!selectedAcademicYearId && currentYearId) {
-      setSelectedAcademicYearId(currentYearId);
-    }
-  }, [selectedAcademicYearId, currentYearId]);
 
   useEffect(() => {
     if (grades.length > 0) {
@@ -113,14 +109,14 @@ export function StudentProvisioningManager() {
 
   const queryFilters = useMemo(
     () => ({
-      academicYearId: currentYearId,
+      academicYearId: effectiveAcademicYearId || undefined,
       gradeId: currentGrade?.id,
       search: debouncedSearch.trim() || undefined,
       accountStatus: accountStatus !== "ALL" ? (accountStatus as StudentAccountStatus) : undefined,
       gender: gender !== "ALL" ? (gender as "MALE" | "FEMALE") : undefined,
       limit: 100,
     }),
-    [currentYearId, currentGrade?.id, debouncedSearch, accountStatus, gender]
+    [effectiveAcademicYearId, currentGrade?.id, debouncedSearch, accountStatus, gender]
   );
 
   const { data: studentsData, isLoading: isStudentsLoading } = useStudents(queryFilters);
@@ -189,7 +185,7 @@ export function StudentProvisioningManager() {
         gender={gender}
         onGenderChange={setGender}
         academicYears={academicYears}
-        selectedAcademicYearId={currentYearId}
+        selectedAcademicYearId={selectedAcademicYearId}
         onSelectAcademicYear={(id) => {
           setSelectedAcademicYearId(id);
           setSelectedGradeId(undefined);
@@ -210,42 +206,44 @@ export function StudentProvisioningManager() {
       />
 
       {isStructureLoading || isStudentsLoading ? (
-        <div className="rounded-2xl bg-card border border-border p-12 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+        <div className="rounded-none bg-card border border-border p-12 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
           <LoadingSpinner size={24} />
           <span>Loading student onboarding data...</span>
         </div>
       ) : grades.length === 0 ? (
-        <div className="rounded-2xl bg-card border border-border p-10 text-center space-y-3">
+        <div className="rounded-none bg-card border border-border p-10 text-center space-y-3">
           <p className="text-xs text-muted-foreground">
             No grade levels configured for this academic year yet.
           </p>
           <button
             type="button"
             onClick={() => setIsAddGradeOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
           >
             Add first grade level
           </button>
         </div>
       ) : (
-        <StudentSectionList
-          sections={sections}
-          students={students}
-          openSectionIds={openSectionIds}
-          onToggleSection={handleToggleSection}
-          onOpenAddSection={() => setIsAddSectionOpen(true)}
-          onViewDetails={setDetailStudent}
-          onActivate={handleActivateStudent}
-          onDeactivate={handleDeactivateStudent}
-          onResetPassword={setResettingStudent}
-        />
+        <SearchQueryProvider query={search}>
+          <StudentSectionList
+            sections={sections}
+            students={students}
+            openSectionIds={openSectionIds}
+            onToggleSection={handleToggleSection}
+            onOpenAddSection={() => setIsAddSectionOpen(true)}
+            onViewDetails={setDetailStudent}
+            onActivate={handleActivateStudent}
+            onDeactivate={handleDeactivateStudent}
+            onResetPassword={setResettingStudent}
+          />
+        </SearchQueryProvider>
       )}
 
       <AddStudentModal
         isOpen={isAddStudentOpen}
         onClose={() => setIsAddStudentOpen(false)}
         academicYears={academicYears}
-        selectedAcademicYearId={currentYearId}
+        selectedAcademicYearId={effectiveAcademicYearId}
         selectedGradeId={currentGrade?.id}
         onSubmit={handleProvisionStudent}
         isSubmitting={provisionStudentMutation.isPending}
@@ -255,7 +253,7 @@ export function StudentProvisioningManager() {
         isOpen={isImportCsvOpen}
         onClose={() => setIsImportCsvOpen(false)}
         academicYears={academicYears}
-        selectedAcademicYearId={currentYearId}
+        selectedAcademicYearId={effectiveAcademicYearId}
         selectedGradeId={currentGrade?.id}
         onSubmit={handleBulkCsv}
         isSubmitting={bulkCsvMutation.isPending}
@@ -271,7 +269,7 @@ export function StudentProvisioningManager() {
       <AddSectionModal
         isOpen={isAddSectionOpen}
         onClose={() => setIsAddSectionOpen(false)}
-        academicYearId={currentYearId || ""}
+        academicYearId={effectiveAcademicYearId}
         gradeId={currentGrade?.id || ""}
         gradeLevel={currentGrade?.level}
         onSubmit={handleCreateSection}
