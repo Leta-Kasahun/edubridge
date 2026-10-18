@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ArrowRightLeft, ArrowUpRight, Calendar, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage, useInfiniteScrollSentinel } from "@/shared/utils";
 import { useInfiniteStudentRoster } from "../hooks/useStudentAssignments";
@@ -16,6 +16,7 @@ import { BulkTransferModal } from "./BulkTransferModal";
 import { PromotionModal } from "./PromotionModal";
 import { StudentEnrollmentHistoryModal } from "./StudentEnrollmentHistoryModal";
 import { WithdrawStudentModal } from "./WithdrawStudentModal";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { StudentRosterItem } from "../types/student-assignment.types";
 
 export function StudentAssignmentsView() {
@@ -23,6 +24,7 @@ export function StudentAssignmentsView() {
   const [gradeId, setGradeId] = useState<string | undefined>(undefined);
   const [sectionId, setSectionId] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState<string>("");
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [singleTransferStudent, setSingleTransferStudent] = useState<StudentRosterItem | null>(null);
   const [historyStudent, setHistoryStudent] = useState<StudentRosterItem | null>(null);
@@ -38,14 +40,10 @@ export function StudentAssignmentsView() {
     return years.find((y) => y.status === "ACTIVE") || years[0] || null;
   }, [years]);
 
-  useEffect(() => {
-    if (activeYear?.id && !academicYearId) {
-      setAcademicYearId(activeYear.id);
-    }
-  }, [activeYear, academicYearId]);
+  const effectiveAcademicYearId = academicYearId || activeYear?.id || "";
 
   const { data: sections = [] } = useSections({
-    academicYearId,
+    academicYearId: effectiveAcademicYearId || undefined,
     gradeId,
   });
 
@@ -57,10 +55,10 @@ export function StudentAssignmentsView() {
     fetchNextPage,
     error: rosterError,
   } = useInfiniteStudentRoster({
-    academicYearId,
+    academicYearId: effectiveAcademicYearId || undefined,
     gradeId,
     sectionId,
-    search: search.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
     limit: 30,
   });
 
@@ -112,17 +110,18 @@ export function StudentAssignmentsView() {
   const filterGroups: FilterGroup[] = [
     {
       id: "academicYear",
-      label: "Year",
+      label: "Academic Year",
       icon: Calendar,
-      selectedValue: academicYearId || "",
+      selectedValue: academicYearId || "ALL",
       options: [
+        { label: "All", value: "ALL" },
         ...years.map((y) => ({
-          label: y.name,
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
           value: y.id,
         })),
       ],
       onSelect: (val) => {
-        setAcademicYearId(val);
+        setAcademicYearId(val === "ALL" ? "" : val);
         setGradeId(undefined);
         setSectionId(undefined);
         resetPagination();
@@ -157,7 +156,7 @@ export function StudentAssignmentsView() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={search}
           onSearchChange={(val) => {
@@ -172,7 +171,7 @@ export function StudentAssignmentsView() {
                 type="button"
                 disabled={selectedStudentIds.length === 0}
                 onClick={() => setIsBulkTransferOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-background border border-border hover:bg-muted text-foreground transition-colors cursor-pointer shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex-1 sm:flex-initial"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-background border border-border hover:bg-muted text-foreground transition-colors cursor-pointer shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex-1 sm:flex-initial"
               >
                 <ArrowRightLeft size={14} />
                 <span>Bulk Transfer ({selectedStudentIds.length})</span>
@@ -180,7 +179,7 @@ export function StudentAssignmentsView() {
               <button
                 type="button"
                 onClick={() => setIsPromotionOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap flex-1 sm:flex-initial"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs whitespace-nowrap flex-1 sm:flex-initial"
               >
                 <ArrowUpRight size={14} />
                 <span>Run Promotion</span>
@@ -200,7 +199,7 @@ export function StudentAssignmentsView() {
               resetPagination();
             }}
             className={cn(
-              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+              "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-none text-xs font-semibold transition-colors cursor-pointer shadow-xs",
               !gradeId
                 ? "bg-primary text-primary-foreground"
                 : "bg-card border border-border text-foreground hover:bg-muted/80"
@@ -229,7 +228,7 @@ export function StudentAssignmentsView() {
                   resetPagination();
                 }}
                 className={cn(
-                  "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+                  "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-none text-xs font-semibold transition-colors cursor-pointer shadow-xs",
                   isSelected
                     ? "bg-primary text-primary-foreground"
                     : "bg-card border border-border text-foreground hover:bg-muted/80"
@@ -257,20 +256,22 @@ export function StudentAssignmentsView() {
           <LoadingSpinner size={28} />
         </div>
       ) : (
-        <StudentAssignmentsTable
-          items={roster}
-          selectedStudentIds={selectedStudentIds}
-          sentinelRef={sentinelRef}
-          isFetchingMore={isFetchingNextPage}
-          hasMore={Boolean(hasNextPage)}
-          total={lastPagination?.total ?? 0}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-          onClearSelection={handleClearSelection}
-          onTransferSingle={(student) => setSingleTransferStudent(student)}
-          onShowHistory={(student) => setHistoryStudent(student)}
-          onWithdraw={(student) => setWithdrawStudent(student)}
-        />
+        <SearchQueryProvider query={search}>
+          <StudentAssignmentsTable
+            items={roster}
+            selectedStudentIds={selectedStudentIds}
+            sentinelRef={sentinelRef}
+            isFetchingMore={isFetchingNextPage}
+            hasMore={Boolean(hasNextPage)}
+            total={lastPagination?.total ?? 0}
+            onToggleSelect={handleToggleSelect}
+            onSelectAll={handleSelectAll}
+            onClearSelection={handleClearSelection}
+            onTransferSingle={(student) => setSingleTransferStudent(student)}
+            onShowHistory={(student) => setHistoryStudent(student)}
+            onWithdraw={(student) => setWithdrawStudent(student)}
+          />
+        </SearchQueryProvider>
       )}
 
       <SingleTransferModal

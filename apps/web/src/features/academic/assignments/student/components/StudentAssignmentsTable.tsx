@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { StudentRosterItem } from "../types/student-assignment.types";
 import { getEnrollmentStatusBadgeClass, formatEnrollmentStatus } from "@/shared/utils";
+import { SearchHighlight } from "@/shared/components";
 
 interface StudentAssignmentsTableProps {
   readonly items: readonly StudentRosterItem[];
@@ -189,7 +190,7 @@ export function StudentAssignmentsTable({
   return (
     <div className="space-y-4">
       {/* Desktop Table */}
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
@@ -204,8 +205,8 @@ export function StudentAssignmentsTable({
                     {isAllSelected ? (
                       <CheckSquare size={16} className="text-primary" />
                     ) : isIndeterminate ? (
-                      <div className="h-4 w-4 rounded-sm border border-primary bg-primary/20 flex items-center justify-center">
-                        <div className="h-1.5 w-2 bg-primary rounded-xs" />
+                      <div className="h-4 w-4 rounded-none border border-primary bg-primary/20 flex items-center justify-center">
+                        <div className="h-1.5 w-2 bg-primary rounded-none" />
                       </div>
                     ) : (
                       <Square size={16} />
@@ -252,10 +253,10 @@ export function StudentAssignmentsTable({
                       </button>
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-foreground">
-                      {item.fullName}
+                      <SearchHighlight text={item.fullName} />
                     </td>
                     <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
-                      {item.studentCode}
+                      <SearchHighlight text={item.studentCode} />
                     </td>
                     <td className="py-3.5 px-4 text-muted-foreground uppercase text-[11px]">
                       {item.gender}
@@ -268,7 +269,7 @@ export function StudentAssignmentsTable({
                     </td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getEnrollmentStatusBadgeClass(
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-none ${getEnrollmentStatusBadgeClass(
                           item.status
                         )}`}
                       >
@@ -300,7 +301,7 @@ export function StudentAssignmentsTable({
           return (
             <div
               key={item.enrollmentId}
-              className={`bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-2.5 relative ${
+              className={`bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs space-y-2.5 relative ${
                 isSelected ? "border-primary/50 bg-primary/5" : ""
               }`}
             >
@@ -324,16 +325,18 @@ export function StudentAssignmentsTable({
                   </button>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-foreground truncate">{item.fullName}</div>
+                    <div className="text-xs font-bold text-foreground truncate">
+                      <SearchHighlight text={item.fullName} />
+                    </div>
                     <div className="text-[11px] font-mono text-muted-foreground truncate">
-                      {item.studentCode}
+                      <SearchHighlight text={item.studentCode} />
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getEnrollmentStatusBadgeClass(
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-none ${getEnrollmentStatusBadgeClass(
                       item.status
                     )}`}
                   >
