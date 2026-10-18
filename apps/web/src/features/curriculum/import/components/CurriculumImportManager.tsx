@@ -24,8 +24,8 @@ import {
 import {
   ErrorAlert,
   LoadingSpinner,
-  SelectDropdown,
-  SelectDropdownOption,
+  TableToolbar,
+  FilterGroup,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
@@ -48,50 +48,41 @@ export function CurriculumImportManager() {
 
   const curricula = curriculaData?.data ?? [];
 
-  useEffect(() => {
-    if (curricula.length > 0 && !selectedCurriculumId) {
-      const first = curricula[0];
-      if (first) {
-        setSelectedCurriculumId(first.id);
-      }
-    }
-  }, [curricula, selectedCurriculumId]);
+  const defaultCurriculum = useMemo(
+    () => curricula.find((c) => c.status === "ACTIVE") || curricula[0],
+    [curricula]
+  );
+  const effectiveCurriculumId = selectedCurriculumId || defaultCurriculum?.id || "";
 
   const selectedCurriculum = useMemo<CurriculumItem | null>(() => {
-    return curricula.find((c) => c.id === selectedCurriculumId) || null;
-  }, [curricula, selectedCurriculumId]);
+    return curricula.find((c) => c.id === effectiveCurriculumId) || null;
+  }, [curricula, effectiveCurriculumId]);
 
   const {
     data: curriculumDetail,
-    isLoading: isLoadingDetail,
-  } = useCurriculumDetails(selectedCurriculumId || null);
+  } = useCurriculumDetails(effectiveCurriculumId || null);
 
   const versions = curriculumDetail?.versions ?? [];
 
-  useEffect(() => {
-    if (versions.length > 0) {
-      const draftOrActive =
-        versions.find((v) => v.status === "ACTIVE") ||
-        versions.find((v) => v.status === "DRAFT") ||
-        versions[0];
-      if (draftOrActive && (!selectedVersionId || !versions.some((v) => v.id === selectedVersionId))) {
-        setSelectedVersionId(draftOrActive.id);
-      }
-    } else {
-      setSelectedVersionId("");
-    }
-  }, [versions, selectedVersionId]);
+  const defaultVersion = useMemo(
+    () =>
+      versions.find((v) => v.status === "ACTIVE") ||
+      versions.find((v) => v.status === "DRAFT") ||
+      versions[0],
+    [versions]
+  );
+  const effectiveVersionId = selectedVersionId || defaultVersion?.id || "";
 
   const previewMutation = usePreviewCurriculumImport();
   const commitMutation = useCommitCurriculumImport();
 
   const handleGeneratePreview = async (csvContent: string) => {
-    if (!selectedVersionId) return;
+    if (!effectiveVersionId) return;
     setCachedCsvContent(csvContent);
 
     try {
       const result = await previewMutation.mutateAsync({
-        curriculumVersionId: selectedVersionId,
+        curriculumVersionId: effectiveVersionId,
         csvContent,
       });
       setPreviewData(result);
@@ -101,11 +92,11 @@ export function CurriculumImportManager() {
   };
 
   const handleCommit = async () => {
-    if (!selectedVersionId || !cachedCsvContent) return;
+    if (!effectiveVersionId || !cachedCsvContent) return;
 
     try {
       const result = await commitMutation.mutateAsync({
-        curriculumVersionId: selectedVersionId,
+        curriculumVersionId: effectiveVersionId,
         csvContent: cachedCsvContent,
       });
       setCommitResult(result);
@@ -150,25 +141,32 @@ export function CurriculumImportManager() {
     setSelectedVersionId(newVer.id);
   };
 
-  const curriculumOptions: readonly SelectDropdownOption[] = useMemo(
-    () =>
-      curricula.map((c) => ({
-        value: c.id,
-        label: c.name,
-        badge: c.code,
-      })),
-    [curricula]
-  );
-
-  const versionOptions: readonly SelectDropdownOption[] = useMemo(
-    () =>
-      versions.map((v) => ({
-        value: v.id,
-        label: v.name,
-        badge: v.code,
-      })),
-    [versions]
-  );
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    return [
+      {
+        id: "curriculum",
+        label: "Curriculum",
+        selectedValue: selectedCurriculumId || "ALL",
+        options: curricula.map((c) => ({
+          label: c.name,
+          value: c.id,
+        })),
+        onSelect: (val) => handleCurriculumChange(val === "ALL" ? "" : val),
+        icon: BookOpen,
+      },
+      {
+        id: "version",
+        label: "Version",
+        selectedValue: selectedVersionId || "ALL",
+        options: versions.map((v) => ({
+          label: v.name,
+          value: v.id,
+        })),
+        onSelect: (val) => handleVersionChange(val === "ALL" ? "" : val),
+        icon: Layers,
+      },
+    ];
+  }, [curricula, selectedCurriculumId, versions, selectedVersionId]);
 
   if (isLoadingCurricula) {
     return (
@@ -188,8 +186,8 @@ export function CurriculumImportManager() {
 
   if (curricula.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-4 shadow-xs">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+      <div className="bg-card rounded-none border border-dashed border-border p-8 text-center space-y-4 shadow-xs">
+        <div className="h-12 w-12 rounded-none bg-primary/10 text-primary flex items-center justify-center mx-auto">
           <BookOpen size={24} />
         </div>
         <div className="space-y-1">
@@ -203,7 +201,7 @@ export function CurriculumImportManager() {
         <button
           type="button"
           onClick={() => setIsCreateCurriculumOpen(true)}
-          className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
         >
           <Plus size={13} />
           <span>Create Curriculum</span>
@@ -222,56 +220,35 @@ export function CurriculumImportManager() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
       {step !== "SUCCESS" && (
-        <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-3.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <Layers size={18} />
+        <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
+          <TableToolbar
+            searchValue=""
+            onSearchChange={() => { }}
+            searchPlaceholder="Curriculum import..."
+            className="[&>div:first-child>div:first-child]:hidden [&_div:has(>input[type='search'])]:hidden"
+            filters={filterGroups}
+            actionButton={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateCurriculumOpen(true)}
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
+                >
+                  <Plus size={14} />
+                  <span>Curriculum</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateVersionOpen(true)}
+                  disabled={!effectiveCurriculumId}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <Plus size={14} />
+                  <span>Version</span>
+                </button>
               </div>
-              <h2 className="text-base font-bold text-foreground">
-                Target Destination
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setIsCreateCurriculumOpen(true)}
-                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
-              >
-                <Plus size={13} />
-                <span>Curriculum</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsCreateVersionOpen(true)}
-                disabled={!selectedCurriculumId}
-                className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none shrink-0"
-              >
-                <Plus size={13} />
-                <span>Version</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
-            <SelectDropdown
-              label="Curriculum"
-              value={selectedCurriculumId}
-              onChange={handleCurriculumChange}
-              options={curriculumOptions}
-              placeholder="Select curriculum..."
-            />
-            <SelectDropdown
-              label="Version"
-              value={selectedVersionId}
-              onChange={handleVersionChange}
-              options={versionOptions}
-              placeholder={versions.length === 0 ? "No versions available" : "Select version..."}
-              disabled={versions.length === 0 || isLoadingDetail}
-            />
-          </div>
+            }
+          />
         </div>
       )}
 

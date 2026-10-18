@@ -89,7 +89,7 @@ export function CurriculumImportUpload({
 
   return (
     <div className="space-y-4">
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="bg-card rounded-none border border-border p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
           <h2 className="text-sm sm:text-base font-bold text-foreground">
             Download Template
@@ -98,7 +98,7 @@ export function CurriculumImportUpload({
             <button
               type="button"
               onClick={() => curriculumImportService.downloadCsvTemplate()}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
             >
               <FileText size={13} className="text-primary" />
               <span>CSV Template</span>
@@ -106,7 +106,7 @@ export function CurriculumImportUpload({
             <button
               type="button"
               onClick={() => curriculumImportService.downloadExcelTemplate()}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-none text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
             >
               <FileSpreadsheet size={13} className="text-emerald-500" />
               <span>Excel (.xlsx) Template</span>
@@ -123,7 +123,7 @@ export function CurriculumImportUpload({
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className="group flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed border-border hover:border-primary/60 rounded-xl bg-muted/20 hover:bg-primary/5 transition-all cursor-pointer text-center"
+            className="group flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed border-border hover:border-primary/60 rounded-none bg-muted/20 hover:bg-primary/5 transition-all cursor-pointer text-center"
           >
             <input
               ref={fileInputRef}
@@ -135,7 +135,7 @@ export function CurriculumImportUpload({
               }}
               className="hidden"
             />
-            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
+            <div className="h-10 w-10 rounded-none bg-primary/10 text-primary flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
               <Upload size={20} />
             </div>
             <p className="text-xs sm:text-sm font-semibold text-foreground">
@@ -144,9 +144,9 @@ export function CurriculumImportUpload({
           </div>
 
           {file && (
-            <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/40">
+            <div className="flex items-center justify-between p-3 rounded-none border border-border bg-muted/40">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <FileSpreadsheet size={16} />
                 </div>
                 <div className="min-w-0">
@@ -161,7 +161,7 @@ export function CurriculumImportUpload({
               <button
                 type="button"
                 onClick={handleRemoveFile}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                className="p-1.5 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                 title="Remove file"
               >
                 <Trash2 size={14} />
@@ -173,7 +173,7 @@ export function CurriculumImportUpload({
             <SubmitButton
               isLoading={isPending}
               disabled={!file || !csvContent}
-              className="w-full sm:w-auto h-9 sm:h-9 text-xs font-semibold px-4"
+              className="w-full sm:w-auto h-9 sm:h-9 text-xs font-semibold px-4 rounded-none shadow-2xs"
             >
               Preview & Validate
             </SubmitButton>

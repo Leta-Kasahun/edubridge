@@ -39,7 +39,7 @@ export function CurriculumImportPreviewTable({
 
   return (
     <div className="space-y-4 max-w-full min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3.5 sm:p-5 rounded-none border border-border shadow-xs min-w-0">
         <div className="min-w-0 space-y-1">
           <button
             type="button"
@@ -61,7 +61,7 @@ export function CurriculumImportPreviewTable({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 sm:flex-none h-9 px-4 text-xs font-semibold rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="flex-1 sm:flex-none h-9 px-4 text-xs font-semibold rounded-none border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0 shadow-2xs"
           >
             Cancel
           </button>
@@ -70,7 +70,7 @@ export function CurriculumImportPreviewTable({
             isLoading={isCommitting}
             disabled={!preview.canCommit || preview.invalidRowsCount > 0}
             onClick={onCommit}
-            className="flex-1 sm:flex-none shrink-0"
+            className="flex-1 sm:flex-none shrink-0 rounded-none shadow-2xs"
           >
             {`Import ${preview.validRowsCount} Item${preview.validRowsCount === 1 ? "" : "s"}`}
           </SubmitButton>
@@ -82,7 +82,7 @@ export function CurriculumImportPreviewTable({
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+        <div className="bg-card rounded-none border border-border p-3.5 shadow-2xs">
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
             <FileText size={14} className="text-primary" />
             <span>Total Rows</span>
@@ -92,7 +92,7 @@ export function CurriculumImportPreviewTable({
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+        <div className="bg-card rounded-none border border-border p-3.5 shadow-2xs">
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
             <CheckCircle2 size={14} className="text-emerald-500" />
             <span>Valid</span>
@@ -102,7 +102,7 @@ export function CurriculumImportPreviewTable({
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+        <div className="bg-card rounded-none border border-border p-3.5 shadow-2xs">
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
             <AlertCircle size={14} className="text-destructive" />
             <span>Invalid</span>
@@ -112,7 +112,7 @@ export function CurriculumImportPreviewTable({
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border p-3.5 shadow-2xs">
+        <div className="bg-card rounded-none border border-border p-3.5 shadow-2xs">
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-semibold">
             <Layers size={14} className="text-primary" />
             <span>Structure</span>
@@ -124,7 +124,7 @@ export function CurriculumImportPreviewTable({
       </div>
 
       {preview.issues.length > 0 && (
-        <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-2">
+        <div className="rounded-none border border-border bg-muted/40 p-3.5 space-y-2">
           <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
             <AlertTriangle size={14} className="text-amber-500" />
             <span>Issues Found ({preview.issues.length})</span>
@@ -132,7 +132,7 @@ export function CurriculumImportPreviewTable({
           <div className="max-h-36 overflow-y-auto space-y-1 text-xs text-muted-foreground">
             {preview.issues.slice(0, 10).map((issue, idx) => (
               <div key={idx} className="flex items-start gap-2">
-                <span className={`inline-block px-1.5 py-0.5 rounded font-mono text-[10px] uppercase font-bold shrink-0 ${
+                <span className={`inline-block px-1.5 py-0.5 rounded-none font-mono text-[10px] uppercase font-bold shrink-0 ${
                   issue.severity === "ERROR"
                     ? "bg-destructive/10 text-destructive border border-destructive/20"
                     : "bg-muted text-foreground border border-border"
@@ -151,12 +151,12 @@ export function CurriculumImportPreviewTable({
         </div>
       )}
 
-      <div className="bg-card rounded-2xl border border-border shadow-2xs overflow-hidden">
+      <div className="bg-card rounded-none border border-border shadow-2xs overflow-hidden">
         <div className="flex items-center gap-2 p-3 border-b border-border bg-muted/30 overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab("ALL")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+            className={`px-3 py-1 rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
               activeTab === "ALL"
                 ? "bg-card text-foreground shadow-2xs border border-border"
                 : "text-muted-foreground hover:text-foreground"
@@ -167,7 +167,7 @@ export function CurriculumImportPreviewTable({
           <button
             type="button"
             onClick={() => setActiveTab("VALID")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+            className={`px-3 py-1 rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
               activeTab === "VALID"
                 ? "bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs border border-border"
                 : "text-muted-foreground hover:text-foreground"
@@ -178,7 +178,7 @@ export function CurriculumImportPreviewTable({
           <button
             type="button"
             onClick={() => setActiveTab("INVALID")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+            className={`px-3 py-1 rounded-none text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
               activeTab === "INVALID"
                 ? "bg-card text-destructive shadow-2xs border border-border"
                 : "text-muted-foreground hover:text-foreground"
@@ -235,11 +235,11 @@ export function CurriculumImportPreviewTable({
                   </td>
                   <td className="py-2.5 px-3 text-center whitespace-nowrap">
                     {row.isValid ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-foreground border border-border">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-semibold bg-muted text-foreground border border-border">
                         Valid
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
                         Invalid
                       </span>
                     )}
