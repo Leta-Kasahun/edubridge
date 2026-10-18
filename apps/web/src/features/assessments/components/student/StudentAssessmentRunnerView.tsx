@@ -22,6 +22,11 @@ import { StudentAssessmentCompletedView } from "@/features/evaluations-feedback"
 import { formatTimeRemaining } from "@/shared/utils/assessment.util";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/stores/auth.store";
+import {
+  outboxRepository,
+  attemptCacheRepository,
+  OfflineStatusIcon,
+} from "@/features/offline";
 
 interface StudentAssessmentRunnerViewProps {
   readonly session: StudentActiveAttemptSession;
@@ -55,11 +60,50 @@ export function StudentAssessmentRunnerView({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [submittedResult, setSubmittedResult] = useState<AssessmentAttemptResult | null>(null);
+  const [isOfflineSubmitted, setIsOfflineSubmitted] = useState(false);
 
   const saveAnswerMutation = useSaveAnswer();
   const submitAttemptMutation = useSubmitAttempt();
 
   const debounceTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  useEffect(() => {
+    const tenantId = useAuthStore.getState().tenantId;
+    const userId = useAuthStore.getState().user?.id;
+    if (!tenantId || !userId) return;
+
+    attemptCacheRepository.getAttempt(session.attemptId, tenantId, userId).then((cached) => {
+      if (cached?.answers) {
+        setAnswers((prev) => {
+          const merged = new Map(prev);
+          Object.entries(cached.answers).forEach(([qId, val]) => {
+            if (val !== undefined && val !== null) {
+              merged.set(qId, val);
+            }
+          });
+          return merged;
+        });
+      } else {
+        const initialAnswers: Record<string, unknown> = {};
+        session.questions.forEach((q) => {
+          if (q.savedAnswer !== undefined && q.savedAnswer !== null) {
+            initialAnswers[q.questionVersionId] = q.savedAnswer;
+          }
+        });
+
+        attemptCacheRepository.saveAttempt({
+          attemptId: session.attemptId,
+          assessmentId: session.assessmentId,
+          tenantId,
+          userId,
+          answers: initialAnswers,
+          timeLimitMinutes: session.timeLimitMinutes,
+          startedAt: session.startedAt,
+          updatedAt: Date.now(),
+        });
+      }
+    });
+  }, [session]);
 
   const initialRemainingSeconds = useMemo(() => {
     if (!session.deadline && !session.timeLimitMinutes) return null;
@@ -83,12 +127,37 @@ export function StudentAssessmentRunnerView({
   );
 
   const handleFinalSubmit = useCallback(async () => {
-    if (submittedResult || submitAttemptMutation.isPending) return;
+    if (submittedResult || submitAttemptMutation.isPending || isOfflineSubmitted) return;
 
     const answersPayload = Array.from(answers.entries()).map(([qId, val]) => ({
       questionVersionId: qId,
       response: val,
     }));
+
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    const tenantId = useAuthStore.getState().tenantId;
+    const userId = useAuthStore.getState().user?.id;
+
+    if (isOffline && tenantId && userId) {
+      await outboxRepository.enqueue({
+        tenantId,
+        userId,
+        targetEntityKey: `attempt:${session.attemptId}:submit`,
+        actionType: "SUBMIT_ASSESSMENT_ATTEMPT",
+        endpoint: `/api/v1/assessments/${session.assessmentId}/attempts/${session.attemptId}/submit`,
+        method: "POST",
+        payload: {
+          answers: answersPayload,
+        },
+        idempotencyKey: `${session.attemptId}:submit`,
+        clientTimestamp: Date.now(),
+        conflictStrategy: "IMMUTABLE_SUBMIT",
+      });
+
+      setIsConfirmModalOpen(false);
+      setIsOfflineSubmitted(true);
+      return;
+    }
 
     try {
       const result = await submitAttemptMutation.mutateAsync({
@@ -98,12 +167,16 @@ export function StudentAssessmentRunnerView({
       });
       setSubmittedResult(result);
       setIsConfirmModalOpen(false);
+      if (tenantId && userId) {
+        attemptCacheRepository.removeAttempt(session.attemptId);
+      }
       onFinish?.(result);
     } catch {
       setIsConfirmModalOpen(false);
     }
   }, [
     answers,
+    isOfflineSubmitted,
     onFinish,
     session.assessmentId,
     session.attemptId,
@@ -144,18 +217,51 @@ export function StudentAssessmentRunnerView({
         return next;
       });
 
+      const tenantId = useAuthStore.getState().tenantId;
+      const userId = useAuthStore.getState().user?.id;
+
+      if (tenantId && userId) {
+        attemptCacheRepository.saveAnswer(
+          session.attemptId,
+          tenantId,
+          userId,
+          questionVersionId,
+          value
+        );
+      }
+
       const existingTimer = debounceTimersRef.current.get(questionVersionId);
       if (existingTimer) {
         clearTimeout(existingTimer);
       }
 
       const timer = setTimeout(() => {
-        saveAnswerMutation.mutate({
-          assessmentId: session.assessmentId,
-          attemptId: session.attemptId,
-          questionVersionId,
-          response: value,
-        });
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          if (tenantId && userId) {
+            outboxRepository.enqueue({
+              tenantId,
+              userId,
+              targetEntityKey: `attempt:${session.attemptId}:q:${questionVersionId}`,
+              actionType: "SAVE_ASSESSMENT_ANSWER",
+              endpoint: `/api/v1/assessments/${session.assessmentId}/attempts/${session.attemptId}/answers`,
+              method: "PUT",
+              payload: {
+                questionVersionId,
+                response: value,
+              },
+              idempotencyKey: `${session.attemptId}:${questionVersionId}`,
+              clientTimestamp: Date.now(),
+              conflictStrategy: "LAST_WRITE_WINS",
+            });
+          }
+        } else {
+          saveAnswerMutation.mutate({
+            assessmentId: session.assessmentId,
+            attemptId: session.attemptId,
+            questionVersionId,
+            response: value,
+          });
+        }
         debounceTimersRef.current.delete(questionVersionId);
       }, 600);
 
@@ -191,6 +297,25 @@ export function StudentAssessmentRunnerView({
       await onRetake();
     }
   };
+
+  if (isOfflineSubmitted) {
+    return (
+      <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div className="max-w-md w-full border border-border bg-card p-6 rounded-lg text-center space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Assessment Completed</h2>
+          <p className="text-sm text-muted-foreground">
+            Your answers are saved on this device and will be submitted automatically when connection is available.
+          </p>
+          <Link
+            href={isTeacherOrStaff ? ROUTES.ASSESSMENTS.LIST : ROUTES.STUDENT.PRACTICE}
+            className="inline-block px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (submittedResult) {
     return (
@@ -236,6 +361,7 @@ export function StudentAssessmentRunnerView({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <OfflineStatusIcon />
             {secondsRemaining !== null && (
               <div
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border font-mono font-bold text-xs sm:text-sm transition-colors ${
