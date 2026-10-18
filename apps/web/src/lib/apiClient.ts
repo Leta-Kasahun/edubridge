@@ -149,7 +149,20 @@ apiClient.interceptors.response.use(
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
       return apiClient(originalRequest);
     } catch (refreshError) {
-      const err = refreshError instanceof Error ? refreshError : new Error("Authentication failed");
+      const isNetworkOrOffline =
+        (typeof navigator !== "undefined" && !navigator.onLine) ||
+        (axios.isAxiosError(refreshError) &&
+          (!refreshError.response || refreshError.code === "ERR_NETWORK"));
+
+      if (isNetworkOrOffline) {
+        const networkErr =
+          refreshError instanceof Error ? refreshError : new Error("Network offline");
+        processQueue(networkErr, null);
+        return Promise.reject(networkErr);
+      }
+
+      const err =
+        refreshError instanceof Error ? refreshError : new Error("Authentication failed");
       processQueue(err, null);
       clearAuthStorage();
       if (typeof window !== "undefined") {
