@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Eye, UserX, CheckCircle2 } from "lucide-react";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, SearchHighlight } from "@/shared/components";
 import {
   formatGradeName,
   getGradeCategoryLabel,
@@ -208,15 +208,15 @@ export function GradesTable({
             <div
               key={grade.id}
               onClick={() => onViewDetails(grade)}
-              className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+              className="bg-card rounded-none border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-xs sm:text-sm font-bold text-foreground truncate">
-                      {formatGradeName(grade.level)}
+                      <SearchHighlight text={formatGradeName(grade.level)} />
                     </p>
-                    <span className="inline-flex px-1.5 py-0.2 rounded-md text-[9px] font-semibold bg-muted text-muted-foreground border border-border">
+                    <span className="inline-flex px-1.5 py-0.2 rounded-none text-[9px] font-semibold bg-muted text-muted-foreground border border-border">
                       {getGradeCategoryLabel(grade.level)}
                     </span>
                   </div>
@@ -272,7 +272,7 @@ export function GradesTable({
         })}
       </div>
 
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -302,7 +302,7 @@ export function GradesTable({
                   >
                     <td className="py-3.5 px-4">
                       <p className="font-bold text-foreground truncate group-hover:text-foreground/80 transition-colors">
-                        {formatGradeName(grade.level)}
+                        <SearchHighlight text={formatGradeName(grade.level)} />
                       </p>
                     </td>
 
