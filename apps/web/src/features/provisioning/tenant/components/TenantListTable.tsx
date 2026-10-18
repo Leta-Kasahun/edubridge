@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { TenantActionDropdown } from "./TenantActionDropdown";
 import {
   useTenants,
@@ -85,7 +86,7 @@ export function TenantListTable({
       <button
         type="button"
         onClick={onAddSchool}
-        className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
+        className="flex items-center gap-1.5 h-9 px-3.5 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
       >
         <Plus size={15} />
         <span>Add School</span>
@@ -95,7 +96,7 @@ export function TenantListTable({
 
   return (
     <div className="space-y-4 w-full">
-      <div className="bg-card p-4 rounded-2xl border border-border">
+      <div className="bg-card p-4 rounded-none border border-border">
         <TableToolbar
           searchValue={search}
           onSearchChange={(v) => {
@@ -108,15 +109,16 @@ export function TenantListTable({
         />
       </div>
 
-      <div className="bg-card rounded-2xl border border-border shadow-xs pb-1">
+      <SearchQueryProvider query={search}>
+        <div className="bg-card rounded-none border border-border shadow-xs pb-1">
         {isLoading ? (
           <div className="p-8 text-center space-y-3">
-            <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent animate-spin" />
             <div className="text-xs text-muted-foreground">Loading schools...</div>
           </div>
         ) : tenants.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <div className="inline-flex p-3 rounded-full bg-muted text-muted-foreground">
+            <div className="inline-flex p-3 bg-muted text-muted-foreground">
               <Building2 size={28} />
             </div>
             <div className="text-sm font-semibold text-foreground">No schools found</div>
@@ -127,7 +129,7 @@ export function TenantListTable({
               <button
                 type="button"
                 onClick={onAddSchool}
-                className="px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer"
+                className="px-3.5 py-1.5 rounded-none bg-primary text-primary-foreground text-xs font-semibold cursor-pointer"
               >
                 Add School
               </button>
@@ -156,7 +158,7 @@ export function TenantListTable({
                       <td className="px-5 py-3.5">
                         <div>
                           <div className="font-semibold text-foreground">
-                            {tenant.name}
+                            <SearchHighlight text={tenant.name} />
                           </div>
                           <div className="text-[11px] text-muted-foreground flex items-center gap-2">
                             <span>{tenant.totalTeachers} teachers</span>
@@ -167,17 +169,17 @@ export function TenantListTable({
                       </td>
 
                       <td className="px-4 py-3.5 font-mono text-muted-foreground">
-                        {tenant.code}
+                        <SearchHighlight text={tenant.code} />
                       </td>
 
                       <td className="px-4 py-3.5">
                         {tenant.admin ? (
                           <div>
                             <div className="font-medium text-foreground">
-                              {tenant.admin.firstName} {tenant.admin.lastName}
+                              <SearchHighlight text={`${tenant.admin.firstName} ${tenant.admin.lastName}`} />
                             </div>
                             <div className="text-[11px] text-muted-foreground">
-                              {tenant.admin.email || "No email"}
+                              <SearchHighlight text={tenant.admin.email || "No email"} />
                             </div>
                           </div>
                         ) : (
@@ -188,7 +190,7 @@ export function TenantListTable({
                       </td>
 
                       <td className="px-4 py-3.5 font-mono font-medium text-foreground">
-                        {tenant.admin?.username || "—"}
+                        {tenant.admin?.username ? <SearchHighlight text={tenant.admin.username} /> : "—"}
                       </td>
 
                       <td className="px-4 py-3.5">
@@ -224,10 +226,10 @@ export function TenantListTable({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-xs text-foreground">
-                        {tenant.name}
+                        <SearchHighlight text={tenant.name} />
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        Code: {tenant.code}
+                        Code: <SearchHighlight text={tenant.code} />
                       </div>
                     </div>
 
@@ -255,7 +257,7 @@ export function TenantListTable({
                     <div>
                       <span className="text-[10px] block uppercase text-muted-foreground">Administrator</span>
                       <span className="font-medium text-foreground">
-                        {tenant.admin ? `${tenant.admin.firstName} ${tenant.admin.lastName}` : "Unassigned"}
+                        {tenant.admin ? <SearchHighlight text={`${tenant.admin.firstName} ${tenant.admin.lastName}`} /> : "Unassigned"}
                       </span>
                     </div>
                     <div className="text-right">
@@ -277,7 +279,7 @@ export function TenantListTable({
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-background transition-colors cursor-pointer"
+                    className="p-1.5 rounded-none border border-border disabled:opacity-40 hover:bg-background transition-colors cursor-pointer"
                   >
                     <ChevronLeft size={16} />
                   </button>
@@ -288,7 +290,7 @@ export function TenantListTable({
                     type="button"
                     disabled={page >= pagination.totalPages}
                     onClick={() => setPage((p) => p + 1)}
-                    className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-background transition-colors cursor-pointer"
+                    className="p-1.5 rounded-none border border-border disabled:opacity-40 hover:bg-background transition-colors cursor-pointer"
                   >
                     <ChevronRight size={16} />
                   </button>
@@ -298,6 +300,7 @@ export function TenantListTable({
           </>
         )}
       </div>
+      </SearchQueryProvider>
     </div>
   );
 }
