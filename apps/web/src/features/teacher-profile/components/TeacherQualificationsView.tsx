@@ -75,14 +75,14 @@ function QualificationMenu({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isDeleting}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
         aria-label="Options"
       >
         {isDeleting ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-card border border-border shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-full mt-1 w-44 rounded-none bg-card border border-border shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
           {qualification.documentUrl && onPreview && (
             <button
               type="button"
@@ -158,14 +158,14 @@ function ExperienceMenu({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isDeleting}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
+        className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50"
         aria-label="Options"
       >
         {isDeleting ? <LoadingSpinner size={14} /> : <MoreVertical size={16} />}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-36 rounded-xl bg-card border border-border shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-full mt-1 w-36 rounded-none bg-card border border-border shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
           <button
             type="button"
             onClick={() => {
@@ -340,7 +340,7 @@ export function TeacherQualificationsView() {
           <button
             type="button"
             onClick={handleOpenAddQual}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-card hover:bg-muted/70 text-foreground text-xs font-semibold border border-border shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-none bg-card hover:bg-muted/70 text-foreground text-xs font-semibold border border-border shadow-2xs transition-colors cursor-pointer"
           >
             <Plus size={14} />
             <span>Add qualification</span>
@@ -348,13 +348,13 @@ export function TeacherQualificationsView() {
         </div>
 
         {qualifications.length === 0 ? (
-          <div className="bg-card rounded-2xl border border-border p-6 text-center shadow-xs">
+          <div className="bg-card rounded-none border border-border p-6 text-center shadow-xs">
             <p className="text-xs text-muted-foreground">
               No education or qualifications added yet.
             </p>
           </div>
         ) : (
-          <div className="bg-card rounded-2xl border border-border divide-y divide-border overflow-hidden shadow-xs">
+          <div className="bg-card rounded-none border border-border divide-y divide-border overflow-hidden shadow-xs">
             {qualifications.map((qual) => {
               const hasDoc = Boolean(qual.documentUrl);
               const isPdf = isPdfDocument(qual.documentUrl);
@@ -372,7 +372,7 @@ export function TeacherQualificationsView() {
                       onClick={() => {
                         if (hasDoc) handlePreviewCertificate(qual);
                       }}
-                      className={`relative w-16 h-14 sm:w-20 sm:h-16 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border transition-all group/thumb ${
+                      className={`relative w-16 h-14 sm:w-20 sm:h-16 rounded-none overflow-hidden flex items-center justify-center shrink-0 border transition-all group/thumb ${
                         hasDoc
                           ? "bg-card border-border cursor-pointer hover:border-foreground/40 hover:shadow-xs"
                           : "bg-muted/30 text-muted-foreground/40 border-border/40"
@@ -470,7 +470,7 @@ export function TeacherQualificationsView() {
           <button
             type="button"
             onClick={handleOpenAddExp}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-card hover:bg-muted/70 text-foreground text-xs font-semibold border border-border shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-none bg-card hover:bg-muted/70 text-foreground text-xs font-semibold border border-border shadow-2xs transition-colors cursor-pointer"
           >
             <Plus size={14} />
             <span>Add experience</span>
@@ -478,13 +478,13 @@ export function TeacherQualificationsView() {
         </div>
 
         {experiences.length === 0 ? (
-          <div className="bg-card rounded-2xl border border-border p-6 text-center shadow-xs">
+          <div className="bg-card rounded-none border border-border p-6 text-center shadow-xs">
             <p className="text-xs text-muted-foreground">
               No work experience records added yet.
             </p>
           </div>
         ) : (
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-xs">
+          <div className="bg-card rounded-none border border-border p-4 sm:p-6 shadow-xs">
             <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-border">
               {experiences.map((exp) => {
                 const isCurrent = !exp.endDate;

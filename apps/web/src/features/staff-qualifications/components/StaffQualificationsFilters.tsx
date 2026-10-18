@@ -11,18 +11,26 @@ import {
 interface StaffQualificationsFiltersProps {
   readonly filters: StaffDirectoryFilters;
   readonly onFiltersChange: (newFilters: StaffDirectoryFilters) => void;
+  readonly search?: string;
+  readonly onSearchChange?: (val: string) => void;
 }
 
 export function StaffQualificationsFilters({
   filters,
   onFiltersChange,
+  search,
+  onSearchChange,
 }: StaffQualificationsFiltersProps) {
   const handleSearchChange = (val: string) => {
-    onFiltersChange({
-      ...filters,
-      search: val || undefined,
-      page: 1,
-    });
+    if (onSearchChange) {
+      onSearchChange(val);
+    } else {
+      onFiltersChange({
+        ...filters,
+        search: val || undefined,
+        page: 1,
+      });
+    }
   };
 
   const filterGroups: FilterGroup[] = [
@@ -77,9 +85,9 @@ export function StaffQualificationsFilters({
   ];
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
+    <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
       <TableToolbar
-        searchValue={filters.search || ""}
+        searchValue={search ?? (filters.search || "")}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search teacher by name, code, field of study, school..."
         filters={filterGroups}

@@ -7,6 +7,7 @@ import {
   QUALIFICATION_LEVEL_LABELS,
 } from "../types/staff-qualifications.types";
 import { calculateTotalExperience } from "@/shared/utils/experience.util";
+import { SearchHighlight } from "@/shared/components";
 
 interface StaffQualificationsTableProps {
   readonly items: readonly StaffDirectoryItem[];
@@ -73,7 +74,7 @@ export function StaffQualificationsTable({
 }: StaffQualificationsTableProps) {
   if (items.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-border p-8 text-center shadow-xs">
+      <div className="bg-card rounded-none border border-border p-8 text-center shadow-xs">
         <p className="text-xs text-muted-foreground">
           No qualified teachers found matching the current search or filters.
         </p>
@@ -94,12 +95,12 @@ export function StaffQualificationsTable({
             <div
               key={teacher.id}
               onClick={() => onViewDetails(teacher)}
-              className="bg-card rounded-2xl border border-border p-4 shadow-xs hover:border-foreground/30 transition-colors space-y-3 cursor-pointer"
+              className="bg-card rounded-none border border-border p-4 shadow-xs hover:border-foreground/30 transition-colors space-y-3 cursor-pointer"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs sm:text-sm font-bold text-foreground">
-                    {teacher.fullName}
+                    <SearchHighlight text={teacher.fullName} />
                   </p>
                 </div>
 
@@ -119,7 +120,7 @@ export function StaffQualificationsTable({
                   {teacher.fieldsOfStudy.map((field) => (
                     <span
                       key={field}
-                      className="inline-flex px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-muted text-foreground border border-border"
+                      className="inline-flex px-2 py-0.5 rounded-none text-[10px] font-semibold bg-muted text-foreground border border-border"
                     >
                       {field}
                     </span>
@@ -147,11 +148,11 @@ export function StaffQualificationsTable({
                   </span>
                   <div className="flex items-center gap-1 flex-wrap">
                     {highestLevelStr && (
-                      <span className="inline-flex px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-primary/10 text-primary border border-primary/20">
+                      <span className="inline-flex px-1.5 py-0.2 rounded-none text-[9px] font-bold bg-primary/10 text-primary border border-primary/20">
                         {highestLevelStr}
                       </span>
                     )}
-                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-md text-[9px] font-medium bg-muted text-muted-foreground border border-border">
+                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-none text-[9px] font-medium bg-muted text-muted-foreground border border-border">
                       {teacher.certificateCount > 0
                         ? `${teacher.certificateCount} Certs`
                         : "No cert"}
@@ -164,7 +165,7 @@ export function StaffQualificationsTable({
         })}
       </div>
 
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -192,7 +193,7 @@ export function StaffQualificationsTable({
                   >
                     <td className="py-3.5 px-4">
                       <p className="font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                        {teacher.fullName}
+                        <SearchHighlight text={teacher.fullName} />
                       </p>
                     </td>
 
