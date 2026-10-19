@@ -24,6 +24,7 @@ function VerifyOtpContent() {
 
   return (
     <AuthCard
+      asideMode="general"
       title="Two-Factor Verification"
       description="Enter the 6-digit security code sent to your registered account to continue"
       footer={

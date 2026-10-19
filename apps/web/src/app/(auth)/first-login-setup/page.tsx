@@ -23,6 +23,7 @@ function FirstLoginSetupContent() {
 
   return (
     <AuthCard
+      asideMode="first-login"
       title="First-Time Account Setup"
       description="Configure your personal password to activate and access your school portal"
       footer={
