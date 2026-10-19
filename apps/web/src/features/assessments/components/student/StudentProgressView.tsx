@@ -10,6 +10,7 @@ import {
   PlayCircle,
   Award,
   Sparkles,
+  Search,
 } from "lucide-react";
 import { useMyStudentProfile } from "@/features/students/hooks/useStudentProfile";
 import { useStudentClass } from "@/features/classes/hooks/useStudentClass";
@@ -18,6 +19,7 @@ import { useStudentInProgressAssessments } from "../../hooks/useAssessments";
 import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
 import { useStudentInProgressPractices } from "@/features/question-bank/hooks/useQuestionBanks";
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
+import { SearchHighlight, SearchQueryProvider } from "@/shared/components";
 import { ROUTES } from "@/constants/routes";
 
 type MasteryStage = "Mastered" | "Doing Well" | "Needs Practice" | "Learning" | "Not Started";
@@ -115,6 +117,7 @@ export function StudentProgressView(): React.JSX.Element {
     useStudentInProgressPractices();
 
   const [selectedSubjectCode, setSelectedSubjectCode] = React.useState<string>("");
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const isLoading =
     isProfileLoading ||
@@ -336,6 +339,38 @@ export function StudentProgressView(): React.JSX.Element {
     return list;
   }, [inProgressAssessments, inProgressContent, inProgressPractices]);
 
+  const filteredActivities = useMemo(() => {
+    if (!searchQuery.trim()) return inProgressActivities;
+    const q = searchQuery.toLowerCase();
+    return inProgressActivities.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.subjectCode.toLowerCase().includes(q) ||
+        a.type.toLowerCase().includes(q)
+    );
+  }, [inProgressActivities, searchQuery]);
+
+  const filteredRecommendedTopics = useMemo(() => {
+    if (!searchQuery.trim()) return recommendedTopics;
+    const q = searchQuery.toLowerCase();
+    return recommendedTopics.filter(
+      (t) =>
+        t.topicName.toLowerCase().includes(q) ||
+        t.subjectName.toLowerCase().includes(q) ||
+        t.subjectCode.toLowerCase().includes(q)
+    );
+  }, [recommendedTopics, searchQuery]);
+
+  const filteredSubjectMasteryList = useMemo(() => {
+    if (!searchQuery.trim()) return subjectMasteryList;
+    const q = searchQuery.toLowerCase();
+    return subjectMasteryList.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.code.toLowerCase().includes(q) ||
+        s.teacher.toLowerCase().includes(q)
+    );
+  }, [subjectMasteryList, searchQuery]);
 
   // High-level aggregate metrics
   const totalMasteredTopics = useMemo(() => {
@@ -363,14 +398,14 @@ export function StudentProgressView(): React.JSX.Element {
     return (
       <div className="space-y-6 pb-12 w-full max-w-full min-w-0">
         <div className="flex items-center justify-between gap-3 pb-4 border-b border-border">
-          <div className="h-8 w-44 rounded-xl bg-muted/50 animate-pulse border border-border/40" />
-          <div className="h-6 w-20 rounded-full bg-muted/40 animate-pulse border border-border/40" />
+          <div className="h-8 w-44 rounded-none bg-muted/50 animate-pulse border border-border/40" />
+          <div className="h-6 w-20 rounded-none bg-muted/40 animate-pulse border border-border/40" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="h-44 rounded-2xl bg-card border border-border/50 animate-pulse p-4"
+              className="h-44 rounded-none bg-card border border-border/50 animate-pulse p-4"
             />
           ))}
         </div>
@@ -379,479 +414,515 @@ export function StudentProgressView(): React.JSX.Element {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full min-w-0">
-      {/* Page Header with Grade & Quick Mastery Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            My Progress
-          </h1>
-          {studentGradeLevel && (
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              Grade {studentGradeLevel}
-            </span>
-          )}
-        </div>
-
-        {/* Quick summary badges */}
-        <div className="flex items-center gap-2 text-xs flex-wrap">
-          {totalCurriculumTopics > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-foreground font-semibold">
-              <Award size={14} className="text-primary" />
-              <span>
-                {totalMasteredTopics} / {totalCurriculumTopics} Topics Mastered
+    <SearchQueryProvider query={searchQuery}>
+      <div className="space-y-6 pb-12 w-full max-w-full min-w-0">
+        {/* Page Header with Grade & Quick Mastery Summary */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              My Progress
+            </h1>
+            {studentGradeLevel && (
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-none bg-primary/10 text-primary border border-primary/20">
+                Grade {studentGradeLevel}
               </span>
-            </span>
-          )}
-          {averageAccuracy !== null && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary/10 border border-primary/20 text-primary font-bold">
-              <Sparkles size={14} />
-              <span>{averageAccuracy}% Avg Accuracy</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Section 1: In Progress Activities */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-              <PlayCircle size={18} className="text-primary" />
-              <span>In Progress</span>
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Continue your active practice exams, quizzes, and curriculum lessons
-            </p>
+            )}
           </div>
-          <span className="text-xs text-muted-foreground font-medium">
-            {inProgressActivities.length} active
-          </span>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search progress & topics..."
+                className="w-full rounded-none border border-border bg-card pl-10 pr-4 py-2 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary/40"
+              />
+            </div>
+
+            {/* Quick summary badges */}
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              {totalCurriculumTopics > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none bg-card border border-border text-foreground font-semibold">
+                  <Award size={14} className="text-primary" />
+                  <span>
+                    {totalMasteredTopics} / {totalCurriculumTopics} Topics Mastered
+                  </span>
+                </span>
+              )}
+              {averageAccuracy !== null && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none bg-primary/10 border border-primary/20 text-primary font-bold">
+                  <Sparkles size={14} />
+                  <span>{averageAccuracy}% Avg Accuracy</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {inProgressActivities.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-6 sm:p-8 text-center space-y-3 shadow-xs">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <PlayCircle className="h-6 w-6" />
-            </div>
-            <div className="space-y-1 max-w-sm mx-auto">
-              <h3 className="text-sm font-bold text-foreground">
-                No activities currently in progress
-              </h3>
+        {/* Section 1: In Progress Activities */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <PlayCircle size={18} className="text-primary" />
+                <span>In Progress</span>
+              </h2>
               <p className="text-xs text-muted-foreground">
-                You do not have any unfinished exams or lessons. Start a new assessment or practice topic to build your mastery.
+                Continue your active practice exams, quizzes, and curriculum lessons
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <Link
-                href={ROUTES.ASSESSMENTS.LIST}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-xs"
-              >
-                <span>Browse Assessments</span>
-                <ChevronRight size={13} />
-              </Link>
-              <Link
-                href={ROUTES.STUDENT.MATERIALS}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition shadow-xs"
-              >
-                <span>Curriculum Materials</span>
-              </Link>
-            </div>
+            <span className="text-xs text-muted-foreground font-medium">
+              {filteredActivities.length} active
+            </span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            {inProgressActivities.map((item) => (
-              <div
-                key={item.id}
-                className="group rounded-2xl border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
-              >
-                <div className="space-y-2 min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-muted text-muted-foreground shrink-0">
-                      {item.subjectCode}
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary shrink-0">
-                      {item.type}
-                    </span>
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                      {item.title}
-                    </h3>
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 sm:w-28 h-2 bg-muted rounded-full overflow-hidden shrink-0">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all duration-500"
-                          style={{ width: `${Math.max(item.progress, 0)}%` }}
-                        />
-                      </div>
-                      <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
-                    </div>
-                    <span className="shrink-0 text-[11px] sm:text-xs">
-                      {item.completedItems} of {item.totalItems} completed
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
+          {filteredActivities.length === 0 ? (
+            <div className="rounded-none border border-dashed border-border bg-card/60 p-6 sm:p-8 text-center space-y-3 shadow-xs">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-none bg-primary/10 text-primary">
+                <PlayCircle className="h-6 w-6" />
+              </div>
+              <div className="space-y-1 max-w-sm mx-auto">
+                <h3 className="text-sm font-bold text-foreground">
+                  {inProgressActivities.length === 0
+                    ? "No activities currently in progress"
+                    : "No activities match your search"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {inProgressActivities.length === 0
+                    ? "You do not have any unfinished exams or lessons. Start a new assessment or practice topic to build your mastery."
+                    : "Try adjusting your search query."}
+                </p>
+              </div>
+              {inProgressActivities.length === 0 && (
+                <div className="pt-2 flex items-center justify-center gap-3">
                   <Link
-                    href={item.href}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                    href={ROUTES.ASSESSMENTS.LIST}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-xs"
                   >
-                    <span>Continue</span>
+                    <span>Browse Assessments</span>
                     <ChevronRight size={13} />
                   </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Section 2: Recommended Topics to Improve */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Target size={18} className="text-primary" />
-            <span>Recommended Topics to Practice</span>
-          </h2>
-          <span className="text-xs text-muted-foreground font-medium">
-            {recommendedTopics.length} recommended
-          </span>
-        </div>
-
-        {recommendedTopics.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
-            <Target className="h-8 w-8 text-muted-foreground/60 mb-2" />
-            <h3 className="text-sm font-semibold text-foreground">
-              Great job! All topics are in good standing
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
-              Keep practicing other curriculum subjects to maintain proficiency.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recommendedTopics.map((item, idx) => {
-              const colors = getMasteryColors(item.stage);
-
-              return (
-                <div
-                  key={`rec-topic-${item.id}-${idx}`}
-                  className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
-                >
-                  <div className="space-y-2.5 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                        {item.subjectCode}
-                      </span>
-                      <span className={`text-xs font-bold ${colors.text}`}>
-                        {item.currentScore > 0 ? `${item.currentScore}%` : "Not Attempted"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                        {item.topicName}
-                      </h3>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                        {item.subjectName}
-                      </p>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {item.reason}
-                    </p>
-
-                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
-                        style={{ width: `${Math.max(item.currentScore, 4)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}
-                    >
-                      {item.stage}
-                    </span>
-                    <Link
-                      href={ROUTES.ASSESSMENTS.BASE}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
-                    >
-                      <span>Practice</span>
-                      <ChevronRight size={13} />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Section 3: Subject Mastery Breakdown */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <TrendingUp size={18} className="text-primary" />
-            <span>Subject Mastery</span>
-          </h2>
-          <span className="text-xs text-muted-foreground font-medium">
-            {subjectMasteryList.length} subjects
-          </span>
-        </div>
-
-        {subjectMasteryList.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
-            <BookOpen className="h-8 w-8 text-muted-foreground/60 mb-2" />
-            <h3 className="text-sm font-semibold text-foreground">
-              No subjects registered
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Contact your school administrator to confirm your class enrollment.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subjectMasteryList.map((item, idx) => {
-              const colors = getMasteryColors(item.stage);
-
-              return (
-                <div
-                  key={`subj-mastery-${item.id || item.code}-${idx}`}
-                  className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
-                >
-                  <div className="space-y-2.5 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                        {item.code}
-                      </span>
-                      <span className={`text-xs font-bold ${colors.text}`}>
-                        {item.progress > 0 ? `${item.progress}%` : "0%"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                        {item.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {item.teacher}
-                      </p>
-                    </div>
-
-                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
-                        style={{ width: `${Math.max(item.progress, 3)}%` }}
-                      />
-                    </div>
-
-                    {item.totalTopics > 0 && (
-                      <p className="text-[11px] text-muted-foreground">
-                        {item.masteredCount} of {item.totalTopics} topics mastered
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}
-                    >
-                      {item.stage}
-                    </span>
-                    <Link
-                      href={ROUTES.ASSESSMENTS.BASE}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                    >
-                      <span>Practice</span>
-                      <ChevronRight size={13} />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Section 4: Curriculum Units & Topic Mastery Breakdown */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-              <BookOpen size={18} className="text-primary" />
-              <span>Units & Topics Breakdown</span>
-            </h2>
-          </div>
-
-          {/* Subject Switcher Tabs */}
-          {uniqueSubjects.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/40 rounded-2xl border border-border">
-              {uniqueSubjects.map((s, idx) => {
-                const isSelected = (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode;
-                return (
-                  <button
-                    type="button"
-                    key={`subj-tab-${s.subjectId || s.subjectCode}-${idx}`}
-                    onClick={() => setSelectedSubjectCode(s.subjectCode)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    }`}
+                  <Link
+                    href={ROUTES.STUDENT.MATERIALS}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-none border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition shadow-xs"
                   >
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                        isSelected
-                          ? "bg-primary-foreground/20 text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {s.subjectCode}
-                    </span>
-                    <span className="truncate max-w-[130px] sm:max-w-[180px]">{s.subjectName}</span>
-                    {s.overallAccuracy !== null && (
-                      <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
-                          isSelected
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-primary/10 text-primary"
-                        }`}
-                      >
-                        {Math.round(s.overallAccuracy)}%
+                    <span>Curriculum Materials</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              {filteredActivities.map((item) => (
+                <div
+                  key={item.id}
+                  className="group rounded-none border border-border border-l-4 border-l-primary bg-card hover:bg-muted/20 transition-all p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
+                >
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-none bg-muted text-muted-foreground shrink-0">
+                        <SearchHighlight text={item.subjectCode} />
                       </span>
-                    )}
-                  </button>
-                );
-              })}
+                      <span className="px-2 py-0.5 text-[10px] font-semibold rounded-none bg-primary/10 text-primary shrink-0">
+                        {item.type}
+                      </span>
+                      <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                        <SearchHighlight text={item.title} />
+                      </h3>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 sm:w-28 h-2 bg-muted rounded-none overflow-hidden shrink-0">
+                          <div
+                            className="h-full rounded-none bg-primary transition-all duration-500"
+                            style={{ width: `${Math.max(item.progress, 0)}%` }}
+                          />
+                        </div>
+                        <span className="font-bold text-foreground shrink-0">{item.progress}%</span>
+                      </div>
+                      <span className="shrink-0 text-[11px] sm:text-xs">
+                        {item.completedItems} of {item.totalItems} completed
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border shrink-0">
+                    <Link
+                      href={item.href}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                    >
+                      <span>Continue</span>
+                      <ChevronRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Selected Subject Unit & Topic Breakdown */}
-        {(() => {
-          const activeSubject =
-            uniqueSubjects.find(
-              (s) => (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode
-            ) || uniqueSubjects[0];
+        {/* Section 2: Recommended Topics to Improve */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Target size={18} className="text-primary" />
+              <span>Recommended Topics to Practice</span>
+            </h2>
+            <span className="text-xs text-muted-foreground font-medium">
+              {filteredRecommendedTopics.length} recommended
+            </span>
+          </div>
 
-          if (!activeSubject || activeSubject.units.length === 0) {
-            return (
-              <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">
-                No units or topic structures registered yet for this subject.
-              </div>
-            );
-          }
-
-          return (
-            <div className="space-y-4">
-              {activeSubject.units.map((unit, unitIdx) => {
-                const masteredInUnit = unit.topics.filter(
-                  (t) => t.level === "MASTERED" || (t.accuracy !== null && t.accuracy >= 80)
-                ).length;
-                const unitTopicCount = unit.topics.length;
-                const unitProgress = unitTopicCount > 0 ? Math.round((masteredInUnit / unitTopicCount) * 100) : 0;
+          {filteredRecommendedTopics.length === 0 ? (
+            <div className="rounded-none border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
+              <Target className="h-8 w-8 text-muted-foreground/60 mb-2" />
+              <h3 className="text-sm font-semibold text-foreground">
+                {recommendedTopics.length === 0
+                  ? "Great job! All topics are in good standing"
+                  : "No recommended topics match your search"}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
+                Keep practicing other curriculum subjects to maintain proficiency.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredRecommendedTopics.map((item, idx) => {
+                const colors = getMasteryColors(item.stage);
 
                 return (
                   <div
-                    key={`unit-${unit.unitId || unit.unitCode}-${unitIdx}`}
-                    className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs space-y-3 p-4 sm:p-5"
+                    key={`rec-topic-${item.id}-${idx}`}
+                    className="rounded-none border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                            {unit.unitCode}
-                          </span>
-                          <h3 className="text-sm font-bold text-foreground truncate">
-                            {unit.unitTitle}
-                          </h3>
-                        </div>
+                    <div className="space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-none bg-muted text-muted-foreground border border-border">
+                          <SearchHighlight text={item.subjectCode} />
+                        </span>
+                        <span className={`text-xs font-bold ${colors.text}`}>
+                          {item.currentScore > 0 ? `${item.currentScore}%` : "Not Attempted"}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="text-muted-foreground font-medium">
-                          {masteredInUnit}/{unitTopicCount} Topics Mastered
-                        </span>
-                        <div className="w-20 sm:w-28 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-                            style={{ width: `${Math.max(unitProgress, 4)}%` }}
-                          />
-                        </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                          <SearchHighlight text={item.topicName} />
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                          <SearchHighlight text={item.subjectName} />
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground">
+                        {item.reason}
+                      </p>
+
+                      <div className="w-full h-2 bg-muted rounded-none overflow-hidden">
+                        <div
+                          className={`h-full rounded-none transition-all duration-500 ${colors.bar}`}
+                          style={{ width: `${Math.max(item.currentScore, 4)}%` }}
+                        />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                      {unit.topics.map((topic, topicIdx) => {
-                        const score = topic.accuracy !== null ? Math.round(topic.accuracy) : 0;
-                        const stage =
-                          topic.accuracy !== null
-                            ? getMasteryStage(score)
-                            : topic.level === "DEVELOPING"
-                            ? "Needs Practice"
-                            : "Not Started";
-                        const colors = getMasteryColors(stage);
-
-                        return (
-                          <div
-                            key={`topic-${topic.topicId || topic.topicCode}-${topicIdx}`}
-                            className="p-3.5 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col justify-between space-y-2.5"
-                          >
-                            <div className="space-y-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-[10px] font-mono font-medium text-muted-foreground truncate">
-                                  {topic.topicCode}
-                                </span>
-                                <span
-                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}
-                                >
-                                  {stage}
-                                </span>
-                              </div>
-
-                              <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug break-words">
-                                {topic.topicTitle}
-                              </h4>
-                            </div>
-
-                            <div className="space-y-1.5 pt-1 border-t border-border/50">
-                              <div className="flex items-center justify-between text-[11px]">
-                                <span className="text-muted-foreground">
-                                  {topic.questionCount > 0
-                                    ? `${topic.correctCount}/${topic.questionCount} correct`
-                                    : "No attempts yet"}
-                                </span>
-                                <span className={`font-bold font-mono ${colors.text}`}>
-                                  {topic.accuracy !== null ? `${score}%` : "—"}
-                                </span>
-                              </div>
-
-                              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-300 ${colors.bar}`}
-                                  style={{ width: `${Math.max(score, 3)}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-none border ${colors.badge}`}
+                      >
+                        {item.stage}
+                      </span>
+                      <Link
+                        href={ROUTES.ASSESSMENTS.BASE}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-all shadow-xs"
+                      >
+                        <span>Practice</span>
+                        <ChevronRight size={13} />
+                      </Link>
                     </div>
                   </div>
                 );
               })}
             </div>
-          );
-        })()}
+          )}
+        </div>
+
+        {/* Section 3: Subject Mastery Breakdown */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <TrendingUp size={18} className="text-primary" />
+              <span>Subject Mastery</span>
+            </h2>
+            <span className="text-xs text-muted-foreground font-medium">
+              {filteredSubjectMasteryList.length} subjects
+            </span>
+          </div>
+
+          {filteredSubjectMasteryList.length === 0 ? (
+            <div className="rounded-none border border-dashed border-border bg-card p-6 text-center flex flex-col items-center justify-center shadow-xs">
+              <BookOpen className="h-8 w-8 text-muted-foreground/60 mb-2" />
+              <h3 className="text-sm font-semibold text-foreground">
+                {subjectMasteryList.length === 0
+                  ? "No subjects registered"
+                  : "No subjects match your search"}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Contact your school administrator to confirm your class enrollment.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSubjectMasteryList.map((item, idx) => {
+                const colors = getMasteryColors(item.stage);
+
+                return (
+                  <div
+                    key={`subj-mastery-${item.id || item.code}-${idx}`}
+                    className="rounded-none border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm flex flex-col justify-between space-y-3 min-w-0 group"
+                  >
+                    <div className="space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-none bg-muted text-muted-foreground border border-border">
+                          <SearchHighlight text={item.code} />
+                        </span>
+                        <span className={`text-xs font-bold ${colors.text}`}>
+                          {item.progress > 0 ? `${item.progress}%` : "0%"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                          <SearchHighlight text={item.name} />
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          <SearchHighlight text={item.teacher} />
+                        </p>
+                      </div>
+
+                      <div className="w-full h-2 bg-muted rounded-none overflow-hidden">
+                        <div
+                          className={`h-full rounded-none transition-all duration-500 ${colors.bar}`}
+                          style={{ width: `${Math.max(item.progress, 3)}%` }}
+                        />
+                      </div>
+
+                      {item.totalTopics > 0 && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {item.masteredCount} of {item.totalTopics} topics mastered
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-none border ${colors.badge}`}
+                      >
+                        {item.stage}
+                      </span>
+                      <Link
+                        href={ROUTES.ASSESSMENTS.BASE}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      >
+                        <span>Practice</span>
+                        <ChevronRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Section 4: Curriculum Units & Topic Mastery Breakdown */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <BookOpen size={18} className="text-primary" />
+                <span>Units & Topics Breakdown</span>
+              </h2>
+            </div>
+
+            {/* Subject Switcher Tabs */}
+            {uniqueSubjects.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/40 rounded-none border border-border">
+                {uniqueSubjects.map((s, idx) => {
+                  const isSelected = (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode;
+                  return (
+                    <button
+                      type="button"
+                      key={`subj-tab-${s.subjectId || s.subjectCode}-${idx}`}
+                      onClick={() => setSelectedSubjectCode(s.subjectCode)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      }`}
+                    >
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-none ${
+                          isSelected
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <SearchHighlight text={s.subjectCode} />
+                      </span>
+                      <span className="truncate max-w-[130px] sm:max-w-[180px]">
+                        <SearchHighlight text={s.subjectName} />
+                      </span>
+                      {s.overallAccuracy !== null && (
+                        <span
+                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-none ${
+                            isSelected
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {Math.round(s.overallAccuracy)}%
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Selected Subject Unit & Topic Breakdown */}
+          {(() => {
+            const activeSubject =
+              uniqueSubjects.find(
+                (s) => (selectedSubjectCode || uniqueSubjects[0]?.subjectCode) === s.subjectCode
+              ) || uniqueSubjects[0];
+
+            if (!activeSubject || activeSubject.units.length === 0) {
+              return (
+                <div className="rounded-none border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">
+                  No units or topic structures registered yet for this subject.
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {activeSubject.units.map((unit, unitIdx) => {
+                  const matchingTopics = unit.topics.filter(
+                    (t) =>
+                      !searchQuery.trim() ||
+                      t.topicTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      t.topicCode.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+
+                  if (searchQuery.trim() && matchingTopics.length === 0) {
+                    return null;
+                  }
+
+                  const masteredInUnit = unit.topics.filter(
+                    (t) => t.level === "MASTERED" || (t.accuracy !== null && t.accuracy >= 80)
+                  ).length;
+                  const unitTopicCount = unit.topics.length;
+                  const unitProgress = unitTopicCount > 0 ? Math.round((masteredInUnit / unitTopicCount) * 100) : 0;
+
+                  return (
+                    <div
+                      key={`unit-${unit.unitId || unit.unitCode}-${unitIdx}`}
+                      className="bg-card rounded-none border border-border overflow-hidden shadow-xs space-y-3 p-4 sm:p-5"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-none bg-muted text-muted-foreground border border-border">
+                              <SearchHighlight text={unit.unitCode} />
+                            </span>
+                            <h3 className="text-sm font-bold text-foreground truncate">
+                              <SearchHighlight text={unit.unitTitle} />
+                            </h3>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-muted-foreground font-medium">
+                            {masteredInUnit}/{unitTopicCount} Topics Mastered
+                          </span>
+                          <div className="w-20 sm:w-28 h-2 bg-muted rounded-none overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 rounded-none transition-all duration-300"
+                              style={{ width: `${Math.max(unitProgress, 4)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        {matchingTopics.map((topic, topicIdx) => {
+                          const score = topic.accuracy !== null ? Math.round(topic.accuracy) : 0;
+                          const stage =
+                            topic.accuracy !== null
+                              ? getMasteryStage(score)
+                              : topic.level === "DEVELOPING"
+                              ? "Needs Practice"
+                              : "Not Started";
+                          const colors = getMasteryColors(stage);
+
+                          return (
+                            <div
+                              key={`topic-${topic.topicId || topic.topicCode}-${topicIdx}`}
+                              className="p-3.5 rounded-none border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col justify-between space-y-2.5"
+                            >
+                              <div className="space-y-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-mono font-medium text-muted-foreground truncate">
+                                    <SearchHighlight text={topic.topicCode} />
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-none border ${colors.badge}`}
+                                  >
+                                    {stage}
+                                  </span>
+                                </div>
+
+                                <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug break-words">
+                                  <SearchHighlight text={topic.topicTitle} />
+                                </h4>
+                              </div>
+
+                              <div className="space-y-1.5 pt-1 border-t border-border/50">
+                                <div className="flex items-center justify-between text-[11px]">
+                                  <span className="text-muted-foreground">
+                                    {topic.questionCount > 0
+                                      ? `${topic.correctCount}/${topic.questionCount} correct`
+                                      : "No attempts yet"}
+                                  </span>
+                                  <span className={`font-bold font-mono ${colors.text}`}>
+                                    {topic.accuracy !== null ? `${score}%` : "—"}
+                                  </span>
+                                </div>
+
+                                <div className="w-full h-1.5 bg-muted rounded-none overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-none transition-all duration-300 ${colors.bar}`}
+                                    style={{ width: `${Math.max(score, 3)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
       </div>
-
-
-    </div>
+    </SearchQueryProvider>
   );
 }

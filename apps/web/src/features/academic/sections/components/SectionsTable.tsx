@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Eye, Edit2, UserX, CheckCircle2, Trash2 } from "lucide-react";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, SearchHighlight } from "@/shared/components";
 import { SectionRecord } from "../types/section.types";
 import { useUpdateSectionStatus, useDeleteSection } from "../hooks/useSections";
 import { formatCapacityUtilization } from "@/shared/utils/section.util";
@@ -231,7 +231,7 @@ export function SectionsTable({
 
   if (items.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-border p-8 text-center shadow-xs">
+      <div className="bg-card rounded-none border border-border p-8 text-center shadow-xs">
         <p className="text-xs text-muted-foreground">
           No sections found matching your criteria.
         </p>
@@ -246,12 +246,12 @@ export function SectionsTable({
           <div
             key={sec.id}
             onClick={() => onViewDetails(sec)}
-            className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+            className="bg-card rounded-none border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-foreground truncate">
-                  Section {sec.name}
+                  Section <SearchHighlight text={sec.name} />
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   Grade {sec.gradeLevel} · {sec.academicYearName}
@@ -280,7 +280,11 @@ export function SectionsTable({
                   Homeroom
                 </span>
                 <p className="text-xs font-semibold text-foreground truncate">
-                  {sec.homeroomTeacher?.fullName || "Unassigned"}
+                  {sec.homeroomTeacher?.fullName ? (
+                    <SearchHighlight text={sec.homeroomTeacher.fullName} />
+                  ) : (
+                    "Unassigned"
+                  )}
                 </p>
               </div>
 
@@ -306,7 +310,7 @@ export function SectionsTable({
         ))}
       </div>
 
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -329,7 +333,7 @@ export function SectionsTable({
                 >
                   <td className="py-3.5 px-4">
                     <p className="font-bold text-foreground truncate group-hover:text-foreground/80 transition-colors">
-                      Section {sec.name}
+                      Section <SearchHighlight text={sec.name} />
                     </p>
                   </td>
 
@@ -342,7 +346,11 @@ export function SectionsTable({
                   </td>
 
                   <td className="py-3.5 px-4 font-medium text-foreground truncate max-w-40">
-                    {sec.homeroomTeacher ? sec.homeroomTeacher.fullName : "Unassigned"}
+                    {sec.homeroomTeacher?.fullName ? (
+                      <SearchHighlight text={sec.homeroomTeacher.fullName} />
+                    ) : (
+                      "Unassigned"
+                    )}
                   </td>
 
                   <td className="py-3.5 px-4 font-medium text-foreground">

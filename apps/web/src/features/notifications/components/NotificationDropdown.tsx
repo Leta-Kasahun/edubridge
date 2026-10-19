@@ -85,7 +85,7 @@ function NotificationRow({
     >
       <div
         className={cn(
-          "mt-0.5 shrink-0 p-1.5 rounded-lg flex items-center justify-center",
+          "mt-0.5 shrink-0 p-1.5 rounded-none flex items-center justify-center",
           item.isRead
             ? "bg-muted text-muted-foreground"
             : "bg-primary/10 text-primary"
@@ -182,7 +182,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
   return (
     <div
-      className="fixed inset-x-2.5 top-15 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-[380px] max-w-[calc(100vw-1.25rem)] sm:max-w-md origin-top-right rounded-xl bg-card border border-border shadow-xl ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden flex flex-col"
+      className="fixed inset-x-2.5 top-15 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-[380px] max-w-[calc(100vw-1.25rem)] sm:max-w-md origin-top-right rounded-none bg-card border border-border shadow-xl ring-1 ring-foreground/5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden flex flex-col"
       role="dialog"
       aria-label="Notifications"
     >
@@ -193,7 +193,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
             Notifications
           </span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full shrink-0">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-none shrink-0">
               {unreadCount}
             </span>
           )}
@@ -219,7 +219,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           <button
             type="button"
             onClick={onClose}
-            className="sm:hidden p-1 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="sm:hidden p-1 -mr-1 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             aria-label="Close notifications"
           >
             <X size={15} />
@@ -254,42 +254,14 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
             />
           ))}
 
-        {!isLoading && hasNextPage && <div ref={observerRef} className="h-1" />}
+        {!isLoading && hasNextPage && <div ref={observerRef} className="h-4 w-full" />}
 
         {isFetchingNextPage && (
-          <div className="flex items-center justify-center py-3 text-muted-foreground bg-muted/10">
+          <div className="flex items-center justify-center py-3.5 bg-muted/10">
             <Loader2 size={16} className="animate-spin text-primary" />
           </div>
         )}
       </div>
-
-      {!isLoading && items.length > 0 && (
-        <div className="border-t border-border px-4 py-2.5 bg-muted/20 text-center shrink-0">
-          {hasNextPage ? (
-            <button
-              type="button"
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer py-0.5 disabled:opacity-50"
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 size={12} className="animate-spin shrink-0" />
-                  <span>Loading more notifications...</span>
-                </>
-              ) : (
-                <span>
-                  Load more notifications ({items.length} of {total})
-                </span>
-              )}
-            </button>
-          ) : (
-            <span className="text-[11px] text-muted-foreground">
-              All {items.length} {items.length === 1 ? "notification" : "notifications"} loaded
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 }

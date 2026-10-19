@@ -1,4 +1,5 @@
 export * from "./AuthCard";
+export * from "./AuthAside";
 export * from "./LoginForm";
 export * from "./VerifyOtpForm";
 export * from "./FirstLoginSetupForm";

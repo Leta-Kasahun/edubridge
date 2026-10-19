@@ -224,7 +224,7 @@ export function PreferencesManager() {
           <button
             type="button"
             onClick={openAddModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-colors shadow-2xs w-fit cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-none bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-colors shadow-2xs w-fit cursor-pointer shrink-0"
           >
             <Plus size={15} />
             <span>New Item</span>
@@ -232,7 +232,7 @@ export function PreferencesManager() {
         }
       />
 
-      <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
+      <div className="bg-card rounded-none border border-border shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border">

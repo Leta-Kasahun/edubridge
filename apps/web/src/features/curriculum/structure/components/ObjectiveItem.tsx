@@ -2,6 +2,7 @@
 
 import { Target, Edit2, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { LearningObjectiveItem } from "../types/structure.types";
+import { SearchHighlight } from "@/shared/components";
 
 interface ObjectiveItemProps {
   readonly objective: LearningObjectiveItem;
@@ -33,15 +34,15 @@ export function ObjectiveItem({
         <div className="space-y-0.5 min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-sm bg-muted text-foreground uppercase tracking-wider">
-              {objective.code}
+              <SearchHighlight text={objective.code} />
             </span>
             <span className="text-xs font-medium text-foreground leading-relaxed">
-              {objective.statement}
+              <SearchHighlight text={objective.statement} />
             </span>
           </div>
           {objective.description && (
             <p className="text-[11px] text-muted-foreground line-clamp-2 leading-normal">
-              {objective.description}
+              <SearchHighlight text={objective.description} />
             </p>
           )}
         </div>

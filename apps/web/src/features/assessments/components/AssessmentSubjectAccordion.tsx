@@ -13,6 +13,7 @@ import {
 import { AssessmentItem } from "../types/assessment.types";
 import { AssessmentStatusBadge } from "./AssessmentStatusBadge";
 import { ASSESSMENT_TYPE_LABELS } from "@/shared/constants/assessment.constants";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 
 export interface AssessmentSubjectGroup {
   readonly id: string;
@@ -54,7 +55,7 @@ export function AssessmentSubjectAccordion({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm text-foreground truncate">
-                {group.name}
+                <SearchHighlight text={group.name} />
               </span>
               {group.code && (
                 <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
@@ -104,7 +105,7 @@ export function AssessmentSubjectAccordion({
                         href={`/dashboard/assessments/${assessment.id}`}
                         className="font-semibold text-sm text-foreground hover:text-primary transition-colors cursor-pointer"
                       >
-                        {assessment.title}
+                        <SearchHighlight text={assessment.title} />
                       </Link>
                       <AssessmentStatusBadge status={assessment.status} />
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
@@ -129,7 +130,7 @@ export function AssessmentSubjectAccordion({
 
                     {assessment.description && (
                       <p className="text-xs text-muted-foreground line-clamp-2">
-                        {assessment.description}
+                        <SearchHighlight text={assessment.description} />
                       </p>
                     )}
 

@@ -11,6 +11,8 @@ import {
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
@@ -78,8 +80,10 @@ export function QuestionBankTable() {
     return rawSubjectsList.filter((s) => allowedSubjectIds.includes(s.id));
   }, [rawSubjectsList, isTeacher, allowedSubjectIds]);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const { data, isLoading, error } = useQuestionBanks({
-    search: search.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
     status: statusFilter === "ALL" ? undefined : (statusFilter as QuestionBankStatus),
     examContextId: examTypeFilter === "ALL" ? undefined : examTypeFilter,
     limit: 100,
@@ -163,12 +167,24 @@ export function QuestionBankTable() {
   }, [effectiveGradesList, selectedGradeId]);
 
   const filteredByGradeItems = useMemo(() => {
-    if (!activeGrade) return scopedItems;
-    return scopedItems.filter(
-      (item) =>
-        item.gradeId === activeGrade.id || item.grade?.level === activeGrade.level
-    );
-  }, [scopedItems, activeGrade]);
+    let list = scopedItems;
+    if (activeGrade) {
+      list = list.filter(
+        (item) =>
+          item.gradeId === activeGrade.id || item.grade?.level === activeGrade.level
+      );
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          (item.description && item.description.toLowerCase().includes(q)) ||
+          (item.subject?.name && item.subject.name.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [scopedItems, activeGrade, search]);
 
   const subjectGroups: readonly BankSubjectAccordionGroup[] = useMemo(() => {
     const map = new Map<string, QuestionBankItem[]>();
@@ -276,7 +292,7 @@ export function QuestionBankTable() {
     if (academicYears.length > 0) {
       filters.push({
         id: "year",
-        label: "Year",
+        label: "Academic Year",
         icon: Calendar,
         selectedValue: academicYearFilter,
         onSelect: (val) => setAcademicYearFilter(val),
@@ -310,25 +326,9 @@ export function QuestionBankTable() {
     return filters;
   }, [statusFilter, academicYearFilter, examTypeFilter, academicYears, examContexts]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={error.message || "Failed to load question banks."} />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
           searchValue={search}
           onSearchChange={(val) => setSearch(val)}
@@ -338,7 +338,7 @@ export function QuestionBankTable() {
             <button
               type="button"
               onClick={handleCreate}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <Plus size={14} />
               <span>Create Question Bank</span>
@@ -354,8 +354,16 @@ export function QuestionBankTable() {
         totalCount={scopedItems.length}
       />
 
-      {scopedItems.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border p-12 text-center flex flex-col items-center justify-center">
+      {isLoading && !data ? (
+        <div className="min-h-[300px] flex items-center justify-center p-8 bg-card rounded-none border border-border">
+          <LoadingSpinner size={32} />
+        </div>
+      ) : error ? (
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <ErrorAlert message={error.message || "Failed to load question banks."} />
+        </div>
+      ) : filteredByGradeItems.length === 0 ? (
+        <div className="bg-card rounded-none border border-border p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <BookOpen size={20} />
           </div>
@@ -377,30 +385,32 @@ export function QuestionBankTable() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {subjectGroups.map((group) => (
-            <QuestionBankSubjectAccordion
-              key={group.id}
-              group={group}
-              isOpen={openSubjectIds.has(group.id)}
-              onToggle={() => handleToggleSubject(group.id)}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isDeleting={deleteMutation.isPending}
-              renderRowActions={(bank) => (
-                <BankRowActions
-                  bank={bank}
-                  onEdit={handleEdit}
-                  onUpload={(b) => setUploadBankId(b.id)}
-                  onAddQuestion={(b) => setAddQuestionBankId(b.id)}
-                  onStatusChange={handleStatusChange}
-                  onDelete={handleDelete}
-                  isBusy={deleteMutation.isPending || statusMutation.isPending}
-                />
-              )}
-            />
-          ))}
-        </div>
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
+            {subjectGroups.map((group) => (
+              <QuestionBankSubjectAccordion
+                key={group.id}
+                group={group}
+                isOpen={openSubjectIds.has(group.id)}
+                onToggle={() => handleToggleSubject(group.id)}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isDeleting={deleteMutation.isPending}
+                renderRowActions={(bank) => (
+                  <BankRowActions
+                    bank={bank}
+                    onEdit={handleEdit}
+                    onUpload={(b) => setUploadBankId(b.id)}
+                    onAddQuestion={(b) => setAddQuestionBankId(b.id)}
+                    onStatusChange={handleStatusChange}
+                    onDelete={handleDelete}
+                    isBusy={deleteMutation.isPending || statusMutation.isPending}
+                  />
+                )}
+              />
+            ))}
+          </div>
+        </SearchQueryProvider>
       )}
 
       <QuestionBankFormModal

@@ -17,6 +17,7 @@ import {
   formatTeacherAssignmentRole,
   getTeacherLoadBadgeClass,
 } from "@/shared/utils";
+import { SearchHighlight } from "@/shared/components";
 
 interface TeacherAssignmentsTableProps {
   readonly items: readonly TeacherAssignmentListItem[];
@@ -194,8 +195,8 @@ export function TeacherAssignmentsTable({
 }: TeacherAssignmentsTableProps) {
   if (items.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-xs">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground mb-4">
+      <div className="bg-card rounded-none border border-border p-12 text-center shadow-xs">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-none bg-muted/60 text-muted-foreground mb-4">
           <GraduationCap size={24} />
         </div>
         <h3 className="text-sm font-semibold text-foreground mb-1">No teacher assignments found</h3>
@@ -209,7 +210,7 @@ export function TeacherAssignmentsTable({
   return (
     <div className="space-y-4">
       {/* Desktop Table */}
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
@@ -227,23 +228,27 @@ export function TeacherAssignmentsTable({
                 return (
                   <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-foreground">{item.teacherName}</div>
+                      <div className="font-semibold text-foreground">
+                        <SearchHighlight text={item.teacherName} />
+                      </div>
                       <div className="font-mono text-[11px] text-muted-foreground">
-                        {item.employeeCode}
+                        <SearchHighlight text={item.employeeCode} />
                       </div>
                     </td>
                     <td className="py-3.5 px-4 font-medium text-foreground">
                       {formatTeacherAssignmentRole(item.role)}
                     </td>
                     <td className="py-3.5 px-4 text-foreground">
-                      Grade {item.gradeLevel} — {item.sectionName}
+                      Grade {item.gradeLevel} — <SearchHighlight text={item.sectionName} />
                     </td>
                     <td className="py-3.5 px-4 text-foreground">
                       {item.subjectName ? (
                         <div>
-                          <span className="font-medium">{item.subjectName}</span>
+                          <span className="font-medium">
+                            <SearchHighlight text={item.subjectName} />
+                          </span>
                           <span className="font-mono text-[10px] text-muted-foreground ml-1.5">
-                            ({item.subjectCode})
+                            (<SearchHighlight text={item.subjectCode} />)
                           </span>
                         </div>
                       ) : (
@@ -254,7 +259,7 @@ export function TeacherAssignmentsTable({
                       <button
                         type="button"
                         onClick={() => onViewLoad(item)}
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors cursor-pointer hover:opacity-80 ${getTeacherLoadBadgeClass(
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-none transition-colors cursor-pointer hover:opacity-80 ${getTeacherLoadBadgeClass(
                           item.teacherActiveLoad
                         )}`}
                         title="Click to view full workload"
@@ -284,13 +289,15 @@ export function TeacherAssignmentsTable({
           return (
             <div
               key={item.id}
-              className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-2.5 relative"
+              className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs space-y-2.5 relative"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-foreground truncate">{item.teacherName}</div>
+                  <div className="text-xs font-bold text-foreground truncate">
+                    <SearchHighlight text={item.teacherName} />
+                  </div>
                   <div className="text-[11px] font-mono text-muted-foreground truncate">
-                    {item.employeeCode}
+                    <SearchHighlight text={item.employeeCode} />
                   </div>
                 </div>
 
@@ -298,7 +305,7 @@ export function TeacherAssignmentsTable({
                   <button
                     type="button"
                     onClick={() => onViewLoad(item)}
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${getTeacherLoadBadgeClass(
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-none ${getTeacherLoadBadgeClass(
                       item.teacherActiveLoad
                     )}`}
                   >
@@ -323,14 +330,14 @@ export function TeacherAssignmentsTable({
                 <div>
                   <span className="text-muted-foreground text-[11px]">Section: </span>
                   <span className="font-semibold text-foreground">
-                    Grade {item.gradeLevel} — {item.sectionName}
+                    Grade {item.gradeLevel} — <SearchHighlight text={item.sectionName} />
                   </span>
                 </div>
                 {item.subjectName && (
                   <div className="w-full">
                     <span className="text-muted-foreground text-[11px]">Subject: </span>
                     <span className="font-semibold text-foreground">
-                      {item.subjectName} ({item.subjectCode})
+                      <SearchHighlight text={item.subjectName} /> (<SearchHighlight text={item.subjectCode} />)
                     </span>
                   </div>
                 )}

@@ -42,9 +42,9 @@ export function AssessmentGradeTabs({
       <button
         type="button"
         onClick={() => onSelectGrade(null)}
-        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+        className={`px-3.5 py-1.5 rounded-none text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
           selectedGradeId === null
-            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+            ? "bg-primary text-primary-foreground border-primary shadow-2xs"
             : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
         }`}
       >
@@ -60,9 +60,9 @@ export function AssessmentGradeTabs({
             key={grade.id}
             type="button"
             onClick={() => onSelectGrade(grade.id)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-none text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
               isSelected
-                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                ? "bg-primary text-primary-foreground border-primary shadow-2xs"
                 : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
             }`}
           >

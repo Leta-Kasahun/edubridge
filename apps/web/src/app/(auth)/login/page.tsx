@@ -9,6 +9,7 @@ export default function LoginPage() {
 
   return (
     <AuthCard
+      asideMode="login"
       title="Welcome Back"
       description="Sign in to your account to continue"
     >

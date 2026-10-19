@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/shared/components/Logo";
 
 export const metadata: Metadata = {
   title: "Terms of Service | EduBridge",
@@ -12,7 +12,7 @@ export default function TermsOfServicePage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex items-center space-x-3 mb-8 border-b pb-6">
-          <Image src="/logo.png" alt="EduBridge Logo" width={48} height={48} className="rounded-lg" />
+          <Logo variant="mark" size="lg" />
           <div>
             <h1 className="text-3xl font-bold text-slate-900">EduBridge Terms of Service</h1>
             <p className="text-sm text-slate-500">Effective Date: January 1, 2026 | Last Updated: September 11, 2026</p>

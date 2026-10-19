@@ -274,20 +274,7 @@ export function Sidebar() {
   const closeMobile = () => setSidebarMobileOpen(false);
 
   const userRoles = user?.roles ?? [];
-  const isSystemAdmin = userRoles.includes("SYSTEM_ADMIN");
   const navTree = getNavigationTree(userRoles);
-
-  const roleLabel = isSystemAdmin
-    ? "System Admin"
-    : userRoles[0]
-      ? userRoles[0].replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      : "School Admin";
-
-  const orgName = isSystemAdmin
-    ? "EduBridge Platform"
-    : user?.memberships?.[0]?.tenantName ?? "Greenfield Academy";
-
-  const orgSubtitle = isSystemAdmin ? "Global Operations" : "2025-2026 Academic Term";
 
   return (
     <>
@@ -385,25 +372,6 @@ export function Sidebar() {
             </div>
           )}
         </div>
-
-        {/* School / Tenant Badge Header */}
-        {(!sidebarCollapsed || sidebarMobileOpen) && (
-          <div className="px-3.5 py-3 border-b border-[#1E293B]">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#1E293B]/70 to-[#0F172A]/90 border border-[#1E293B] shadow-2xs space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-xs font-bold text-slate-100 truncate tracking-tight">
-                  {orgName}
-                </h3>
-                <span className="text-[9.5px] font-semibold px-2 py-0.5 rounded-md bg-[#0284C7]/20 text-[#38BDF8] border border-[#0284C7]/30 shrink-0">
-                  {roleLabel}
-                </span>
-              </div>
-              <p className="text-[10.5px] text-slate-400 font-medium truncate">
-                {orgSubtitle}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Navigation Items List */}
         <div

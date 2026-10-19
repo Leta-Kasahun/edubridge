@@ -26,13 +26,17 @@ import { SubjectFormModal } from "./SubjectFormModal";
 import {
   LoadingSpinner,
   ErrorAlert,
+  TableToolbar,
+  FilterGroup,
   SelectDropdown,
   SelectDropdownOption,
   ConfirmDeleteModal,
+  SearchQueryProvider,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMyTeacherAssignments } from "@/features/academic/assignments/teacher";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 export function StructureView() {
   const user = useAuthStore((s) => s.user);
@@ -42,6 +46,9 @@ export function StructureView() {
       !user?.roles?.includes("SYSTEM_ADMIN")
   );
   const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>("");
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
@@ -61,33 +68,23 @@ export function StructureView() {
 
   const curricula = curriculaData?.data ?? [];
 
-  useEffect(() => {
-    if (curricula.length > 0 && !selectedCurriculumId) {
-      const first = curricula[0];
-      if (first) {
-        setSelectedCurriculumId(first.id);
-      }
-    }
-  }, [curricula, selectedCurriculumId]);
+  const defaultCurriculum = useMemo(
+    () => curricula.find((c) => c.status === "ACTIVE") || curricula[0],
+    [curricula]
+  );
+  const effectiveCurriculumId = selectedCurriculumId || defaultCurriculum?.id || "";
 
   const {
     data: curriculumDetail,
-  } = useCurriculumDetails(selectedCurriculumId || null);
+  } = useCurriculumDetails(effectiveCurriculumId || null);
 
   const versions = curriculumDetail?.versions ?? [];
 
-  useEffect(() => {
-    if (versions.length > 0) {
-      if (!selectedVersionId || !versions.some((v) => v.id === selectedVersionId)) {
-        const activeVer = versions.find((v) => v.status === "ACTIVE") ?? versions[0];
-        if (activeVer) {
-          setSelectedVersionId(activeVer.id);
-        }
-      }
-    } else {
-      setSelectedVersionId("");
-    }
-  }, [versions, selectedVersionId]);
+  const defaultVersion = useMemo(
+    () => versions.find((v) => v.status === "ACTIVE") || versions[0],
+    [versions]
+  );
+  const effectiveVersionId = selectedVersionId || defaultVersion?.id || "";
 
   const handleCurriculumChange = (currId: string) => {
     setSelectedCurriculumId(currId);
@@ -104,7 +101,7 @@ export function StructureView() {
     data: rawSubjects = [],
     isLoading: isLoadingSubjects,
     error: subjectsError,
-  } = useCurriculumSubjects(selectedVersionId);
+  } = useCurriculumSubjects(effectiveVersionId);
 
   const subjects = useMemo(() => {
     if (!isTeacher) return rawSubjects;
@@ -121,10 +118,22 @@ export function StructureView() {
     });
   }, [rawSubjects, isTeacher, allowedSubjectIds, allowedGradeIds]);
 
+  const displayedSubjects = useMemo(() => {
+    if (!debouncedSearch.trim()) return subjects;
+    const q = debouncedSearch.toLowerCase().trim();
+    const matched = subjects.filter(
+      (s) =>
+        s.subjectName.toLowerCase().includes(q) ||
+        s.subjectCode.toLowerCase().includes(q) ||
+        `grade ${s.gradeLevel}`.toLowerCase().includes(q)
+    );
+    return matched.length > 0 ? matched : subjects;
+  }, [subjects, debouncedSearch]);
+
   useEffect(() => {
-    if (subjects.length > 0) {
-      if (!selectedSubjectId || !subjects.some((s) => s.id === selectedSubjectId)) {
-        const firstSubject = subjects[0];
+    if (displayedSubjects.length > 0) {
+      if (!selectedSubjectId || !displayedSubjects.some((s) => s.id === selectedSubjectId)) {
+        const firstSubject = displayedSubjects[0];
         if (firstSubject) {
           setSelectedSubjectId(firstSubject.id);
         }
@@ -132,7 +141,7 @@ export function StructureView() {
     } else {
       setSelectedSubjectId("");
     }
-  }, [subjects, selectedSubjectId]);
+  }, [displayedSubjects, selectedSubjectId]);
 
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
 
@@ -141,6 +150,17 @@ export function StructureView() {
     isLoading: isLoadingUnits,
     error: unitsError,
   } = useCurriculumUnits(selectedSubjectId, Boolean(selectedSubjectId));
+
+  const filteredUnits = useMemo(() => {
+    if (!debouncedSearch.trim()) return units;
+    const q = debouncedSearch.toLowerCase().trim();
+    return units.filter(
+      (u) =>
+        u.title.toLowerCase().includes(q) ||
+        u.code.toLowerCase().includes(q) ||
+        (u.description && u.description.toLowerCase().includes(q))
+    );
+  }, [units, debouncedSearch]);
 
   const deleteSubjectMutation = useDeleteSubject();
   const deleteUnitMutation = useDeleteUnit();
@@ -188,25 +208,32 @@ export function StructureView() {
     });
   };
 
-  const curriculumOptions: readonly SelectDropdownOption[] = useMemo(
-    () =>
-      curricula.map((c) => ({
-        value: c.id,
-        label: c.name,
-        badge: c.code,
-      })),
-    [curricula]
-  );
-
-  const versionOptions: readonly SelectDropdownOption[] = useMemo(
-    () =>
-      versions.map((v) => ({
-        value: v.id,
-        label: v.name,
-        badge: v.code,
-      })),
-    [versions]
-  );
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    return [
+      {
+        id: "curriculum",
+        label: "Curriculum",
+        selectedValue: selectedCurriculumId || "ALL",
+        options: curricula.map((c) => ({
+          label: c.name,
+          value: c.id,
+        })),
+        onSelect: (val) => handleCurriculumChange(val === "ALL" ? "" : val),
+        icon: BookOpen,
+      },
+      {
+        id: "version",
+        label: "Version",
+        selectedValue: selectedVersionId || "ALL",
+        options: versions.map((v) => ({
+          label: v.name,
+          value: v.id,
+        })),
+        onSelect: (val) => handleVersionChange(val === "ALL" ? "" : val),
+        icon: Layers,
+      },
+    ];
+  }, [curricula, selectedCurriculumId, versions, selectedVersionId]);
 
   if (isLoadingCurricula) {
     return (
@@ -227,8 +254,8 @@ export function StructureView() {
   if (curricula.length === 0) {
     return (
       <div className="max-w-7xl mx-auto w-full p-4 sm:p-6">
-        <div className="bg-card rounded-2xl border border-border p-8 text-center space-y-3 shadow-xs">
-          <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+        <div className="bg-card rounded-none border border-border p-8 text-center space-y-3 shadow-xs">
+          <div className="h-12 w-12 rounded-none bg-primary/10 text-primary flex items-center justify-center mx-auto">
             <BookOpen size={24} />
           </div>
           <h2 className="text-base font-bold text-foreground">
@@ -241,123 +268,92 @@ export function StructureView() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-3.5">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Layers size={18} />
-          </div>
-          <h1 className="text-base sm:text-lg font-bold text-foreground">
-            Curriculum Structure
-          </h1>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
-          <SelectDropdown
-            label="Curriculum"
-            value={selectedCurriculumId}
-            onChange={handleCurriculumChange}
-            options={curriculumOptions}
-            placeholder="Select curriculum..."
-          />
-          <SelectDropdown
-            label="Version"
-            value={selectedVersionId}
-            onChange={handleVersionChange}
-            options={versionOptions}
-            placeholder={versions.length === 0 ? "No versions" : "Select version..."}
-            disabled={versions.length === 0}
-          />
-        </div>
+      {/* TableToolbar with Curriculum & Version Filter Dropdowns */}
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
+        <TableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search curriculum structure..."
+          filters={filterGroups}
+          actionButton={
+            !isTeacher ? (
+              <button
+                type="button"
+                onClick={() => setIsAddSubjectOpen(true)}
+                disabled={!effectiveVersionId}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Plus size={14} />
+                <span>Subject</span>
+              </button>
+            ) : undefined
+          }
+        />
       </div>
 
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <GraduationCap size={18} className="text-primary" />
-            <h2 className="text-xs sm:text-sm font-bold text-foreground">
-              Subjects
-            </h2>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {subjects.length}
-            </span>
+      {/* Subject Tabs directly beneath TableToolbar */}
+      {isLoadingSubjects ? (
+        <div className="flex items-center justify-center p-6 bg-card rounded-none border border-border">
+          <LoadingSpinner size={24} />
+        </div>
+      ) : subjectsError ? (
+        <ErrorAlert message={getErrorMessage(subjectsError, "Failed to load subjects.")} />
+      ) : displayedSubjects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 text-center rounded-none border border-dashed border-border bg-card space-y-3">
+          <div className="h-10 w-10 rounded-none bg-muted text-muted-foreground flex items-center justify-center">
+            <BookOpen size={20} />
           </div>
-
-          {!isTeacher && (
+          <p className="text-xs sm:text-sm font-bold text-foreground">
+            {debouncedSearch ? "No matching subjects found" : "No subjects configured in this version"}
+          </p>
+          {!isTeacher && !debouncedSearch && (
             <button
               type="button"
               onClick={() => setIsAddSubjectOpen(true)}
-              disabled={!selectedVersionId}
-              className="inline-flex items-center justify-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+              className="inline-flex items-center gap-1 h-7.5 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
             >
               <Plus size={13} />
               <span>Subject</span>
             </button>
           )}
         </div>
+      ) : (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none select-none">
+          {displayedSubjects.map((sub) => {
+            const isSelected = sub.id === selectedSubjectId;
 
-        {isLoadingSubjects ? (
-          <div className="flex items-center justify-center p-6">
-            <LoadingSpinner size={24} />
-          </div>
-        ) : subjectsError ? (
-          <ErrorAlert message={getErrorMessage(subjectsError, "Failed to load subjects.")} />
-        ) : subjects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 text-center rounded-xl border border-dashed border-border bg-muted/10 space-y-3">
-            <div className="h-10 w-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
-              <BookOpen size={20} />
-            </div>
-            <p className="text-xs sm:text-sm font-bold text-foreground">
-              No subjects configured in this version
-            </p>
-            {!isTeacher && (
+            return (
               <button
+                key={sub.id}
                 type="button"
-                onClick={() => setIsAddSubjectOpen(true)}
-                className="inline-flex items-center gap-1 h-7.5 px-3.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs"
+                onClick={() => setSelectedSubjectId(sub.id)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-none text-xs font-semibold transition-all cursor-pointer shrink-0 border whitespace-nowrap shadow-2xs ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+                }`}
               >
-                <Plus size={13} />
-                <span>Subject</span>
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {subjects.map((sub) => {
-              const isSelected = sub.id === selectedSubjectId;
-
-              return (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setSelectedSubjectId(sub.id)}
-                  className={`flex items-center gap-2 h-9 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 border ${
+                <span>Grade {sub.gradeLevel}: {sub.subjectName}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-none font-bold ${
                     isSelected
-                      ? "bg-primary text-primary-foreground border-primary shadow-2xs"
-                      : "bg-muted/50 text-foreground border-border hover:bg-muted"
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span>Grade {sub.gradeLevel}: {sub.subjectName}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isSelected
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {sub.unitCount}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                  {sub.unitCount}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {selectedSubject && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-3.5 sm:p-4 rounded-2xl border border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-3.5 sm:p-4 rounded-none border border-border">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <BookOpen size={16} />
               </div>
               <div>
@@ -376,7 +372,7 @@ export function StructureView() {
                   type="button"
                   onClick={() => setSubjectToDelete(selectedSubject)}
                   title="Remove subject from version"
-                  className="h-7.5 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="h-7.5 px-2.5 rounded-none text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Trash2 size={13} />
                   <span className="hidden sm:inline">Remove Subject</span>
@@ -387,7 +383,7 @@ export function StructureView() {
                     setUnitToEdit(null);
                     setIsAddUnitOpen(true);
                   }}
-                  className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
+                  className="inline-flex items-center gap-1 h-7.5 px-2.5 rounded-none text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer shrink-0"
                 >
                   <Plus size={13} />
                   <span>Unit</span>
@@ -397,27 +393,27 @@ export function StructureView() {
           </div>
 
           {isLoadingUnits ? (
-            <div className="flex items-center justify-center p-8 bg-card rounded-2xl border border-border">
+            <div className="flex items-center justify-center p-8 bg-card rounded-none border border-border">
               <LoadingSpinner size={28} />
             </div>
           ) : unitsError ? (
             <ErrorAlert message={getErrorMessage(unitsError, "Failed to load units.")} />
-          ) : units.length === 0 ? (
-            <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-3 shadow-xs">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+          ) : filteredUnits.length === 0 ? (
+            <div className="bg-card rounded-none border border-dashed border-border p-8 text-center space-y-3 shadow-xs">
+              <div className="h-10 w-10 rounded-none bg-primary/10 text-primary flex items-center justify-center mx-auto">
                 <Layers size={20} />
               </div>
               <p className="text-xs sm:text-sm font-bold text-foreground">
-                No units defined for this subject yet
+                {debouncedSearch ? "No matching units found" : "No units defined for this subject yet"}
               </p>
-              {!isTeacher && (
+              {!isTeacher && !debouncedSearch && (
                 <button
                   type="button"
                   onClick={() => {
                     setUnitToEdit(null);
                     setIsAddUnitOpen(true);
                   }}
-                  className="inline-flex items-center gap-1 h-7.5 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 h-7.5 px-3 rounded-none text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
                 >
                   <Plus size={13} />
                   <span>Unit</span>
@@ -425,21 +421,23 @@ export function StructureView() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {units.map((unit, idx) => (
-                <UnitItem
-                  key={unit.id}
-                  unit={unit}
-                  isFirst={idx === 0}
-                  isLast={idx === units.length - 1}
-                  onEdit={(item) => setUnitToEdit(item)}
-                  onDelete={(item) => setUnitToDelete(item)}
-                  onMoveUp={(item) => handleMoveUnit(item, "up")}
-                  onMoveDown={(item) => handleMoveUnit(item, "down")}
-                  isReadOnly={isTeacher}
-                />
-              ))}
-            </div>
+            <SearchQueryProvider query={debouncedSearch}>
+              <div className="space-y-3">
+                {filteredUnits.map((unit, idx) => (
+                  <UnitItem
+                    key={unit.id}
+                    unit={unit}
+                    isFirst={idx === 0}
+                    isLast={idx === filteredUnits.length - 1}
+                    onEdit={(item) => setUnitToEdit(item)}
+                    onDelete={(item) => setUnitToDelete(item)}
+                    onMoveUp={(item) => handleMoveUnit(item, "up")}
+                    onMoveDown={(item) => handleMoveUnit(item, "down")}
+                    isReadOnly={isTeacher}
+                  />
+                ))}
+              </div>
+            </SearchQueryProvider>
           )}
         </div>
       )}
@@ -447,7 +445,7 @@ export function StructureView() {
       <SubjectFormModal
         isOpen={isAddSubjectOpen}
         onClose={() => setIsAddSubjectOpen(false)}
-        versionId={selectedVersionId}
+        versionId={effectiveVersionId}
       />
 
       <UnitFormModal

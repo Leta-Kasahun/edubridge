@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Edit2, CheckCircle2, Eye, Archive, RotateCcw } from "lucide-react";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, SearchHighlight } from "@/shared/components";
 import {
   formatAcademicDateRange,
   formatAcademicYearStatus,
@@ -259,16 +259,16 @@ export function AcademicYearsTable({
           return (
             <div
               key={year.id}
-              className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 transition-colors"
+              className="bg-card rounded-none border border-border p-4 shadow-xs space-y-3 transition-colors"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-xs sm:text-sm font-bold text-foreground truncate">
-                      {year.name}
+                      <SearchHighlight text={year.name} />
                     </p>
-                    <span className="inline-flex px-1.5 py-0.2 rounded-md text-[9px] font-mono font-semibold bg-muted text-muted-foreground border border-border">
-                      {year.code}
+                    <span className="inline-flex px-1.5 py-0.2 rounded-none text-[9px] font-mono font-semibold bg-muted text-muted-foreground border border-border">
+                      <SearchHighlight text={year.code} />
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -316,7 +316,7 @@ export function AcademicYearsTable({
         })}
       </div>
 
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -338,12 +338,12 @@ export function AcademicYearsTable({
                   <tr key={year.id} className="hover:bg-muted/20 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="font-bold text-foreground truncate">
-                        {year.name}
+                        <SearchHighlight text={year.name} />
                       </p>
                     </td>
 
                     <td className="py-3.5 px-4 font-mono font-medium text-muted-foreground">
-                      {year.code}
+                      <SearchHighlight text={year.code} />
                     </td>
 
                     <td className="py-3.5 px-4 text-muted-foreground">

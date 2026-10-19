@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Eye, Edit2, UserX, CheckCircle2, BookOpen } from "lucide-react";
-import { LoadingSpinner } from "@/shared/components";
+import { LoadingSpinner, SearchHighlight } from "@/shared/components";
 import { SubjectItem } from "../types/subject.types";
 import { useToggleSubjectStatus } from "../hooks/useSubjects";
 import { formatGradeLevelsSummary } from "@/shared/utils/subject.util";
@@ -214,7 +214,7 @@ export function SubjectsTable({
 
   if (items.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-border p-8 text-center shadow-xs">
+      <div className="bg-card rounded-none border border-border p-8 text-center shadow-xs">
         <p className="text-xs text-muted-foreground">
           No subjects found matching your criteria.
         </p>
@@ -229,15 +229,15 @@ export function SubjectsTable({
           <div
             key={sub.id}
             onClick={() => onViewDetails(sub)}
-            className="bg-card rounded-2xl border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+            className="bg-card rounded-none border border-border p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-foreground truncate">
-                  {sub.name}
+                  <SearchHighlight text={sub.name} />
                 </p>
                 <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                  {sub.code} · {formatGradeLevelsSummary(sub.assignedGradeLevels)}
+                  <SearchHighlight text={sub.code} /> · {formatGradeLevelsSummary(sub.assignedGradeLevels)}
                 </p>
               </div>
 
@@ -289,7 +289,7 @@ export function SubjectsTable({
         ))}
       </div>
 
-      <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -311,12 +311,12 @@ export function SubjectsTable({
                 >
                   <td className="py-3.5 px-4">
                     <p className="font-bold text-foreground truncate group-hover:text-foreground/80 transition-colors">
-                      {sub.name}
+                      <SearchHighlight text={sub.name} />
                     </p>
                   </td>
 
                   <td className="py-3.5 px-4 font-mono text-muted-foreground">
-                    {sub.code}
+                    <SearchHighlight text={sub.code} />
                   </td>
 
                   <td className="py-3.5 px-4 text-muted-foreground">

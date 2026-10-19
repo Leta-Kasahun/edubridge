@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import {
   useAssessments,
   useAssessmentAttempts,
@@ -221,6 +223,8 @@ export function AssessmentGlobalResultsView() {
   const gradeFilteredAssessments = useMemo(() => {
     if (!selectedGradeId) return assessments;
     return assessments.filter((a) =>
+      a.gradeId === selectedGradeId ||
+      a.grade?.id === selectedGradeId ||
       a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
     );
   }, [assessments, selectedGradeId]);
@@ -248,11 +252,41 @@ export function AssessmentGlobalResultsView() {
 
   const assessmentOptions: readonly SelectDropdownOption[] = useMemo(() => {
     const list = gradeFilteredAssessments.length > 0 ? gradeFilteredAssessments : assessments;
-    return list.map((a) => ({
-      value: a.id,
-      label: `${a.title} (${ASSESSMENT_TYPE_LABELS[a.type] || a.type})`,
-    }));
+    return [
+      { value: "ALL", label: "All Assessments" },
+      ...list.map((a) => ({
+        value: a.id,
+        label: `${a.subject?.name ? `${a.subject.name}: ` : ""}${a.title} (${ASSESSMENT_TYPE_LABELS[a.type] || a.type})`,
+      })),
+    ];
   }, [gradeFilteredAssessments, assessments]);
+
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    return [
+      {
+        id: "assessment",
+        label: "Assessment",
+        options: assessmentOptions.map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+        })),
+        selectedValue: selectedAssessmentId || "ALL",
+        onSelect: (val) => setSelectedAssessmentId(val === "ALL" ? "" : val),
+      },
+      {
+        id: "status",
+        label: "Status",
+        options: [
+          { label: "All Statuses", value: "ALL" },
+          { label: "Graded", value: "GRADED" },
+          { label: "Submitted", value: "SUBMITTED" },
+          { label: "In Progress", value: "IN_PROGRESS" },
+        ],
+        selectedValue: statusFilter,
+        onSelect: (val) => setStatusFilter(val),
+      },
+    ];
+  }, [assessmentOptions, selectedAssessmentId, statusFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -342,27 +376,14 @@ export function AssessmentGlobalResultsView() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-16">
-      {/* Enterprise Single-Row Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate">
-            Results & Grading
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <div className="px-3 py-1 rounded-xl bg-card border border-border flex items-center gap-1.5 shadow-2xs">
-            <span className="text-xs text-muted-foreground">Class Average:</span>
-            <span className="font-bold text-xs text-primary">
-              {gradedAttempts.length > 0 ? `${averagePercentage}%` : "—"}
-            </span>
-          </div>
-
-          <div className="px-3 py-1 rounded-xl bg-card border border-border flex items-center gap-1.5 shadow-2xs">
-            <span className="text-xs text-muted-foreground">Submissions:</span>
-            <span className="font-bold text-xs text-foreground">{attempts.length}</span>
-          </div>
-        </div>
+      {/* Filter Toolbar with TableToolbar */}
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
+        <TableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search student submissions by name or code..."
+          filters={filterGroups}
+        />
       </div>
 
       {/* Grade Tabs Filter */}
@@ -372,72 +393,11 @@ export function AssessmentGlobalResultsView() {
           selectedGradeId={selectedGradeId}
           onSelectGrade={(gradeId) => {
             setSelectedGradeId(gradeId);
-            const matching = gradeId
-              ? assessments.filter((a) =>
-                  a.assignments?.some((as) => as.section?.grade?.id === gradeId)
-                )
-              : assessments;
-            if (matching.length > 0 && !matching.some((a) => a.id === activeAssessmentId)) {
-              setSelectedAssessmentId(matching[0].id);
-            }
+            setSelectedAssessmentId("");
           }}
           assessments={assessments}
         />
       )}
-
-      {/* Filter Toolbar (Search on LEFT, Assessment Dropdown, Status Filter) */}
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
-          {/* Search Input on the LEFT */}
-          <div className="flex-1 min-w-[220px] relative">
-            <Search
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search student by name or code..."
-              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-2xs"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Assessment Dropdown */}
-          <div className="w-full sm:w-80 min-w-[200px]">
-            <SelectDropdown
-              value={activeAssessmentId}
-              onChange={(val) => setSelectedAssessmentId(val)}
-              options={assessmentOptions}
-              placeholder="Select Assessment"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="w-full sm:w-44 min-w-[140px]">
-            <SelectDropdown
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val)}
-              options={[
-                { label: "All Statuses", value: "ALL" },
-                { label: "Graded", value: "GRADED" },
-                { label: "Submitted", value: "SUBMITTED" },
-                { label: "In Progress", value: "IN_PROGRESS" },
-              ]}
-              placeholder="Filter Status"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Submissions Table with Enterprise Clean Sort Headers */}
       {isLoadingAttempts ? (
@@ -445,8 +405,8 @@ export function AssessmentGlobalResultsView() {
           <LoadingSpinner />
         </div>
       ) : attempts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center flex flex-col items-center justify-center bg-card shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+        <div className="rounded-none border border-dashed border-border p-12 text-center flex flex-col items-center justify-center bg-card shadow-xs">
+          <div className="w-12 h-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <Award size={24} />
           </div>
           <h3 className="text-sm font-bold text-foreground mb-1">
@@ -457,7 +417,7 @@ export function AssessmentGlobalResultsView() {
           </p>
         </div>
       ) : sortedAndFilteredAttempts.length === 0 ? (
-        <div className="rounded-2xl border border-border p-8 text-center bg-card shadow-xs">
+        <div className="rounded-none border border-border p-8 text-center bg-card shadow-xs">
           <p className="text-xs text-muted-foreground mb-2">
             No student submissions match your current search and filter criteria.
           </p>
@@ -473,84 +433,87 @@ export function AssessmentGlobalResultsView() {
           </button>
         </div>
       ) : (
-        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 text-muted-foreground font-semibold select-none">
-                  <th className="p-3.5 whitespace-nowrap">
-                    <SortableHeader
-                      label="Student"
-                      field="student"
-                      currentField={sortField}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </th>
-                  <th className="p-3.5 whitespace-nowrap">
-                    <SortableHeader
-                      label="Score"
-                      field="score"
-                      currentField={sortField}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </th>
-                  <th className="p-3.5 whitespace-nowrap">
-                    <SortableHeader
-                      label="Percentage"
-                      field="percentage"
-                      currentField={sortField}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </th>
-                  <th className="p-3.5 whitespace-nowrap">
-                    <SortableHeader
-                      label="Status"
-                      field="status"
-                      currentField={sortField}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </th>
-                  <th className="p-3.5 whitespace-nowrap">
-                    <SortableHeader
-                      label="Submitted"
-                      field="submitted"
-                      currentField={sortField}
-                      currentDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </th>
-                  <th className="p-3.5 text-right font-semibold text-muted-foreground whitespace-nowrap pr-4">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {sortedAndFilteredAttempts.map((att) => {
-                  const studentName = `${att.student?.user?.firstName || ""} ${
-                    att.student?.user?.lastName || ""
-                  }`.trim() || att.student?.studentCode || "Student";
-                  const statusBadge = getAttemptStatusBadge(att.status);
-                  const pct = att.percentage != null
-                    ? Math.round(Number(att.percentage))
-                    : Number(formatPercentage(att.score, att.maxScore || 100).replace("%", "")) || 0;
+        <SearchQueryProvider query={search}>
+          <div className="bg-card rounded-none border border-border overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-muted-foreground font-semibold select-none">
+                    <th className="p-3.5 whitespace-nowrap">
+                      <SortableHeader
+                        label="Student"
+                        field="student"
+                        currentField={sortField}
+                        currentDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="p-3.5 whitespace-nowrap">
+                      <SortableHeader
+                        label="Score"
+                        field="score"
+                        currentField={sortField}
+                        currentDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="p-3.5 whitespace-nowrap">
+                      <SortableHeader
+                        label="Percentage"
+                        field="percentage"
+                        currentField={sortField}
+                        currentDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="p-3.5 whitespace-nowrap">
+                      <SortableHeader
+                        label="Status"
+                        field="status"
+                        currentField={sortField}
+                        currentDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="p-3.5 whitespace-nowrap">
+                      <SortableHeader
+                        label="Submitted"
+                        field="submitted"
+                        currentField={sortField}
+                        currentDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="p-3.5 text-right font-semibold text-muted-foreground whitespace-nowrap pr-4">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {sortedAndFilteredAttempts.map((att) => {
+                    const studentName = `${att.student?.user?.firstName || ""} ${
+                      att.student?.user?.lastName || ""
+                    }`.trim() || att.student?.studentCode || "Student";
+                    const statusBadge = getAttemptStatusBadge(att.status);
+                    const pct = att.percentage != null
+                      ? Math.round(Number(att.percentage))
+                      : Number(formatPercentage(att.score, att.maxScore || 100).replace("%", "")) || 0;
 
-                  return (
-                    <tr key={att.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="p-3.5 whitespace-nowrap">
-                        <div className="font-bold text-foreground">{studentName}</div>
-                        {att.student?.studentCode && (
-                          <div className="text-[10px] text-muted-foreground font-mono">
-                            {att.student.studentCode}
+                    return (
+                      <tr key={att.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-3.5 whitespace-nowrap">
+                          <div className="font-bold text-foreground">
+                            <SearchHighlight text={studentName} />
                           </div>
-                        )}
-                      </td>
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
-                        {att.score != null ? `${att.score} pts` : "—"}
-                      </td>
+                          {att.student?.studentCode && (
+                            <div className="text-[10px] text-muted-foreground font-mono">
+                              <SearchHighlight text={att.student.studentCode} />
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
+                          {att.score != null ? `${att.score} pts` : "—"}
+                        </td>
                       <td className="p-3.5 whitespace-nowrap">
                         <span
                           className={`font-bold font-mono ${
@@ -590,7 +553,8 @@ export function AssessmentGlobalResultsView() {
             </table>
           </div>
         </div>
-      )}
+      </SearchQueryProvider>
+    )}
 
       {/* Manual Grading Modal */}
       {manualGradingAttempt && activeAssessment && (

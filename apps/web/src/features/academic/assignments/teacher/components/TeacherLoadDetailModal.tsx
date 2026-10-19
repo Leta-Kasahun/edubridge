@@ -48,10 +48,10 @@ export function TeacherLoadDetailModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-lg rounded-none bg-card border border-border p-4 sm:p-6 shadow-xl z-10 max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-border mb-3 sm:mb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Layers size={18} />
             </div>
             <div>
@@ -64,7 +64,7 @@ export function TeacherLoadDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
+            className="p-1.5 text-muted-foreground hover:text-foreground rounded-none hover:bg-muted transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -84,19 +84,19 @@ export function TeacherLoadDetailModal({
           ) : (
             <>
               <div className="grid grid-cols-3 gap-2 sm:gap-2.5 shrink-0">
-                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                <div className="p-2.5 sm:p-3 rounded-none bg-muted/30 border border-border text-center">
                   <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.activeAssignmentsCount}
                   </div>
                   <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">Total Classes</div>
                 </div>
-                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                <div className="p-2.5 sm:p-3 rounded-none bg-muted/30 border border-border text-center">
                   <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.homeroomCount}
                   </div>
                   <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">Homeroom</div>
                 </div>
-                <div className="p-2.5 sm:p-3 rounded-xl bg-muted/30 border border-border text-center">
+                <div className="p-2.5 sm:p-3 rounded-none bg-muted/30 border border-border text-center">
                   <div className="text-lg sm:text-xl font-bold text-foreground">
                     {loadSummary.subjectAssignmentsCount}
                   </div>
@@ -107,7 +107,7 @@ export function TeacherLoadDetailModal({
               <div className="space-y-2">
                 <div className="text-xs font-bold text-foreground">Active Assignments</div>
                 {loadSummary.assignments.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground text-center">
+                  <div className="p-4 rounded-none bg-muted/20 border border-border text-xs text-muted-foreground text-center">
                     No active assignments in this session.
                   </div>
                 ) : (
@@ -115,13 +115,13 @@ export function TeacherLoadDetailModal({
                     {loadSummary.assignments.map((item) => (
                       <div
                         key={item.id}
-                        className="p-3 rounded-xl bg-muted/30 border border-border space-y-1.5 text-xs"
+                        className="p-3 rounded-none bg-muted/30 border border-border space-y-1.5 text-xs"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-foreground">
                             Grade {item.gradeLevel} — {item.sectionName}
                           </span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-none bg-primary/10 text-primary border border-primary/20">
                             {formatTeacherAssignmentRole(item.role)}
                           </span>
                         </div>
@@ -151,7 +151,7 @@ export function TeacherLoadDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-4 h-9 rounded-xl text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-center"
+            className="w-full sm:w-auto px-4 h-9 rounded-none text-xs font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-center"
           >
             Close
           </button>

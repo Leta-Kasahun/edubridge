@@ -7,6 +7,8 @@ import { ROUTES } from "@/constants/routes";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { ConfirmDeleteModal } from "@/shared/components/ConfirmDeleteModal";
 import {
   useAssessments,
@@ -74,12 +76,14 @@ export function AssessmentListView() {
   const { data: sectionsData } = useSections();
   const sections = sectionsData || [];
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const {
     data: assessmentsData,
     isLoading,
     error,
   } = useAssessments({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     academicYearId: selectedAcademicYearId || undefined,
     type: selectedType ? (selectedType as AssessmentType) : undefined,
     status: selectedStatus ? (selectedStatus as AssessmentStatus) : undefined,
@@ -95,7 +99,7 @@ export function AssessmentListView() {
   const unarchiveMutation = useUnarchiveAssessment();
 
   const subjectGroups = useMemo<AssessmentSubjectGroup[]>(() => {
-    const filtered = selectedGradeId
+    let filtered = selectedGradeId
       ? assessments.filter(
           (a) =>
             a.gradeId === selectedGradeId ||
@@ -103,6 +107,17 @@ export function AssessmentListView() {
             a.assignments?.some((as) => as.section?.grade?.id === selectedGradeId)
         )
       : assessments;
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          (a.description && a.description.toLowerCase().includes(q)) ||
+          (a.subject?.name && a.subject.name.toLowerCase().includes(q)) ||
+          (a.examContext?.name && a.examContext.name.toLowerCase().includes(q))
+      );
+    }
 
     const map = new Map<string, AssessmentItem[]>();
 
@@ -124,8 +139,8 @@ export function AssessmentListView() {
         (a) =>
           a.subjectId === subj.id ||
           a.subject?.id === subj.id ||
-          a.examContext?.id === subj.id ||
-          a.title.toLowerCase().includes(subj.name.toLowerCase())
+          (a.subject?.name && a.subject.name.toLowerCase() === subj.name.toLowerCase()) ||
+          a.examContext?.id === subj.id
       );
       if (matched.length > 0) {
         groups.push({
@@ -151,7 +166,7 @@ export function AssessmentListView() {
     }
 
     return groups;
-  }, [assessments, subjects, selectedGradeId]);
+  }, [assessments, subjects, selectedGradeId, search]);
 
   const toggleSubject = (id: string) => {
     setOpenSubjectIds((prev) => {
@@ -209,10 +224,10 @@ export function AssessmentListView() {
           {
             id: "academicYear",
             label: "Academic Year",
-            selectedValue: selectedAcademicYearId,
-            onSelect: (val: string) => setSelectedAcademicYearId(val),
+            selectedValue: selectedAcademicYearId || "ALL",
+            onSelect: (val: string) => setSelectedAcademicYearId(val === "ALL" ? "" : val),
             options: [
-              { label: "All", value: "" },
+              { label: "All", value: "ALL" },
               ...academicYears.map((ay) => ({
                 label: ay.name || ay.code,
                 value: ay.id,
@@ -224,10 +239,10 @@ export function AssessmentListView() {
     {
       id: "type",
       label: "Type",
-      selectedValue: selectedType,
-      onSelect: (val: string) => setSelectedType(val),
+      selectedValue: selectedType || "ALL",
+      onSelect: (val: string) => setSelectedType(val === "ALL" ? "" : val),
       options: [
-        { label: "All", value: "" },
+        { label: "All", value: "ALL" },
         ...ASSESSMENT_TYPES.map((t: AssessmentType) => ({
           label: ASSESSMENT_TYPE_LABELS[t],
           value: t,
@@ -239,10 +254,10 @@ export function AssessmentListView() {
           {
             id: "status",
             label: "Status",
-            selectedValue: selectedStatus,
-            onSelect: (val: string) => setSelectedStatus(val),
+            selectedValue: selectedStatus || "ALL",
+            onSelect: (val: string) => setSelectedStatus(val === "ALL" ? "" : val),
             options: [
-              { label: "All", value: "" },
+              { label: "All", value: "ALL" },
               ...ASSESSMENT_STATUSES.map((s: AssessmentStatus) => ({
                 label: ASSESSMENT_STATUS_LABELS[s],
                 value: s,
@@ -253,36 +268,30 @@ export function AssessmentListView() {
       : []),
   ];
 
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      {/* Enterprise Single-Row Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate">
-            {isStudent ? "My Assessments" : "Assessments"}
-          </h1>
-          <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
-            {assessments.length} {assessments.length === 1 ? "Assessment" : "Assessments"}
-          </span>
-        </div>
-
-        {!isStudent && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setEditingAssessment(null);
-                setIsFormModalOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-1 h-8 sm:h-8.5 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-xs"
-              title="Create Assessment"
-            >
-              <Plus size={14} />
-              <span>Assessment</span>
-            </button>
-          </div>
-        )}
+      <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
+        <TableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search assessments by title or topic..."
+          filters={filterGroups}
+          actionButton={
+            !isStudent ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingAssessment(null);
+                  setIsFormModalOpen(true);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              >
+                <Plus size={14} />
+                <span>Create Assessment</span>
+              </button>
+            ) : undefined
+          }
+        />
       </div>
 
       <AssessmentGradeTabs
@@ -292,24 +301,15 @@ export function AssessmentListView() {
         assessments={assessments}
       />
 
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
-        <TableToolbar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search assessments by title or topic..."
-          filters={filterGroups}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center p-12">
+      {isLoading && !assessmentsData ? (
+        <div className="flex justify-center p-12 bg-card rounded-none border border-border">
           <LoadingSpinner />
         </div>
       ) : error ? (
         <ErrorAlert message="Failed to load assessments. Please try again." />
       ) : subjectGroups.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+        <div className="bg-card rounded-none border border-border p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-none bg-muted flex items-center justify-center mx-auto text-muted-foreground">
             <BookOpen size={24} />
           </div>
           <h3 className="text-sm font-bold text-foreground">No Assessments Found</h3>
@@ -325,7 +325,7 @@ export function AssessmentListView() {
                 setEditingAssessment(null);
                 setIsFormModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
             >
               <Plus size={14} />
               Create First Assessment
@@ -333,42 +333,44 @@ export function AssessmentListView() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {subjectGroups.map((group) => {
-            const isOpen = openSubjectIds.has(group.id);
-            return (
-              <AssessmentSubjectAccordion
-                key={group.id}
-                group={group}
-                isOpen={isOpen}
-                onToggle={() => toggleSubject(group.id)}
-                renderActions={(assessment) =>
-                  isStudent ? (
-                    <Link
-                      href={ROUTES.ASSESSMENTS.ATTEMPT(assessment.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
-                    >
-                      <Play size={13} className="fill-current" />
-                      <span>Start Assessment</span>
-                    </Link>
-                  ) : (
-                    <AssessmentRowActions
-                      assessment={assessment}
-                      onAssign={(a) => setAssigningAssessment(a)}
-                      onPublish={(a) => handlePublish(a)}
-                      onUnarchive={(a) => handleUnarchive(a)}
-                      onEdit={(a) => {
-                        setEditingAssessment(a);
-                        setIsFormModalOpen(true);
-                      }}
-                      onDelete={(a) => setDeletingAssessment(a)}
-                    />
-                  )
-                }
-              />
-            );
-          })}
-        </div>
+        <SearchQueryProvider query={search}>
+          <div className="space-y-4">
+            {subjectGroups.map((group) => {
+              const isOpen = openSubjectIds.has(group.id);
+              return (
+                <AssessmentSubjectAccordion
+                  key={group.id}
+                  group={group}
+                  isOpen={isOpen}
+                  onToggle={() => toggleSubject(group.id)}
+                  renderActions={(assessment) =>
+                    isStudent ? (
+                      <Link
+                        href={ROUTES.ASSESSMENTS.ATTEMPT(assessment.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
+                      >
+                        <Play size={13} className="fill-current" />
+                        <span>Start Assessment</span>
+                      </Link>
+                    ) : (
+                      <AssessmentRowActions
+                        assessment={assessment}
+                        onAssign={(a) => setAssigningAssessment(a)}
+                        onPublish={(a) => handlePublish(a)}
+                        onUnarchive={(a) => handleUnarchive(a)}
+                        onEdit={(a) => {
+                          setEditingAssessment(a);
+                          setIsFormModalOpen(true);
+                        }}
+                        onDelete={(a) => setDeletingAssessment(a)}
+                      />
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+        </SearchQueryProvider>
       )}
 
       {isFormModalOpen && (

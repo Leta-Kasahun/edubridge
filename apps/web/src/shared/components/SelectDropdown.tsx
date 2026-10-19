@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { SearchHighlight } from "./SearchHighlight";
 
 export interface SelectDropdownOption {
   readonly value: string;
@@ -123,7 +124,7 @@ export function SelectDropdown({
 
           <div className="flex items-center gap-1.5 shrink-0 ml-1 text-muted-foreground">
             {selectedOption?.badge && (
-              <span className="hidden xs:inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+              <span className="hidden xs:inline-block text-[10px] font-semibold px-2 py-0.5 rounded-none bg-muted text-muted-foreground border border-border">
                 {selectedOption.badge}
               </span>
             )}
@@ -139,20 +140,23 @@ export function SelectDropdown({
             {showSearch && (
               <div className="p-1.5 border-b border-border/80 sticky top-0 bg-card rounded-none shrink-0">
                 <div className="relative flex items-center">
-                  <Search size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
+                  <Search
+                    size={13}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
                   <input
                     ref={searchInputRef}
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={searchPlaceholder}
-                    className="w-full h-8 pl-8 pr-7 text-xs bg-muted/50 border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-primary transition-colors"
+                    className="w-full h-8.5 pl-9 pr-7 text-xs bg-muted/50 border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:bg-background focus:border-primary transition-colors"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
                     >
                       <X size={12} />
                     </button>
@@ -186,10 +190,12 @@ export function SelectDropdown({
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
                         <div className="truncate min-w-0">
-                          <p className="truncate">{opt.label}</p>
+                          <p className="truncate">
+                            <SearchHighlight text={opt.label} query={searchQuery} />
+                          </p>
                           {opt.description && (
                             <p className="text-[10px] text-muted-foreground truncate font-normal">
-                              {opt.description}
+                              <SearchHighlight text={opt.description} query={searchQuery} />
                             </p>
                           )}
                         </div>
@@ -197,7 +203,7 @@ export function SelectDropdown({
 
                       <div className="flex items-center gap-1.5 shrink-0 ml-1">
                         {opt.badge && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-none bg-muted text-muted-foreground border border-border">
                             {opt.badge}
                           </span>
                         )}

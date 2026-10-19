@@ -19,9 +19,11 @@ import { MasteryProgressBar } from "./MasteryProgressBar";
 import { useTopicMasteryHistory } from "../hooks/useMastery";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 
 interface MasteryDrillDownViewProps {
   readonly data: SectionMasteryMatrixResponse;
+  readonly searchQuery?: string;
 }
 
 type DrillStep = "units" | "topics" | "objectives" | "students" | "evidence";
@@ -36,6 +38,7 @@ const STANDING_OPTIONS: readonly SelectDropdownOption[] = [
 
 export function MasteryDrillDownView({
   data,
+  searchQuery = "",
 }: MasteryDrillDownViewProps): React.JSX.Element {
   const [currentStep, setCurrentStep] = useState<DrillStep>("units");
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -48,7 +51,7 @@ export function MasteryDrillDownView({
   const [standingFilter, setStandingFilter] = useState<string>("ALL");
 
   // Group topics by Unit
-  const unitsMap = useMemo(() => {
+  const rawUnitsMap = useMemo(() => {
     const map = new Map<
       string,
       {
@@ -76,17 +79,85 @@ export function MasteryDrillDownView({
     return Array.from(map.values());
   }, [data.topics]);
 
+  // Filtered units based on searchQuery
+  const unitsMap = useMemo(() => {
+    if (!searchQuery.trim()) return rawUnitsMap;
+    const q = searchQuery.toLowerCase().trim();
+
+    return rawUnitsMap
+      .map((unit) => {
+        const unitMatches =
+          unit.unitTitle.toLowerCase().includes(q) ||
+          unit.unitCode.toLowerCase().includes(q);
+
+        const matchingTopics = unit.topics.filter(
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            t.code.toLowerCase().includes(q) ||
+            (t.objectives &&
+              t.objectives.some(
+                (o) =>
+                  o.statement.toLowerCase().includes(q) ||
+                  o.code.toLowerCase().includes(q)
+              ))
+        );
+
+        if (unitMatches) return unit;
+        if (matchingTopics.length > 0) {
+          return {
+            ...unit,
+            topics: matchingTopics,
+          };
+        }
+        return null;
+      })
+      .filter((u): u is (typeof rawUnitsMap)[number] => u !== null);
+  }, [rawUnitsMap, searchQuery]);
+
   // Selected Unit
   const currentUnit = useMemo(() => {
-    if (!selectedUnitId) return unitsMap[0] ?? null;
-    return unitsMap.find((u) => u.unitId === selectedUnitId) ?? null;
-  }, [unitsMap, selectedUnitId]);
+    if (!selectedUnitId) return unitsMap[0] ?? rawUnitsMap[0] ?? null;
+    return rawUnitsMap.find((u) => u.unitId === selectedUnitId) ?? null;
+  }, [unitsMap, rawUnitsMap, selectedUnitId]);
+
+  // Filtered topics for current unit based on searchQuery
+  const currentUnitTopics = useMemo(() => {
+    if (!currentUnit) return [];
+    if (!searchQuery.trim()) return currentUnit.topics;
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = currentUnit.topics.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.code.toLowerCase().includes(q) ||
+        (t.objectives &&
+          t.objectives.some(
+            (o) =>
+              o.statement.toLowerCase().includes(q) ||
+              o.code.toLowerCase().includes(q)
+          ))
+    );
+    return filtered.length > 0 ? filtered : currentUnit.topics;
+  }, [currentUnit, searchQuery]);
 
   // Selected Topic
   const currentTopic = useMemo(() => {
     if (!selectedTopicId) return null;
     return data.topics.find((t) => t.id === selectedTopicId) ?? null;
   }, [data.topics, selectedTopicId]);
+
+  // Filtered objectives for current topic based on searchQuery
+  const currentTopicObjectives = useMemo(() => {
+    if (!currentTopic?.objectives) return [];
+    if (!searchQuery.trim()) return currentTopic.objectives;
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = currentTopic.objectives.filter(
+      (o) =>
+        o.statement.toLowerCase().includes(q) ||
+        o.code.toLowerCase().includes(q) ||
+        (o.description && o.description.toLowerCase().includes(q))
+    );
+    return filtered.length > 0 ? filtered : currentTopic.objectives;
+  }, [currentTopic, searchQuery]);
 
   // Selected Objective
   const currentObjective = useMemo(() => {
@@ -185,8 +256,9 @@ export function MasteryDrillDownView({
       list = list.filter((s) => s.level === standingFilter);
     }
 
-    if (studentSearch.trim()) {
-      const q = studentSearch.toLowerCase().trim();
+    const activeSearch = studentSearch.trim() || searchQuery.trim();
+    if (activeSearch) {
+      const q = activeSearch.toLowerCase().trim();
       list = list.filter(
         (s) =>
           s.studentName.toLowerCase().includes(q) ||
@@ -195,7 +267,7 @@ export function MasteryDrillDownView({
     }
 
     return list;
-  }, [data.students, currentTopic, standingFilter, studentSearch]);
+  }, [data.students, currentTopic, standingFilter, studentSearch, searchQuery]);
 
   // Topic Summary Breakdown
   const topicStats = useMemo(() => {
@@ -368,9 +440,13 @@ export function MasteryDrillDownView({
           {unitsMap.length === 0 ? (
             <div className="p-12 text-center bg-card rounded-2xl border border-dashed border-border space-y-2">
               <BookOpen className="w-8 h-8 text-muted-foreground/50 mx-auto" />
-              <h3 className="text-sm font-semibold text-foreground">No Units Configured</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                {searchQuery ? "No Matching Units or Topics" : "No Units Configured"}
+              </h3>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                No curriculum units are mapped for this subject yet.
+                {searchQuery
+                  ? `No units, topics, or objectives match "${searchQuery}".`
+                  : "No curriculum units are mapped for this subject yet."}
               </p>
             </div>
           ) : (
@@ -414,7 +490,7 @@ export function MasteryDrillDownView({
                         </span>
                       </div>
                       <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {unit.unitTitle}
+                        <SearchHighlight text={unit.unitTitle} />
                       </h3>
                     </div>
 
@@ -456,7 +532,7 @@ export function MasteryDrillDownView({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {currentUnit.topics.map((topic) => {
+            {currentUnitTopics.map((topic) => {
               // Topic Stats
               let mastered = 0;
               let proficient = 0;
@@ -499,7 +575,7 @@ export function MasteryDrillDownView({
                       ) : null}
                     </div>
                     <h3 className="text-sm font-bold text-foreground line-clamp-2">
-                      {topic.title}
+                      <SearchHighlight text={topic.title} />
                     </h3>
                   </div>
 
@@ -601,7 +677,7 @@ export function MasteryDrillDownView({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {currentTopic.objectives.map((obj, idx) => (
+              {currentTopicObjectives.map((obj, idx) => (
                 <div
                   key={obj.id}
                   onClick={() => handleSelectObjective(obj.id)}
@@ -617,7 +693,7 @@ export function MasteryDrillDownView({
                       </span>
                     </div>
                     <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-relaxed">
-                      {obj.statement}
+                      <SearchHighlight text={obj.statement} />
                     </p>
                     {obj.description && (
                       <p className="text-[11px] text-muted-foreground line-clamp-2">
@@ -718,10 +794,14 @@ export function MasteryDrillDownView({
                   {/* Student Info */}
                   <div className="space-y-0.5 min-w-0">
                     <p className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                      {st.studentName}
+                      <SearchHighlight text={st.studentName} />
                     </p>
                     <span className="text-[10px] text-muted-foreground font-mono">
-                      {st.rollNumber ? `ID: ${st.rollNumber}` : "Student"}
+                      {st.rollNumber ? (
+                        <>ID: <SearchHighlight text={st.rollNumber} /></>
+                      ) : (
+                        "Student"
+                      )}
                     </span>
                   </div>
 

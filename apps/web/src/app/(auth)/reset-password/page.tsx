@@ -67,6 +67,7 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthCard
+      asideMode="general"
       title="Reset Password"
       description={
         isSubmitted

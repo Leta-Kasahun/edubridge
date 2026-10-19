@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Layers } from "lucide-react";
+import { Layers, School, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardLayout } from "@/shared/components/layouts";
 import { RoleGuard } from "@/shared/components/RoleGuard";
-import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { getErrorMessage } from "@/shared/utils";
+import { useDebounce } from "@/shared/hooks";
 import { useGrades } from "@/features/academic/grades";
 import { useSections } from "@/features/academic/sections";
 import { useSubjects } from "@/features/academic/subjects";
@@ -19,6 +22,8 @@ export default function LearningProgressPage(): React.JSX.Element {
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const debouncedSearch = useDebounce(search, 300);
 
   // Academic data queries
   const { data: gradesData } = useGrades({ isActive: true });
@@ -35,13 +40,6 @@ export default function LearningProgressPage(): React.JSX.Element {
     }
   }, [gradesData, selectedGradeId]);
 
-  // Auto-select first section when grade changes
-  useEffect(() => {
-    if (sectionsData && sectionsData.length > 0 && !selectedSectionId) {
-      setSelectedSectionId(sectionsData[0].id);
-    }
-  }, [sectionsData, selectedSectionId]);
-
   // Dropdown options
   const sectionOptions: SelectDropdownOption[] = useMemo(() => {
     if (!sectionsData) return [];
@@ -51,22 +49,40 @@ export default function LearningProgressPage(): React.JSX.Element {
     }));
   }, [sectionsData]);
 
-  const subjectOptions: SelectDropdownOption[] = useMemo(() => {
-    if (!subjectsData) return [];
-    const all = [{ value: "", label: "All Subjects" }];
-    const subs = subjectsData.map((sub) => ({
-      value: sub.id,
-      label: sub.name,
-    }));
-    return [...all, ...subs];
-  }, [subjectsData]);
+  const effectiveSectionId = selectedSectionId || sectionsData?.[0]?.id || "";
+
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    return [
+      {
+        id: "section",
+        label: "Section",
+        selectedValue: selectedSectionId || "ALL",
+        options: [
+          ...sectionOptions.map((s) => ({ label: s.label, value: s.value })),
+        ],
+        onSelect: (val) => setSelectedSectionId(val === "ALL" ? "" : val),
+        icon: School,
+      },
+      {
+        id: "subject",
+        label: "Subject",
+        selectedValue: selectedSubjectId || "ALL",
+        options: [
+          { label: "All Subjects", value: "ALL" },
+          ...(subjectsData || []).map((sub) => ({ label: sub.name, value: sub.id })),
+        ],
+        onSelect: (val) => setSelectedSubjectId(val === "ALL" ? "" : val),
+        icon: BookOpen,
+      },
+    ];
+  }, [sectionOptions, selectedSectionId, subjectsData, selectedSubjectId]);
 
   // Section Learning Progress Query
   const {
     data: matrixData,
     isLoading: isMatrixLoading,
     error: matrixError,
-  } = useSectionMastery(selectedSectionId, {
+  } = useSectionMastery(effectiveSectionId, {
     subjectId: selectedSubjectId || undefined,
   });
 
@@ -74,9 +90,19 @@ export default function LearningProgressPage(): React.JSX.Element {
     <RoleGuard allowedRoles={["SCHOOL_ADMIN", "TEACHER", "SYSTEM_ADMIN"]}>
       <DashboardLayout>
         <div className="max-w-7xl mx-auto space-y-4 pb-10">
-          {/* Grade Tabs */}
+          {/* TableToolbar with Section & Subject Dropdowns */}
+          <div className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs">
+            <TableToolbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search student progress..."
+              filters={filterGroups}
+            />
+          </div>
+
+          {/* Grade Tabs directly beneath toolbar */}
           {gradesData && gradesData.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none select-none">
               {gradesData.map((grade) => {
                 const isSelected = selectedGradeId === grade.id;
 
@@ -89,10 +115,10 @@ export default function LearningProgressPage(): React.JSX.Element {
                       setSelectedSectionId("");
                     }}
                     className={cn(
-                      "shrink-0 inline-flex items-center gap-2 h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs",
+                      "px-3.5 py-1.5 rounded-none text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer shadow-2xs",
                       isSelected
-                        ? "bg-primary text-primary-foreground font-bold"
-                        : "bg-card border border-border text-foreground hover:bg-muted/80"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
                     )}
                   >
                     <span>Grade {grade.level}</span>
@@ -102,37 +128,10 @@ export default function LearningProgressPage(): React.JSX.Element {
             </div>
           )}
 
-          {/* Section & Subject Dropdowns */}
-          <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Section Selector */}
-              <SelectDropdown
-                label="Section"
-                placeholder={selectedGradeId ? "Select Section" : "Select Grade first"}
-                options={sectionOptions}
-                value={selectedSectionId}
-                onChange={setSelectedSectionId}
-                disabled={!selectedGradeId || isSectionsLoading}
-                searchable
-              />
-
-              {/* Subject Selector */}
-              <SelectDropdown
-                label="Subject"
-                placeholder="All Subjects"
-                options={subjectOptions}
-                value={selectedSubjectId}
-                onChange={setSelectedSubjectId}
-                disabled={isSubjectsLoading}
-                searchable
-              />
-            </div>
-          </div>
-
           {/* Content Body: Drill-Down Experience */}
-          {!selectedSectionId ? (
-            <div className="p-12 text-center bg-card rounded-2xl border border-dashed border-border space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
+          {!effectiveSectionId ? (
+            <div className="p-12 text-center bg-card rounded-none border border-dashed border-border space-y-3">
+              <div className="w-12 h-12 rounded-none bg-primary/10 text-primary mx-auto flex items-center justify-center">
                 <Layers className="w-6 h-6" />
               </div>
               <h3 className="text-base font-semibold text-foreground">
@@ -143,7 +142,7 @@ export default function LearningProgressPage(): React.JSX.Element {
               </p>
             </div>
           ) : isMatrixLoading ? (
-            <div className="p-16 flex flex-col items-center justify-center gap-3 bg-card rounded-2xl border border-border">
+            <div className="p-16 flex flex-col items-center justify-center gap-3 bg-card rounded-none border border-border">
               <LoadingSpinner size={32} />
               <p className="text-sm font-medium text-muted-foreground">
                 Loading progress records...
@@ -154,7 +153,9 @@ export default function LearningProgressPage(): React.JSX.Element {
               message={getErrorMessage(matrixError, "Failed to load progress records.")}
             />
           ) : matrixData ? (
-            <MasteryDrillDownView data={matrixData} />
+            <SearchQueryProvider query={debouncedSearch}>
+              <MasteryDrillDownView data={matrixData} searchQuery={debouncedSearch} />
+            </SearchQueryProvider>
           ) : null}
         </div>
       </DashboardLayout>

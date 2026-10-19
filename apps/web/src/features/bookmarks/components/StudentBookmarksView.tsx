@@ -15,11 +15,12 @@ import { BookmarkItem } from "../types/bookmark.types";
 import { ROUTES } from "@/constants/routes";
 import {
   TableToolbar,
-  SelectDropdown,
-  SelectDropdownOption,
+  FilterGroup,
   LoadingSpinner,
   ErrorAlert,
   ConfirmDeleteModal,
+  SearchHighlight,
+  SearchQueryProvider,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
@@ -37,7 +38,7 @@ interface SubjectBookmarkGroup {
   readonly totalCount: number;
 }
 
-const ASSESSMENT_TYPE_OPTIONS: readonly SelectDropdownOption[] = [
+const ASSESSMENT_TYPE_OPTIONS = [
   { value: "ALL", label: "All Exam Types" },
   { value: "PRACTICE", label: "Practice" },
   { value: "QUIZ", label: "Quiz" },
@@ -45,7 +46,7 @@ const ASSESSMENT_TYPE_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "ASSIGNMENT", label: "Assignment" },
   { value: "MOCK_EXAM", label: "Mock Exam" },
   { value: "DIAGNOSTIC", label: "Knowledge Check" },
-];
+] as const;
 
 function inferSubject(item: BookmarkItem): { id: string; name: string; code?: string } {
   const s = item.questionDetails?.subject;
@@ -166,20 +167,20 @@ function QuestionBookmarkCard({
   const isMcqOrTrueFalse = q?.type === "MCQ" || q?.type === "MULTIPLE_CHOICE" || q?.type === "TRUE_FALSE" || displayOptions.length > 0;
 
   return (
-    <div className="bg-card rounded-2xl border border-border/80 p-4 sm:p-5 space-y-3.5 transition-all shadow-2xs hover:border-border">
+    <div className="bg-card rounded-none border border-border/80 p-4 sm:p-5 space-y-3.5 transition-all shadow-2xs hover:border-border">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
+          <span className="px-2 py-0.5 rounded-none text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
             {getQuestionTypeLabel(q?.type)}
           </span>
           {q?.topic && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted text-muted-foreground border border-border max-w-[200px] truncate">
-              {q.topic.title}
+            <span className="px-2 py-0.5 rounded-none text-[10px] font-semibold bg-muted text-muted-foreground border border-border max-w-[200px] truncate">
+              <SearchHighlight text={q.topic.title} />
             </span>
           )}
           {q?.difficulty && (
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${difficultyColors}`}
+              className={`px-2 py-0.5 rounded-none text-[10px] font-semibold border ${difficultyColors}`}
             >
               {q.difficulty}
             </span>
@@ -195,7 +196,7 @@ function QuestionBookmarkCard({
           type="button"
           onClick={() => onRequestDelete(item)}
           aria-label="Remove saved question"
-          className="inline-flex items-center gap-1 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-xs"
+          className="inline-flex items-center gap-1 p-1.5 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-xs"
         >
           <Trash2 size={14} />
           <span className="hidden sm:inline text-[11px]">Remove</span>
@@ -204,7 +205,11 @@ function QuestionBookmarkCard({
 
       <div className="space-y-2">
         <p className="text-xs sm:text-sm font-semibold text-foreground leading-relaxed whitespace-pre-wrap">
-          {q?.questionText || "Question details unavailable"}
+          {q?.questionText ? (
+            <SearchHighlight text={q.questionText} />
+          ) : (
+            "Question details unavailable"
+          )}
         </p>
       </div>
 
@@ -216,7 +221,7 @@ function QuestionBookmarkCard({
               return (
                 <div
                   key={opt.id || opt.optionKey || idx}
-                  className={`p-3 rounded-xl border text-xs sm:text-sm flex items-center justify-between gap-3 ${
+                  className={`p-3 rounded-none border text-xs sm:text-sm flex items-center justify-between gap-3 ${
                     isCorrect
                       ? "bg-emerald-500/10 border-emerald-500/40 text-foreground font-semibold"
                       : "bg-muted/20 border-border text-foreground"
@@ -224,7 +229,7 @@ function QuestionBookmarkCard({
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                      className={`w-6 h-6 rounded-none text-[11px] font-bold flex items-center justify-center shrink-0 ${
                         isCorrect
                           ? "bg-emerald-500 text-white shadow-2xs"
                           : "bg-muted text-muted-foreground border border-border"
@@ -232,7 +237,9 @@ function QuestionBookmarkCard({
                     >
                       {opt.optionKey}
                     </span>
-                    <span className="break-words leading-relaxed">{opt.optionText}</span>
+                    <span className="break-words leading-relaxed">
+                      <SearchHighlight text={opt.optionText} />
+                    </span>
                   </div>
                   {isCorrect && (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -249,12 +256,14 @@ function QuestionBookmarkCard({
 
       {!isMcqOrTrueFalse && q?.correctAnswer && (
         <div className="pt-1 border-t border-border/60">
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs sm:text-sm flex items-center justify-between gap-3">
+          <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/30 text-xs sm:text-sm flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="font-bold text-emerald-700 dark:text-emerald-400 text-xs uppercase tracking-wide">
                 Correct Answer:
               </span>
-              <span className="font-semibold text-foreground">{q.correctAnswer}</span>
+              <span className="font-semibold text-foreground">
+                <SearchHighlight text={q.correctAnswer} />
+              </span>
             </div>
             <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
           </div>
@@ -262,9 +271,11 @@ function QuestionBookmarkCard({
       )}
 
       {q?.explanation && (
-        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs text-foreground space-y-1">
+        <div className="p-3 rounded-none bg-primary/5 border border-primary/20 text-xs text-foreground space-y-1">
           <span className="font-bold text-primary block">Explanation:</span>
-          <p className="leading-relaxed whitespace-pre-wrap">{q.explanation}</p>
+          <p className="leading-relaxed whitespace-pre-wrap">
+            <SearchHighlight text={q.explanation} />
+          </p>
         </div>
       )}
     </div>
@@ -287,7 +298,7 @@ export function StudentBookmarksView(): React.JSX.Element {
 
   const allItems = data?.items ?? [];
 
-  const subjectOptions: readonly SelectDropdownOption[] = useMemo(() => {
+  const subjectOptions = useMemo(() => {
     const map = new Map<string, { id: string; name: string; code?: string }>();
     for (const item of allItems) {
       const s = inferSubject(item);
@@ -303,6 +314,31 @@ export function StudentBookmarksView(): React.JSX.Element {
       }));
     return [{ value: "ALL", label: "All Subjects" }, ...list];
   }, [allItems]);
+
+  const filterGroups: readonly FilterGroup[] = useMemo(() => {
+    return [
+      {
+        id: "examType",
+        label: "Exam Type",
+        options: ASSESSMENT_TYPE_OPTIONS.map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+        })),
+        selectedValue: selectedAssessmentType,
+        onSelect: (val) => setSelectedAssessmentType(val),
+      },
+      {
+        id: "subject",
+        label: "Subject",
+        options: subjectOptions.map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+        })),
+        selectedValue: selectedSubjectId,
+        onSelect: (val) => setSelectedSubjectId(val),
+      },
+    ];
+  }, [selectedAssessmentType, selectedSubjectId, subjectOptions]);
 
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
@@ -428,142 +464,125 @@ export function StudentBookmarksView(): React.JSX.Element {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto py-4 animate-in fade-in-0 duration-300">
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
-        <TableToolbar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search saved questions by prompt, topic, exam, or subject..."
-          actionButton={
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-              <div className="w-full sm:w-44">
-                <SelectDropdown
-                  options={ASSESSMENT_TYPE_OPTIONS}
-                  value={selectedAssessmentType}
-                  onChange={setSelectedAssessmentType}
-                  placeholder="All Exam Types"
-                />
-              </div>
-              <div className="w-full sm:w-52">
-                <SelectDropdown
-                  options={subjectOptions}
-                  value={selectedSubjectId}
-                  onChange={setSelectedSubjectId}
-                  placeholder="All Subjects"
-                />
-              </div>
-            </div>
-          }
-        />
-      </div>
-
-      {groupedBySubject.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-xs flex flex-col items-center justify-center space-y-3">
-          <div className="h-12 w-12 rounded-2xl bg-muted/60 text-muted-foreground flex items-center justify-center">
-            <Bookmark size={24} />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-foreground">
-              {allItems.length === 0 ? "No Saved Questions" : "No Matching Questions"}
-            </h3>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              {allItems.length === 0
-                ? "Questions you save while practicing or reviewing exams will appear here organized by subject and exam."
-                : "No saved questions match your current search or filter criteria."}
-            </p>
-          </div>
-          {allItems.length === 0 && (
-            <Link
-              href={ROUTES.STUDENT.EXAMS}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
-            >
-              <span>Go to Exams</span>
-              <ChevronRight size={13} />
-            </Link>
-          )}
+    <SearchQueryProvider query={search}>
+      <div className="space-y-6 max-w-5xl mx-auto py-4 animate-in fade-in-0 duration-300">
+        <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
+          <TableToolbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search saved questions by prompt, topic, exam, or subject..."
+            filters={filterGroups}
+          />
         </div>
-      ) : (
-        <div className="space-y-6">
-          {groupedBySubject.map((subjectGroup) => (
-            <div
-              key={subjectGroup.subjectId}
-              className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs space-y-5 p-4 sm:p-6"
-            >
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-border">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <BookOpen size={16} />
+
+        {groupedBySubject.length === 0 ? (
+          <div className="bg-card rounded-none border border-border p-12 text-center shadow-xs flex flex-col items-center justify-center space-y-3">
+            <div className="h-12 w-12 rounded-none bg-muted/60 text-muted-foreground flex items-center justify-center">
+              <Bookmark size={24} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-foreground">
+                {allItems.length === 0 ? "No Saved Questions" : "No Matching Questions"}
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                {allItems.length === 0
+                  ? "Questions you save while practicing or reviewing exams will appear here organized by subject and exam."
+                  : "No saved questions match your current search or filter criteria."}
+              </p>
+            </div>
+            {allItems.length === 0 && (
+              <Link
+                href={ROUTES.STUDENT.EXAMS}
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
+              >
+                <span>Go to Exams</span>
+                <ChevronRight size={13} />
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {groupedBySubject.map((subjectGroup) => (
+              <div
+                key={subjectGroup.subjectId}
+                className="bg-card rounded-none border border-border overflow-hidden shadow-xs space-y-5 p-4 sm:p-6"
+              >
+                <div className="flex items-center justify-between gap-3 pb-3 border-b border-border">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-none bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <BookOpen size={16} />
+                    </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
+                        <SearchHighlight text={subjectGroup.subjectName} />
+                      </h2>
+                      {subjectGroup.subjectCode && (
+                        <span className="px-2 py-0.5 rounded-none text-[10px] font-mono font-bold bg-muted text-muted-foreground border border-border shrink-0">
+                          <SearchHighlight text={subjectGroup.subjectCode} />
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
-                      {subjectGroup.subjectName}
-                    </h2>
-                    {subjectGroup.subjectCode && (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-muted text-muted-foreground border border-border shrink-0">
-                        {subjectGroup.subjectCode}
-                      </span>
-                    )}
-                  </div>
+
+                  <span className="text-xs font-semibold text-muted-foreground shrink-0">
+                    {subjectGroup.totalCount} {subjectGroup.totalCount === 1 ? "question" : "questions"}
+                  </span>
                 </div>
 
-                <span className="text-xs font-semibold text-muted-foreground shrink-0">
-                  {subjectGroup.totalCount} {subjectGroup.totalCount === 1 ? "question" : "questions"}
-                </span>
-              </div>
+                <div className="space-y-6">
+                  {subjectGroup.assessmentGroups.map((assessGroup) => (
+                    <div
+                      key={assessGroup.assessmentTitle}
+                      className="space-y-3 rounded-none border border-border/60 bg-muted/15 p-3.5 sm:p-4.5"
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText size={15} className="text-primary shrink-0" />
+                          <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                            <SearchHighlight text={assessGroup.assessmentTitle} />
+                          </h3>
+                          {assessGroup.assessmentType && (
+                            <span className="px-2 py-0.5 rounded-none text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
+                              {assessGroup.assessmentType}
+                            </span>
+                          )}
+                        </div>
 
-              <div className="space-y-6">
-                {subjectGroup.assessmentGroups.map((assessGroup) => (
-                  <div
-                    key={assessGroup.assessmentTitle}
-                    className="space-y-3 rounded-2xl border border-border/60 bg-muted/15 p-3.5 sm:p-4.5"
-                  >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText size={15} className="text-primary shrink-0" />
-                        <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                          {assessGroup.assessmentTitle}
-                        </h3>
-                        {assessGroup.assessmentType && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
-                            {assessGroup.assessmentType}
-                          </span>
-                        )}
+                        <span className="text-[11px] font-semibold text-muted-foreground">
+                          {assessGroup.items.length} {assessGroup.items.length === 1 ? "question" : "questions"}
+                        </span>
                       </div>
 
-                      <span className="text-[11px] font-semibold text-muted-foreground">
-                        {assessGroup.items.length} {assessGroup.items.length === 1 ? "question" : "questions"}
-                      </span>
+                      <div className="space-y-3">
+                        {assessGroup.items.map((item) => (
+                          <QuestionBookmarkCard
+                            key={item.id}
+                            item={item}
+                            onRequestDelete={setItemToDelete}
+                          />
+                        ))}
+                      </div>
                     </div>
-
-                    <div className="space-y-3">
-                      {assessGroup.items.map((item) => (
-                        <QuestionBookmarkCard
-                          key={item.id}
-                          item={item}
-                          onRequestDelete={setItemToDelete}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      <ConfirmDeleteModal
-        isOpen={Boolean(itemToDelete)}
-        onClose={() => {
-          setItemToDelete(null);
-          setDeleteError(null);
-        }}
-        onConfirm={handleConfirmDelete}
-        title="Remove Saved Question"
-        description="Are you sure you want to remove this question from your saved questions? You can always save it again during practice."
-        isPending={deleteMutation.isPending}
-        errorMessage={deleteError}
-      />
-    </div>
+        <ConfirmDeleteModal
+          isOpen={Boolean(itemToDelete)}
+          onClose={() => {
+            setItemToDelete(null);
+            setDeleteError(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Remove Saved Question"
+          description="Are you sure you want to remove this question from your saved questions? You can always save it again during practice."
+          isPending={deleteMutation.isPending}
+          errorMessage={deleteError}
+        />
+      </div>
+    </SearchQueryProvider>
   );
 }

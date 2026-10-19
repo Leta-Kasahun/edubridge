@@ -12,7 +12,12 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { LoadingSpinner, ErrorAlert } from "@/shared/components";
+import {
+  LoadingSpinner,
+  ErrorAlert,
+  SearchHighlight,
+  SearchQueryProvider,
+} from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage } from "@/shared/utils";
 import { useSections } from "@/features/academic/sections/hooks/useSections";
@@ -88,7 +93,7 @@ function ClassRowActions({ section, onViewDetails }: ClassRowActionsProps) {
           e.stopPropagation();
           setIsOpen((prev) => !prev);
         }}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+        className="p-1.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
         aria-label="Actions"
       >
         <MoreVertical size={16} />
@@ -99,7 +104,7 @@ function ClassRowActions({ section, onViewDetails }: ClassRowActionsProps) {
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}
           style={{ position: "fixed", top: `${coords.top}px`, left: `${coords.left}px`, zIndex: 9999 }}
-          className="w-40 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
+          className="w-40 bg-popover text-popover-foreground border border-border rounded-none shadow-xl py-1.5 animate-in fade-in-0 zoom-in-95 text-xs"
         >
           <button
             type="button"
@@ -134,6 +139,7 @@ function ClassRowActions({ section, onViewDetails }: ClassRowActionsProps) {
 export function TeacherClassesView() {
   const user = useAuthStore((s) => s.user);
   const [filters, setFilters] = useState<SectionFilterParams>({});
+  const [search, setSearch] = useState<string>("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | "HOMEROOM" | "SUBJECT">("ALL");
   const [selectedSection, setSelectedSection] = useState<SectionRecord | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -144,7 +150,9 @@ export function TeacherClassesView() {
   const { data: grades = [] } = useGrades({ isActive: true });
 
   const activeYear = useMemo(
-    () => academicYears.find((y) => y.status === "ACTIVE"),
+    () =>
+      academicYears.find((y) => y.status === "ACTIVE") ||
+      academicYears[0],
     [academicYears]
   );
 
@@ -155,7 +163,7 @@ export function TeacherClassesView() {
     isLoading,
     error,
   } = useSections({
-    ...filters,
+    gradeId: filters.gradeId,
     academicYearId: effectiveAcademicYearId || undefined,
   });
 
@@ -166,8 +174,17 @@ export function TeacherClassesView() {
   }, [grades, sections]);
 
   const filteredSections = useMemo(() => {
-    if (roleFilter === "ALL") return sections;
     return sections.filter((sec) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchesName = sec.name.toLowerCase().includes(q);
+        const matchesHomeroom = (sec.homeroomTeacher?.fullName || "").toLowerCase().includes(q);
+        const matchesCode = (sec.code || "").toLowerCase().includes(q);
+        if (!matchesName && !matchesHomeroom && !matchesCode) {
+          return false;
+        }
+      }
+      if (roleFilter === "ALL") return true;
       const isHomeroom = Boolean(
         sec.homeroomTeacher &&
           (sec.homeroomTeacher.teacherId === user?.id ||
@@ -175,13 +192,10 @@ export function TeacherClassesView() {
       );
       return roleFilter === "HOMEROOM" ? isHomeroom : !isHomeroom;
     });
-  }, [sections, roleFilter, user?.id]);
+  }, [sections, search, roleFilter, user?.id]);
 
   const handleSearchChange = (val: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: val || undefined,
-    }));
+    setSearch(val);
   };
 
   const filterGroups: FilterGroup[] = [
@@ -220,13 +234,13 @@ export function TeacherClassesView() {
     },
     {
       id: "academicYear",
-      label: "Year",
+      label: "Academic Year",
       icon: Calendar,
-      selectedValue: effectiveAcademicYearId || "ALL",
+      selectedValue: filters.academicYearId || "ALL",
       options: [
         { label: "All", value: "ALL" },
         ...academicYears.map((y) => ({
-          label: y.name,
+          label: y.name.replace(/Academic Year/i, "").trim() || y.name,
           value: y.id,
         })),
       ],
@@ -239,192 +253,188 @@ export function TeacherClassesView() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <ErrorAlert message={getErrorMessage(error, "Failed to load assigned classes.")} />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-4 shadow-xs">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-4 shadow-xs">
         <TableToolbar
-          searchValue={filters.search || ""}
+          searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search classes..."
           filters={filterGroups}
         />
       </div>
 
-      {filteredSections.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border min-h-[260px] flex flex-col items-center justify-center p-8 text-center shadow-xs">
-          <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+      {isLoading ? (
+        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
+          <LoadingSpinner size={32} />
+        </div>
+      ) : error ? (
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <ErrorAlert message={getErrorMessage(error, "Failed to load assigned classes.")} />
+        </div>
+      ) : filteredSections.length === 0 ? (
+        <div className="bg-card rounded-none border border-border min-h-[260px] flex flex-col items-center justify-center p-8 text-center shadow-xs">
+          <div className="h-12 w-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
             <School size={22} />
           </div>
           <h3 className="text-sm font-semibold text-foreground">No classes found</h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-            {filters.search || filters.gradeId || roleFilter !== "ALL"
+            {search || filters.gradeId || roleFilter !== "ALL"
               ? "No classes match your active filter criteria."
               : "You do not have any active class assignments yet."}
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {/* Mobile responsive card list (< md and below 320px) */}
-          <div className="md:hidden space-y-3">
-            {filteredSections.map((sec) => (
-              <div
-                key={sec.id}
-                onClick={() => {
-                  setSelectedSection(sec);
-                  setIsDetailModalOpen(true);
-                }}
-                className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-foreground truncate">
-                      Section {sec.name}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
-                      Grade {sec.gradeLevel}
-                    </p>
-                  </div>
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
+            {/* Mobile responsive card list (< md and below 320px) */}
+            <div className="md:hidden space-y-3">
+              {filteredSections.map((sec) => (
+                <div
+                  key={sec.id}
+                  onClick={() => {
+                    setSelectedSection(sec);
+                    setIsDetailModalOpen(true);
+                  }}
+                  className="bg-card rounded-none border border-border p-3.5 sm:p-4 shadow-xs space-y-3 transition-colors cursor-pointer hover:border-foreground/30"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        Section <SearchHighlight text={sec.name} />
+                      </p>
+                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                        Grade {sec.gradeLevel}
+                      </p>
+                    </div>
 
-                  <div
-                    className="shrink-0 flex items-center gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ClassRowActions
-                      section={sec}
-                      onViewDetails={(s) => {
-                        setSelectedSection(s);
-                        setIsDetailModalOpen(true);
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Homeroom
-                    </span>
-                    <p className="text-xs font-medium text-foreground truncate">
-                      {sec.homeroomTeacher?.fullName || "Unassigned"}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Students
-                    </span>
-                    <p className="text-xs font-medium text-foreground">
-                      {sec.studentCount}
-                    </p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground block">
-                      Status
-                    </span>
-                    <span className="font-medium text-foreground text-xs">
-                      {SECTION_STATUS_LABELS[sec.status] || sec.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop structured table */}
-          <div className="hidden md:block bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
-                  <tr>
-                    <th className="py-3 px-4">Class</th>
-                    <th className="py-3 px-4">Grade Level</th>
-                    <th className="py-3 px-4">Homeroom Teacher</th>
-                    <th className="py-3 px-4">Enrolled Students</th>
-                    <th className="py-3 px-4">Role</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right w-16">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {filteredSections.map((sec) => {
-                    const isHomeroom = Boolean(
-                      sec.homeroomTeacher &&
-                        (sec.homeroomTeacher.teacherId === user?.id ||
-                          sec.homeroomTeacher.id === user?.id)
-                    );
-
-                    return (
-                      <tr
-                        key={sec.id}
-                        onClick={() => {
-                          setSelectedSection(sec);
+                    <div
+                      className="shrink-0 flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ClassRowActions
+                        section={sec}
+                        onViewDetails={(s) => {
+                          setSelectedSection(s);
                           setIsDetailModalOpen(true);
                         }}
-                        className="hover:bg-muted/20 transition-colors"
-                      >
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-foreground">Section {sec.name}</div>
-                        </td>
+                      />
+                    </div>
+                  </div>
 
-                        <td className="py-3.5 px-4 font-medium text-foreground">
-                          Grade {sec.gradeLevel}
-                        </td>
+                  <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-xs text-center">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">
+                        Homeroom
+                      </span>
+                      <p className="text-xs font-medium text-foreground truncate">
+                        <SearchHighlight text={sec.homeroomTeacher?.fullName || "Unassigned"} />
+                      </p>
+                    </div>
 
-                        <td className="py-3.5 px-4 text-foreground">
-                          {sec.homeroomTeacher ? sec.homeroomTeacher.fullName : "Unassigned"}
-                        </td>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">
+                        Students
+                      </span>
+                      <p className="text-xs font-medium text-foreground">
+                        {sec.studentCount}
+                      </p>
+                    </div>
 
-                        <td className="py-3.5 px-4 text-foreground">
-                          {formatCapacityUtilization(sec.studentCount, sec.capacity)}
-                        </td>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-muted-foreground block">
+                        Status
+                      </span>
+                      <span className="font-medium text-foreground text-xs">
+                        {SECTION_STATUS_LABELS[sec.status] || sec.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                        <td className="py-3.5 px-4 font-medium text-foreground">
-                          {isHomeroom ? "Homeroom Teacher" : "Subject Teacher"}
-                        </td>
+            {/* Desktop structured table */}
+            <div className="hidden md:block bg-card rounded-none border border-border overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead className="bg-muted/40 border-b border-border text-muted-foreground font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Class</th>
+                      <th className="py-3 px-4">Grade Level</th>
+                      <th className="py-3 px-4">Homeroom Teacher</th>
+                      <th className="py-3 px-4">Enrolled Students</th>
+                      <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right w-16">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {filteredSections.map((sec) => {
+                      const isHomeroom = Boolean(
+                        sec.homeroomTeacher &&
+                          (sec.homeroomTeacher.teacherId === user?.id ||
+                            sec.homeroomTeacher.id === user?.id)
+                      );
 
-                        <td className="py-3.5 px-4 font-medium text-foreground">
-                          {SECTION_STATUS_LABELS[sec.status] || sec.status}
-                        </td>
-
-                        <td
-                          className="py-3.5 px-4 text-right"
-                          onClick={(e) => e.stopPropagation()}
+                      return (
+                        <tr
+                          key={sec.id}
+                          onClick={() => {
+                            setSelectedSection(sec);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="hover:bg-muted/20 transition-colors"
                         >
-                          <div className="flex items-center justify-end gap-1.5">
-                            <ClassRowActions
-                              section={sec}
-                              onViewDetails={(s) => {
-                                setSelectedSection(s);
-                                setIsDetailModalOpen(true);
-                              }}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          <td className="py-3.5 px-4">
+                            <div className="font-semibold text-foreground">
+                              Section <SearchHighlight text={sec.name} />
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-medium text-foreground">
+                            Grade {sec.gradeLevel}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-foreground">
+                            <SearchHighlight text={sec.homeroomTeacher ? sec.homeroomTeacher.fullName : "Unassigned"} />
+                          </td>
+
+                          <td className="py-3.5 px-4 text-foreground">
+                            {formatCapacityUtilization(sec.studentCount, sec.capacity)}
+                          </td>
+
+                          <td className="py-3.5 px-4 font-medium text-foreground">
+                            {isHomeroom ? "Homeroom Teacher" : "Subject Teacher"}
+                          </td>
+
+                          <td className="py-3.5 px-4 font-medium text-foreground">
+                            {SECTION_STATUS_LABELS[sec.status] || sec.status}
+                          </td>
+
+                          <td
+                            className="py-3.5 px-4 text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-end gap-1.5">
+                              <ClassRowActions
+                                section={sec}
+                                onViewDetails={(s) => {
+                                  setSelectedSection(s);
+                                  setIsDetailModalOpen(true);
+                                }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
+        </SearchQueryProvider>
       )}
 
       {selectedSection && (
