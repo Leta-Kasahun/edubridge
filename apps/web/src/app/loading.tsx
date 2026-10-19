@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Logo } from "@/shared/components/Logo";
 
 export default function RootLoading() {
   return (
@@ -31,26 +31,8 @@ export default function RootLoading() {
       `}</style>
 
       <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-md w-full animate-in fade-in-50 duration-500">
-        <div className="relative mb-4">
-          <Image
-            src="/logo.png"
-            alt="EduBridge Logo"
-            width={84}
-            height={84}
-            priority
-            className="w-20 h-20 object-contain drop-shadow-sm transition-transform duration-500 hover:scale-105"
-          />
-        </div>
-
-        <div className="flex items-center justify-center mb-6">
-          <span className="font-extrabold tracking-tight text-3xl sm:text-4xl font-heading inline-flex items-center">
-            <span className="text-primary font-extrabold">
-              edu
-            </span>
-            <span className="bg-gradient-to-r from-[#FB923C] via-[#F97316] to-[#EA580C] dark:from-[#FDBA74] dark:via-[#FB923C] dark:to-[#F97316] bg-clip-text text-transparent font-extrabold">
-              bridge
-            </span>
-          </span>
+        <div className="mb-6">
+          <Logo size="xl" priority />
         </div>
 
         <div className="space-y-4 flex flex-col items-center w-full max-w-xs">

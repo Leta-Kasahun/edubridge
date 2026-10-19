@@ -25,36 +25,57 @@ export interface LogoProps {
   onClick?: () => void;
 }
 
-const SIZE_MAP: Record<LogoSize, { px: number; textClass: string; subtextClass: string }> = {
+const SIZE_CONFIG: Record<
+  LogoSize,
+  {
+    logoHeight: number;
+    logoWidth: number;
+    markSize: number;
+    containerClass: string;
+    subtextClass: string;
+  }
+> = {
   xs: {
-    px: 24,
-    textClass: "text-[9px]",
-    subtextClass: "text-[7px]",
-  },
-  sm: {
-    px: 32,
-    textClass: "text-[11px]",
-    subtextClass: "text-[8px]",
-  },
-  md: {
-    px: 40,
-    textClass: "text-[13px]",
+    logoHeight: 22,
+    logoWidth: 115,
+    markSize: 24,
+    containerClass: "h-5 sm:h-6",
     subtextClass: "text-[9px]",
   },
-  lg: {
-    px: 50,
-    textClass: "text-[15px]",
+  sm: {
+    logoHeight: 28,
+    logoWidth: 146,
+    markSize: 32,
+    containerClass: "h-7 sm:h-8",
     subtextClass: "text-[10px]",
   },
+  md: {
+    logoHeight: 36,
+    logoWidth: 188,
+    markSize: 40,
+    containerClass: "h-9 sm:h-10",
+    subtextClass: "text-xs",
+  },
+  lg: {
+    logoHeight: 46,
+    logoWidth: 240,
+    markSize: 48,
+    containerClass: "h-11 sm:h-12",
+    subtextClass: "text-sm",
+  },
   xl: {
-    px: 64,
-    textClass: "text-[18px]",
-    subtextClass: "text-[11px]",
+    logoHeight: 58,
+    logoWidth: 303,
+    markSize: 60,
+    containerClass: "h-14 sm:h-16",
+    subtextClass: "text-base",
   },
   "2xl": {
-    px: 80,
-    textClass: "text-[22px]",
-    subtextClass: "text-[12px]",
+    logoHeight: 76,
+    logoWidth: 397,
+    markSize: 76,
+    containerClass: "h-18 sm:h-20",
+    subtextClass: "text-lg",
   },
 };
 
@@ -75,11 +96,12 @@ export function Logo({
   textClassName,
   onClick,
 }: LogoProps) {
-  const sizeConfig = SIZE_MAP[size];
-  const pixelSize = width ?? sizeConfig.px;
-  const pixelHeight = height ?? pixelSize;
+  const config = SIZE_CONFIG[size];
+  const isMark = variant === "mark";
 
-  const isStacked = variant === "full" || variant === "stacked";
+  const markPixelSize = width ?? height ?? config.markSize;
+  const logoPixelHeight = height ?? config.logoHeight;
+  const logoPixelWidth = width ?? (height ? Math.round(height * (570 / 109)) : config.logoWidth);
 
   const frameClasses: Record<LogoFrame, string> = {
     none: "",
@@ -89,12 +111,12 @@ export function Logo({
         : "bg-white p-1.5 rounded-xl border border-slate-200/80 shadow-xs",
     pill:
       theme === "dark"
-        ? "bg-slate-900/80 p-2 rounded-full border border-white/15 shadow-sm"
-        : "bg-white p-2 rounded-full border border-slate-200 shadow-sm",
+        ? "bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/15 shadow-sm"
+        : "bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm",
     glass:
       "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-white/40 dark:border-white/10 shadow-sm",
     glow:
-      "bg-white p-2 rounded-2xl border border-blue-500/30 shadow-[0_0_18px_rgba(37,99,235,0.25)]",
+      "bg-white dark:bg-slate-950 px-2.5 py-1.5 rounded-2xl border border-orange-500/30 shadow-[0_0_18px_rgba(249,115,22,0.25)]",
   };
 
   const badgeThemeClasses = {
@@ -112,79 +134,80 @@ export function Logo({
   const content = (
     <div
       className={cn(
-        "inline-flex transition-all duration-200 select-none group",
-        isStacked
-          ? "flex-col items-center justify-center text-center gap-0.5"
-          : "items-center gap-2.5",
+        "inline-flex flex-col items-start leading-tight select-none group transition-all duration-200",
+        frame !== "none" && frameClasses[frame],
         className
       )}
       onClick={onClick}
     >
-      <div
-        className={cn(
-          "relative flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-[1.04]",
-          frame !== "none" && frameClasses[frame]
+      <div className={cn("inline-flex items-center gap-2", textClassName)}>
+        {isMark ? (
+          /* Exact Iconic Stylized 'E' Mark for Collapsed / Compact Nav */
+          <div
+            className="relative flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-[1.04]"
+            style={{ width: markPixelSize, height: markPixelSize }}
+          >
+            <Image
+              src="/edubridge-mark.png"
+              alt="EduBridge Mark"
+              width={markPixelSize}
+              height={markPixelSize}
+              priority={priority}
+              className={cn(
+                "h-full w-full object-contain drop-shadow-xs dark:drop-shadow-[0_1px_8px_rgba(255,165,0,0.25)]",
+                imageClassName
+              )}
+            />
+          </div>
+        ) : (
+          /* Exact Custom Stylized Text Logo: Orange 'Edu' + Blue 'Bridge' with Leaf on 'i' */
+          <div
+            className={cn(
+              "relative flex items-center shrink-0 transition-transform duration-300 group-hover:scale-[1.02]",
+              config.containerClass
+            )}
+            style={
+              height || width
+                ? { height: logoPixelHeight, width: logoPixelWidth }
+                : undefined
+            }
+          >
+            <Image
+              src="/edubridge-text-logo.png"
+              alt="EduBridge"
+              width={logoPixelWidth}
+              height={logoPixelHeight}
+              priority={priority}
+              className={cn(
+                "h-full w-auto object-contain drop-shadow-xs dark:drop-shadow-[0_1px_10px_rgba(255,255,255,0.12)]",
+                imageClassName
+              )}
+            />
+          </div>
         )}
-        style={{ width: pixelSize, height: pixelHeight }}
-      >
-        <Image
-          src="/logo.png"
-          alt="EduBridge Logo"
-          width={pixelSize}
-          height={pixelHeight}
-          priority={priority}
-          sizes={`${pixelSize}px`}
-          className={cn("h-full w-full object-contain rounded-md drop-shadow-xs", imageClassName)}
-        />
+
+        {badgeText && !isMark && (
+          <span
+            className={cn(
+              "text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full border leading-none tracking-wider shrink-0",
+              badgeThemeClasses
+            )}
+          >
+            {badgeText}
+          </span>
+        )}
       </div>
 
-      {variant !== "mark" && (
-        <div
+      {subtext && !isMark && (
+        <span
           className={cn(
-            "flex flex-col leading-tight",
-            isStacked ? "items-center text-center" : "items-start",
-            textClassName
+            "font-medium uppercase tracking-wider truncate opacity-80 mt-0.5 pl-0.5",
+            config.subtextClass,
+            subtextThemeClasses
           )}
         >
-          <div className="flex items-center justify-center">
-            <span
-              className={cn(
-                "font-extrabold font-heading tracking-tight inline-flex items-center",
-                sizeConfig.textClass
-              )}
-            >
-              <span className="bg-gradient-to-r from-[#38BDF8] via-[#00A3FF] to-[#0284C7] dark:from-[#7DD3FC] dark:via-[#38BDF8] dark:to-[#00A3FF] bg-clip-text text-transparent font-extrabold">
-                edu
-              </span>
-              <span className="bg-gradient-to-r from-[#FB923C] via-[#F97316] to-[#EA580C] dark:from-[#FDBA74] dark:via-[#FB923C] dark:to-[#F97316] bg-clip-text text-transparent font-extrabold">
-                bridge
-              </span>
-            </span>
-
-            {badgeText && !isStacked && (
-              <span
-                className={cn(
-                  "text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full border leading-none tracking-wider ml-1",
-                  badgeThemeClasses
-                )}
-              >
-                {badgeText}
-              </span>
-            )}
-          </div>
-
-          {subtext && (
-            <span
-              className={cn(
-                "font-medium uppercase tracking-wider truncate text-center opacity-80",
-                sizeConfig.subtextClass,
-                subtextThemeClasses
-              )}
-            >
-              {subtext}
-            </span>
-          )}
-        </div>
+          {subtext}
+        </span>
       )}
     </div>
   );
@@ -202,3 +225,4 @@ export function Logo({
 
   return content;
 }
+
