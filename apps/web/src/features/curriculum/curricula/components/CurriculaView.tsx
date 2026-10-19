@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import {
   CurriculumItem,
@@ -22,6 +23,7 @@ import { CurriculaTable } from "./CurriculaTable";
 import { CurriculumFormModal } from "./CurriculumFormModal";
 import { CurriculumDetailModal } from "./CurriculumDetailModal";
 import { CurriculumVersionFormModal } from "./CurriculumVersionFormModal";
+import { CurriculumImportModal } from "../../import";
 import { useMemo } from "react";
 import {
   TableToolbar,
@@ -46,6 +48,7 @@ export function CurriculaView() {
   });
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<CurriculumItem | null>(null);
   const [detailItem, setDetailItem] = useState<CurriculumItem | null>(null);
 
@@ -164,14 +167,24 @@ export function CurriculaView() {
           filters={filterGroups}
           actionButton={
             isTeacher ? undefined : (
-              <button
-                type="button"
-                onClick={handleOpenAdd}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
-              >
-                <Plus size={14} />
-                <span>Curriculum</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold bg-card border border-border text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs shrink-0"
+                >
+                  <Upload size={14} className="text-foreground" />
+                  <span>Import</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAdd}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 sm:h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+                >
+                  <Plus size={14} />
+                  <span>Curriculum</span>
+                </button>
+              </div>
             )
           }
         />
@@ -270,6 +283,11 @@ export function CurriculaView() {
         }}
         curriculum={versionCurriculum}
         versionToEdit={versionToEdit}
+      />
+
+      <CurriculumImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
       />
     </div>
   );

@@ -36,14 +36,6 @@ const CURRICULUM_SECTIONS: readonly CurriculumSectionItem[] = [
     icon: BookOpen,
     badge: "Units & Topics",
   },
-  {
-    title: "Import",
-    description:
-      "Import curriculum units, topics, and learning objectives into target versions using standard CSV and Excel templates.",
-    href: ROUTES.CURRICULUM.IMPORT,
-    icon: FileSpreadsheet,
-    badge: "Batch Import",
-  },
 ];
 
 export default function CurriculumDashboardPage() {

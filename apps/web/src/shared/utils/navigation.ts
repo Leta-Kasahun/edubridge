@@ -45,7 +45,6 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     children: [
       { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
       { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
-      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
     ],
   },
   {
@@ -91,7 +90,6 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     children: [
       { label: "Curricula", href: ROUTES.CURRICULUM.CURRICULA },
       { label: "Structure", href: ROUTES.CURRICULUM.STRUCTURE },
-      { label: "Import", href: ROUTES.CURRICULUM.IMPORT },
     ],
   },
   {
