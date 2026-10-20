@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "motion/react";
 import { Building2, BookOpen, GraduationCap, CheckCircle } from "lucide-react";
 
 interface RoleFeatureCategory {
@@ -46,11 +49,39 @@ const ROLE_FEATURES: readonly RoleFeatureCategory[] = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+};
+
 export function FeaturesSection() {
   return (
     <section id="features" className="py-12 sm:py-20 bg-white dark:bg-slate-950 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-2xl mx-auto space-y-2"
+        >
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             Platform Features
           </span>
@@ -60,14 +91,21 @@ export function FeaturesSection() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Dedicated tools for administrators, teachers, and students in one simple platform.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
+        >
           {ROLE_FEATURES.map((category) => {
             const Icon = category.icon;
             return (
-              <div
+              <motion.div
                 key={category.role}
+                variants={cardVariants}
                 className="rounded-2xl bg-card border border-border/80 p-5 sm:p-7 shadow-xs hover:border-primary/40 hover:shadow-sm transition-all flex flex-col justify-between"
               >
                 <div className="space-y-4">
@@ -94,10 +132,10 @@ export function FeaturesSection() {
                     ))}
                   </ul>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

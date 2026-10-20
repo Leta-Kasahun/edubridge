@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
+import { motion } from "motion/react";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -94,26 +95,33 @@ export function HeroSection() {
           );
         })}
 
-        <div className="absolute inset-0 z-20 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-slate-950/25" />
-        <div className="absolute inset-0 z-20 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/15" />
+        <div className="absolute inset-0 z-20 bg-slate-950/60" />
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40" />
       </div>
 
-      <div className="relative z-30 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-20 md:py-24 w-full">
-        <div className="max-w-3xl space-y-6 text-left">
+      <div className="relative z-30 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 md:py-24 w-full flex flex-col items-center text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl space-y-6 flex flex-col items-center text-center"
+        >
           <div className="space-y-4">
-            <h1 className="text-2xl sm:text-5xl md:text-6xl font-light tracking-tight text-white leading-tight">
-              Make Learning Easier. <br />
-              <span className="font-normal text-sky-400">
-                Help Every Student Move Forward.
-              </span>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight">
+              Bridging Education for Grades 7 to 12
             </h1>
 
-            <p className="text-sm sm:text-base md:text-lg font-light text-slate-200 leading-relaxed max-w-2xl">
-              EduBridge brings learning, teaching, practice, assessments, and student progress together in one simple platform.
+            <p className="text-sm sm:text-base md:text-lg font-normal text-slate-200 leading-relaxed max-w-2xl mx-auto">
+              EduBridge brings learning, teaching, practice, assessments, exam preparation, and student progress together in one simple platform.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2"
+          >
             <Link
               href={ROUTES.AUTH.LOGIN}
               className={cn(
@@ -139,9 +147,9 @@ export function HeroSection() {
               <ShieldCheck size={15} className="text-slate-300" />
               <span>First Login Setup</span>
             </Link>
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2 pt-3">
+          <div className="flex items-center justify-center gap-2 pt-3">
             {HERO_SLIDES.map((slide, index) => (
               <button
                 key={slide.image}
@@ -157,7 +165,7 @@ export function HeroSection() {
               />
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

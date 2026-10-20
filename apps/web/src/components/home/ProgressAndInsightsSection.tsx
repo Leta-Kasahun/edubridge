@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "motion/react";
 import { CheckCircle2, AlertCircle, Clock, Award } from "lucide-react";
 
 interface ProgressStage {
@@ -34,11 +37,19 @@ const PROGRESS_STAGES: readonly ProgressStage[] = [
   },
 ];
 
+const easeCurve = [0.16, 1, 0.3, 1] as const;
+
 export function ProgressAndInsightsSection() {
   return (
     <section id="student-progress" className="py-12 sm:py-20 bg-white dark:bg-slate-950 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: easeCurve }}
+          className="text-center max-w-2xl mx-auto space-y-2"
+        >
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             Student Progress
           </span>
@@ -48,14 +59,36 @@ export function ProgressAndInsightsSection() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Clear four-stage mastery milestones help students and teachers celebrate growth.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+        >
           {PROGRESS_STAGES.map((stage) => {
             const Icon = stage.icon;
             return (
-              <div
+              <motion.div
                 key={stage.title}
+                variants={{
+                  hidden: { opacity: 0, y: 22 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    transition: { duration: 0.6, ease: easeCurve },
+                  },
+                }}
                 className="p-5 sm:p-7 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col justify-between hover:border-primary/40 hover:shadow-sm transition-all space-y-4"
               >
                 <div className="space-y-3">
@@ -69,10 +102,10 @@ export function ProgressAndInsightsSection() {
                     {stage.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import {
   Accordion,
   AccordionContent,
@@ -46,7 +47,7 @@ const FAQ_ITEMS: readonly FaqItem[] = [
   },
   {
     id: "offline-support",
-    question: "Can students use EduBridge without internet?",
+    question: "Does it work without internet?",
     answer:
       "EduBridge is designed to support learning when internet access is limited. Selected materials and activities can be available offline, with work updated when the connection returns.",
   },
@@ -58,11 +59,19 @@ const FAQ_ITEMS: readonly FaqItem[] = [
   },
 ];
 
+const easeCurve = [0.16, 1, 0.3, 1] as const;
+
 export function FaqSection() {
   return (
     <section id="faq" className="py-12 sm:py-24 bg-slate-50/80 dark:bg-slate-900/60 px-3 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-10">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: easeCurve }}
+          className="text-center max-w-2xl mx-auto space-y-2"
+        >
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             Common Questions
           </span>
@@ -72,9 +81,15 @@ export function FaqSection() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Everything you need to know about getting started with EduBridge.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-8 shadow-xs">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: easeCurve }}
+          className="bg-card border border-border/80 rounded-2xl p-4 sm:p-8 shadow-xs"
+        >
           <Accordion className="w-full">
             {FAQ_ITEMS.map((item) => (
               <AccordionItem
@@ -91,7 +106,7 @@ export function FaqSection() {
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

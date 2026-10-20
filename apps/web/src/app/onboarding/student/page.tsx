@@ -3,7 +3,7 @@ import { StudentOnboardingWizard } from "@/features/students";
 
 export const metadata: Metadata = {
   title: "Student Onboarding | EduBridge",
-  description: "Complete your student profile details to activate your school portal access",
+  description: "Complete your profile details",
 };
 
 export default function StudentOnboardingPage() {

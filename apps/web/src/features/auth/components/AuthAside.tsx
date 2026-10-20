@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -27,33 +27,33 @@ const SLIDES: readonly SlideItem[] = [
   {
     id: "login",
     tabLabel: "Students",
-    title: "Master every subject with confidence",
-    image: "/hero1.jpg",
-    alt: "Ethiopian students learning with digital tools",
+    title: "Master every subject and inspire students",
+    image: "/auth-aside.jpg",
+    alt: "Students learning with digital tools on EduBridge",
     kenBurns: "hero-ken-burns-a",
-  },
-  {
-    id: "teacher",
-    tabLabel: "Teachers",
-    title: "Inspire every classroom with ease",
-    image: "/hero1.jpg",
-    alt: "Ethiopian educator and students in classroom",
-    kenBurns: "hero-ken-burns-b",
   },
   {
     id: "first-login",
     tabLabel: "Account Setup",
-    title: "Activate your school account in seconds",
-    image: "/hero1.jpg",
-    alt: "Ethiopian students activating school portal",
+    title: "Activate your first account",
+    image: "/auth-aside.jpg",
+    alt: "Students setting up their school accounts",
+    kenBurns: "hero-ken-burns-b",
+  },
+  {
+    id: "student",
+    tabLabel: "Onboarding",
+    title: "Complete your profile details",
+    image: "/auth-aside.jpg",
+    alt: "Complete profile details for school access",
     kenBurns: "hero-ken-burns-c",
   },
   {
     id: "general",
-    tabLabel: "Campus Hub",
-    title: "Your complete school hub in one place",
-    image: "/hero1.jpg",
-    alt: "Ethiopian students and teacher learning together",
+    tabLabel: "Password Reset",
+    title: "Reset with email if verified, or contact your admin",
+    image: "/auth-aside.jpg",
+    alt: "Reset password with verified email or admin contact",
     kenBurns: "hero-ken-burns-d",
   },
 ];
@@ -62,28 +62,31 @@ export function AuthAside({ mode = "login", className }: AuthAsideProps) {
   // Analogically map the initial slide to the active auth flow
   const initialIndex = useMemo(() => {
     switch (mode) {
-      case "teacher":
-        return 1;
       case "first-login":
+        return 1;
+      case "student":
+      case "teacher":
         return 2;
       case "general":
         return 3;
-      case "student":
       case "login":
       default:
         return 0;
     }
   }, [mode]);
 
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [userSelectedIndex, setUserSelectedIndex] = useState<number | null>(null);
+  const [prevMode, setPrevMode] = useState(mode);
 
-  // Sync when mode changes
-  useEffect(() => {
-    setCurrentIndex(initialIndex);
-  }, [initialIndex]);
+  if (prevMode !== mode) {
+    setPrevMode(mode);
+    setUserSelectedIndex(null);
+  }
+
+  const currentIndex = userSelectedIndex ?? initialIndex;
 
   const advanceTo = useCallback((nextIndex: number) => {
-    setCurrentIndex(nextIndex);
+    setUserSelectedIndex(nextIndex);
   }, []);
 
   return (

@@ -6,7 +6,7 @@ import {
   ProgressAndInsightsSection,
   HowItWorksSection,
   FaqSection,
-  ScrollReveal,
+  SmoothScrollProvider,
 } from "@/components/home";
 
 const jsonLd = {
@@ -47,38 +47,25 @@ const jsonLd = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-clip">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <Header />
+    <SmoothScrollProvider>
+      <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-clip">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <Header />
 
-      <main className="flex-1 flex flex-col w-full overflow-x-clip">
-        <HeroSection />
-
-        <ScrollReveal>
+        <main className="flex-1 flex flex-col w-full overflow-x-clip">
+          <HeroSection />
           <FeaturesSection />
-        </ScrollReveal>
-
-        <ScrollReveal>
           <ExamAndIntelligenceSection />
-        </ScrollReveal>
-
-        <ScrollReveal>
           <ProgressAndInsightsSection />
-        </ScrollReveal>
-
-        <ScrollReveal>
           <HowItWorksSection />
-        </ScrollReveal>
-
-        <ScrollReveal>
           <FaqSection />
-        </ScrollReveal>
-      </main>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </SmoothScrollProvider>
   );
 }

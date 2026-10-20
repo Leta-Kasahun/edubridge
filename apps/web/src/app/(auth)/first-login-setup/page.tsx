@@ -25,7 +25,7 @@ function FirstLoginSetupContent() {
     <AuthCard
       asideMode="first-login"
       title="First-Time Account Setup"
-      description="Configure your personal password to activate and access your school portal"
+      description="Activate your first account by configuring your personal password"
       footer={
         <div className="text-center text-xs sm:text-sm">
           <span className="text-muted-foreground">Already have your password configured? </span>

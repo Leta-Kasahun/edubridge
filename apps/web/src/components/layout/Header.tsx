@@ -15,12 +15,12 @@ interface NavLinkItem {
 }
 
 const NAV_LINKS: readonly NavLinkItem[] = [
-  { label: "Features", href: "/#features" },
-  { label: "Exam Prep", href: "/#exam-prep" },
-  { label: "Student Progress", href: "/#student-progress" },
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contacts", href: "/#contacts" },
+  { label: "Features", href: "/home#features" },
+  { label: "Exam Prep", href: "/home#exam-prep" },
+  { label: "Student Progress", href: "/home#student-progress" },
+  { label: "How It Works", href: "/home#how-it-works" },
+  { label: "FAQ", href: "/home#faq" },
+  { label: "Contacts", href: "/home#contacts" },
 ];
 
 const desktopNavLinkClass = cn(

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { Logo } from "@/shared/components/Logo";
@@ -36,6 +37,17 @@ export function AuthCard({
       {/* Main Authentication Form Area */}
       <div className="order-1 lg:order-2 w-full min-h-screen flex items-center justify-center p-4 sm:p-8 md:p-12 lg:p-16 xl:p-20 overflow-y-auto">
         <div className="w-full max-w-md xl:max-w-lg space-y-6 sm:space-y-8 my-auto">
+          {/* Home Link with Back Arrow */}
+          <div className="flex items-center justify-between">
+            <Link
+              href={ROUTES.HOME}
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span>Home page</span>
+            </Link>
+          </div>
+
           {showLogo && (
             <div className="flex justify-center lg:hidden pb-1 sm:pb-2">
               <Link href={ROUTES.HOME} title="EduBridge Home">

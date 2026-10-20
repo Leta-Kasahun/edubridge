@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { FolderTree, BookOpen, Laptop, Dumbbell, BarChart3, HeartHandshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,13 +51,21 @@ const WORKFLOW_STEPS: readonly WorkflowStep[] = [
   },
 ];
 
+const easeCurve = [0.16, 1, 0.3, 1] as const;
+
 export function HowItWorksSection() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
   return (
     <section id="how-it-works" className="py-12 sm:py-24 bg-slate-100/80 dark:bg-slate-900/70 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: easeCurve }}
+          className="text-center max-w-2xl mx-auto space-y-2"
+        >
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             Simple Step-by-Step
           </span>
@@ -66,9 +75,15 @@ export function HowItWorksSection() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             A clear and easy guide showing how administrators, teachers, and students use the platform everyday.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="hidden lg:flex flex-row gap-3 min-h-[310px] w-full items-stretch">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: easeCurve }}
+          className="hidden lg:flex flex-row gap-3 min-h-[310px] w-full items-stretch"
+        >
           {WORKFLOW_STEPS.map((step, index) => {
             const Icon = step.icon;
             const isActive = activeIndex === index;
@@ -127,9 +142,15 @@ export function HowItWorksSection() {
               </div>
             );
           })}
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.65, ease: easeCurve }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4"
+        >
           {WORKFLOW_STEPS.map((step) => {
             const Icon = step.icon;
             return (
@@ -157,7 +178,7 @@ export function HowItWorksSection() {
               </div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

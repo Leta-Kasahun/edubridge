@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
       description={
         isSubmitted
           ? "Check your inbox for the one-time verification code (OTP)"
-          : "Enter your registered email address to receive a verification code"
+          : "Reset with email if you have a verified email, or contact your school administrator"
       }
       footer={
         <div className="text-center text-xs sm:text-sm">

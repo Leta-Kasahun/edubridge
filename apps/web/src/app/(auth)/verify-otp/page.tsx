@@ -43,7 +43,7 @@ function VerifyOtpContent() {
         userId={userId}
         email={email}
         purpose={purpose}
-        onSuccess={() => router.push(ROUTES.DASHBOARD)}
+        onSuccess={() => window.location.replace(ROUTES.DASHBOARD)}
       />
     </AuthCard>
   );

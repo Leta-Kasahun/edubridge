@@ -214,7 +214,7 @@ export function TeacherOnboardingWizard({
   return (
     <OnboardingLayout
       title="Teacher Profile Setup"
-      subtitle="Complete your profile details to activate your school portal access"
+      subtitle="Complete your profile details"
       stepper={
         <OnboardingStepper
           steps={ONBOARDING_STEPS}

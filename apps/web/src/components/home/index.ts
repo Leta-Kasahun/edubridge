@@ -4,4 +4,4 @@ export * from "./ExamAndIntelligenceSection";
 export * from "./ProgressAndInsightsSection";
 export * from "./HowItWorksSection";
 export * from "./FaqSection";
-export * from "./ScrollReveal";
+export * from "./SmoothScrollProvider";

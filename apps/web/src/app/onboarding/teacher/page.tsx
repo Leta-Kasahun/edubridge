@@ -3,7 +3,7 @@ import { TeacherOnboardingWizard } from "@/features/teacher-profile";
 
 export const metadata: Metadata = {
   title: "Teacher Onboarding | EduBridge",
-  description: "Complete your teacher profile details to activate your school portal access",
+  description: "Complete your profile details",
 };
 
 export default function TeacherOnboardingPage() {

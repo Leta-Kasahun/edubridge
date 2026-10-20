@@ -257,7 +257,7 @@ export function StudentOnboardingWizard({
   return (
     <OnboardingLayout
       title="Student Profile Setup"
-      subtitle="Complete your profile and parent contact details to activate your school account"
+      subtitle="Complete your profile details"
       stepper={
         <OnboardingStepper
           steps={ONBOARDING_STEPS}
