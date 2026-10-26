@@ -16,6 +16,7 @@ import { useLogin } from "../hooks";
 import { loginValidationSchema, LoginFormData } from "../validations";
 import { AuthResponseData } from "../types";
 import { GoogleButton } from "./GoogleButton";
+import { KeycloakButton } from "./KeycloakButton";
 
 export interface LoginFormProps {
   onSuccess?: (data: AuthResponseData) => void;
@@ -23,6 +24,8 @@ export interface LoginFormProps {
   onRequiresFirstLoginSetup?: (userId?: string) => void;
   onGoogleClick?: () => void;
   isGoogleLoading?: boolean;
+  onKeycloakClick?: () => void;
+  isKeycloakLoading?: boolean;
   forgotPasswordHref?: string;
 }
 
@@ -47,9 +50,11 @@ export function LoginForm({
   onRequiresFirstLoginSetup,
   onGoogleClick,
   isGoogleLoading,
+  onKeycloakClick,
+  isKeycloakLoading,
   forgotPasswordHref = ROUTES.AUTH.RESET_PASSWORD,
 }: LoginFormProps) {
-  const [googleError, setGoogleError] = useState<string | null>(() => {
+  const [ssoError, setSsoError] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search).get("error");
     }
@@ -75,6 +80,7 @@ export function LoginForm({
 
     const params = new URLSearchParams(window.location.search);
     const googleSuccess = params.get("google_success");
+    const keycloakSuccess = params.get("keycloak_success");
     const authError = params.get("error");
     const authDataParam = params.get("auth_data");
 
@@ -83,7 +89,7 @@ export function LoginForm({
       return;
     }
 
-    if (googleSuccess !== "true") return;
+    if (googleSuccess !== "true" && keycloakSuccess !== "true") return;
 
     const parsedAuth = parseAuthData(authDataParam);
     if (parsedAuth?.user && parsedAuth?.tokens?.accessToken) {
@@ -121,12 +127,12 @@ export function LoginForm({
         }
       })
       .catch(() => {
-        setGoogleError("Authentication failed. Please try again.");
+        setSsoError("Authentication failed. Please try again.");
       });
   }, [onSuccess, setAuth]);
 
   const onSubmit = (values: LoginFormData) => {
-    setGoogleError(null);
+    setSsoError(null);
     const identifier = values.email.trim();
     const isEmail = identifier.includes("@");
 
@@ -155,7 +161,7 @@ export function LoginForm({
   };
 
   const handleGoogleClick = () => {
-    setGoogleError(null);
+    setSsoError(null);
     if (onGoogleClick) {
       onGoogleClick();
       return;
@@ -165,7 +171,18 @@ export function LoginForm({
     window.location.href = `${env.apiUrl}/auth/google${originParam}`;
   };
 
-  const currentError = error ? getErrorMessage(error) : googleError;
+  const handleKeycloakClick = () => {
+    setSsoError(null);
+    if (onKeycloakClick) {
+      onKeycloakClick();
+      return;
+    }
+
+    const originParam = typeof window !== "undefined" ? `?origin=${encodeURIComponent(window.location.origin)}` : "";
+    window.location.href = `${env.apiUrl}/auth/keycloak${originParam}`;
+  };
+
+  const currentError = error ? getErrorMessage(error) : ssoError;
 
   return (
     <div className="space-y-4 sm:space-y-5 w-full">
@@ -220,10 +237,16 @@ export function LoginForm({
         </span>
       </div>
 
-      <GoogleButton
-        onClick={handleGoogleClick}
-        isLoading={isGoogleLoading}
-      />
+      <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
+        <KeycloakButton
+          onClick={handleKeycloakClick}
+          isLoading={isKeycloakLoading}
+        />
+        <GoogleButton
+          onClick={handleGoogleClick}
+          isLoading={isGoogleLoading}
+        />
+      </div>
 
       <div className="pt-2 text-center text-xs sm:text-sm text-muted-foreground">
         <span>First time login? </span>
