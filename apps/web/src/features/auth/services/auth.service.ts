@@ -7,6 +7,7 @@ import {
   ResendOtpPayload,
   FirstLoginSetupPayload,
   GoogleAuthPayload,
+  KeycloakAuthPayload,
   ChangePasswordPayload,
   AuthResponseData,
   AdminResetPasswordPayload,
@@ -49,6 +50,14 @@ export const authService = {
   googleAuth: async (payload: GoogleAuthPayload): Promise<AuthResponseData> => {
     const response = await apiClient.post<ApiResponse<AuthResponseData>>(
       API_ENDPOINTS.AUTH.GOOGLE,
+      payload
+    );
+    return response.data.data;
+  },
+
+  keycloakAuth: async (payload: KeycloakAuthPayload): Promise<AuthResponseData> => {
+    const response = await apiClient.post<ApiResponse<AuthResponseData>>(
+      API_ENDPOINTS.AUTH.KEYCLOAK,
       payload
     );
     return response.data.data;
