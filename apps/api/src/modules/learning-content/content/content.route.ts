@@ -5,6 +5,7 @@ import { requireIdempotency } from "../../../middleware/idempotency.js";
 import { requireRoles } from "../../../middleware/rbac.js";
 import { contentController } from "./controllers/content.controller.js";
 import { contentAttachmentController } from "./controllers/content-attachment.controller.js";
+import { contentRagController } from "./controllers/content-rag.controller.js";
 import { createB2MulterStorage } from "./utils/b2-multer.storage.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "../../../shared/constants/learning-content.constants.js";
 
@@ -30,12 +31,23 @@ router.get(
 
 router.use(authenticate);
 
+router.post(
+  "/search",
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN", "STUDENT"),
+  contentRagController.search
+);
+
 router.get("/student/in-progress", contentController.listStudentInProgress);
 router.get("/:id/progress", contentController.getProgress);
 router.put("/:id/progress", requireIdempotency, contentController.saveProgress);
 
 router.get("/", contentController.listContent);
 router.get("/:id", contentController.getContentDetail);
+router.post(
+  "/:id/ingest",
+  requireRoles("TEACHER", "SCHOOL_ADMIN", "ADMIN"),
+  contentRagController.ingestContent
+);
 router.post(
   "/",
   requireRoles("SCHOOL_ADMIN", "TEACHER", "ADMIN"),
