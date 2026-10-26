@@ -166,6 +166,7 @@ export class LoginService {
     }
 
     await this.cacheSvc.clearFailedAttempts(identifier);
+    await this.cacheSvc.clearLockout(identifier);
     await this.authRepo.resetFailedAttempts(user.id, metadata.ipAddress);
     await this.securityRepo.recordLoginAttempt({
       tenantId: activeTenantId,
