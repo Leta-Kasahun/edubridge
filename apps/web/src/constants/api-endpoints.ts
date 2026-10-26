@@ -241,6 +241,18 @@ export const API_ENDPOINTS = {
     CHECK: "/bookmarks/check",
     BY_ID: (id: string) => `/bookmarks/${id}`,
   },
+  AI: {
+    GENERATE_QUESTIONS: "/ai/questions/generate",
+    GENERATE_CONTENT: "/ai/content/generate",
+    EXPLANATION_STREAM: (questionId: string) => `/ai/questions/${questionId}/explanation/stream`,
+    TUTOR_STREAM: "/ai/tutor/stream",
+    JOBS: "/ai/jobs",
+    JOB_BY_ID: (id: string) => `/ai/jobs/${id}`,
+  },
+  RAG: {
+    SEARCH: "/learning-content/content/search",
+    INGEST: (id: string) => `/learning-content/content/${id}/ingest`,
+  },
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;
