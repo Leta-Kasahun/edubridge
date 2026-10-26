@@ -92,25 +92,25 @@ export class ExplanationService {
       ? `${correctOption.optionKey}: ${correctOption.optionText}`
       : version.explanation ?? "N/A";
 
-    const prompt = `A student is reviewing this practice question:
+    const prompt = `A student is reviewing this question:
 
 QUESTION: ${version.questionText}
 ${optionsText ? `OPTIONS:\n${optionsText}` : ""}
 CORRECT ANSWER: ${correctAnswerText}
 TOPIC: ${topicTitle}
 ${studentAnswer ? `STUDENT'S ANSWER: ${studentAnswer}` : ""}
-${contextText ? `RELATED CURRICULUM MATERIAL:\n${contextText}` : ""}
+${contextText ? `LESSON MATERIAL:\n${contextText}` : ""}
 
-Task: Write a clear, student-friendly explanation (under 200 words) that:
-1. States the correct answer and why it is correct.
-2. Explains the underlying concept in 2-3 sentences.
-3. If multiple-choice: briefly explains why the common distractors are incorrect.
-4. Mentions one common mistake students make on this type of question.`;
+Task: Write a simple, friendly, step-by-step explanation:
+1. Explain clearly why the correct answer is right using plain words.
+2. If the student gave an answer that was incorrect, gently clarify where the misunderstanding happened.
+3. Share a helpful tip or memory trick so they easily remember this concept next time.
+4. Clean formatting: DO NOT use asterisks (*** or **) in your text. Write clean, natural sentences.`;
 
     let fullGeneratedText = "";
     for await (const chunk of this.ai.stream(prompt, {
       temperature: AI_CONSTANTS.TEMPERATURE_EXPLANATION,
-      systemInstruction: "You are an encouraging, expert educational tutor providing clear, accurate explanations to students.",
+      systemInstruction: "You are a friendly, encouraging learning assistant providing clear, simple, and clean guidance to students without asterisks.",
     })) {
       fullGeneratedText += chunk;
       yield chunk;

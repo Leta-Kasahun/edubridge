@@ -6,12 +6,20 @@ import {
   requireExplanationRateLimit,
 } from "./middleware/ai-rate-limiter.js";
 import { explanationController } from "./controllers/explanation.controller.js";
+import { tutorController } from "./controllers/tutor.controller.js";
 import { questionGenerationController } from "./controllers/question-generation.controller.js";
 import { contentGenerationController } from "./controllers/content-generation.controller.js";
 
 const router: Router = Router();
 
 router.use(authenticate);
+
+router.post(
+  "/tutor/stream",
+  requireRoles("STUDENT", "TEACHER", "SCHOOL_ADMIN", "ADMIN"),
+  requireExplanationRateLimit,
+  tutorController.streamTutor
+);
 
 router.get(
   "/questions/:id/explanation/stream",
