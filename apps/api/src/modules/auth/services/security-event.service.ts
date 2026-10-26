@@ -50,18 +50,13 @@ export class SecurityEventService {
     const lockoutMinutes = policy?.lockoutDurationMinutes ?? AUTH_CONSTANTS.LOCKOUT.DURATION_MINUTES;
 
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
-    const user = await this.authRepo.findByIdentifier(identifier);
-
-    if (user?.lockedUntil && user.lockedUntil > new Date()) {
-      throw new UnauthorizedError("Account is temporarily locked due to multiple failed login attempts.");
-    }
-
-    const failedCount = await this.securityRepo.countRecentFailedAttempts(identifier, windowStart, user?.id);
+    const failedCount = await this.securityRepo.countRecentFailedAttempts(identifier, ipAddress, windowStart);
 
     if (failedCount >= maxAttempts) {
       const lockedUntil = new Date(Date.now() + lockoutMinutes * 60 * 1000);
       await this.cacheSvc.setLockout(identifier, lockoutMinutes * 60);
 
+      const user = await this.authRepo.findByIdentifier(identifier);
       if (user) {
         await this.authRepo.incrementFailedAttempts(user.id, lockedUntil);
         await this.securityRepo.createSecurityEvent({
