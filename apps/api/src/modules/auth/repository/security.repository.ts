@@ -20,26 +20,10 @@ export class SecurityRepository {
     });
   }
 
-  async countRecentFailedAttempts(identifier: string, since: Date, userId?: string) {
-    const conditions: Prisma.LoginAttemptWhereInput[] = [
-      { identifier: { equals: identifier, mode: "insensitive" } },
-    ];
-    if (userId) {
-      conditions.push({ userId });
-    }
+  async countRecentFailedAttempts(identifier: string, ipAddress: string, since: Date) {
     return prisma.loginAttempt.count({
       where: {
-        OR: conditions,
-        success: false,
-        createdAt: { gte: since },
-      },
-    });
-  }
-
-  async countRecentFailedAttemptsByIp(ipAddress: string, since: Date) {
-    return prisma.loginAttempt.count({
-      where: {
-        ipAddress,
+        OR: [{ identifier }, { ipAddress }],
         success: false,
         createdAt: { gte: since },
       },
