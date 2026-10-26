@@ -114,6 +114,39 @@ const authRouteDefinitions: RouteDefinition[] = [
     },
   },
   {
+    path: "/auth/keycloak",
+    method: "GET",
+    summary: "Initiate Keycloak OIDC Login",
+    description: "Redirects user to Keycloak login page for OpenID Connect Single Sign-On",
+    tags: ["Authentication"],
+  },
+  {
+    path: "/auth/keycloak/callback",
+    method: "GET",
+    summary: "Keycloak OIDC Callback",
+    description: "Callback URL where Keycloak redirects with authorization code to finalize authentication",
+    tags: ["Authentication"],
+  },
+  {
+    path: "/auth/keycloak",
+    method: "POST",
+    summary: "Keycloak Token Authentication",
+    description: "Authenticate using a Keycloak Bearer access token directly",
+    tags: ["Authentication"],
+    requestBody: {
+      schema: {
+        type: "object",
+        properties: {
+          token: {
+            type: "string",
+            description: "Keycloak access token",
+          },
+        },
+        required: ["token"],
+      },
+    },
+  },
+  {
     path: "/auth/refresh-token",
     method: "POST",
     summary: "Refresh Token",
