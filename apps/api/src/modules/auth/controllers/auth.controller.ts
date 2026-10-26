@@ -74,6 +74,55 @@ export class AuthController {
     }
   });
 
+  initiateKeycloakAuth = asyncHandler(async (req: Request, res: Response) => {
+    let origin: string | undefined = req.query.origin as string | undefined;
+    if (!origin && req.headers.referer) {
+      try {
+        origin = new URL(req.headers.referer).origin;
+      } catch {
+        origin = undefined;
+      }
+    }
+    const statePayload = Buffer.from(
+      JSON.stringify({ origin, nonce: crypto.randomBytes(8).toString("hex") })
+    ).toString("base64url");
+    const authUrl = this.authSvc.getKeycloakAuthUrl(statePayload);
+    res.redirect(authUrl);
+  });
+
+  handleKeycloakCallback = asyncHandler(async (req: Request, res: Response) => {
+    const { code, error, state } = req.query;
+    let customOrigin: string | undefined;
+    if (typeof state === "string") {
+      try {
+        const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+        if (parsed?.origin && typeof parsed.origin === "string") {
+          customOrigin = parsed.origin;
+        }
+      } catch {
+        customOrigin = undefined;
+      }
+    }
+
+    if (error || !code) {
+      const errorMsg = (error as string) || "Keycloak authentication was cancelled or failed";
+      res.redirect(this.authSvc.getKeycloakErrorRedirectUrl(errorMsg, customOrigin));
+      return;
+    }
+
+    const metadata = this.extractMetadata(req);
+    const tenantId = this.extractTenantId(req);
+
+    try {
+      const result = await this.authSvc.handleKeycloakCallback(code as string, metadata, tenantId);
+      setRefreshCookie(res, result.tokens?.refreshToken);
+      res.redirect(this.authSvc.getKeycloakRedirectUrl(customOrigin, result));
+    } catch (authError) {
+      const msg = authError instanceof Error ? authError.message : "Keycloak authentication failed";
+      res.redirect(this.authSvc.getKeycloakErrorRedirectUrl(msg, customOrigin));
+    }
+  });
+
   login = asyncHandler(async (req: Request, res: Response) => {
     const metadata = this.extractMetadata(req);
     const tenantId = this.extractTenantId(req);
@@ -121,6 +170,21 @@ export class AuthController {
     const tenantId = this.extractTenantId(req);
     const { googleId, email } = req.body;
     const result = await this.authSvc.googleAuth(googleId, email, metadata, tenantId);
+    setRefreshCookie(res, result.tokens?.refreshToken);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  keycloakAuth = asyncHandler(async (req: Request, res: Response) => {
+    const metadata = this.extractMetadata(req);
+    const tenantId = this.extractTenantId(req);
+    const token = req.body?.token || req.body?.accessToken;
+    if (!token || typeof token !== "string") {
+      throw new UnauthorizedError("Keycloak access token is required");
+    }
+    const result = await this.authSvc.keycloakAuth(token, metadata, tenantId);
     setRefreshCookie(res, result.tokens?.refreshToken);
     res.status(200).json({
       success: true,
