@@ -36,6 +36,7 @@ import {
 import { evaluationRouter } from "./modules/evaluation/index.js";
 import { masteryRouter } from "./modules/mastery/index.js";
 import { bookmarksRouter } from "./modules/bookmarks/index.js";
+import { aiRouter } from "./modules/ai/index.js";
 
 const app: Express = express();
 
@@ -101,6 +102,7 @@ app.use("/api/evaluations", evaluationRouter);
 app.use("/api/assessments", assessmentRouter);
 app.use("/api/mastery", masteryRouter);
 app.use("/api/bookmarks", bookmarksRouter);
+app.use("/api/ai", aiRouter);
 
 app.use(errorHandler);
 
