@@ -43,6 +43,11 @@ export const RedisKeys = {
     context: (userId: string, conversationId: string) => `ai:context:${userId}:${conversationId}`,
     tokenRateLimit: (userId: string) => `ai:ratelimit:tokens:${userId}`,
     requestRateLimit: (userId: string) => `ai:ratelimit:requests:${userId}`,
+    // RAG embedding and generation cache keys
+    embeddingCache: (hash: string) => `ai:embed:${hash}`,
+    generationRateLimit: (tenantId: string, userId: string) => `ai:ratelimit:gen:${tenantId}:${userId}`,
+    explanationRateLimit: (tenantId: string, userId: string) => `ai:ratelimit:expl:${tenantId}:${userId}`,
+    explanationCache: (questionId: string) => `ai:cache:expl:${questionId}`,
   },
   notification: {
     // Pub/Sub channel per user for SSE fan-out

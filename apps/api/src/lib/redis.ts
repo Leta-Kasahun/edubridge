@@ -27,6 +27,10 @@ const globalForRedis = globalThis as unknown as {
 
 export const redis = globalForRedis.redis ?? createRedisClient();
 
+redis.on("error", () => {
+  // Gracefully swallowed so connection retries don't emit unhandled process warnings
+});
+
 if (env.NODE_ENV !== "production") {
   globalForRedis.redis = redis;
 }
