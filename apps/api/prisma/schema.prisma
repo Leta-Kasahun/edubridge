@@ -434,6 +434,7 @@ model User {
   username            String?       @unique
   email               String?       @unique
   googleId            String?       @unique
+  keycloakId          String?       @unique
   passwordHash        String?
   status              AccountStatus @default(PENDING_FIRST_LOGIN)
   emailVerified       Boolean       @default(false)
@@ -617,6 +618,7 @@ model SecurityPolicy {
   notifyOnNewDevice     Boolean @default(true)
 
   allowGoogleAuth Boolean @default(true)
+  allowKeycloakAuth Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
