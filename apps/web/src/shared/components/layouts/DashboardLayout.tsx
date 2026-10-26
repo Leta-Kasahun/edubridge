@@ -7,6 +7,8 @@ import { DashboardHeader } from "./DashboardHeader";
 import { BreadcrumbItemData } from "@/shared/utils/breadcrumbs";
 import { cn } from "@/lib/utils";
 import { useNotificationStream } from "@/features/notifications/hooks/useNotificationStream";
+import { useAuthStore } from "@/stores/auth.store";
+import { StudentAiTutorWidget } from "@/features/ai";
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode;
@@ -20,6 +22,7 @@ export function DashboardLayout({
   customBreadcrumbLabels,
 }: DashboardLayoutProps) {
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
+  const isStudent = useAuthStore((state) => state.user?.roles?.includes("STUDENT"));
 
   useNotificationStream();
 
@@ -46,6 +49,8 @@ export function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {isStudent && <StudentAiTutorWidget />}
     </div>
   );
 }
