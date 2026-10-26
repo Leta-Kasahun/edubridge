@@ -80,16 +80,21 @@ export class AuthService {
     return this.googleAuthSvc.authenticateWithGoogle(googleId, email, metadata, tenantId);
   }
 
-  getKeycloakAuthUrl(customState?: string): string {
-    return this.keycloakAuthSvc.getAuthorizationUrl(customState);
+  generateKeycloakPkcePair(): { verifier: string; challenge: string } {
+    return this.keycloakAuthSvc.generatePkcePair();
+  }
+
+  getKeycloakAuthUrl(customState?: string, codeChallenge?: string): string {
+    return this.keycloakAuthSvc.getAuthorizationUrl(customState, codeChallenge);
   }
 
   async handleKeycloakCallback(
     code: string,
     metadata: SessionMetadata,
-    tenantId?: string
+    tenantId?: string,
+    codeVerifier?: string
   ): Promise<AuthResponse> {
-    return this.keycloakAuthSvc.processKeycloakCallback(code, metadata, tenantId);
+    return this.keycloakAuthSvc.processKeycloakCallback(code, metadata, tenantId, codeVerifier);
   }
 
   getKeycloakRedirectUrl(customOrigin?: string, authResult?: AuthResponse): string {
