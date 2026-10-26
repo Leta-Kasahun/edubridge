@@ -1,5 +1,5 @@
 export const ROUTES = {
-  HOME: "/home",
+  HOME: "/",
   AUTH: {
     LOGIN: "/login",
     VERIFY_OTP: "/verify-otp",
