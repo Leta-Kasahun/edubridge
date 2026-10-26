@@ -2,3 +2,8 @@ export * from "./extraction.types.js";
 export * from "./ocr-provider.interface.js";
 export * from "./tesseract-ocr.provider.js";
 export * from "./document-extractor.lib.js";
+export * from "./text-cleaner.js";
+export * from "./chunking/chunk-strategy.interface.js";
+export * from "./chunking/semantic-boundary.chunker.js";
+export * from "./chunking/fixed-sliding.chunker.js";
+export * from "./chunking/chunker.factory.js";
