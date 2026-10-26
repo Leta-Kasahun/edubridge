@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
     RESEND_OTP: "/auth/resend-otp",
     FIRST_LOGIN_SETUP: "/auth/first-login-setup",
     GOOGLE: "/auth/google",
+    KEYCLOAK: "/auth/keycloak",
     REFRESH_TOKEN: "/auth/refresh-token",
     LOGOUT: "/auth/logout",
     LOGOUT_ALL: "/auth/logout-all",

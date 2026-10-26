@@ -23,6 +23,9 @@ router.post("/first-login-setup", authLimiter, validate(firstLoginSetupSchema), 
 router.get("/google", authController.initiateGoogleAuth);
 router.get("/google/callback", authController.handleGoogleCallback);
 router.post("/google", authController.googleAuth);
+router.get("/keycloak", authController.initiateKeycloakAuth);
+router.get("/keycloak/callback", authController.handleKeycloakCallback);
+router.post("/keycloak", authController.keycloakAuth);
 router.post("/refresh-token", authLimiter, validate(refreshTokenSchema), authController.refreshToken);
 router.post("/logout", authController.logout);
 router.post("/logout-all", authenticate, authController.logoutAll);

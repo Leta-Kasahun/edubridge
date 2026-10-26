@@ -86,6 +86,22 @@ export class AuthRepository {
     });
   }
 
+  async findByKeycloakId(keycloakId: string) {
+    return prisma.user.findUnique({
+      where: { keycloakId },
+      include: AUTH_USER_INCLUDE,
+    });
+  }
+
+  async linkKeycloakAccount(userId: string, keycloakId: string) {
+    return runWithoutTenant(async () => {
+      return prisma.user.update({
+        where: { id: userId },
+        data: { keycloakId, emailVerified: true },
+      });
+    });
+  }
+
   async updatePassword(userId: string, passwordHash: string) {
     return runWithoutTenant(async () => {
       return prisma.user.update({

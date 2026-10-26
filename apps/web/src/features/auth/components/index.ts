@@ -6,5 +6,6 @@ export * from "./FirstLoginSetupForm";
 export * from "./ChangePasswordForm";
 export * from "./PasswordStrengthIndicator";
 export * from "./GoogleButton";
+export * from "./KeycloakButton";
 export * from "./AuthIdentifierToggle";
 export * from "./AdminResetPasswordModal";

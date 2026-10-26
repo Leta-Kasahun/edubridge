@@ -47,6 +47,10 @@ export interface GoogleAuthPayload {
   email: string;
 }
 
+export interface KeycloakAuthPayload {
+  token: string;
+}
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

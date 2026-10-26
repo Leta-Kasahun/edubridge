@@ -51,6 +51,19 @@ if (env.NODE_ENV !== "test") {
 
 setupSwagger(app);
 
+app.get(["/", "/api"], (_req, res) => {
+  res.status(200).json({
+    name: "EduBridge API",
+    version: "1.0.0",
+    status: "healthy",
+    message: "EduBridge Backend API is running",
+    endpoints: {
+      docs: "/api-docs",
+      health: "/api/health",
+    },
+  });
+});
+
 app.use("/health", healthRouter);
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
@@ -101,6 +114,15 @@ app.use("/api/evaluations", evaluationRouter);
 app.use("/api/assessments", assessmentRouter);
 app.use("/api/mastery", masteryRouter);
 app.use("/api/bookmarks", bookmarksRouter);
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    statusCode: 404,
+    code: "NOT_FOUND",
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+  });
+});
 
 app.use(errorHandler);
 
