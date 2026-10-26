@@ -16,7 +16,9 @@ import {
   BookOpen,
   ShieldCheck,
   Folder,
+  Sparkles,
 } from "lucide-react";
+import { AiGenerateContentModal } from "@/features/ai";
 import {
   LearningContentListItem,
   LearningContentDetailItem,
@@ -124,6 +126,7 @@ export function ContentListView() {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [uploadTargetItem, setUploadTargetItem] =
     useState<LearningContentListItem | null>(null);
+  const [isAiDraftModalOpen, setIsAiDraftModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     readonly type: "single" | "batch";
     readonly id?: string;
@@ -139,7 +142,7 @@ export function ContentListView() {
   );
   const { allowedSubjectIds, allowedGradeIds } = useMyTeacherAssignments();
 
-  const { data, isLoading, error, isFetching } = useContentList(filters);
+  const { data, isLoading, error, isFetching, refetch } = useContentList(filters);
   const { data: subjects = [] } = useSubjects();
   const { data: grades = [] } = useGrades();
   const { data: academicYearsData } = useAcademicYears();
@@ -569,14 +572,25 @@ export function ContentListView() {
           searchPlaceholder="Search materials..."
           filters={filterGroups}
           actionButton={
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
-            >
-              <Plus size={14} />
-              <span>New Material</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsAiDraftModalOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer shadow-2xs shrink-0"
+                title="Draft Curriculum Content with AI"
+              >
+                <Sparkles size={14} />
+                <span>Draft with AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenAdd}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shadow-2xs shrink-0"
+              >
+                <Plus size={14} />
+                <span>New Material</span>
+              </button>
+            </div>
           }
         />
       </div>
@@ -805,6 +819,26 @@ export function ContentListView() {
         itemName={deleteTarget?.title}
         isPending={deleteMutation.isPending}
       />
+
+      {isAiDraftModalOpen && subjects.length > 0 && (
+        <AiGenerateContentModal
+          isOpen={isAiDraftModalOpen}
+          onClose={() => setIsAiDraftModalOpen(false)}
+          subjectId={subjects[0].id}
+          gradeId={selectedGradeId !== "ALL" ? selectedGradeId : undefined}
+          topicId={
+            items.find((m) => m.primaryTopic?.topicId)?.primaryTopic?.topicId ||
+            items[0]?.primaryTopic?.topicId ||
+            ""
+          }
+          topicTitle={
+            items.find((m) => m.primaryTopic?.topicTitle)?.primaryTopic?.topicTitle ||
+            subjects[0].name ||
+            "Curriculum Material"
+          }
+          onGenerated={() => refetch()}
+        />
+      )}
     </div>
   );
 }

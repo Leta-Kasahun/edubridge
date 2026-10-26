@@ -23,6 +23,7 @@ import { SelectDropdown, SelectDropdownOption } from "@/shared/components/Select
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { BookmarkButton } from "@/features/bookmarks";
+import { AiExplanationBox } from "@/features/ai";
 
 const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "CLARIFICATION", label: "Need Help" },
@@ -364,14 +365,29 @@ export function StudentAssessmentCompletedView({
                   )}
 
                   <div className="pt-2 border-t border-border/70 flex items-center justify-between gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => toggleExplanation(qKey)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      <Lightbulb size={14} className="text-amber-500" />
-                      <span>{isExplanationOpen ? "Hide Solution" : "View Solution"}</span>
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => toggleExplanation(qKey)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <Lightbulb size={14} className="text-amber-500" />
+                        <span>{isExplanationOpen ? "Hide Solution" : "View Solution"}</span>
+                      </button>
+
+                      {targetQuestionId && (
+                        <AiExplanationBox
+                          questionId={targetQuestionId}
+                          studentAnswer={
+                            typeof ans.answer === "string"
+                              ? ans.answer
+                              : typeof ans.answer === "object" && ans.answer !== null
+                              ? JSON.stringify(ans.answer)
+                              : undefined
+                          }
+                        />
+                      )}
+                    </div>
 
                     <button
                       type="button"

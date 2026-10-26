@@ -8,6 +8,7 @@ import { buildOptionLabel } from "@/shared/utils/question.util";
 import { useSubmitQuestionFeedback } from "../../hooks/useAssessmentAttempt";
 import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { BookmarkButton } from "@/features/bookmarks";
+import { AiExplanationBox } from "@/features/ai";
 
 const FEEDBACK_CATEGORY_OPTIONS: readonly SelectDropdownOption[] = [
   { value: "CLARIFICATION", label: "Need Help" },
@@ -330,6 +331,16 @@ export function StudentAssessmentQuestionCard({
       </div>
 
       <div>{renderQuestionInput()}</div>
+
+      {/* AI Concept Explanation for Instant Feedback */}
+      {(question.questionId || question.questionVersionId) && (
+        <div className="pt-2 border-t border-border/70">
+          <AiExplanationBox
+            questionId={question.questionId || question.questionVersionId}
+            studentAnswer={typeof currentAnswer === "string" ? currentAnswer : undefined}
+          />
+        </div>
+      )}
 
       {isFeedbackOpen && (
         <div
