@@ -6,6 +6,7 @@ import { loginService, LoginService } from "./login.service.js";
 import { otpAuthService, OtpAuthService } from "./otp-auth.service.js";
 import { passwordService, PasswordService } from "./password.service.js";
 import { googleAuthService, GoogleAuthService } from "./google-auth.service.js";
+import { keycloakAuthService, KeycloakAuthService } from "./keycloak-auth.service.js";
 import { tokenService, TokenService } from "./token.service.js";
 import { sessionService, SessionService } from "./session.service.js";
 import {
@@ -23,6 +24,7 @@ export class AuthService {
     private readonly otpAuthSvc: OtpAuthService = otpAuthService,
     private readonly passwordSvc: PasswordService = passwordService,
     private readonly googleAuthSvc: GoogleAuthService = googleAuthService,
+    private readonly keycloakAuthSvc: KeycloakAuthService = keycloakAuthService,
     private readonly tokenSvc: TokenService = tokenService,
     private readonly sessionSvc: SessionService = sessionService,
     private readonly sessionRepo: SessionRepository = sessionRepository,
@@ -76,6 +78,34 @@ export class AuthService {
     tenantId?: string
   ): Promise<AuthResponse> {
     return this.googleAuthSvc.authenticateWithGoogle(googleId, email, metadata, tenantId);
+  }
+
+  getKeycloakAuthUrl(customState?: string): string {
+    return this.keycloakAuthSvc.getAuthorizationUrl(customState);
+  }
+
+  async handleKeycloakCallback(
+    code: string,
+    metadata: SessionMetadata,
+    tenantId?: string
+  ): Promise<AuthResponse> {
+    return this.keycloakAuthSvc.processKeycloakCallback(code, metadata, tenantId);
+  }
+
+  getKeycloakRedirectUrl(customOrigin?: string, authResult?: AuthResponse): string {
+    return this.keycloakAuthSvc.resolveFrontendRedirect(customOrigin, authResult);
+  }
+
+  getKeycloakErrorRedirectUrl(errorMessage: string, customOrigin?: string): string {
+    return this.keycloakAuthSvc.resolveFrontendErrorRedirect(errorMessage, customOrigin);
+  }
+
+  async keycloakAuth(
+    token: string,
+    metadata: SessionMetadata,
+    tenantId?: string
+  ): Promise<AuthResponse> {
+    return this.keycloakAuthSvc.authenticateWithKeycloakToken(token, metadata, tenantId);
   }
 
   async refreshToken(rawRefreshToken: string, metadata: SessionMetadata): Promise<AuthResponse> {
