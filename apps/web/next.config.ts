@@ -19,6 +19,15 @@ const apiDestination = normalizeApiUrl(
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",
+  async redirects() {
+    return [
+      {
+        source: "/home",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
