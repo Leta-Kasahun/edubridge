@@ -49,11 +49,6 @@ export class AuthCacheService {
     await redis.set(key, "locked", "EX", durationSeconds);
   }
 
-  async clearLockout(identifier: string) {
-    const key = RedisKeys.auth.lockout(identifier);
-    await redis.del(key);
-  }
-
   async isLockedOut(identifier: string) {
     const key = RedisKeys.auth.lockout(identifier);
     const result = await redis.get(key);
