@@ -21,7 +21,9 @@ import {
   ChevronDown,
   Check,
   X,
+  Sparkles,
 } from "lucide-react";
+import { AiGenerateQuestionsModal } from "@/features/ai";
 import { ROUTES } from "@/constants/routes";
 import { FilterGroup } from "@/shared/components/TableToolbar";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
@@ -199,9 +201,10 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isAiGenerateModalOpen, setIsAiGenerateModalOpen] = useState(false);
 
   const { data: bank, isLoading: isBankLoading } = useQuestionBank(bankId);
-  const { data: questionsData, isLoading: isQuestionsLoading, error } = useQuestions(
+  const { data: questionsData, isLoading: isQuestionsLoading, error, refetch } = useQuestions(
     bankId,
     {
       unitId: unitFilter === "ALL" ? undefined : unitFilter,
@@ -584,6 +587,15 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
+            onClick={() => setIsAiGenerateModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-8.5 px-3 rounded-none text-xs font-semibold border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer shadow-2xs"
+            title="Generate Practice Questions with AI"
+          >
+            <Sparkles size={13} />
+            <span>Generate with AI</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setIsUploadModalOpen(true)}
             className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-8.5 px-3 rounded-none text-xs font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer shadow-2xs"
             title="Upload Document"
@@ -836,6 +848,23 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
       />
+
+      {bank?.subjectId && (
+        <AiGenerateQuestionsModal
+          isOpen={isAiGenerateModalOpen}
+          onClose={() => setIsAiGenerateModalOpen(false)}
+          subjectId={bank.subjectId}
+          gradeId={bank.gradeId || undefined}
+          topicId={topicFilter !== "ALL" ? topicFilter : availableTopics[0]?.value || ""}
+          topicTitle={
+            availableTopics.find((t) => t.value === topicFilter)?.label ||
+            bank.name ||
+            "Selected Topic"
+          }
+          questionBankId={bankId}
+          onGenerated={() => refetch()}
+        />
+      )}
 
       <ConfirmDeleteModal
         isOpen={Boolean(deleteTarget)}

@@ -23,6 +23,7 @@ import {
 import { QuestionListItem, QuestionDetailItem, QuestionReportItem } from "../../types/question-bank.types";
 import { buildOptionLabel } from "@/shared/utils/question.util";
 import { getErrorMessage } from "@/shared/utils";
+import { AiExplanationBox } from "@/features/ai";
 
 interface QuestionPreviewModalProps {
   readonly isOpen: boolean;
@@ -270,6 +271,11 @@ export function QuestionPreviewModal({
               </p>
             </div>
           )}
+
+          {/* AI Concept Explanation */}
+          <div className="pt-1">
+            <AiExplanationBox questionId={question.id} />
+          </div>
 
           {/* Student Feedback & Reports Panel */}
           {(pendingReports.length > 0 || resolvedReports.length > 0) && (
