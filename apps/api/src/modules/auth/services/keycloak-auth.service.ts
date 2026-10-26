@@ -40,7 +40,13 @@ export class KeycloakAuthService {
     private readonly sessionSvc: SessionService = sessionService
   ) {}
 
-  getAuthorizationUrl(customState?: string): string {
+  generatePkcePair(): { verifier: string; challenge: string } {
+    const verifier = crypto.randomBytes(32).toString("base64url");
+    const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+    return { verifier, challenge };
+  }
+
+  getAuthorizationUrl(customState?: string, codeChallenge?: string): string {
     const state = customState || crypto.randomBytes(16).toString("hex");
     const params = new URLSearchParams({
       client_id: keycloakConfig.frontendClientId,
@@ -50,16 +56,25 @@ export class KeycloakAuthService {
       state,
     });
 
+    if (codeChallenge) {
+      params.set("code_challenge", codeChallenge);
+      params.set("code_challenge_method", "S256");
+    }
+
     return `${keycloakConfig.authorizationEndpoint}?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<KeycloakTokenResponse> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<KeycloakTokenResponse> {
     const params = new URLSearchParams({
       code,
       client_id: keycloakConfig.frontendClientId,
       redirect_uri: keycloakConfig.callbackUrl,
       grant_type: "authorization_code",
     });
+
+    if (codeVerifier) {
+      params.append("code_verifier", codeVerifier);
+    }
 
     if (keycloakConfig.clientSecret) {
       params.append("client_secret", keycloakConfig.clientSecret);
@@ -94,9 +109,10 @@ export class KeycloakAuthService {
   async processKeycloakCallback(
     code: string,
     metadata: SessionMetadata,
-    tenantId?: string
+    tenantId?: string,
+    codeVerifier?: string
   ): Promise<AuthResponse> {
-    const tokenData = await this.exchangeCodeForTokens(code);
+    const tokenData = await this.exchangeCodeForTokens(code, codeVerifier);
     const profile = await this.fetchKeycloakUserInfo(tokenData.access_token);
 
     return this.authenticateWithKeycloakIdentity(
