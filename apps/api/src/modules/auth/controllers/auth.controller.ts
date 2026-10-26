@@ -83,21 +83,26 @@ export class AuthController {
         origin = undefined;
       }
     }
+    const { verifier, challenge } = this.authSvc.generateKeycloakPkcePair();
     const statePayload = Buffer.from(
-      JSON.stringify({ origin, nonce: crypto.randomBytes(8).toString("hex") })
+      JSON.stringify({ origin, nonce: crypto.randomBytes(8).toString("hex"), verifier })
     ).toString("base64url");
-    const authUrl = this.authSvc.getKeycloakAuthUrl(statePayload);
+    const authUrl = this.authSvc.getKeycloakAuthUrl(statePayload, challenge);
     res.redirect(authUrl);
   });
 
   handleKeycloakCallback = asyncHandler(async (req: Request, res: Response) => {
     const { code, error, state } = req.query;
     let customOrigin: string | undefined;
+    let codeVerifier: string | undefined;
     if (typeof state === "string") {
       try {
         const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
         if (parsed?.origin && typeof parsed.origin === "string") {
           customOrigin = parsed.origin;
+        }
+        if (parsed?.verifier && typeof parsed.verifier === "string") {
+          codeVerifier = parsed.verifier;
         }
       } catch {
         customOrigin = undefined;
@@ -114,7 +119,7 @@ export class AuthController {
     const tenantId = this.extractTenantId(req);
 
     try {
-      const result = await this.authSvc.handleKeycloakCallback(code as string, metadata, tenantId);
+      const result = await this.authSvc.handleKeycloakCallback(code as string, metadata, tenantId, codeVerifier);
       setRefreshCookie(res, result.tokens?.refreshToken);
       res.redirect(this.authSvc.getKeycloakRedirectUrl(customOrigin, result));
     } catch (authError) {
