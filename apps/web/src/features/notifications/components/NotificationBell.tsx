@@ -37,7 +37,8 @@ export function NotificationBell() {
         <Bell size={17} />
         {unreadCount > 0 && (
           <span
-            className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-none bg-primary text-[9px] font-bold text-primary-foreground ring-2 ring-card px-0.5"
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-rose-600 text-white text-[10px] font-bold rounded-full ring-2 ring-card shadow-xs select-none"
+            style={{ borderRadius: "9999px" }}
             aria-hidden="true"
           >
             {badgeLabel}

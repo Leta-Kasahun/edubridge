@@ -238,18 +238,36 @@ export function StudentAiTutorWidget({
   if (!isOpen) {
     return (
       <aside aria-label="AI Assistant" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => {
             setIsOpen(true);
             setIsMinimized(false);
           }}
-          className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-out flex items-center justify-center cursor-pointer border-none outline-hidden select-none"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setIsOpen(true);
+              setIsMinimized(false);
+            }
+          }}
+          className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 ease-out flex items-center justify-center cursor-pointer border-none outline-hidden select-none"
+          style={{
+            borderRadius: "9999px",
+            animation: "eduBridgeAiGentleFloat 3.5s ease-in-out infinite",
+          }}
           aria-label="Open AI Assistant"
           title="Ask AI Assistant"
         >
+          <style>{`
+            @keyframes eduBridgeAiGentleFloat {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-5px); }
+            }
+          `}</style>
           <Sparkles className="w-7 h-7 text-primary-foreground" />
-        </button>
+        </div>
       </aside>
     );
   }
