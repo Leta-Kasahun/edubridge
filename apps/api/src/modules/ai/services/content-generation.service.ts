@@ -14,7 +14,7 @@ import {
   GEMINI_CONTENT_RESPONSE_SCHEMA,
 } from "../schemas/content-generation.schema.js";
 import type { GeneratedContentResult, AiJobDto } from "../types/ai.types.js";
-import { NotFoundError, BadRequestError } from "../../../shared/exceptions/index.js";
+import { BadRequestError } from "../../../shared/exceptions/index.js";
 
 export class ContentGenerationService {
   constructor(
@@ -32,27 +32,111 @@ export class ContentGenerationService {
     readonly contentId: string;
     readonly title: string;
   }> {
-    const topic = await prisma.curriculumTopic.findUnique({
-      where: { id: input.topicId },
-      include: {
-        unit: {
-          include: {
-            curriculumSubject: {
-              include: {
-                grade: true,
-                subject: true,
+    let scopeTitle = "Curriculum Content";
+    let subjectName = "Subject";
+    let gradeLevel = input.targetGradeLevel ?? 8;
+    let objectivesList = "Core conceptual understanding and practical applications.";
+    let primaryTopicId: string | null = null;
+    let unitId: string | null = null;
+    let curriculumVersionId: string | undefined;
+    let querySeedText = "";
+
+    if (input.scope === "TOPIC" && input.topicId) {
+      const topic = await prisma.curriculumTopic.findUnique({
+        where: { id: input.topicId },
+        include: {
+          unit: {
+            include: {
+              curriculumSubject: {
+                include: {
+                  grade: true,
+                  subject: true,
+                },
               },
             },
           },
+          objectives: {
+            orderBy: { orderIndex: "asc" },
+          },
         },
-        objectives: {
-          orderBy: { orderIndex: "asc" },
-        },
-      },
-    });
+      });
 
-    if (!topic) {
-      throw new NotFoundError("Curriculum topic not found");
+      if (topic) {
+        primaryTopicId = topic.id;
+        unitId = topic.unitId;
+        scopeTitle = `Topic: "${topic.title}"`;
+        querySeedText = topic.title;
+        subjectName = topic.unit?.curriculumSubject?.subject?.name ?? subjectName;
+        gradeLevel =
+          input.targetGradeLevel ?? topic.unit?.curriculumSubject?.grade?.level ?? gradeLevel;
+        curriculumVersionId = topic.unit?.curriculumSubject?.curriculumVersionId;
+        if (topic.objectives.length > 0) {
+          objectivesList = topic.objectives
+            .map((obj, i) => `${i + 1}. ${obj.statement}`)
+            .join("\n");
+        }
+      }
+    } else if (input.scope === "UNIT" && input.unitId) {
+      const unit = await prisma.curriculumUnit.findUnique({
+        where: { id: input.unitId },
+        include: {
+          curriculumSubject: {
+            include: {
+              grade: true,
+              subject: true,
+            },
+          },
+          topics: {
+            include: {
+              objectives: { orderBy: { orderIndex: "asc" } },
+            },
+            orderBy: { orderIndex: "asc" },
+          },
+        },
+      });
+
+      if (unit) {
+        unitId = unit.id;
+        scopeTitle = `Chapter / Unit: "${unit.title}"`;
+        querySeedText = unit.title;
+        subjectName = unit.curriculumSubject?.subject?.name ?? subjectName;
+        gradeLevel =
+          input.targetGradeLevel ?? unit.curriculumSubject?.grade?.level ?? gradeLevel;
+        curriculumVersionId = unit.curriculumSubject?.curriculumVersionId;
+        primaryTopicId = unit.topics[0]?.id ?? null;
+        const allObjectives = unit.topics.flatMap((t) => t.objectives);
+        if (allObjectives.length > 0) {
+          objectivesList = allObjectives
+            .slice(0, 15)
+            .map((obj, i) => `${i + 1}. ${obj.statement}`)
+            .join("\n");
+        } else if (unit.topics.length > 0) {
+          objectivesList = unit.topics
+            .map((t, i) => `${i + 1}. Topic: ${t.title}`)
+            .join("\n");
+        }
+      }
+    }
+
+    if (querySeedText === "") {
+      const subject = await prisma.subject.findUnique({
+        where: { id: input.subjectId },
+        select: { name: true },
+      });
+      if (subject) {
+        subjectName = subject.name;
+        scopeTitle = `Subject Overview: ${subject.name}`;
+        querySeedText = subject.name;
+      }
+      if (input.gradeId) {
+        const grade = await prisma.grade.findUnique({
+          where: { id: input.gradeId },
+          select: { level: true },
+        });
+        if (grade) {
+          gradeLevel = input.targetGradeLevel ?? grade.level;
+        }
+      }
     }
 
     const job = await this.jobRepo.createJob(tenantId, {
@@ -69,13 +153,18 @@ export class ContentGenerationService {
     try {
       let contextChunksText = "";
       try {
-        const queryVector = await this.ai.embedQuery(topic.title);
-        const chunks = await this.chunkRepo.searchHybrid(tenantId, queryVector, topic.title, {
-          topicId: input.topicId,
-          subjectId: input.subjectId,
-          gradeId: input.gradeId,
-          limit: 5,
-        });
+        const queryVector = await this.ai.embedQuery(querySeedText || scopeTitle);
+        const chunks = await this.chunkRepo.searchHybrid(
+          tenantId,
+          queryVector,
+          querySeedText || scopeTitle,
+          {
+            topicId: primaryTopicId || undefined,
+            subjectId: input.subjectId,
+            gradeId: input.gradeId || undefined,
+            limit: 5,
+          }
+        );
 
         if (chunks.length > 0) {
           contextChunksText = chunks
@@ -86,16 +175,8 @@ export class ContentGenerationService {
         // Fallback to generating without chunk context
       }
 
-      const objectivesList = topic.objectives.length > 0
-        ? topic.objectives.map((obj, i) => `${i + 1}. ${obj.statement}`).join("\n")
-        : "Core conceptual understanding and practical applications.";
-
-      const subjectName = topic.unit?.curriculumSubject?.subject?.name ?? "Subject";
-      const gradeLevel = input.targetGradeLevel ?? topic.unit?.curriculumSubject?.grade?.level ?? 8;
-      const curriculumVersionId = topic.unit?.curriculumSubject?.curriculumVersionId;
-
       const prompt = `You are an expert educational content writer creating comprehensive curriculum materials for ${subjectName} (Grade ${gradeLevel}).
-Task: Write a ${input.contentType.toLowerCase().replace(/_/g, " ")} for the topic: "${topic.title}".
+Task: Write a ${input.contentType.toLowerCase().replace(/_/g, " ")} for ${scopeTitle}.
 
 TONE: ${input.tone}
 TARGET GRADE LEVEL: Grade ${gradeLevel}
@@ -116,7 +197,8 @@ REQUIREMENTS:
         prompt,
         GEMINI_CONTENT_RESPONSE_SCHEMA,
         {
-          systemInstruction: "You are a master teacher authoring rich, accurate, and engaging lesson materials.",
+          systemInstruction:
+            "You are a master teacher authoring rich, accurate, and engaging lesson materials.",
         }
       );
 
@@ -125,21 +207,46 @@ REQUIREMENTS:
         throw new BadRequestError("AI model did not return valid curriculum content");
       }
 
+      const targetScope =
+        input.scope === "UNIT" ? "UNIT" : input.scope === "SUBJECT" ? "SUBJECT" : "TOPIC";
+
+      let verifiedUnitId: string | undefined = undefined;
+      if (unitId) {
+        const u = await prisma.curriculumUnit.findUnique({
+          where: { id: unitId },
+          select: { id: true },
+        });
+        if (u) {
+          verifiedUnitId = u.id;
+        }
+      }
+
+      let verifiedTopicId: string | null = null;
+      if (primaryTopicId) {
+        const t = await prisma.curriculumTopic.findUnique({
+          where: { id: primaryTopicId },
+          select: { id: true },
+        });
+        if (t) {
+          verifiedTopicId = t.id;
+        }
+      }
+
       const content = await prisma.$transaction(async (tx) => {
         return tx.learningContent.create({
           data: {
             tenantId,
             authorId: userId,
-            title: generated.title || `${topic.title} - ${input.contentType}`,
+            title: generated.title || `${scopeTitle} - ${input.contentType}`,
             description: generated.summary,
             type: input.contentType === "WORKSHEET" ? "WORKSHEET" : "LESSON",
-            scope: "TOPIC",
+            scope: targetScope,
             source: "AI",
             status: "DRAFT",
             currentVersion: 1,
             subjectId: input.subjectId,
             gradeId: input.gradeId,
-            unitId: topic.unitId,
+            unitId: verifiedUnitId,
             curriculumVersionId,
             versions: {
               create: {
@@ -153,12 +260,14 @@ REQUIREMENTS:
                 createdById: userId,
               },
             },
-            topics: {
-              create: {
-                topicId: input.topicId,
-                isPrimary: true,
-              },
-            },
+            topics: verifiedTopicId
+              ? {
+                  create: {
+                    topicId: verifiedTopicId,
+                    isPrimary: true,
+                  },
+                }
+              : undefined,
           },
           select: { id: true, title: true },
         });

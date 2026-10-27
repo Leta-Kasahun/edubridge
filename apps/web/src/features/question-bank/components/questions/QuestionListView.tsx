@@ -724,16 +724,28 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
         onClose={() => setIsUploadModalOpen(false)}
       />
 
-      {bank?.subjectId && (
+      {Boolean(bank?.subjectId || bank?.examContexts?.[0]?.subjectId || items.find((q) => q.subjectId)?.subjectId) && (
         <AiGenerateQuestionsModal
           isOpen={isAiGenerateModalOpen}
           onClose={() => setIsAiGenerateModalOpen(false)}
-          subjectId={bank.subjectId}
-          gradeId={bank.gradeId || undefined}
-          topicId={topicFilter !== "ALL" ? topicFilter : availableTopics[0]?.value || ""}
+          subjectId={
+            bank?.subjectId ||
+            bank?.examContexts?.[0]?.subjectId ||
+            items.find((q) => q.subjectId)?.subjectId ||
+            ""
+          }
+          gradeId={
+            bank?.gradeId ||
+            bank?.examContexts?.[0]?.gradeId ||
+            items.find((q) => q.gradeId)?.gradeId ||
+            undefined
+          }
+          unitId={unitFilter !== "ALL" ? unitFilter : undefined}
+          topicId={topicFilter !== "ALL" ? topicFilter : undefined}
           topicTitle={
             availableTopics.find((t) => t.value === topicFilter)?.label ||
-            bank.name ||
+            availableUnits.find((u) => u.value === unitFilter)?.label ||
+            bank?.name ||
             "Selected Topic"
           }
           questionBankId={bankId}

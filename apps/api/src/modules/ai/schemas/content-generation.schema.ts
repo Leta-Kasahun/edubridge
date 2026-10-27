@@ -1,9 +1,14 @@
 import { z } from "zod";
 
+const emptyToUndefined = (val: unknown) =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
 export const generateContentSchema = z.object({
+  scope: z.enum(["TOPIC", "UNIT", "SUBJECT"]).default("TOPIC"),
   subjectId: z.string().uuid("Invalid subject ID"),
-  gradeId: z.string().uuid("Invalid grade ID").optional(),
-  topicId: z.string().uuid("Invalid topic ID"),
+  gradeId: z.preprocess(emptyToUndefined, z.string().uuid("Invalid grade ID").optional().nullable()),
+  unitId: z.preprocess(emptyToUndefined, z.string().uuid("Invalid unit ID").optional().nullable()),
+  topicId: z.preprocess(emptyToUndefined, z.string().uuid("Invalid topic ID").optional().nullable()),
   contentType: z
     .enum(["LESSON_NOTE", "SUMMARY", "STUDY_GUIDE", "WORKSHEET"])
     .default("LESSON_NOTE"),

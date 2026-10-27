@@ -25,10 +25,11 @@ export interface GeneratedQuestionOption {
 
 export interface GeneratedQuestion {
   readonly questionText: string;
-  readonly type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
+  readonly type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "NUMERIC";
   readonly difficulty: "EASY" | "MEDIUM" | "HARD";
   readonly points: number;
   readonly explanation: string;
+  readonly correctAnswer?: string;
   readonly options?: readonly GeneratedQuestionOption[];
   readonly targetedObjectiveIndex?: number;
 }

@@ -1,24 +1,39 @@
 export type AiJobType = "CONTENT_GENERATION" | "QUESTION_GENERATION";
 export type AiJobStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-export type QuestionDifficulty = "EASY" | "MEDIUM" | "HARD";
-export type QuestionTypeFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER";
+export type QuestionScope = "TOPIC" | "UNIT" | "SUBJECT" | "MOCK_EXAM";
+export type QuestionDifficulty = "EASY" | "MEDIUM" | "HARD" | "MIXED";
+export type QuestionTypeFormat = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "NUMERIC" | "MIXED";
+export type ContentScope = "TOPIC" | "UNIT" | "SUBJECT";
 export type ContentTypeFormat = "LESSON_NOTE" | "SUMMARY" | "STUDY_GUIDE" | "WORKSHEET";
 export type ContentTone = "ACADEMIC" | "SIMPLIFIED" | "ENGAGING";
 
+export interface QuestionTypeDistribution {
+  readonly MCQ?: number;
+  readonly TRUE_FALSE?: number;
+  readonly SHORT_ANSWER?: number;
+  readonly NUMERIC?: number;
+}
+
 export interface GenerateQuestionsDto {
+  readonly scope?: QuestionScope;
   readonly subjectId: string;
   readonly gradeId?: string;
-  readonly topicId: string;
+  readonly unitId?: string;
+  readonly topicId?: string;
+  readonly examContextId?: string;
   readonly count?: number;
   readonly difficulty?: QuestionDifficulty;
   readonly questionType?: QuestionTypeFormat;
+  readonly typeDistribution?: QuestionTypeDistribution;
   readonly questionBankId?: string;
 }
 
 export interface GenerateContentDto {
+  readonly scope?: ContentScope;
   readonly subjectId: string;
   readonly gradeId?: string;
-  readonly topicId: string;
+  readonly unitId?: string;
+  readonly topicId?: string;
   readonly contentType?: ContentTypeFormat;
   readonly tone?: ContentTone;
   readonly targetGradeLevel?: number;

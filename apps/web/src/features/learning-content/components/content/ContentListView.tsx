@@ -829,7 +829,7 @@ export function ContentListView() {
           topicId={
             items.find((m) => m.primaryTopic?.topicId)?.primaryTopic?.topicId ||
             items[0]?.primaryTopic?.topicId ||
-            ""
+            undefined
           }
           topicTitle={
             items.find((m) => m.primaryTopic?.topicTitle)?.primaryTopic?.topicTitle ||
