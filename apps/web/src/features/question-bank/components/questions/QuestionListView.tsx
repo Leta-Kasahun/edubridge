@@ -25,9 +25,9 @@ import {
 } from "lucide-react";
 import { AiGenerateQuestionsModal } from "@/features/ai";
 import { ROUTES } from "@/constants/routes";
-import { FilterGroup } from "@/shared/components/TableToolbar";
-import { useClickOutside } from "@/shared/hooks/useClickOutside";
-import { cn } from "@/lib/utils";
+import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import {
@@ -54,136 +54,13 @@ import { QuestionUploadModal } from "../upload/QuestionUploadModal";
 import { ConfirmDeleteModal } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
-interface QuestionFiltersToolbarProps {
-  readonly filters: readonly FilterGroup[];
-  readonly hasActiveFilters: boolean;
-  readonly onResetAll: () => void;
-  readonly resultCount?: number;
-}
-
-function QuestionFiltersToolbar({
-  filters,
-  hasActiveFilters,
-  onResetAll,
-  resultCount,
-}: QuestionFiltersToolbarProps) {
-  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(containerRef, () => setOpenFilterId(null));
-
-  return (
-    <div
-      ref={containerRef}
-      className="flex items-center justify-between gap-2.5 flex-wrap w-full"
-    >
-      <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-        {filters.map((group, index) => {
-          const isOpen = openFilterId === group.id;
-          const selectedOption = group.options.find(
-            (o) => o.value === group.selectedValue
-          );
-          const GroupIcon = group.icon || Filter;
-          const isActive = Boolean(group.selectedValue && group.selectedValue !== "ALL");
-          const isTrailing = index >= Math.max(1, filters.length - 2);
-
-          return (
-            <div key={group.id} className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setOpenFilterId(isOpen ? null : group.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-none text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
-                  isActive
-                    ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15"
-                    : "bg-card text-foreground border-border hover:bg-muted"
-                )}
-              >
-                <GroupIcon size={13} className={isActive ? "text-primary" : "text-muted-foreground"} />
-                <span className={cn("font-medium", isActive ? "text-primary/80" : "text-muted-foreground")}>
-                  {group.label}:
-                </span>
-                <span className={cn("font-semibold", isActive ? "text-primary" : "text-foreground")}>
-                  {selectedOption ? selectedOption.label : "All"}
-                </span>
-                <ChevronDown
-                  size={13}
-                  className={cn(
-                    "ml-0.5 transition-transform duration-150",
-                    isOpen && "rotate-180",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}
-                />
-              </button>
-
-              {isOpen && (
-                <div
-                  className={cn(
-                    "absolute top-10 w-48 max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-none shadow-lg p-1 z-30 animate-in fade-in-0 zoom-in-95",
-                    isTrailing ? "right-0" : "left-0"
-                  )}
-                >
-                  {group.options.map((opt) => {
-                    const isSelected = group.selectedValue === opt.value;
-
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          group.onSelect(opt.value);
-                          setOpenFilterId(null);
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-none transition-colors cursor-pointer text-left",
-                          isSelected
-                            ? "bg-muted font-bold text-foreground"
-                            : "text-foreground hover:bg-muted/60 font-medium"
-                        )}
-                      >
-                        <span className="truncate">{opt.label}</span>
-                        {isSelected && <Check size={13} className="text-foreground shrink-0 ml-1" />}
-                        {!isSelected && opt.count !== undefined && (
-                          <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-                            {opt.count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={onResetAll}
-            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-none text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
-            title="Reset all filters"
-          >
-            <X size={13} />
-            <span>Reset</span>
-          </button>
-        )}
-      </div>
-
-      {resultCount !== undefined && (
-        <div className="text-[11px] font-medium text-muted-foreground shrink-0 hidden sm:block">
-          Showing {resultCount} {resultCount === 1 ? "question" : "questions"}
-        </div>
-      )}
-    </div>
-  );
-}
-
 interface QuestionListViewProps {
   readonly bankId: string;
 }
 
 export function QuestionListView({ bankId }: QuestionListViewProps) {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [unitFilter, setUnitFilter] = useState<string>("ALL");
   const [topicFilter, setTopicFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
@@ -207,6 +84,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   const { data: questionsData, isLoading: isQuestionsLoading, error, refetch } = useQuestions(
     bankId,
     {
+      search: debouncedSearch.trim() || undefined,
       unitId: unitFilter === "ALL" ? undefined : unitFilter,
       topicId: topicFilter === "ALL" ? undefined : topicFilter,
       type: typeFilter === "ALL" ? undefined : (typeFilter as QuestionType),
@@ -221,6 +99,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
   );
 
   const hasActiveFilters =
+    Boolean(search.trim()) ||
     unitFilter !== "ALL" ||
     topicFilter !== "ALL" ||
     typeFilter !== "ALL" ||
@@ -229,6 +108,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     feedbackFilter !== "ALL";
 
   const handleResetFilters = () => {
+    setSearch("");
     setUnitFilter("ALL");
     setTopicFilter("ALL");
     setTypeFilter("ALL");
@@ -428,10 +308,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setUnitFilter(val);
           setPage(1);
         },
-        options: [
-          { label: "All", value: "ALL" },
-          ...availableUnits,
-        ],
+        options: availableUnits,
       });
     }
 
@@ -445,10 +322,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setTopicFilter(val);
           setPage(1);
         },
-        options: [
-          { label: "All", value: "ALL" },
-          ...availableTopics,
-        ],
+        options: availableTopics,
       });
     }
 
@@ -463,7 +337,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All", value: "ALL" },
           { label: "Multiple Choice", value: "MCQ" },
           { label: "True / False", value: "TRUE_FALSE" },
           { label: "Short Answer", value: "SHORT_ANSWER" },
@@ -483,7 +356,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All", value: "ALL" },
           { label: "Easy", value: "EASY" },
           { label: "Medium", value: "MEDIUM" },
           { label: "Hard", value: "HARD" },
@@ -499,7 +371,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All", value: "ALL" },
           { label: "Draft", value: "DRAFT" },
           { label: "Approved", value: "APPROVED" },
           { label: "Published", value: "PUBLISHED" },
@@ -516,7 +387,6 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           setPage(1);
         },
         options: [
-          { label: "All", value: "ALL" },
           { label: `Needs Review (${pendingReportsCount})`, value: "PENDING" },
           { label: "Resolved", value: "RESOLVED" },
         ],
@@ -524,7 +394,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
     );
 
     return filters;
-  }, [availableTopics, topicFilter, typeFilter, difficultyFilter, statusFilter, feedbackFilter, pendingReportsCount]);
+  }, [availableUnits, availableTopics, unitFilter, topicFilter, typeFilter, difficultyFilter, statusFilter, feedbackFilter, pendingReportsCount]);
 
   const isAnyBulkPending =
     bulkPublishMutation.isPending ||
@@ -620,11 +490,14 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
       )}
 
       <div className="bg-card rounded-none border border-border p-3 sm:p-3.5 shadow-xs">
-        <QuestionFiltersToolbar
+        <TableToolbar
+          searchValue={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          searchPlaceholder="Search questions by prompt..."
           filters={toolbarFilters}
-          hasActiveFilters={hasActiveFilters}
-          onResetAll={handleResetFilters}
-          resultCount={displayedItems.length}
         />
       </div>
 
@@ -791,32 +664,34 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {displayedItems.map((q, idx) => (
-            <QuestionCardItem
-              key={q.id}
-              question={q}
-              qIndex={idx}
-              isSelected={selectedQuestionIds.has(q.id)}
-              onToggleSelect={() => handleToggleSelect(q.id)}
-              onPreview={setPreviewQuestion}
-              onEdit={handleEdit}
-              onPublish={handlePublish}
-              onArchive={handleArchive}
-              onActivate={handleActivate}
-              onDelete={handleDelete}
-              onResolveReport={handleResolveReport}
-              isBusy={
-                statusMutation.isPending ||
-                publishMutation.isPending ||
-                deleteMutation.isPending ||
-                bulkPublishMutation.isPending ||
-                bulkArchiveMutation.isPending ||
-                bulkDeleteMutation.isPending
-              }
-            />
-          ))}
-        </div>
+        <SearchQueryProvider query={debouncedSearch}>
+          <div className="space-y-3">
+            {displayedItems.map((q, idx) => (
+              <QuestionCardItem
+                key={q.id}
+                question={q}
+                qIndex={idx}
+                isSelected={selectedQuestionIds.has(q.id)}
+                onToggleSelect={() => handleToggleSelect(q.id)}
+                onPreview={setPreviewQuestion}
+                onEdit={handleEdit}
+                onPublish={handlePublish}
+                onArchive={handleArchive}
+                onActivate={handleActivate}
+                onDelete={handleDelete}
+                onResolveReport={handleResolveReport}
+                isBusy={
+                  statusMutation.isPending ||
+                  publishMutation.isPending ||
+                  deleteMutation.isPending ||
+                  bulkPublishMutation.isPending ||
+                  bulkArchiveMutation.isPending ||
+                  bulkDeleteMutation.isPending
+                }
+              />
+            ))}
+          </div>
+        </SearchQueryProvider>
       )}
 
       <QuestionFormModal

@@ -17,6 +17,7 @@ import {
   Bookmark,
   AlertCircle,
 } from "lucide-react";
+import { SearchHighlight } from "@/shared/components/SearchHighlight";
 import { getErrorMessage } from "@/shared/utils";
 import { QuestionListItem } from "../../types/question-bank.types";
 import {
@@ -194,7 +195,7 @@ export function QuestionCardItem({
           )}
 
           <p className="text-xs sm:text-sm font-semibold text-foreground break-words leading-relaxed">
-            {question.prompt}
+            <SearchHighlight text={question.prompt} />
           </p>
         </div>
 
@@ -273,7 +274,9 @@ export function QuestionCardItem({
                   >
                     {String.fromCharCode(65 + idx)}.
                   </span>
-                  <span className="break-words text-xs">{opt.text}</span>
+                  <span className="break-words text-xs">
+                    <SearchHighlight text={opt.text} />
+                  </span>
                 </div>
 
                 {isCorrect && (
@@ -458,7 +461,7 @@ export function QuestionCardItem({
               <strong className="text-foreground block mb-0.5">
                 Answer Explanation:
               </strong>
-              {question.explanation}
+              <SearchHighlight text={question.explanation} />
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { Search, X, Check, PlusCircle, Filter } from "lucide-react";
+import { Search, X, Check, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClickOutside } from "@/shared/hooks/useClickOutside";
 import { SearchHighlight } from "./SearchHighlight";

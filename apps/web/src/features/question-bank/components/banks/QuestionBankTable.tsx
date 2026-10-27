@@ -281,7 +281,6 @@ export function QuestionBankTable() {
         selectedValue: statusFilter,
         onSelect: (val) => setStatusFilter(val),
         options: [
-          { label: "All", value: "ALL" },
           { label: "Active", value: "ACTIVE" },
           { label: "Draft", value: "DRAFT" },
           { label: "Archived", value: "ARCHIVED" },
@@ -296,13 +295,10 @@ export function QuestionBankTable() {
         icon: Calendar,
         selectedValue: academicYearFilter,
         onSelect: (val) => setAcademicYearFilter(val),
-        options: [
-          { label: "All", value: "ALL" },
-          ...academicYears.map((ay) => ({
-            label: ay.name.replace(/Academic Year/i, "").trim() || ay.name,
-            value: ay.id,
-          })),
-        ],
+        options: academicYears.map((ay) => ({
+          label: ay.name.replace(/Academic Year/i, "").trim() || ay.name,
+          value: ay.id,
+        })),
       });
     }
 
@@ -313,13 +309,10 @@ export function QuestionBankTable() {
         icon: Award,
         selectedValue: examTypeFilter,
         onSelect: (val) => setExamTypeFilter(val),
-        options: [
-          { label: "All", value: "ALL" },
-          ...examContexts.map((ec) => ({
-            label: ec.name,
-            value: ec.id,
-          })),
-        ],
+        options: examContexts.map((ec) => ({
+          label: ec.name,
+          value: ec.id,
+        })),
       });
     }
 
