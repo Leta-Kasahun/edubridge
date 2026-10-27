@@ -46,25 +46,18 @@ export function StudentAssessmentsView() {
   }, [profile]);
 
   const typeDropdownOptions: readonly SelectDropdownOption[] = useMemo(() => {
-    return [
-      { value: "ALL", label: "All Exam Types" },
-      ...ASSESSMENT_TYPES.map((t: AssessmentType) => ({
-        value: t,
-        label: ASSESSMENT_TYPE_LABELS[t],
-      })),
-    ];
+    return ASSESSMENT_TYPES.map((t: AssessmentType) => ({
+      value: t,
+      label: ASSESSMENT_TYPE_LABELS[t],
+    }));
   }, []);
 
   const yearDropdownOptions: readonly SelectDropdownOption[] = useMemo(() => {
-    const baseOptions: SelectDropdownOption[] = [
-      { value: "ALL", label: "All Academic Years" },
-    ];
-    const mapped = academicYears.map((yr) => ({
+    return academicYears.map((yr) => ({
       value: yr.id,
       label: yr.name || yr.code,
       badge: yr.status === "ACTIVE" ? "Current" : undefined,
     }));
-    return [...baseOptions, ...mapped];
   }, [academicYears]);
 
   const { data, isLoading, error } = useAssessments({

@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { SubmitButton } from "@/shared/components/SubmitButton";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
-import { SelectDropdown, SelectDropdownOption } from "@/shared/components/SelectDropdown";
+import { SelectDropdown } from "@/shared/components/SelectDropdown";
+import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { AssessmentItem } from "../../types/assessment.types";
 import {
   QuestionBankItem,
@@ -48,15 +50,13 @@ interface AssessmentBankSelectorWorkspaceProps {
   readonly isSaving?: boolean;
 }
 
-const DIFFICULTY_OPTIONS: readonly SelectDropdownOption[] = [
-  { value: "ALL", label: "All Difficulties" },
+const DIFFICULTY_OPTIONS = [
   { value: "EASY", label: "Easy" },
   { value: "MEDIUM", label: "Medium" },
   { value: "HARD", label: "Hard" },
 ];
 
-const TYPE_OPTIONS: readonly SelectDropdownOption[] = [
-  { value: "ALL", label: "All Formats" },
+const TYPE_OPTIONS = [
   { value: "MCQ", label: "Multiple Choice" },
   { value: "TRUE_FALSE", label: "True / False" },
   { value: "SHORT_ANSWER", label: "Short Answer" },
@@ -75,6 +75,7 @@ export function AssessmentBankSelectorWorkspace({
   onSave,
   isSaving = false,
 }: AssessmentBankSelectorWorkspaceProps) {
+  const [search, setSearch] = useState("");
   const [selectedBankId, setSelectedBankId] = useState<string | null>(
     questionBanks[0]?.id || null
   );
@@ -140,11 +141,21 @@ export function AssessmentBankSelectorWorkspace({
     return q.latestVersionId || q.versionId || q.id;
   };
 
-  // Filter questions based on scope, difficulty, type, unit, and topic
+  // Filter questions based on scope, difficulty, type, unit, topic, and search
   const filteredQuestions = useMemo(() => {
     return availableQuestions.filter((q) => {
       const versionId = getQuestionVersionId(q);
       const isAllocated = Boolean(versionId && allocations.has(versionId));
+
+      if (search.trim()) {
+        const qSearch = search.toLowerCase().trim();
+        const promptMatch = (q.prompt || "").toLowerCase().includes(qSearch);
+        const optionMatch = (q.options || []).some((opt) =>
+          opt.text.toLowerCase().includes(qSearch)
+        );
+        const explanationMatch = (q.explanation || "").toLowerCase().includes(qSearch);
+        if (!promptMatch && !optionMatch && !explanationMatch) return false;
+      }
 
       if (scopeFilter === "IN_ASSESSMENT" && !isAllocated) {
         return false;
@@ -166,7 +177,7 @@ export function AssessmentBankSelectorWorkspace({
       }
       return true;
     });
-  }, [availableQuestions, allocations, scopeFilter, selectedDifficulty, selectedType, selectedUnit, selectedTopic]);
+  }, [availableQuestions, allocations, search, scopeFilter, selectedDifficulty, selectedType, selectedUnit, selectedTopic]);
 
   const inAssessmentCount = useMemo(() => {
     return availableQuestions.filter((q) => {
@@ -387,6 +398,49 @@ export function AssessmentBankSelectorWorkspace({
     (id) => !initialIds.has(id)
   ).length;
 
+  const toolbarFilters: readonly FilterGroup[] = useMemo(() => {
+    const filters: FilterGroup[] = [
+      {
+        id: "difficulty",
+        label: "Difficulty",
+        selectedValue: selectedDifficulty,
+        onSelect: setSelectedDifficulty,
+        options: DIFFICULTY_OPTIONS,
+      },
+      {
+        id: "type",
+        label: "Format",
+        selectedValue: selectedType,
+        onSelect: setSelectedType,
+        options: TYPE_OPTIONS,
+      },
+    ];
+
+    if (bankUnits.length > 0) {
+      filters.push({
+        id: "unit",
+        label: "Unit",
+        icon: Layers,
+        selectedValue: selectedUnit,
+        onSelect: setSelectedUnit,
+        options: bankUnits.map((u) => ({ value: u.id, label: u.title })),
+      });
+    }
+
+    if (bankTopics.length > 0) {
+      filters.push({
+        id: "topic",
+        label: "Topic",
+        icon: Tag,
+        selectedValue: selectedTopic,
+        onSelect: setSelectedTopic,
+        options: bankTopics.map((t) => ({ value: t.id, label: t.title })),
+      });
+    }
+
+    return filters;
+  }, [selectedDifficulty, selectedType, selectedUnit, selectedTopic, bankUnits, bankTopics]);
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto w-full pb-10">
       {/* Enterprise Single-Row Header */}
@@ -441,10 +495,10 @@ export function AssessmentBankSelectorWorkspace({
       </div>
 
       {/* Top Filter & Question Bank Selector Toolbar */}
-      <div className="bg-card rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs space-y-3">
-        {/* Row 1: Filters Strip (Clean & Spacious without search bar) */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
-          <div className="flex-1 min-w-[220px]">
+      <div className="bg-card rounded-none border border-border p-3 sm:p-3.5 shadow-xs space-y-3">
+        {/* Row 1: Bank Selector & Shared TableToolbar */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+          <div className="w-full lg:w-72 shrink-0">
             <SelectDropdown
               value={selectedBankId || ""}
               onChange={(val) => {
@@ -460,63 +514,27 @@ export function AssessmentBankSelectorWorkspace({
             />
           </div>
 
-          <div className="w-full sm:w-48 min-w-[140px]">
-            <SelectDropdown
-              value={selectedDifficulty}
-              onChange={setSelectedDifficulty}
-              options={DIFFICULTY_OPTIONS}
-              placeholder="Difficulty"
+          <div className="flex-1 min-w-0">
+            <TableToolbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search questions to add by prompt or option..."
+              filters={toolbarFilters}
+              actionButton={
+                selectedBankId ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthoringQuestion(true)}
+                    className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-none bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shrink-0 cursor-pointer shadow-xs"
+                    title="Create new question in this bank"
+                  >
+                    <Plus size={14} />
+                    <span>Question</span>
+                  </button>
+                ) : undefined
+              }
             />
           </div>
-
-          <div className="w-full sm:w-52 min-w-[150px]">
-            <SelectDropdown
-              value={selectedType}
-              onChange={setSelectedType}
-              options={TYPE_OPTIONS}
-              placeholder="Format"
-            />
-          </div>
-
-          {bankUnits.length > 0 && (
-            <div className="w-full sm:w-52 min-w-[150px]">
-              <SelectDropdown
-                value={selectedUnit}
-                onChange={setSelectedUnit}
-                options={[
-                  { value: "ALL", label: "All Units" },
-                  ...bankUnits.map((u) => ({ value: u.id, label: u.title })),
-                ]}
-                placeholder="Unit"
-              />
-            </div>
-          )}
-
-          {bankTopics.length > 0 && (
-            <div className="w-full sm:w-52 min-w-[150px]">
-              <SelectDropdown
-                value={selectedTopic}
-                onChange={setSelectedTopic}
-                options={[
-                  { value: "ALL", label: "All Topics" },
-                  ...bankTopics.map((t) => ({ value: t.id, label: t.title })),
-                ]}
-                placeholder="Topic"
-              />
-            </div>
-          )}
-
-          {selectedBankId && (
-            <button
-              type="button"
-              onClick={() => setIsAuthoringQuestion(true)}
-              className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shrink-0 cursor-pointer shadow-xs"
-              title="Create new question in this bank"
-            >
-              <Plus size={14} />
-              <span>Question</span>
-            </button>
-          )}
         </div>
 
         {/* Row 2: Sub-Action Bar with Scope Filters, Bulk Add/Remove & Batch Points */}
@@ -666,7 +684,8 @@ export function AssessmentBankSelectorWorkspace({
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
           {filteredQuestions.map((q, idx) => {
             const versionId = getQuestionVersionId(q);
             const isSelected = Boolean(versionId && selectedQuestionIds.has(versionId));
@@ -745,7 +764,7 @@ export function AssessmentBankSelectorWorkspace({
                     )}
 
                     <p className="text-xs sm:text-sm font-semibold text-foreground break-words leading-relaxed pt-0.5">
-                      {q.prompt}
+                      <SearchHighlight text={q.prompt} />
                     </p>
                   </div>
 
@@ -848,7 +867,7 @@ export function AssessmentBankSelectorWorkspace({
                               {String.fromCharCode(65 + oIdx)}.
                             </span>
                             <span className="break-words truncate text-[11px]">
-                              {opt.text}
+                              <SearchHighlight text={opt.text} />
                             </span>
                           </div>
 
@@ -879,7 +898,7 @@ export function AssessmentBankSelectorWorkspace({
                     </button>
                     {isExplanationOpen && (
                       <p className="mt-1.5 p-2.5 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground leading-relaxed">
-                        {q.explanation}
+                        <SearchHighlight text={q.explanation} />
                       </p>
                     )}
                   </div>
@@ -888,6 +907,7 @@ export function AssessmentBankSelectorWorkspace({
             );
           })}
         </div>
+        </SearchQueryProvider>
       )}
 
       {previewingQuestion && (
