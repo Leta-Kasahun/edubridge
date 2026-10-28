@@ -42,7 +42,11 @@ export function TeacherAssignmentsView() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [reassignAssignment, setReassignAssignment] = useState<TeacherAssignmentListItem | null>(null);
   const [endAssignment, setEndAssignment] = useState<TeacherAssignmentListItem | null>(null);
-  const [loadTeacher, setLoadTeacher] = useState<{ id: string; name: string } | null>(null);
+  const [loadTeacher, setLoadTeacher] = useState<{
+    id: string;
+    name: string;
+    academicYearId?: string;
+  } | null>(null);
 
   const { data: yearsResponse, isLoading: isLoadingYears } = useAcademicYears();
   const years = yearsResponse?.data || [];
@@ -241,6 +245,7 @@ export function TeacherAssignmentsView() {
               setLoadTeacher({
                 id: assignment.teacherId,
                 name: assignment.teacherName,
+                academicYearId: assignment.academicYearId || effectiveAcademicYearId,
               })
             }
           />
@@ -251,7 +256,7 @@ export function TeacherAssignmentsView() {
       <TeacherAssignmentModal
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
-        defaultAcademicYearId={filters.academicYearId || ""}
+        defaultAcademicYearId={effectiveAcademicYearId}
         academicYears={years}
         sections={sections}
         grades={grades}
@@ -274,7 +279,7 @@ export function TeacherAssignmentsView() {
         onClose={() => setLoadTeacher(null)}
         teacherId={loadTeacher?.id || ""}
         teacherName={loadTeacher?.name || ""}
-        academicYearId={filters.academicYearId || ""}
+        academicYearId={loadTeacher?.academicYearId || effectiveAcademicYearId}
       />
     </div>
   );

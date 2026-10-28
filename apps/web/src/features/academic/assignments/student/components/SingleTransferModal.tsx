@@ -28,8 +28,10 @@ export function SingleTransferModal({
 
   const transferMutation = useTransferStudent();
 
+  const effectiveYearId = academicYearId || student?.academicYearId || "";
+
   const { data: sections = [], isLoading: isLoadingSections } = useGradeSectionsCapacity(
-    academicYearId,
+    effectiveYearId,
     student?.gradeLevel
   );
 
@@ -96,7 +98,7 @@ export function SingleTransferModal({
     try {
       await transferMutation.mutateAsync({
         studentId: student.studentId,
-        academicYearId,
+        academicYearId: effectiveYearId,
         input: {
           targetSectionId,
           reason: reason.trim(),

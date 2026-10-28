@@ -278,7 +278,7 @@ export function StudentAssignmentsView() {
         isOpen={Boolean(singleTransferStudent)}
         onClose={() => setSingleTransferStudent(null)}
         student={singleTransferStudent}
-        academicYearId={academicYearId || ""}
+        academicYearId={singleTransferStudent?.academicYearId || effectiveAcademicYearId}
       />
 
       <BulkTransferModal
@@ -288,14 +288,14 @@ export function StudentAssignmentsView() {
           setSelectedStudentIds([]);
         }}
         selectedStudents={selectedStudents}
-        academicYearId={academicYearId || ""}
+        academicYearId={effectiveAcademicYearId}
         onTransferSuccess={handleClearSelection}
       />
 
       <PromotionModal
         isOpen={isPromotionOpen}
         onClose={() => setIsPromotionOpen(false)}
-        currentAcademicYearId={academicYearId || ""}
+        currentAcademicYearId={effectiveAcademicYearId}
         academicYears={years}
         availableGrades={grades.map((g) => g.level)}
         onPromotionSuccess={handleClearSelection}
@@ -311,7 +311,7 @@ export function StudentAssignmentsView() {
         isOpen={Boolean(withdrawStudent)}
         onClose={() => setWithdrawStudent(null)}
         student={withdrawStudent}
-        academicYearId={academicYearId || ""}
+        academicYearId={withdrawStudent?.academicYearId || effectiveAcademicYearId}
       />
     </div>
   );
