@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Plus, Filter, Layers } from "lucide-react";
-import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider, TableSkeleton } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage } from "@/shared/utils";
 import {
@@ -123,9 +123,7 @@ export function GradesView() {
       </div>
 
       {isLoading ? (
-        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
-          <LoadingSpinner size={32} />
-        </div>
+        <TableSkeleton rows={6} columns={5} hasToolbar={false} />
       ) : error ? (
         <div className="p-6 max-w-7xl mx-auto">
           <ErrorAlert message={getErrorMessage(error, "Failed to load grade levels.")} />

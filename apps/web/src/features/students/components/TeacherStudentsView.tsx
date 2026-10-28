@@ -14,7 +14,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner, ErrorAlert, SearchHighlight, SearchQueryProvider } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchHighlight, SearchQueryProvider, TableSkeleton } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage, useInfiniteScrollSentinel } from "@/shared/utils";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -364,9 +364,7 @@ export function TeacherStudentsView() {
       )}
 
       {isLoading && !rosterPages ? (
-        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
-          <LoadingSpinner size={32} />
-        </div>
+        <TableSkeleton rows={8} columns={5} hasToolbar={false} />
       ) : error ? (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           <ErrorAlert message={getErrorMessage(error, "Failed to load student roster.")} />

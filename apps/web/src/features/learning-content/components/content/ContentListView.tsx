@@ -54,6 +54,7 @@ import {
   ErrorAlert,
   ConfirmDeleteModal,
   SearchQueryProvider,
+  TableSkeleton,
 } from "@/shared/components";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getErrorMessage } from "@/shared/utils";
@@ -663,9 +664,7 @@ export function ContentListView() {
       )}
 
       {isLoading && !data ? (
-        <div className="py-20 flex items-center justify-center bg-card rounded-none border border-border">
-          <LoadingSpinner />
-        </div>
+        <TableSkeleton rows={6} columns={5} hasToolbar={false} />
       ) : error ? (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           <ErrorAlert

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Calendar, GraduationCap, BookOpen, Shield } from "lucide-react";
-import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider, TableSkeleton } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getErrorMessage } from "@/shared/utils";
@@ -42,7 +42,11 @@ export function TeacherAssignmentsView() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [reassignAssignment, setReassignAssignment] = useState<TeacherAssignmentListItem | null>(null);
   const [endAssignment, setEndAssignment] = useState<TeacherAssignmentListItem | null>(null);
-  const [loadTeacher, setLoadTeacher] = useState<{ id: string; name: string } | null>(null);
+  const [loadTeacher, setLoadTeacher] = useState<{
+    id: string;
+    name: string;
+    academicYearId?: string;
+  } | null>(null);
 
   const { data: yearsResponse, isLoading: isLoadingYears } = useAcademicYears();
   const years = yearsResponse?.data || [];
@@ -77,6 +81,11 @@ export function TeacherAssignmentsView() {
 
   const assignments = assignmentsResponse?.items || [];
   const pagination = assignmentsResponse?.pagination;
+
+  const isInitialLoading =
+    isLoadingYears ||
+    (!effectiveAcademicYearId && !filters.teacherId) ||
+    (isLoadingAssignments && assignments.length === 0);
 
   const filteredAssignments = useMemo(() => {
     if (!search.trim()) return assignments;
@@ -221,10 +230,8 @@ export function TeacherAssignmentsView() {
 
       {assignmentsError ? (
         <ErrorAlert message={getErrorMessage(assignmentsError, "Failed to load teacher assignments.")} />
-      ) : isLoadingAssignments && assignments.length === 0 ? (
-        <div className="min-h-[300px] flex items-center justify-center p-8 bg-card rounded-none border border-border">
-          <LoadingSpinner size={28} />
-        </div>
+      ) : isInitialLoading ? (
+        <TableSkeleton rows={6} columns={6} hasToolbar={false} />
       ) : (
         <SearchQueryProvider query={search}>
           <TeacherAssignmentsTable
@@ -238,6 +245,7 @@ export function TeacherAssignmentsView() {
               setLoadTeacher({
                 id: assignment.teacherId,
                 name: assignment.teacherName,
+                academicYearId: assignment.academicYearId || effectiveAcademicYearId,
               })
             }
           />
@@ -248,7 +256,7 @@ export function TeacherAssignmentsView() {
       <TeacherAssignmentModal
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
-        defaultAcademicYearId={filters.academicYearId || ""}
+        defaultAcademicYearId={effectiveAcademicYearId}
         academicYears={years}
         sections={sections}
         grades={grades}
@@ -271,7 +279,7 @@ export function TeacherAssignmentsView() {
         onClose={() => setLoadTeacher(null)}
         teacherId={loadTeacher?.id || ""}
         teacherName={loadTeacher?.name || ""}
-        academicYearId={filters.academicYearId || ""}
+        academicYearId={loadTeacher?.academicYearId || effectiveAcademicYearId}
       />
     </div>
   );

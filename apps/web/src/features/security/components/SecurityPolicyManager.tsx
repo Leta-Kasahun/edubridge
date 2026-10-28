@@ -12,6 +12,7 @@ import {
 import { useSecurityPolicy, useUpdateSecurityPolicy } from "../hooks/useSecurityPolicy";
 import { SecurityPolicy, UpdateSecurityPolicyPayload } from "../types/security.types";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { CardGridSkeleton } from "@/shared/components/skeletons/CardGridSkeleton";
 import { cn } from "@/lib/utils";
 
 const FALLBACK_POLICY: SecurityPolicy = {
@@ -172,8 +173,8 @@ export function SecurityPolicyManager() {
 
   if (isLoading && !apiPolicy) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <LoadingSpinner size={28} />
+      <div className="space-y-4">
+        <CardGridSkeleton count={4} columnsClassName="grid-cols-1 md:grid-cols-2" />
       </div>
     );
   }

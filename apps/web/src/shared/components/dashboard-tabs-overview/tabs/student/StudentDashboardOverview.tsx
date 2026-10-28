@@ -17,6 +17,7 @@ import { useStudentInProgressPractices } from "@/features/question-bank/hooks/us
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
 import { useStudentMastery } from "@/features/mastery/hooks/useMastery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PageSkeleton } from "@/shared/components";
 import { getAvatarInitials } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
 
@@ -292,19 +293,7 @@ export function StudentDashboardOverview() {
   const seg4Offset = -(seg1Len + seg2Len + seg3Len);
 
   if (isLoading) {
-    return (
-      <div className="space-y-6 w-full max-w-full min-w-0">
-        <div className="h-28 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="h-24 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
-          <div className="h-24 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="h-64 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
-          <div className="lg:col-span-2 h-64 rounded-3xl bg-muted/40 animate-pulse border border-border/40" />
-        </div>
-      </div>
-    );
+    return <PageSkeleton variant="dashboard" hasHeader={false} />;
   }
 
   return (

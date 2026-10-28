@@ -17,7 +17,7 @@ import {
 import { useContentList } from "../../hooks/useLearningContent";
 import { LearningContentListItem, ContentType } from "../../types/content.types";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { SearchHighlight, SearchQueryProvider } from "@/shared/components";
+import { SearchHighlight, SearchQueryProvider, CardGridSkeleton } from "@/shared/components";
 
 const TEXTBOOK_TYPES: readonly ContentType[] = [
   "TEXTBOOK",
@@ -181,19 +181,7 @@ export function StudentMaterialsView(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className="space-y-6 pb-12">
-        <div className="space-y-2">
-          <div className="h-8 rounded-xl bg-muted/50 animate-pulse border border-border/40 w-56" />
-          <div className="h-4 rounded-xl bg-muted/40 animate-pulse border border-border/40 w-72" />
-        </div>
-        <div className="h-10 rounded-xl bg-muted/40 animate-pulse border border-border/40 w-full" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-44 rounded-2xl bg-muted/40 animate-pulse border border-border/40"
-            />
-          ))}
-        </div>
+        <CardGridSkeleton count={6} />
       </div>
     );
   }

@@ -10,6 +10,7 @@ import {
   AddressHierarchyFields,
   AddressFormValues,
   DatePicker,
+  CardGridSkeleton,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { formatDisplayDate, getMinMaxDobStrings } from "@/shared/utils/date.util";
@@ -103,9 +104,8 @@ export function TeacherProfileView() {
 
   if (isLoading) {
     return (
-      <div className="p-12 text-center space-y-3">
-        <LoadingSpinner size={24} />
-        <p className="text-xs text-muted-foreground">Loading profile details...</p>
+      <div className="space-y-6 max-w-5xl mx-auto w-full">
+        <CardGridSkeleton count={6} />
       </div>
     );
   }

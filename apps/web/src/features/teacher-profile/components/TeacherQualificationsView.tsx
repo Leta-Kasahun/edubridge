@@ -16,6 +16,7 @@ import {
   LoadingSpinner,
   ErrorAlert,
   DocumentPreviewModal,
+  TableSkeleton,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { isPdfDocument, isImageDocument } from "@/shared/utils/document.util";
@@ -286,11 +287,7 @@ export function TeacherQualificationsView() {
   };
 
   if (isQualsLoading || isExpLoading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
-      </div>
-    );
+    return <TableSkeleton rows={4} columns={4} hasToolbar={false} hasPagination={false} />;
   }
 
   return (

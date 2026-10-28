@@ -19,6 +19,7 @@ import { SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { CardGridSkeleton } from "@/shared/components";
 import {
   ASSESSMENT_TYPES,
   ASSESSMENT_TYPE_LABELS,
@@ -141,20 +142,7 @@ export function StudentAssessmentsView() {
   if (isLoading) {
     return (
       <div className="space-y-6 pb-12">
-        <div className="h-8 rounded-xl bg-muted/50 animate-pulse border border-border/40 w-56" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="h-10 rounded-xl bg-muted/40 animate-pulse border border-border/40" />
-          <div className="h-10 rounded-xl bg-muted/40 animate-pulse border border-border/40" />
-          <div className="h-10 rounded-xl bg-muted/40 animate-pulse border border-border/40" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-48 rounded-2xl bg-muted/40 animate-pulse border border-border/40"
-            />
-          ))}
-        </div>
+        <CardGridSkeleton count={6} />
       </div>
     );
   }

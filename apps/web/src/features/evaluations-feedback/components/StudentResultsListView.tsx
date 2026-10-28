@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useStudentResults } from "../hooks/useEvaluations";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { CardGridSkeleton } from "@/shared/components";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
@@ -111,11 +112,8 @@ export function StudentResultsListView() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] space-y-3">
-        <LoadingSpinner size={28} />
-        <p className="text-xs text-muted-foreground font-medium">
-          Loading your evaluations...
-        </p>
+      <div className="space-y-6 max-w-5xl mx-auto py-4">
+        <CardGridSkeleton count={4} columnsClassName="grid-cols-1 lg:grid-cols-2" />
       </div>
     );
   }

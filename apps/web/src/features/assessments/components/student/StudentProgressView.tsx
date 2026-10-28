@@ -19,7 +19,7 @@ import { useStudentInProgressAssessments } from "../../hooks/useAssessments";
 import { useStudentInProgressContent } from "@/features/learning-content/hooks/useLearningContent";
 import { useStudentInProgressPractices } from "@/features/question-bank/hooks/useQuestionBanks";
 import { getAllActiveSessions } from "@/features/question-bank/utils/practice-session.util";
-import { SearchHighlight, SearchQueryProvider } from "@/shared/components";
+import { SearchHighlight, SearchQueryProvider, PageSkeleton } from "@/shared/components";
 import { ROUTES } from "@/constants/routes";
 
 type MasteryStage = "Mastered" | "Doing Well" | "Needs Practice" | "Learning" | "Not Started";
@@ -395,22 +395,7 @@ export function StudentProgressView(): React.JSX.Element {
   }, [uniqueSubjects]);
 
   if (isLoading) {
-    return (
-      <div className="space-y-6 pb-12 w-full max-w-full min-w-0">
-        <div className="flex items-center justify-between gap-3 pb-4 border-b border-border">
-          <div className="h-8 w-44 rounded-none bg-muted/50 animate-pulse border border-border/40" />
-          <div className="h-6 w-20 rounded-none bg-muted/40 animate-pulse border border-border/40" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-44 rounded-none bg-card border border-border/50 animate-pulse p-4"
-            />
-          ))}
-        </div>
-      </div>
-    );
+    return <PageSkeleton variant="grid" hasHeader={false} />;
   }
 
   return (

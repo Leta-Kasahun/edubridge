@@ -6,6 +6,7 @@ import { Plus, BookOpen, Play } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { TableSkeleton } from "@/shared/components";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -296,9 +297,7 @@ export function AssessmentListView() {
       />
 
       {isLoading && !assessmentsData ? (
-        <div className="flex justify-center p-12 bg-card rounded-none border border-border">
-          <LoadingSpinner />
-        </div>
+        <TableSkeleton rows={6} columns={5} hasToolbar={false} />
       ) : error ? (
         <ErrorAlert message="Failed to load assessments. Please try again." />
       ) : subjectGroups.length === 0 ? (

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { TableSkeleton } from "@/shared/components/skeletons/TableSkeleton";
 import { SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
@@ -359,8 +360,8 @@ export function AssessmentGlobalResultsView() {
 
   if (isLoadingAssessments) {
     return (
-      <div className="p-12 flex justify-center items-center min-h-[400px]">
-        <LoadingSpinner />
+      <div className="space-y-4 max-w-7xl mx-auto w-full pb-16">
+        <TableSkeleton rows={6} columns={6} />
       </div>
     );
   }
@@ -401,9 +402,7 @@ export function AssessmentGlobalResultsView() {
 
       {/* Submissions Table with Enterprise Clean Sort Headers */}
       {isLoadingAttempts ? (
-        <div className="p-12 flex justify-center">
-          <LoadingSpinner />
-        </div>
+        <TableSkeleton rows={6} columns={6} hasToolbar={false} />
       ) : attempts.length === 0 ? (
         <div className="rounded-none border border-dashed border-border p-12 text-center flex flex-col items-center justify-center bg-card shadow-xs">
           <div className="w-12 h-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">

@@ -29,6 +29,7 @@ import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { CardGridSkeleton } from "@/shared/components";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import {
   QuestionListItem,
@@ -617,9 +618,7 @@ export function QuestionListView({ bankId }: QuestionListViewProps) {
 
       {/* Questions List */}
       {isBankLoading || isQuestionsLoading ? (
-        <div className="p-12 flex items-center justify-center">
-          <LoadingSpinner size={32} />
-        </div>
+        <CardGridSkeleton count={4} columnsClassName="grid-cols-1" />
       ) : items.length === 0 ? (
         <div className="bg-card rounded-none border border-border p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-none bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">

@@ -12,9 +12,8 @@ import {
 } from "lucide-react";
 import { useStudentClass } from "../hooks/useStudentClass";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
-import { SearchHighlight, SearchQueryProvider } from "@/shared/components";
+import { SearchHighlight, SearchQueryProvider, CardGridSkeleton } from "@/shared/components";
 import { getAvatarInitials } from "@/shared/utils";
 import { ROUTES } from "@/constants/routes";
 
@@ -40,15 +39,7 @@ export const StudentClassView: React.FC = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 pb-12">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64 rounded-none" />
-        </div>
-        <Skeleton className="h-24 w-full rounded-none" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-40 w-full rounded-none" />
-          ))}
-        </div>
+        <CardGridSkeleton count={6} />
       </div>
     );
   }
