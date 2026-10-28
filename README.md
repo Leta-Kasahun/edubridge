@@ -130,7 +130,7 @@ edubridge/
 | **Frontend Web** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
 | **State & Data Fetching** | TanStack Query v5 (Server state), Zustand (Global UI state), React Hook Form + Zod |
 | **Offline Storage** | Dexie.js (IndexedDB) with outbox queue and background synchronization |
-| **AI & LLM Services** | Google Gemini 2.5 Flash (LLM), Google Gemini Embedding 001, Semantic chunking RAG |
+| **AI & LLM Services** | Google Gemini 3.5 Flash (LLM), Google Gemini Embedding 001, Semantic chunking RAG |
 | **Email & Auth** | Brevo (Transactional email API), Google OAuth2, JWT with Redis session tracking |
 | **Infrastructure** | Docker, Docker Compose, PNPM Workspaces, GitHub Actions (CI/CD) |
 
