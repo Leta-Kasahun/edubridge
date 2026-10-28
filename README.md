@@ -1,12 +1,12 @@
 # EduBridge
 
-EduBridge is an **AI-enabled Progressive Web Application (PWA)** for competency-based education. Built as a multi-tenant monorepo, the platform supports institution-scoped data management, academic operations, automated and manual assessment evaluation, offline study capabilities, and curriculum-grounded AI assistance.
+EduBridge is an **AI-enabled Progressive Web Application (PWA)** for competency-based education, designed for private schools. Built as a multi-tenant monorepo, the platform supports school-scoped data management, academic operations, automated and manual assessment evaluation, offline study capabilities, and curriculum-grounded AI assistance.
 
 ---
 
 ## High-Level System Overview
 
-The platform organizes data by tenant (`tenantId`), allowing institutions to manage their own curricula, users, and academic records within a shared database.
+The platform organizes data by tenant (`tenantId`), allowing private schools to manage their own curricula, users, and academic records within a shared database.
 
 ```mermaid
 graph TD
@@ -48,7 +48,7 @@ edubridge/
 │   │       │   ├── academic/             # Years, terms, grades, sections & enrollments
 │   │       │   ├── ai/                   # RAG pipeline, ingestion, AI tutor, questions & content gen
 │   │       │   ├── assessment/           # Timed tests, exams, submissions & auto-grading
-│   │       │   ├── auth/                 # Login, email OTP (2FA), Google SSO, session management
+│   │       │   ├── auth/                 # Login, System Admin OTP (2FA), Google SSO, session management
 │   │       │   ├── bookmarks/            # Student learning bookmarks & personal notes
 │   │       │   ├── curriculum/           # Curricula, versions, subjects, units, topics & competencies
 │   │       │   ├── evaluation/           # Evaluation metrics & student performance logs
@@ -59,7 +59,7 @@ edubridge/
 │   │       │   ├── mastery/              # Competency evidence tracking & student mastery profiles
 │   │       │   ├── notifications/        # Real-time SSE dispatch, templates & inbox management
 │   │       │   ├── permissions/          # Dynamic RBAC roles, actions & permission cache
-│   │       │   ├── provisioning/         # Tenant, staff invitation & bulk student imports
+│   │       │   ├── provisioning/         # Tenant, teacher invitation & bulk student imports
 │   │       │   ├── question-bank/        # Versioned multi-type questions, banks & practice mode
 │   │       │   ├── security-policy/      # Tenant-level authentication policies & lockout rules
 │   │       │   ├── students/             # Student records, status & roster administration
@@ -88,10 +88,10 @@ edubridge/
 │           │   ├── notifications/        # Real-time notification bell, dropdown & inbox
 │           │   ├── offline/              # Dexie IndexedDB manager, outbox sync & network status
 │           │   ├── permissions/          # Role management & permission matrix
-│           │   ├── provisioning/         # Institution onboarding & bulk CSV/XLSX imports
+│           │   ├── provisioning/         # School onboarding & bulk CSV/XLSX imports
 │           │   ├── question-bank/        # Question authoring, bank repository & practice mode
 │           │   ├── security/             # Security policy settings & audit event logs
-│           │   ├── staff-qualifications/ # Staff qualifications & experience forms
+│           │   ├── staff-qualifications/ # Teacher qualifications & experience forms
 │           │   ├── students/             # Student directory, profile & status control
 │           │   └── teacher-profile/      # Teacher profile editor & career history
 │           ├── lib/                      # Axios client, IndexedDB setup & utility helpers
@@ -109,10 +109,10 @@ edubridge/
 
 ## Core Features (Brief Overview)
 
-- **Multi-Tenancy & Access Control**: Tenant-scoped data access (`tenantId`), role-based access control (RBAC), email and password login with OTP verification, Google OAuth2, session tracking, and rate limiting.
+- **Multi-Tenancy & Access Control**: School-scoped data access (`tenantId`) and role-based access control (RBAC). System Admin logins are secured with email OTP (2FA); teachers and students log in directly with their credentials (students can sign in with username or email).
 - **Curriculum & Competency Framework**: Multi-level hierarchy (Curriculum → Subject → Unit → Topic → Learning Objective) with Draft/Published/Archived versioning and scope support (System vs. Tenant).
 - **Academic Structure & Management**: Academic years, terms, grade levels, and class sections. Homeroom and subject teacher allocations, section capacity tracking, student enrollments, transfers, withdrawals, and year-end promotions.
-- **Account Provisioning & Onboarding**: Email invitations for staff with 48-hour single-use OTPs. Bulk student onboarding via CSV/XLSX validation with automated credential generation and welcome email dispatch.
+- **Hierarchical Provisioning**: System Admins provision school tenants. School Admins onboard teachers via email invitations and students via individual entry or bulk CSV/XLSX import with auto-generated credentials. First-time users log in and complete their profile.
 - **Learning Content & Question Bank**: Rich educational content with cloud file storage. Comprehensive question banks supporting Multiple Choice, True/False, Short Answer, Numeric, and Manual questions with full version history and resumable practice sessions.
 - **Assessments, Grading & Mastery**: Timed assessments, automated grading for objective questions, teacher manual evaluation workflow with feedback, and competency evidence tracking with student mastery calculations.
 - **AI-Powered Capabilities (RAG)**: Human-in-the-loop review queue for AI-generated learning materials and questions. Student AI tutor grounded in curriculum embeddings, plus on-demand step-by-step explanations.
@@ -249,6 +249,23 @@ pnpm dev
 - **Frontend Application**: [http://localhost:3000](http://localhost:3000)
 - **Backend REST API**: [http://localhost:5000/api](http://localhost:5000/api)
 - **Interactive Swagger Documentation**: [http://localhost:5000/docs](http://localhost:5000/docs)
+
+---
+
+## Usage & Core Workflows
+
+- **Authentication Flow**:
+  - **System Admin**: Logs in with email and password, followed by an email OTP verification code (2FA).
+  - **School Admin & Teacher**: Log in directly with their email and temporary or permanent password.
+  - **Student**: Logs in directly using either **username or email** and password (no 2FA required).
+- **Provisioning & Onboarding Hierarchy**:
+  1. **System Admin** creates and provisions the private school tenant and sets up the School Admin.
+  2. **School Admin** provisions teachers via email invitations and adds students individually or via bulk CSV/XLSX import with auto-generated credentials.
+  3. **Teachers & Students** sign in with their provided credentials and complete their profile upon initial login.
+- **Academic & Curriculum Setup**: School Admins set up academic years, terms, grade levels, class sections, and curriculum trees (Subject → Unit → Topic → Learning Objective).
+- **Teaching & Content Delivery**: Teachers create curriculum-linked notes under `Learning Content`, manage questions under `Question Bank`, and schedule timed tests under `Assessments`.
+- **Student Learning & Evaluation**: Students access study materials, practice online or offline, and complete assessments with auto-grading; teachers evaluate open-ended answers under `Grading` to update competency mastery.
+- **API Exploration**: Explore and test REST API endpoints with JWT authorization via Swagger UI at `http://localhost:5000/docs`.
 
 ---
 
