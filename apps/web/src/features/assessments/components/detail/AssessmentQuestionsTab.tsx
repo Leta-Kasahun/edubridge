@@ -26,165 +26,10 @@ import {
   QuestionTypeBadge,
   QuestionDifficultyBadge,
 } from "@/features/question-bank/components/questions/QuestionBadges";
-import { useClickOutside } from "@/shared/hooks/useClickOutside";
+import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
+import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { cn } from "@/lib/utils";
 import { questionBankService } from "@/features/question-bank/services/question-bank.service";
-
-interface FilterOption {
-  readonly label: string;
-  readonly value: string;
-}
-
-interface FilterGroupItem {
-  readonly id: string;
-  readonly label: string;
-  readonly icon?: React.ElementType;
-  readonly selectedValue: string;
-  readonly onSelect: (val: string) => void;
-  readonly options: readonly FilterOption[];
-}
-
-interface AssessmentQuestionFiltersToolbarProps {
-  readonly filters: readonly FilterGroupItem[];
-  readonly hasActiveFilters: boolean;
-  readonly onResetAll: () => void;
-  readonly resultCount?: number;
-  readonly pendingReportsCount?: number;
-  readonly onTogglePendingOnly?: () => void;
-  readonly isPendingOnlyActive?: boolean;
-}
-
-function AssessmentQuestionFiltersToolbar({
-  filters,
-  hasActiveFilters,
-  onResetAll,
-  resultCount,
-  pendingReportsCount = 0,
-  onTogglePendingOnly,
-  isPendingOnlyActive = false,
-}: AssessmentQuestionFiltersToolbarProps) {
-  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(containerRef, () => setOpenFilterId(null));
-
-  return (
-    <div
-      ref={containerRef}
-      className="flex items-center justify-between gap-2.5 flex-wrap w-full"
-    >
-      <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-        {filters.map((group, index) => {
-          const isOpen = openFilterId === group.id;
-          const selectedOption = group.options.find(
-            (o) => o.value === group.selectedValue
-          );
-          const GroupIcon = group.icon || Filter;
-          const isActive = Boolean(group.selectedValue && group.selectedValue !== "ALL");
-          const isTrailing = index >= Math.max(1, filters.length - 2);
-
-          return (
-            <div key={group.id} className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setOpenFilterId(isOpen ? null : group.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
-                  isActive
-                    ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/15"
-                    : "bg-card text-foreground border-border hover:bg-muted"
-                )}
-              >
-                <GroupIcon size={13} className={isActive ? "text-primary" : "text-muted-foreground"} />
-                <span className={cn("font-medium", isActive ? "text-primary/80" : "text-muted-foreground")}>
-                  {group.label}:
-                </span>
-                <span className={cn("font-semibold", isActive ? "text-primary" : "text-foreground")}>
-                  {selectedOption ? selectedOption.label : "All"}
-                </span>
-                <ChevronDown
-                  size={13}
-                  className={cn(
-                    "ml-0.5 transition-transform duration-150",
-                    isOpen && "rotate-180",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}
-                />
-              </button>
-
-              {isOpen && (
-                <div
-                  className={cn(
-                    "absolute top-full mt-1.5 z-50 min-w-44 max-w-64 max-h-60 overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-lg animate-in fade-in-0 zoom-in-95",
-                    isTrailing ? "right-0" : "left-0"
-                  )}
-                >
-                  {group.options.map((opt) => {
-                    const isSelected = opt.value === group.selectedValue;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          group.onSelect(opt.value);
-                          setOpenFilterId(null);
-                        }}
-                        className={cn(
-                          "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between gap-2 cursor-pointer",
-                          isSelected
-                            ? "bg-primary text-primary-foreground font-semibold"
-                            : "text-foreground hover:bg-muted"
-                        )}
-                      >
-                        <span className="truncate">{opt.label}</span>
-                        {isSelected && <Check size={12} className="shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {pendingReportsCount > 0 && onTogglePendingOnly && (
-          <button
-            type="button"
-            onClick={onTogglePendingOnly}
-            className={cn(
-              "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap",
-              isPendingOnlyActive
-                ? "bg-amber-500 text-white border-amber-600 dark:bg-amber-600"
-                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20"
-            )}
-            title="Toggle questions needing feedback review"
-          >
-            <AlertTriangle size={13} />
-            <span>{pendingReportsCount} Feedback Pending</span>
-          </button>
-        )}
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={onResetAll}
-            className="inline-flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
-            title="Reset filters"
-          >
-            <RotateCcw size={12} />
-            <span>Reset</span>
-          </button>
-        )}
-      </div>
-
-      {resultCount !== undefined && (
-        <span className="text-xs text-muted-foreground font-medium shrink-0 ml-auto">
-          {resultCount} {resultCount === 1 ? "question" : "questions"}
-        </span>
-      )}
-    </div>
-  );
-}
 
 interface AssessmentQuestionsTabProps {
   readonly questions: readonly AssessmentQuestionItem[];
@@ -211,6 +56,7 @@ export function AssessmentQuestionsTab({
   hasBankAvailable,
   isBusy = false,
 }: AssessmentQuestionsTabProps) {
+  const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [feedbackFilter, setFeedbackFilter] = useState<"ALL" | "PENDING" | "RESOLVED">("ALL");
@@ -245,7 +91,7 @@ export function AssessmentQuestionsTab({
   const pendingReportsCount = questionsWithPendingReports.length;
   const resolvedReportsCount = questionsWithResolvedReports.length;
 
-  const toolbarFilters: readonly FilterGroupItem[] = useMemo(() => {
+  const toolbarFilters: readonly FilterGroup[] = useMemo(() => {
     return [
       {
         id: "type",
@@ -254,7 +100,6 @@ export function AssessmentQuestionsTab({
         selectedValue: typeFilter,
         onSelect: (val) => setTypeFilter(val),
         options: [
-          { label: "All Types", value: "ALL" },
           { label: "Multiple Choice", value: "MULTIPLE_CHOICE" },
           { label: "Multiple Response", value: "MULTIPLE_RESPONSE" },
           { label: "True / False", value: "TRUE_FALSE" },
@@ -270,7 +115,6 @@ export function AssessmentQuestionsTab({
         selectedValue: difficultyFilter,
         onSelect: (val) => setDifficultyFilter(val),
         options: [
-          { label: "All Difficulties", value: "ALL" },
           { label: "Easy", value: "EASY" },
           { label: "Medium", value: "MEDIUM" },
           { label: "Hard", value: "HARD" },
@@ -283,7 +127,6 @@ export function AssessmentQuestionsTab({
         selectedValue: feedbackFilter,
         onSelect: (val) => setFeedbackFilter(val as typeof feedbackFilter),
         options: [
-          { label: "All Questions", value: "ALL" },
           { label: `Needs Review (${pendingReportsCount})`, value: "PENDING" },
           { label: `Resolved (${resolvedReportsCount})`, value: "RESOLVED" },
         ],
@@ -291,9 +134,10 @@ export function AssessmentQuestionsTab({
     ];
   }, [typeFilter, difficultyFilter, feedbackFilter, pendingReportsCount, resolvedReportsCount]);
 
-  const hasActiveFilters = typeFilter !== "ALL" || difficultyFilter !== "ALL" || feedbackFilter !== "ALL";
+  const hasActiveFilters = Boolean(search.trim()) || typeFilter !== "ALL" || difficultyFilter !== "ALL" || feedbackFilter !== "ALL";
 
   const handleResetFilters = () => {
+    setSearch("");
     setTypeFilter("ALL");
     setDifficultyFilter("ALL");
     setFeedbackFilter("ALL");
@@ -303,6 +147,15 @@ export function AssessmentQuestionsTab({
     return questions.filter((q) => {
       const v = q.questionVersion;
       if (!v) return true;
+      if (search.trim()) {
+        const qSearch = search.toLowerCase().trim();
+        const promptMatch = (v.questionText || "").toLowerCase().includes(qSearch);
+        const optionMatch = (v.options || []).some((opt) =>
+          opt.optionText.toLowerCase().includes(qSearch)
+        );
+        const explanationMatch = (v.explanation || "").toLowerCase().includes(qSearch);
+        if (!promptMatch && !optionMatch && !explanationMatch) return false;
+      }
       if (typeFilter !== "ALL" && v.type !== typeFilter) {
         return false;
       }
@@ -321,7 +174,7 @@ export function AssessmentQuestionsTab({
       }
       return true;
     });
-  }, [questions, typeFilter, difficultyFilter, feedbackFilter, resolvedReportIds]);
+  }, [questions, search, typeFilter, difficultyFilter, feedbackFilter, resolvedReportIds]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -448,16 +301,13 @@ export function AssessmentQuestionsTab({
 
   return (
     <div className="space-y-4">
-      {/* Responsive Filters Toolbar (No Search Bar) */}
-      <div className="bg-card rounded-2xl border border-border p-3 sm:p-3.5 shadow-xs">
-        <AssessmentQuestionFiltersToolbar
+      {/* Responsive Filters Toolbar */}
+      <div className="bg-card rounded-none border border-border p-3 sm:p-3.5 shadow-xs">
+        <TableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search questions by prompt or option..."
           filters={toolbarFilters}
-          hasActiveFilters={hasActiveFilters}
-          onResetAll={handleResetFilters}
-          resultCount={filteredQuestions.length}
-          pendingReportsCount={pendingReportsCount}
-          onTogglePendingOnly={() => setFeedbackFilter((prev) => (prev === "PENDING" ? "ALL" : "PENDING"))}
-          isPendingOnlyActive={feedbackFilter === "PENDING"}
         />
       </div>
 
@@ -516,7 +366,8 @@ export function AssessmentQuestionsTab({
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <SearchQueryProvider query={search}>
+          <div className="space-y-3">
           {filteredQuestions.map((q) => {
             const actualIndex = questions.findIndex(
               (item) => item.questionVersionId === q.questionVersionId
@@ -598,7 +449,7 @@ export function AssessmentQuestionsTab({
                     </div>
 
                     <p className="text-xs sm:text-sm font-semibold text-foreground break-words leading-relaxed pt-1">
-                      {promptText}
+                      <SearchHighlight text={promptText} />
                     </p>
                   </div>
 
@@ -838,7 +689,9 @@ export function AssessmentQuestionsTab({
                             >
                               {String.fromCharCode(65 + oIdx)}.
                             </span>
-                            <span className="break-words text-xs">{opt.optionText}</span>
+                            <span className="break-words text-xs">
+                              <SearchHighlight text={opt.optionText} />
+                            </span>
                           </div>
 
                           {isCorrect && (
@@ -867,7 +720,7 @@ export function AssessmentQuestionsTab({
                     </button>
                     {isExplanationOpen && (
                       <p className="mt-1.5 p-2.5 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground leading-relaxed">
-                        {version.explanation}
+                        <SearchHighlight text={version.explanation} />
                       </p>
                     )}
                   </div>
@@ -876,6 +729,7 @@ export function AssessmentQuestionsTab({
             );
           })}
         </div>
+        </SearchQueryProvider>
       )}
     </div>
   );

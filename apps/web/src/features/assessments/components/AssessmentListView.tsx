@@ -241,13 +241,10 @@ export function AssessmentListView() {
       label: "Type",
       selectedValue: selectedType || "ALL",
       onSelect: (val: string) => setSelectedType(val === "ALL" ? "" : val),
-      options: [
-        { label: "All", value: "ALL" },
-        ...ASSESSMENT_TYPES.map((t: AssessmentType) => ({
-          label: ASSESSMENT_TYPE_LABELS[t],
-          value: t,
-        })),
-      ],
+      options: ASSESSMENT_TYPES.map((t: AssessmentType) => ({
+        label: ASSESSMENT_TYPE_LABELS[t],
+        value: t,
+      })),
     },
     ...(!isStudent
       ? [
@@ -256,13 +253,10 @@ export function AssessmentListView() {
             label: "Status",
             selectedValue: selectedStatus || "ALL",
             onSelect: (val: string) => setSelectedStatus(val === "ALL" ? "" : val),
-            options: [
-              { label: "All", value: "ALL" },
-              ...ASSESSMENT_STATUSES.map((s: AssessmentStatus) => ({
-                label: ASSESSMENT_STATUS_LABELS[s],
-                value: s,
-              })),
-            ],
+            options: ASSESSMENT_STATUSES.map((s: AssessmentStatus) => ({
+              label: ASSESSMENT_STATUS_LABELS[s],
+              value: s,
+            })),
           },
         ]
       : []),

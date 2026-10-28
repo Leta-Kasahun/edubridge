@@ -112,7 +112,6 @@ export function ExamContextTable() {
           setPage(1);
         },
         options: [
-          { label: "All", value: "ALL" },
           { label: "National", value: "NATIONAL" },
           { label: "Regional", value: "REGIONAL" },
           { label: "School", value: "SCHOOL" },
@@ -131,13 +130,10 @@ export function ExamContextTable() {
           setYearFilter(val);
           setPage(1);
         },
-        options: [
-          { label: "All", value: "ALL" },
-          ...academicYears.map((ay) => ({
-            label: ay.name,
-            value: ay.name,
-          })),
-        ],
+        options: academicYears.map((ay) => ({
+          label: ay.name,
+          value: ay.name,
+        })),
       });
     }
 

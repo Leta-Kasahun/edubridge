@@ -14,3 +14,4 @@ export * from "./teacher-scope.util.js";
 export * from "./question-config.util.js";
 export * from "./grading.util.js";
 export * from "./mastery.util.js";
+export * from "./hash.util.js";

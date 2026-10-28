@@ -38,6 +38,25 @@ export const env = {
   B2_REGION: (process.env.B2_REGION ?? process.env.AWS_REGION ?? "").trim(),
   B2_PUBLIC_URL_PREFIX: (process.env.B2_PUBLIC_URL_PREFIX ?? "").trim(),
   FRONTEND_URL: (process.env.FRONTEND_URL ?? "").trim(),
+  // AI / Gemini (Google AI Studio — free tier)
+  GEMINI_API_KEY: (process.env.GEMINI_API_KEY ?? "").trim(),
+  GEMINI_LLM_MODEL: process.env.GEMINI_LLM_MODEL ?? "gemini-3.5-flash",
+  GEMINI_EMBEDDING_MODEL: process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001",
+  GEMINI_EMBEDDING_DIMENSIONS: Number(process.env.GEMINI_EMBEDDING_DIMENSIONS) || 768,
+  // RAG / Chunking
+  RAG_CHUNK_MAX_TOKENS: Number(process.env.RAG_CHUNK_MAX_TOKENS) || 512,
+  RAG_CHUNK_OVERLAP_TOKENS: Number(process.env.RAG_CHUNK_OVERLAP_TOKENS) || 128,
+  RAG_MIN_CHUNK_TOKENS: Number(process.env.RAG_MIN_CHUNK_TOKENS) || 50,
+  RAG_HYBRID_TOP_K: Number(process.env.RAG_HYBRID_TOP_K) || 10,
+  RAG_VECTOR_SEARCH_K: Number(process.env.RAG_VECTOR_SEARCH_K) || 20,
+  RAG_FULLTEXT_SEARCH_K: Number(process.env.RAG_FULLTEXT_SEARCH_K) || 20,
+  // AI Cache TTLs (seconds)
+  AI_EMBEDDING_DOC_CACHE_TTL: Number(process.env.AI_EMBEDDING_DOC_CACHE_TTL) || 604800,
+  AI_EMBEDDING_QUERY_CACHE_TTL: Number(process.env.AI_EMBEDDING_QUERY_CACHE_TTL) || 86400,
+  AI_EXPLANATION_CACHE_TTL: Number(process.env.AI_EXPLANATION_CACHE_TTL) || 86400,
+  // AI Rate limits (requests per hour per user)
+  AI_MAX_GENERATION_RPH: Number(process.env.AI_MAX_GENERATION_RPH) || 10,
+  AI_MAX_EXPLANATION_RPH: Number(process.env.AI_MAX_EXPLANATION_RPH) || 60,
 } as const;
 
 export type Env = typeof env;

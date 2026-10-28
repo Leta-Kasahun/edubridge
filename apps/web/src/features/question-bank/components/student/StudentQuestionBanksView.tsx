@@ -30,7 +30,6 @@ import {
 } from "../../utils/practice-session.util";
 
 const SCOPE_DROPDOWN_OPTIONS = [
-  { value: "ALL", label: "All Scopes" },
   { value: "NATIONAL", label: "National Exams" },
   { value: "REGIONAL", label: "Regional Exams" },
   { value: "SCHOOL", label: "School Exams" },
@@ -73,15 +72,11 @@ export function StudentQuestionBanksView(): React.JSX.Element {
   }, [academicYearsResponse]);
 
   const yearDropdownOptions = useMemo(() => {
-    const baseOptions = [
-      { value: "ALL", label: "All Academic Years" },
-    ];
-    const mapped = academicYears.map((yr) => ({
+    return academicYears.map((yr) => ({
       value: yr.id,
       label: yr.name,
       badge: yr.status === "ACTIVE" ? "Current" : undefined,
     }));
-    return [...baseOptions, ...mapped];
   }, [academicYears]);
 
   const filterGroups: readonly FilterGroup[] = useMemo(() => {

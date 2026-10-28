@@ -425,6 +425,10 @@ masteryHistory         MasteryHistory[]
   studentContentProgress StudentContentProgress[]
   studentPracticeSessions StudentPracticeSession[]
 
+  // RAG / AI
+  contentChunks    ContentChunk[]
+  aiGenerationJobs AiGenerationJob[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -456,6 +460,7 @@ model User {
   createdQuestions Question[] @relation("QuestionCreator")
   questionVersionsCreated QuestionVersion[] @relation("QuestionVersionCreator")
   createdAssessments Assessment[]
+  aiGenerationJobs  AiGenerationJob[] @relation("AiJobRequester")
   assessmentAssignmentsCreated AssessmentAssignment[]
   manuallyGradedAnswers StudentAnswer[]
 
@@ -1445,6 +1450,7 @@ model LearningContent {
 
   attachments ContentAttachment[]
   studentProgress StudentContentProgress[]
+  chunks          ContentChunk[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2236,4 +2242,105 @@ model StudentPracticeSession {
   @@index([studentId, lastAccessedAt])
 }
 
+// ============================================================
+// RAG — CONTENT CHUNKS (pgvector + tsvector)
+// ============================================================
+
+model ContentChunk {
+  id           String  @id @default(uuid()) @db.Uuid
+  tenantId     String  @db.Uuid
+  contentId    String  @db.Uuid
+  attachmentId String? @db.Uuid
+
+  // Position within the ingested document
+  chunkIndex Int
+
+  // Raw cleaned text for this chunk
+  text String
+
+  // Token count (tiktoken cl100k_base) — used for chunking accuracy
+  tokenCount Int
+
+  // Which strategy produced this chunk
+  // Values: 'semantic_boundary' | 'fixed_sliding'
+  chunkStrategy String
+
+  // Curriculum alignment — denormalized from LearningContent for fast RAG filtering
+  subjectId           String? @db.Uuid
+  gradeId             String? @db.Uuid
+  unitId              String? @db.Uuid
+  topicId             String? @db.Uuid
+  curriculumVersionId String? @db.Uuid
+
+  // Chunk metadata as JSON:
+  // { headingPath: string[], pageNumber: number, sectionTitle: string }
+  metadata Json?
+
+  // pgvector — 768-dimensional embedding (gemini-embedding-001, MRL truncated)
+  // ivfflat index created via raw SQL after migrate (see post-migrate.sql)
+  embedding Unsupported("vector(768)")?
+
+  // PostgreSQL tsvector for full-text search (sparse leg of hybrid search)
+  // Populated via: UPDATE "ContentChunk" SET "searchVector" = to_tsvector('english', text)
+  searchVector Unsupported("tsvector")?
+
+  content LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Primary access pattern: tenant + content
+  @@index([tenantId, contentId])
+  // Chunk ordering within a document
+  @@index([contentId, chunkIndex])
+  // Curriculum-scoped RAG search filters
+  @@index([tenantId, topicId])
+  @@index([tenantId, subjectId])
+  @@index([tenantId, gradeId])
+  @@index([tenantId, unitId])
+}
+
+// ============================================================
+// AI GENERATION JOB — Audit trail for all LLM generation calls
+// ============================================================
+
+model AiGenerationJob {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+
+  // 'CONTENT_GENERATION' | 'QUESTION_GENERATION'
+  jobType String
+
+  // 'PENDING' | 'COMPLETED' | 'FAILED'
+  status String
+
+  requestedById String @db.Uuid
+
+  // Full request payload — for reproducibility and debugging
+  inputParams Json
+
+  // On completion: { contentId } or { questionIds: string[], count: number }
+  outputSummary Json?
+
+  // LLM model name (e.g. 'gemini-2.5-flash')
+  model        String
+  promptTokens Int?
+  outputTokens Int?
+
+  // Populated on FAILED status only
+  errorMessage String?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedBy User   @relation("AiJobRequester", fields: [requestedById], references: [id])
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  // Filter by type + status (dashboards, monitoring)
+  @@index([tenantId, jobType, status])
+  // Per-user job history
+  @@index([tenantId, requestedById])
+  // Recency ordering
+  @@index([tenantId, createdAt])
+}
 

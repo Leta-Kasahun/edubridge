@@ -279,6 +279,62 @@ const contentRouteDefinitions: readonly RouteDefinition[] = [
       400: { description: "Attachment is locked in published version" },
     },
   },
+  {
+    path: "/api/learning-content/content/{id}/ingest",
+    method: "POST",
+    summary: "Ingest and Vectorize Content",
+    description: "Extract, clean, chunk, and generate vector embeddings for attached materials or body text.",
+    tags: ["Learning Content - RAG"],
+    security: true,
+    parameters: [
+      { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+    ],
+    requestBody: {
+      schema: {
+        type: "object",
+        properties: {
+          attachmentIds: {
+            type: "array",
+            items: { type: "string", format: "uuid" },
+            description: "Optional list of attachment IDs to ingest. If omitted, all eligible attachments are processed.",
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: "Content successfully ingested and indexed" },
+      400: { description: "No extractable text found" },
+      401: { description: "Unauthorized" },
+      404: { description: "Content not found" },
+    },
+  },
+  {
+    path: "/api/learning-content/content/search",
+    method: "POST",
+    summary: "Hybrid RAG Search",
+    description: "Perform reciprocal-rank-fusion hybrid search across content chunks using semantic vectors and full-text search.",
+    tags: ["Learning Content - RAG"],
+    security: true,
+    requestBody: {
+      required: true,
+      schema: {
+        type: "object",
+        required: ["query"],
+        properties: {
+          query: { type: "string", minLength: 2, maxLength: 500 },
+          topicId: { type: "string", format: "uuid" },
+          subjectId: { type: "string", format: "uuid" },
+          gradeId: { type: "string", format: "uuid" },
+          limit: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+        },
+      },
+    },
+    responses: {
+      200: { description: "Ranked relevant chunks retrieved successfully" },
+      400: { description: "Invalid search query" },
+      401: { description: "Unauthorized" },
+    },
+  },
 ];
 
 export function registerContentDocs(): void {

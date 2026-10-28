@@ -16,4 +16,8 @@ export * from "./content/services/content.service.js";
 export * from "./content/services/content-attachment.service.js";
 export * from "./content/controllers/content.controller.js";
 export * from "./content/controllers/content-attachment.controller.js";
-
+export * from "./content/types/rag.types.js";
+export * from "./content/schemas/content-rag.schema.js";
+export * from "./content/repository/content-chunk.repository.js";
+export * from "./content/services/content-rag.service.js";
+export * from "./content/controllers/content-rag.controller.js";

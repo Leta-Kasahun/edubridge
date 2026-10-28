@@ -26,6 +26,9 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   "StudentTopicPerformance",
   "StudentTopicMastery",
   "MasteryHistory",
+  // RAG / AI
+  "ContentChunk",
+  "AiGenerationJob",
 ]);
 
 export const FILTER_WHERE_OPERATIONS = new Set<string>([
