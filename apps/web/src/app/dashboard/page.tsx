@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { DashboardLayout } from "@/shared/components/layouts";
+import { PageSkeleton } from "@/shared/components";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   SystemAdminDashboard,
@@ -47,7 +48,13 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <DashboardLayout>
+          <PageSkeleton variant="dashboard" />
+        </DashboardLayout>
+      }
+    >
       <DashboardContent />
     </Suspense>
   );

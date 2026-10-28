@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { TableSkeleton } from "@/shared/components";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -348,9 +349,7 @@ export function QuestionBankTable() {
       />
 
       {isLoading && !data ? (
-        <div className="min-h-[300px] flex items-center justify-center p-8 bg-card rounded-none border border-border">
-          <LoadingSpinner size={32} />
-        </div>
+        <TableSkeleton rows={6} columns={5} hasToolbar={false} />
       ) : error ? (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           <ErrorAlert message={error.message || "Failed to load question banks."} />

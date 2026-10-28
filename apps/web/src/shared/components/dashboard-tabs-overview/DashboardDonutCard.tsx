@@ -15,7 +15,7 @@ export function DashboardDonutCard({
   const total = activeSlices.reduce((acc, slice) => acc + slice.value, 0);
 
   return (
-    <div className="bg-card text-card-foreground rounded-2xl border border-border p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between h-[340px] w-full">
+    <div className="bg-card text-card-foreground rounded-none border border-border p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between h-[340px] w-full">
       <div className="w-full flex items-center justify-between gap-2 h-7 shrink-0">
         <h4 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
           {title}
@@ -29,7 +29,7 @@ export function DashboardDonutCard({
 
       <div className="w-full h-[155px] flex items-center justify-center relative shrink-0 my-auto">
         {isLoading ? (
-          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-3 border-muted/50 border-t-primary animate-spin" />
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-8 border-muted/60 animate-pulse" />
         ) : total === 0 ? (
           <div className="flex flex-col items-center justify-center text-center p-2">
             <div className="w-20 h-20 rounded-full border-2 border-dashed border-border flex items-center justify-center mb-1">

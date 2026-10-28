@@ -18,6 +18,7 @@ import {
   AddressFormValues,
   ProfilePhotoUpload,
   SubmitButton,
+  CardGridSkeleton,
 } from "@/shared/components";
 import {
   formatStudentAccountStatus,
@@ -120,8 +121,8 @@ export function StudentProfileView() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
+      <div className="space-y-6 max-w-5xl mx-auto w-full">
+        <CardGridSkeleton count={6} />
       </div>
     );
   }

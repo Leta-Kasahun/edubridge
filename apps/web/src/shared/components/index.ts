@@ -15,3 +15,4 @@ export * from "./Logo";
 export * from "./ConfirmDeleteModal";
 export * from "./DatePicker";
 export * from "./SearchHighlight";
+export * from "./skeletons";

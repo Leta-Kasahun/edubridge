@@ -9,6 +9,7 @@ import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import { SelectDropdownOption } from "@/shared/components/SelectDropdown";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { TableSkeleton } from "@/shared/components";
 import { ErrorAlert } from "@/shared/components/ErrorAlert";
 import { getErrorMessage } from "@/shared/utils";
 import { useDebounce } from "@/shared/hooks";
@@ -142,12 +143,7 @@ export default function LearningProgressPage(): React.JSX.Element {
               </p>
             </div>
           ) : isMatrixLoading ? (
-            <div className="p-16 flex flex-col items-center justify-center gap-3 bg-card rounded-none border border-border">
-              <LoadingSpinner size={32} />
-              <p className="text-sm font-medium text-muted-foreground">
-                Loading progress records...
-              </p>
-            </div>
+            <TableSkeleton rows={8} columns={6} hasToolbar={false} />
           ) : matrixError ? (
             <ErrorAlert
               message={getErrorMessage(matrixError, "Failed to load progress records.")}

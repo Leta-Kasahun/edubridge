@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { TableSkeleton } from "@/shared/components";
 import { TenantActionDropdown } from "./TenantActionDropdown";
 import {
   useTenants,
@@ -112,9 +113,8 @@ export function TenantListTable({
       <SearchQueryProvider query={search}>
         <div className="bg-card rounded-none border border-border shadow-xs pb-1">
         {isLoading ? (
-          <div className="p-8 text-center space-y-3">
-            <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent animate-spin" />
-            <div className="text-xs text-muted-foreground">Loading schools...</div>
+          <div className="p-4">
+            <TableSkeleton rows={5} columns={5} hasToolbar={false} hasPagination={false} />
           </div>
         ) : tenants.length === 0 ? (
           <div className="p-12 text-center space-y-3">

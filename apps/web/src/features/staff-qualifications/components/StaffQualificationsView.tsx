@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider, TableSkeleton } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import {
@@ -47,9 +47,7 @@ export function StaffQualificationsView() {
       />
 
       {isLoading ? (
-        <div className="min-h-[400px] flex items-center justify-center p-8 bg-card border border-border">
-          <LoadingSpinner size={32} />
-        </div>
+        <TableSkeleton rows={6} columns={5} hasToolbar={false} />
       ) : error ? (
         <div className="p-6 max-w-7xl mx-auto">
           <ErrorAlert

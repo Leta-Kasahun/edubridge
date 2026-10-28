@@ -21,6 +21,7 @@ import {
   ConfirmDeleteModal,
   SearchHighlight,
   SearchQueryProvider,
+  CardGridSkeleton,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 
@@ -442,14 +443,7 @@ export function StudentBookmarksView(): React.JSX.Element {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] space-y-3">
-        <LoadingSpinner size={28} />
-        <p className="text-xs text-muted-foreground font-medium">
-          Loading saved questions...
-        </p>
-      </div>
-    );
+    return <CardGridSkeleton count={4} columnsClassName="grid-cols-1" />;
   }
 
   if (isError) {

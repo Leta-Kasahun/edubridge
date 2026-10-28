@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { TableSkeleton } from "@/shared/components";
 import { SearchQueryProvider } from "@/shared/components/SearchHighlight";
 import {
   useAcademicStructure,
@@ -206,10 +207,7 @@ export function StudentProvisioningManager() {
       />
 
       {isStructureLoading || isStudentsLoading ? (
-        <div className="rounded-none bg-card border border-border p-12 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
-          <LoadingSpinner size={24} />
-          <span>Loading student onboarding data...</span>
-        </div>
+        <TableSkeleton rows={5} columns={5} hasToolbar={false} />
       ) : grades.length === 0 ? (
         <div className="rounded-none bg-card border border-border p-10 text-center space-y-3">
           <p className="text-xs text-muted-foreground">

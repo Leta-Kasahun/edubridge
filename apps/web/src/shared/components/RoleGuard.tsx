@@ -7,6 +7,8 @@ import { useAuthStore } from "@/stores/auth.store";
 import { ROUTES } from "@/constants/routes";
 import { AppRole } from "@/constants/roles";
 
+import { PageSkeleton } from "./skeletons";
+
 export type AllowedRole = AppRole | string;
 
 export interface RoleGuardProps {
@@ -35,11 +37,7 @@ export function RoleGuard({
   }, [isAuthenticated, isLoading, isHydrated, router]);
 
   if (!isHydrated || isLoading) {
-    return (
-      <div className="flex h-64 w-full items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return fallback ? <>{fallback}</> : <PageSkeleton />;
   }
 
   if (!isAuthenticated) {

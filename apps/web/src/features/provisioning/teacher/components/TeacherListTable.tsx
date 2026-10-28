@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { SearchHighlight, SearchQueryProvider } from "@/shared/components/SearchHighlight";
+import { TableSkeleton } from "@/shared/components";
 import { ACCOUNT_STATUS_FILTER_OPTIONS, formatStudentAccountStatus } from "@/shared/utils";
 import { TeacherActionDropdown } from "./TeacherActionDropdown";
 import {
@@ -152,9 +153,8 @@ export function TeacherListTable({
       <SearchQueryProvider query={search}>
         <div className="bg-card rounded-none border border-border shadow-xs overflow-hidden">
           {isLoading ? (
-            <div className="p-8 text-center space-y-3">
-              <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent animate-spin" />
-              <div className="text-xs text-muted-foreground">Loading teachers...</div>
+            <div className="p-4">
+              <TableSkeleton rows={5} columns={6} hasToolbar={false} hasPagination={false} />
             </div>
           ) : teachers.length === 0 ? (
             <div className="p-12 text-center space-y-3">
