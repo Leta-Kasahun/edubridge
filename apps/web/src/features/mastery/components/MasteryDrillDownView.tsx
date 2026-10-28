@@ -879,8 +879,9 @@ export function MasteryDrillDownView({
             </h3>
 
             {isHistoryLoading ? (
-              <div className="py-8 flex justify-center">
-                <LoadingSpinner size={24} />
+              <div className="space-y-2 py-2">
+                <div className="h-10 bg-muted/60 animate-pulse rounded-none" />
+                <div className="h-10 bg-muted/60 animate-pulse rounded-none" />
               </div>
             ) : !studentHistory || studentHistory.length === 0 ? (
               <div className="p-6 text-center text-xs text-muted-foreground italic bg-muted/20 rounded-xl border border-dashed border-border">

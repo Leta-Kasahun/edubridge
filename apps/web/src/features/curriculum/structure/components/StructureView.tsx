@@ -32,6 +32,8 @@ import {
   SelectDropdownOption,
   ConfirmDeleteModal,
   SearchQueryProvider,
+  TableSkeleton,
+  CardGridSkeleton,
 } from "@/shared/components";
 import { getErrorMessage } from "@/shared/utils";
 import { useAuthStore } from "@/stores/auth.store";
@@ -237,8 +239,8 @@ export function StructureView() {
 
   if (isLoadingCurricula) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
-        <LoadingSpinner size={32} />
+      <div className="space-y-4 max-w-7xl mx-auto w-full pb-12">
+        <TableSkeleton rows={6} columns={4} />
       </div>
     );
   }
@@ -293,8 +295,10 @@ export function StructureView() {
 
       {/* Subject Tabs directly beneath TableToolbar */}
       {isLoadingSubjects ? (
-        <div className="flex items-center justify-center p-6 bg-card rounded-none border border-border">
-          <LoadingSpinner size={24} />
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="h-8 w-32 bg-muted/60 animate-pulse rounded-none" />
+          <div className="h-8 w-28 bg-muted/60 animate-pulse rounded-none" />
+          <div className="h-8 w-36 bg-muted/60 animate-pulse rounded-none" />
         </div>
       ) : subjectsError ? (
         <ErrorAlert message={getErrorMessage(subjectsError, "Failed to load subjects.")} />
@@ -393,9 +397,7 @@ export function StructureView() {
           </div>
 
           {isLoadingUnits ? (
-            <div className="flex items-center justify-center p-8 bg-card rounded-none border border-border">
-              <LoadingSpinner size={28} />
-            </div>
+            <CardGridSkeleton count={3} columnsClassName="grid-cols-1" />
           ) : unitsError ? (
             <ErrorAlert message={getErrorMessage(unitsError, "Failed to load units.")} />
           ) : filteredUnits.length === 0 ? (

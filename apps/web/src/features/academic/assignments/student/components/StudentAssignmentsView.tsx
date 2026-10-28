@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ArrowRightLeft, ArrowUpRight, Calendar, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner, ErrorAlert, SearchQueryProvider } from "@/shared/components";
+import { LoadingSpinner, ErrorAlert, SearchQueryProvider, TableSkeleton } from "@/shared/components";
 import { TableToolbar, FilterGroup } from "@/shared/components/TableToolbar";
 import { getErrorMessage, useInfiniteScrollSentinel } from "@/shared/utils";
 import { useInfiniteStudentRoster } from "../hooks/useStudentAssignments";
@@ -66,6 +66,8 @@ export function StudentAssignmentsView() {
     if (!rosterPages) return [];
     return rosterPages.pages.flatMap((p) => [...p.items]);
   }, [rosterPages]);
+
+  const isInitialLoading = isLoadingYears || !effectiveAcademicYearId || (isLoadingRoster && roster.length === 0);
 
   const lastPagination = rosterPages?.pages.at(-1)?.pagination;
 
@@ -251,10 +253,8 @@ export function StudentAssignmentsView() {
 
       {rosterError ? (
         <ErrorAlert message={getErrorMessage(rosterError, "Failed to load student roster.")} />
-      ) : isLoadingRoster ? (
-        <div className="min-h-[300px] flex items-center justify-center p-8">
-          <LoadingSpinner size={28} />
-        </div>
+      ) : isInitialLoading ? (
+        <TableSkeleton rows={8} columns={5} hasToolbar={false} />
       ) : (
         <SearchQueryProvider query={search}>
           <StudentAssignmentsTable
