@@ -14,6 +14,7 @@ import { SessionMetadata, AuthResponse } from "../types/auth.types.js";
 import { UnauthorizedError } from "../../../shared/exceptions/unauthorized-error.js";
 import { sendOtpEmail } from "../../../lib/email.js";
 import { OTPPurpose } from "../../../shared/enums/index.js";
+import { activityRecorderService } from "../../activity-log/services/activity-recorder.service.js";
 
 export class LoginService {
   constructor(
@@ -24,7 +25,7 @@ export class LoginService {
     private readonly otpSvc: OtpService = otpService,
     private readonly sessionSvc: SessionService = sessionService,
     private readonly securityEventSvc: SecurityEventService = securityEventService
-  ) {}
+  ) { }
 
   async login(dto: LoginDto, metadata: SessionMetadata, tenantId?: string): Promise<AuthResponse> {
     const identifier = (dto.email || dto.identifier)!.trim();
@@ -167,6 +168,18 @@ export class LoginService {
 
     await this.cacheSvc.clearFailedAttempts(identifier);
     await this.authRepo.resetFailedAttempts(user.id, metadata.ipAddress);
+    void activityRecorderService.record({
+      tenantId: activeTenantId,
+      userId: user.id,
+      action: "LOGIN",
+      resource: "AUTH",
+      ipAddress: metadata.ipAddress,
+      metadata: {
+        description: "User logged into the platform",
+        userAgent: metadata.userAgent,
+        deviceId: resolvedDeviceId,
+      },
+    });
     await this.securityRepo.recordLoginAttempt({
       tenantId: activeTenantId,
       userId: user.id,
