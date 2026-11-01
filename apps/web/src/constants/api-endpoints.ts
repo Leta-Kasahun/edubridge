@@ -253,6 +253,10 @@ export const API_ENDPOINTS = {
     SEARCH: "/learning-content/content/search",
     INGEST: (id: string) => `/learning-content/content/${id}/ingest`,
   },
+  ACTIVITY_LOGS: {
+    BASE: "/activity-logs",
+    STATS: "/activity-logs/stats",
+  },
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;

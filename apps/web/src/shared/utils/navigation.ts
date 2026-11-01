@@ -15,6 +15,7 @@ import {
   GraduationCap,
   TrendingUp,
   Bookmark,
+  History,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -51,6 +52,11 @@ export const SYSTEM_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Resources",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookCopy,
+  },
+  {
+    label: "Activity Log",
+    href: ROUTES.ACTIVITY_LOGS,
+    icon: History,
   },
   {
     label: "Settings",
@@ -96,6 +102,11 @@ export const SCHOOL_ADMIN_NAVIGATION_TREE: readonly NavNode[] = [
     label: "Resources",
     href: ROUTES.LEARNING_CONTENT.MATERIALS,
     icon: BookCopy,
+  },
+  {
+    label: "Activity Log",
+    href: ROUTES.ACTIVITY_LOGS,
+    icon: History,
   },
   {
     label: "Question Banks",

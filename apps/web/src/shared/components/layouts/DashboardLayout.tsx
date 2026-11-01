@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useNotificationStream } from "@/features/notifications/hooks/useNotificationStream";
 import { useAuthStore } from "@/stores/auth.store";
 import { StudentAiTutorWidget } from "@/features/ai";
+import { SchoolActivityFloatingTrigger } from "@/features/activity-log";
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode;
@@ -51,6 +52,7 @@ export function DashboardLayout({
       </div>
 
       {isStudent && <StudentAiTutorWidget />}
+      <SchoolActivityFloatingTrigger />
     </div>
   );
 }

@@ -2,9 +2,11 @@ import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { redis } from "./lib/redis.js";
 import { registerNotificationListeners } from "./modules/notifications/index.js";
+import { activityRecorderService } from "./modules/activity-log/index.js";
 
 const startServer = async () => {
   registerNotificationListeners();
+  activityRecorderService.registerEventListeners();
 
   try {
     await redis.ping();
