@@ -541,13 +541,18 @@
 }
 
 /* Enforce completely sharp edges for buttons, inputs, textareas, and selects across all pages */
-button,
-input,
+button:not(.rounded-full):not([data-circular="true"]),
+input:not(.rounded-full):not([data-circular="true"]),
 textarea,
 select,
-[data-slot="button"],
-[data-slot="input"],
+[data-slot="button"]:not(.rounded-full):not([data-circular="true"]),
+[data-slot="input"]:not(.rounded-full):not([data-circular="true"]),
 [data-slot="select-trigger"],
 [data-slot="textarea"] {
   border-radius: 0px !important;
+}
+
+.rounded-full,
+[data-circular="true"] {
+  border-radius: 50% !important;
 }
