@@ -74,6 +74,7 @@ export const ROUTES = {
     RESULT: (id: string, attemptId: string) => `/dashboard/assessments/${id}/attempts/${attemptId}/result`,
   },
   MASTERY: "/dashboard/mastery",
+  ACTIVITY_LOGS: "/dashboard/activity-logs",
   SETTINGS: {
     BASE: "/dashboard/settings",
     SECURITY: "/dashboard/settings/security",
